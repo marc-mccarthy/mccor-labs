@@ -235,8 +235,16 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 # Read only this domain's own secrets, nothing else in Parameter Store.
 data "aws_iam_policy_document" "instance" {
   statement {
-    actions   = ["ssm:GetParameter", "ssm:GetParametersByPath"]
-    resources = ["arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail/*"]
+    actions = ["ssm:GetParameter", "ssm:GetParametersByPath"]
+    resources = [
+      # Both forms are required and they are not interchangeable.
+      # GetParameter reads the children, so it needs the /* form; but
+      # GetParametersByPath is authorised against the PATH ITSELF, without
+      # the wildcard. Granting only /* fails with AccessDeniedException on
+      # the path -- the same trap as an S3 "bucket" vs "bucket/*" policy.
+      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail",
+      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail/*",
+    ]
   }
 
   statement {

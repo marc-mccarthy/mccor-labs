@@ -320,6 +320,11 @@ output "mail_instance_id" {
   value       = var.enable_mailserver ? module.mailserver[0].instance_id : null
 }
 
+output "alerts_topic_arn" {
+  description = "SNS topic the alarms publish to. The email subscription must be confirmed before anything alerts."
+  value       = var.enable_mailserver ? module.mailserver[0].alerts_topic_arn : null
+}
+
 # terraform output -json mailbox_passwords
 output "mailbox_passwords" {
   description = "First-login password per mailbox"

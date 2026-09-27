@@ -67,6 +67,17 @@ mailboxes = {
 # first alphabetically, and would move when you hire someone.
 admin_mailbox = ""
 
+# EC2 instance type. Bump this to resize the server -- Terraform resizes
+# the running instance in place, no data loss. t4g.micro works for a
+# handful of mailboxes at roughly half the price of the default below.
+# instance_type = "t4g.small"
+
+# Size in GB of the separate disk holding mail. Terraform only grows this
+# volume, never shrinks it, and growing it here is only half the job: the
+# box itself then needs `resize2fs` run on the mail filesystem before the
+# extra space is usable. See MAIL.md's scaling section.
+# mail_volume_gb = 20
+
 # ---------------------------------------------------------------
 # Mail forwarding (alternative to the mail server above -- you cannot
 # have both, they each need the domain's MX record).

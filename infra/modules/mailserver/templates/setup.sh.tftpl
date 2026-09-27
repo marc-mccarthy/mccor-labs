@@ -18,6 +18,17 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl gnupg unzip
 
+# Security updates only, applied automatically. This box is internet-facing
+# on four ports (25, 80, 587, 993) and is meant to run for years without
+# anyone logging in. Automatic REBOOTS are deliberately not enabled: a mail
+# server rebooting unattended mid-delivery is worse than a delayed kernel
+# patch, so the operator reboots deliberately, on their own schedule.
+apt-get install -y unattended-upgrades
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+AUTO
+
 # ---------- tools ----------
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscli.zip
 unzip -q /tmp/awscli.zip -d /tmp
@@ -287,7 +298,7 @@ if [ -f "\$CERT" ] && ! openssl x509 -checkend \$((21*86400)) -noout -in "\$CERT
   alert "certificate expiring" "The TLS certificate for ${fqdn} expires within 21 days and has not renewed."
 fi
 
-QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || echo 0)
+QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)
 if [ "\$QUEUED" -gt 50 ]; then
   alert "mail queue backing up" "\$QUEUED messages are queued. The SES relay credential is the usual cause."
 fi

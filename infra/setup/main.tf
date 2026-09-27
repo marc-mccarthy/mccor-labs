@@ -130,6 +130,18 @@ variable "admin_mailbox" {
   }
 }
 
+variable "instance_type" {
+  description = "EC2 instance type for the mail server. t4g.small is the smallest size that runs the mail stack and its spam filter comfortably; t4g.micro works for a handful of mailboxes at roughly half the price. Changing this replaces nothing -- Terraform resizes the running instance in place."
+  type        = string
+  default     = "t4g.small"
+}
+
+variable "mail_volume_gb" {
+  description = "Size in GB of the separate EBS volume holding mail, kept off the root disk so rebuilding the server never touches mail. Terraform only grows the volume -- it never shrinks it. After apply, the box itself still needs `resize2fs` run on the mail filesystem before the extra space is usable; see MAIL.md."
+  type        = number
+  default     = 20
+}
+
 variable "force_destroy" {
   description = "Set true only when removing everything for good. While false, Terraform refuses to delete a state bucket or DNS zone that still has contents."
   type        = bool
@@ -142,6 +154,18 @@ variable "force_destroy" {
 # unique without leaking the account id: mccorlabs.com -> mccorlabs-com-tfstate.
 locals {
   state_bucket = "${replace(var.domain_name, ".", "-")}-tfstate"
+}
+
+# backend.tf hardcodes this same bucket name as a literal string -- backend
+# blocks cannot reference variables or locals, so it can't be derived the
+# way local.state_bucket is above. A comment there claims the two match;
+# this check fails loudly at plan/apply time if they ever diverge, instead
+# of leaving a silent mismatch for the comment to lie about.
+check "state_bucket_matches_backend" {
+  assert {
+    condition     = local.state_bucket == "mccorlabs-com-tfstate"
+    error_message = "local.state_bucket (${local.state_bucket}) no longer matches the literal bucket name hardcoded in backend.tf (mccorlabs-com-tfstate). Update backend.tf to match, then migrate setup's state to the new bucket name."
+  }
 }
 
 resource "aws_s3_bucket" "state" {
@@ -257,11 +281,13 @@ module "mailserver" {
   count  = var.enable_mailserver ? 1 : 0
   source = "../modules/mailserver"
 
-  domain_name   = var.domain_name
-  zone_id       = aws_route53_zone.main.zone_id
-  mailboxes     = var.mailboxes
-  admin_mailbox = var.admin_mailbox
-  alert_email   = var.alert_email
+  domain_name    = var.domain_name
+  zone_id        = aws_route53_zone.main.zone_id
+  mailboxes      = var.mailboxes
+  admin_mailbox  = var.admin_mailbox
+  alert_email    = var.alert_email
+  instance_type  = var.instance_type
+  mail_volume_gb = var.mail_volume_gb
 }
 
 # ---------- Backend settings for the main configuration ----------

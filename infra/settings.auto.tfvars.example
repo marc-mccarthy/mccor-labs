@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------
+# Copy this to settings.auto.tfvars and fill in the blanks.
+#
+#   cp settings.auto.tfvars.example settings.auto.tfvars
+#
+# This file IS committed. settings.auto.tfvars is NOT -- it holds
+# your real domain, your email address and your team's names.
+#
+# Values left as "" below are the ones you must fill in. Terraform
+# refuses to run until they are set, rather than silently deploying
+# with a placeholder.
+# ---------------------------------------------------------------
+
+# ---------- Fill these in ----------
+
+# The domain you own. No "www", no "https://".
+domain_name = ""
+
+# Where AWS spending alerts and mail-server warnings are sent. Use an
+# address on a DIFFERENT provider -- if this server breaks, an alert
+# delivered to this server is an alert you never see.
+alert_email = ""
+
+# ---------- Safe defaults, change if you like ----------
+
+# Short name used in app resource names (the website, API, database).
+# 3-20 characters: lowercase letters, numbers, dashes. Can't contain
+# "aws", "amazon" or "cognito".
+project = "yourproject"
+
+# Email an alert if the month's AWS bill is forecast to pass this (USD).
+# The mail server costs ~$21/month, so 25 leaves room for a real
+# mistake to show up without nagging about normal operation.
+monthly_budget_usd = 25
+
+# ---------------------------------------------------------------
+# Your own mail server
+#
+# One EC2 instance holding your own mailboxes on a disk you own.
+# Flat cost -- adding people does not add to the bill.
+#
+# Turn this on only AFTER the name servers from `deploy.sh setup` are
+# live at your registrar. The server's TLS certificate is issued by
+# reading DNS, which cannot work before the zone is authoritative.
+# ---------------------------------------------------------------
+
+enable_mailserver = false
+
+# Who gets a mailbox. Local part => display name, so
+# "jdoe" becomes jdoe@<domain_name>, shown as "Jane Doe".
+mailboxes = {
+  # jdoe = "Jane Doe"
+}
+
+# Which mailbox receives postmaster@, abuse@ and the DMARC reports.
+# Name one deliberately -- left unset it would fall to whoever sorts
+# first alphabetically, and would move when you hire someone.
+admin_mailbox = ""
+
+# ---------------------------------------------------------------
+# Mail forwarding (alternative to the mail server above -- you cannot
+# have both, they each need the domain's MX record).
+#
+# Addresses that forward into an inbox you already own. No per-user
+# cost and nothing to sign into.
+# ---------------------------------------------------------------
+
+# enable_email    = true
+# mail_forward_to = ""                     # defaults to alert_email
+# mail_recipients = ["hello", "support"]   # [] accepts the whole domain

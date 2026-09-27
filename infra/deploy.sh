@@ -51,54 +51,94 @@ if [[ "$ACTION" == "setup" ]]; then
     cd setup
 
     # setup/ creates the bucket its own state then lives in, so read the
-    # bucket and key literally out of setup/main.tf's own backend block
-    # rather than recomputing them -- a second computation (here, or from a
-    # sibling root's versions.tf) can silently drift from the block
+    # bucket, key and region literally out of setup/main.tf's own backend
+    # block rather than recomputing them -- a second computation (here, or
+    # from a sibling root's versions.tf) can silently drift from the block
     # Terraform actually uses. This can't drift: it IS the block.
     BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' main.tf)"
     STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
     STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" ]]; then
-      echo "Could not find the state bucket/key in setup/main.tf's backend block." >&2
+    STATE_REGION="$(sed -nE 's/^[[:space:]]*region[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
+    if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" || -z "$STATE_REGION" ]]; then
+      echo "Could not read bucket/key/region from setup/main.tf's backend block." >&2
       exit 1
     fi
 
-    # First run ever: this root's own state object doesn't exist in the
-    # bucket yet. The bucket itself is a poor signal -- the same apply that
-    # creates the bucket creates everything else too, so the bucket exists
-    # long before this root's state is actually migrated into it (that's
-    # exactly the gap between "bucket exists" and "my state lives there").
-    # Init without a backend (nothing to reach), apply so the bucket (among
-    # everything else) gets created, then migrate this root's own state
-    # into the bucket it just made. Once the state object exists, every
-    # later run skips straight to plain init.
-    if ! aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" >/dev/null 2>&1; then
-      terraform init -input=false -backend=false
-      terraform apply -input=false -var-file=../settings.auto.tfvars
-      terraform init -input=false -migrate-state -force-copy
-    else
+    # Three outcomes, never two. "Migrated" and "not migrated" are the only
+    # states we may act on; anything else (403, throttle, endpoint error,
+    # dead credentials) must abort. Guessing "not migrated" would run the
+    # bootstrap path against stale local state and -force-copy it over the
+    # real thing -- sts:GetCallerIdentity above proves credentials exist,
+    # not that they can read this object, so that guard doesn't cover this.
+    # --region is passed explicitly: the backend pins one, the CLI profile
+    # has its own, and a mismatch must be an error, not a false 404.
+    if PROBE_ERR="$(aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" \
+      --region "$STATE_REGION" 2>&1 >/dev/null)"; then
+      # State object exists: already migrated. Nothing to bootstrap.
       terraform init -input=false
+    elif grep -qE '\(404\)|Not Found' <<<"$PROBE_ERR"; then
+      # First run ever: this root's own state object doesn't exist in the
+      # bucket yet. The bucket itself is a poor signal -- the same apply
+      # that creates the bucket creates everything else too, so the bucket
+      # exists long before this root's state is actually migrated into it.
+      # Back up the local state before touching anything, init without a
+      # backend (nothing to reach), apply so the bucket (among everything
+      # else) gets created, then migrate this root's own state into the
+      # bucket it just made. Left uninteractive: this is the one Terraform
+      # command in this script that must show its plan before it moves
+      # real, billable resources -- see the trailing apply's comment.
+      cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+      terraform init -input=false -backend=false
+      terraform apply -var-file=../settings.auto.tfvars
+      terraform init -input=false -migrate-state -force-copy
+      # The leftover local terraform.tfstate is exactly what -backend=false
+      # would silently prefer over the remote on a later run -- it's the
+      # fuel for the clobber this whole branch exists to avoid. Move it out
+      # of Terraform's search path rather than delete it: right after
+      # migration the remote copy is seconds old and unverified by anything
+      # but Terraform's own exit code, so the bytes stay recoverable.
+      # *.tfstate.* is already gitignored, so neither copy can leak into git.
+      mv -f terraform.tfstate "terraform.tfstate.migrated-$(date +%Y%m%d-%H%M%S)"
+    else
+      echo "Cannot tell whether setup/ state is already in s3://${STATE_BUCKET}/${STATE_KEY}:" >&2
+      echo "  $PROBE_ERR" >&2
+      echo "Refusing to guess -- guessing wrong overwrites real state. Fix access, then re-run." >&2
+      exit 1
     fi
 
-    terraform apply -input=false -var-file=../settings.auto.tfvars
+    # Every path above ends with either a fresh apply (bootstrap) or none
+    # (already migrated), so this covers steady state. Not -auto-approve:
+    # a human must see the plan before real, billable resources change.
+    # -input=false stays on every init (inits must never prompt); it's
+    # absent here on purpose, same as the bootstrap apply above.
+    terraform apply -var-file=../settings.auto.tfvars
 
     # SES starts sandboxed: 200 messages a day, verified recipients only.
     # No Terraform resource covers production access (aws_sesv2_account_details
     # doesn't exist in the provider), so this stays a scripted step here
     # instead of a manual console visit. Only relevant once the mail server
-    # itself is on. Safe to re-run: a repeat request while pending or
-    # already granted returns an error, which is expected, not a failure.
+    # itself is on. Must never fail the run: capture stderr instead of
+    # discarding it, so a real problem (bad credentials, denied IAM, a
+    # grep that came back empty) prints loudly instead of being folded into
+    # the "already requested" message that only fits an actual conflict.
     if grep -qE '^\s*enable_mailserver\s*=\s*true' ../settings.auto.tfvars; then
       DOMAIN_NAME="$(grep -oE 'domain_name *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
       ALERT_EMAIL="$(grep -oE 'alert_email *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
-      aws sesv2 put-account-details \
+      if [[ -z "$DOMAIN_NAME" || -z "$ALERT_EMAIL" ]]; then
+        echo "WARNING: could not read domain_name/alert_email from settings.auto.tfvars -- skipped the SES production-access request." >&2
+      elif SES_ERR="$(aws sesv2 put-account-details \
         --production-access-enabled \
         --mail-type TRANSACTIONAL \
         --website-url "https://${DOMAIN_NAME}" \
         --additional-contact-email-addresses "${ALERT_EMAIL}" \
-        --contact-language EN 2>/dev/null \
-        && echo ">>> SES production access requested (approval ~24h)" \
-        || echo ">>> SES production access already requested or granted"
+        --contact-language EN 2>&1 >/dev/null)"; then
+        echo ">>> SES production access requested (approval ~24h)"
+      elif grep -qiE 'already|pending' <<<"$SES_ERR"; then
+        echo ">>> SES production access already requested or granted"
+      else
+        echo "WARNING: SES production-access request failed unexpectedly:" >&2
+        echo "  $SES_ERR" >&2
+      fi
     fi
 
     echo

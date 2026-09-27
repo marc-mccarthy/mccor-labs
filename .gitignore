@@ -1,0 +1,12 @@
+# Terraform working files and local state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Real variable values stay out of git (the .example file is committed)
+terraform.tfvars
+settings.auto.tfvars
+
+# Lambda zip built by Terraform
+.build/

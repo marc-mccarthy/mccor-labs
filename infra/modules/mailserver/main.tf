@@ -171,14 +171,15 @@ resource "aws_security_group" "mail" {
 }
 
 # Port 25 is how other mail servers deliver to you, so it has to be open to
-# the whole internet. 587 and 465 are how your own people send. 993 is how
-# their mail clients read. 80 is only used by Let's Encrypt renewals.
+# the whole internet. 587 is how your own people send. 993 is how their mail
+# clients read. 80 is only used by Let's Encrypt renewals. 465 (implicit TLS
+# submission) is deliberately not opened: 587 is the documented submission
+# port, and two ports for one job is surface without benefit.
 resource "aws_vpc_security_group_ingress_rule" "mail" {
   for_each = {
     smtp       = { port = 25, note = "inbound mail from other servers" }
     http       = { port = 80, note = "Let's Encrypt renewal" }
     submission = { port = 587, note = "your people sending (STARTTLS)" }
-    smtps      = { port = 465, note = "your people sending (implicit TLS)" }
     imaps      = { port = 993, note = "your people reading" }
   }
 
@@ -354,22 +355,4 @@ resource "aws_route53_record" "dmarc" {
   type    = "TXT"
   ttl     = 600
   records = ["v=DMARC1; p=none; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
-}
-
-# Lets Apple Mail, Outlook and Thunderbird configure themselves from just an
-# address and password.
-resource "aws_route53_record" "autodiscover" {
-  zone_id = var.zone_id
-  name    = "autodiscover.${var.domain_name}"
-  type    = "CNAME"
-  ttl     = 600
-  records = [local.fqdn]
-}
-
-resource "aws_route53_record" "autoconfig" {
-  zone_id = var.zone_id
-  name    = "autoconfig.${var.domain_name}"
-  type    = "CNAME"
-  ttl     = 600
-  records = [local.fqdn]
 }

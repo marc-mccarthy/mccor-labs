@@ -187,8 +187,11 @@ resource "aws_security_group" "mail" {
 # port, and two ports for one job is surface without benefit.
 resource "aws_vpc_security_group_ingress_rule" "mail" {
   for_each = {
-    smtp       = { port = 25, note = "inbound mail from other servers" }
-    http       = { port = 80, note = "Let's Encrypt renewal" }
+    smtp = { port = 25, note = "inbound mail from other servers" }
+    # No apostrophe: AWS restricts rule descriptions to
+    # a-zA-Z0-9. _-:/()#,@[]+=&;{}!$* and rejects the rest at apply time,
+    # which plan does not catch.
+    http       = { port = 80, note = "ACME certificate renewal" }
     submission = { port = 587, note = "your people sending (STARTTLS)" }
     imaps      = { port = 993, note = "your people reading" }
   }
@@ -203,9 +206,10 @@ resource "aws_vpc_security_group_ingress_rule" "mail" {
 
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.mail.id
-  description       = "outbound: SES relay, package updates, Let's Encrypt"
-  cidr_ipv4         = "0.0.0.0/0"
-  ip_protocol       = "-1"
+  # Apostrophe omitted deliberately -- see the note on the ingress rules above.
+  description = "outbound: SES relay, package updates, ACME"
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }
 
 # Shell access is through SSM Session Manager, so there is no SSH port open

@@ -234,6 +234,18 @@ data "aws_iam_policy_document" "instance" {
     actions   = ["ssm:GetParameter", "ssm:GetParametersByPath"]
     resources = ["arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail/*"]
   }
+
+  statement {
+    # The CloudWatch agent publishes disk and memory metrics; there is no
+    # resource-level scoping available for PutMetricData.
+    actions   = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+  }
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.alerts.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "instance" {
@@ -293,15 +305,16 @@ resource "aws_instance" "mail" {
 
   user_data_replace_on_change = true
   user_data = templatefile("${path.module}/templates/setup.sh.tftpl", {
-    domain        = var.domain_name
-    fqdn          = local.fqdn
-    region        = data.aws_region.current.region
-    relay_user    = aws_iam_access_key.smtp.id
-    alert_email   = var.alert_email
-    param_prefix  = "/${var.domain_name}/mail"
-    postmaster    = "postmaster@${var.domain_name}"
-    admin_address = "${var.admin_mailbox}@${var.domain_name}"
-    mail_device   = "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.mail.id, "-", "")}"
+    domain           = var.domain_name
+    fqdn             = local.fqdn
+    region           = data.aws_region.current.region
+    relay_user       = aws_iam_access_key.smtp.id
+    alert_email      = var.alert_email
+    param_prefix     = "/${var.domain_name}/mail"
+    postmaster       = "postmaster@${var.domain_name}"
+    admin_address    = "${var.admin_mailbox}@${var.domain_name}"
+    mail_device      = "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.mail.id, "-", "")}"
+    alerts_topic_arn = aws_sns_topic.alerts.arn
   })
 
   # Containers must not be able to reach instance credentials: one hop is

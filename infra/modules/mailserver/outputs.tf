@@ -42,3 +42,8 @@ output "snapshot_tag" {
   description = "Tag the backup snapshots carry, for finding them during a restore"
   value       = local.snapshot_tag
 }
+
+output "alerts_topic_arn" {
+  description = "SNS topic every CloudWatch alarm publishes to"
+  value       = aws_sns_topic.alerts.arn
+}

@@ -262,7 +262,7 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'CWCFG'
   "metrics": {
     "append_dimensions": { "InstanceId": "$${aws:InstanceId}" },
     "metrics_collected": {
-      "disk": { "resources": ["/var/mail-data"], "measurement": ["disk_used_percent"], "metrics_collection_interval": 300 },
+      "disk": { "resources": ["/var/mail-data"], "measurement": ["disk_used_percent"], "metrics_collection_interval": 300, "aggregation_dimensions": [["InstanceId","path","fstype"]] },
       "mem":  { "measurement": ["mem_available_percent"], "metrics_collection_interval": 300 }
     }
   }

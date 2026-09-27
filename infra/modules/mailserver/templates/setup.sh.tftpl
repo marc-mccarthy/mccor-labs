@@ -217,7 +217,22 @@ services:
 COMPOSE
 
 docker compose up -d
-until docker exec mailserver ss --listening --tcp | grep -q smtp; do sleep 5; done
+
+# Wait for the CONTAINER, not for Postfix to be listening. docker-mailserver
+# refuses to start Dovecot until at least one mailbox exists, and gives up
+# after 120 seconds -- so waiting for a listening SMTP port before creating
+# the mailboxes deadlocks: it waits for us, we wait for it, and it restarts
+# forever. Creating an account only writes a config file, which works the
+# moment the container can exec.
+for i in $(seq 1 60); do
+  docker exec mailserver test -d /tmp/docker-mailserver 2>/dev/null && break
+  sleep 2
+done
+
+if ! docker exec mailserver test -d /tmp/docker-mailserver 2>/dev/null; then
+  echo "FATAL: mailserver container never became reachable" >&2
+  exit 1
+fi
 
 # ---------- the people ----------
 # Mailboxes are read from Parameter Store at run time rather than baked
@@ -253,6 +268,20 @@ done
 SYNC
 chmod +x /opt/mail/sync-accounts.sh
 /opt/mail/sync-accounts.sh
+
+# Only now can Dovecot start, so this is where waiting for a listening SMTP
+# port belongs. Fail closed: a box that never opens 25 is not a mail server,
+# and it is better to know at boot than from a bounced message.
+for i in $(seq 1 60); do
+  docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp && break
+  sleep 5
+done
+
+if ! docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp; then
+  echo "FATAL: postfix is not listening on 25 after account creation" >&2
+  docker logs --tail 40 mailserver >&2 || true
+  exit 1
+fi
 
 # postmaster@ and abuse@ are required by convention and receive the DMARC
 # reports. They go to a mailbox named on purpose in settings.auto.tfvars --

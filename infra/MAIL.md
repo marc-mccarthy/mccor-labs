@@ -469,7 +469,8 @@ aws ec2 describe-snapshots --owner-ids self \
   | tr '\t' '\n' | xargs -rn1 aws ec2 delete-snapshot --snapshot-id
 
 # To destroy the state bucket, migrate setup's own state back to local first:
-#   comment out the backend block, then: terraform init -migrate-state
+#   mv setup/backend.tf setup/backend.tf.disabled
+#   terraform -chdir=setup init -migrate-state
 ```
 
 Nothing else survives. Custom CloudWatch metrics stop being published and

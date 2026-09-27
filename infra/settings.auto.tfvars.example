@@ -67,16 +67,28 @@ mailboxes = {
 # first alphabetically, and would move when you hire someone.
 admin_mailbox = ""
 
-# EC2 instance type. Bump this to resize the server -- Terraform resizes
-# the running instance in place, no data loss. t4g.micro works for a
-# handful of mailboxes at roughly half the price of the default below.
-# instance_type = "t4g.small"
+# Instance size. Default is the smallest that runs the full stack
+# comfortably -- docker-mailserver's own documented recommendation is
+# 2GB with swap, which is exactly what t4g.small is.
+#
+#   t4g.micro   1GB  ~$6.13/mo   TOO SMALL -- below the documented floor
+#                                with Rspamd running. Risks the kernel
+#                                OOM-killing the spam filter, which fails
+#                                open and quietly stops filtering.
+#   t4g.small   2GB  ~$12.26/mo  DEFAULT. Tight but correct.
+#   t4g.medium  4GB  ~$24.53/mo  Headroom. Worth it if you add webmail,
+#                                or if the memory alarm keeps firing.
+#
+# Decision rule, not a guess: if the mail-memory alarm fires more than
+# twice in thirty days, move up one size and apply. Do not pre-buy it --
+# the alarm costs nothing and tells you when you actually need it.
+instance_type = "t4g.small"
 
-# Size in GB of the separate disk holding mail. Terraform only grows this
-# volume, never shrinks it, and growing it here is only half the job: the
-# box itself then needs `resize2fs` run on the mail filesystem before the
-# extra space is usable. See MAIL.md's scaling section.
-# mail_volume_gb = 20
+# Size of the disk holding mail, in GB. Growing it is two steps: change
+# this and apply, then run `sudo resize2fs /dev/<device>` on the box --
+# Terraform grows the volume but cannot grow the filesystem on it.
+# 20GB is roughly a decade of mail for five people with normal attachments.
+mail_volume_gb = 20
 
 # ---------------------------------------------------------------
 # Mail forwarding (alternative to the mail server above -- you cannot

@@ -419,7 +419,9 @@ resource "aws_iam_role_policy_attachment" "dlm" {
 # disk is the only copy in existence. Snapshots are block-incremental, so
 # four a day costs little more than one.
 resource "aws_dlm_lifecycle_policy" "mail" {
-  description        = "${var.domain_name} mail volume"
+  # AWS only accepts [0-9A-Za-z _-] here, so the domain's dots are stripped --
+  # local.snapshot_tag already does exactly that for the snapshot tags.
+  description        = "${local.snapshot_tag} mail volume"
   execution_role_arn = aws_iam_role.dlm.arn
   state              = "ENABLED"
 

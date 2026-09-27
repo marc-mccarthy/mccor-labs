@@ -37,3 +37,8 @@ output "instance_id" {
   description = "For shell access: aws ssm start-session --target <this>"
   value       = aws_instance.mail.id
 }
+
+output "snapshot_tag" {
+  description = "Tag the backup snapshots carry, for finding them during a restore"
+  value       = local.snapshot_tag
+}

@@ -32,6 +32,10 @@ data "aws_availability_zones" "available" {
 locals {
   fqdn      = "${var.hostname}.${var.domain_name}"
   addresses = { for k, v in var.mailboxes : k => "${k}@${var.domain_name}" }
+
+  # Tag shared between the mail volume and the DLM policy that snapshots it,
+  # and surfaced as an output so a restore knows what to search for.
+  snapshot_tag = "${replace(var.domain_name, ".", "-")}-mail"
 }
 
 # ---------- Sending: SES as the outbound relay ----------
@@ -66,7 +70,10 @@ data "aws_iam_policy_document" "smtp" {
   statement {
     # Scoped to this one identity, matching modules/email. This key is
     # long-lived and lives on an internet-facing box, so it gets the
-    # smallest blast radius available.
+    # smallest blast radius available. Broader than modules/email's single
+    # ses:FromAddress condition, deliberately: this relay sends as every
+    # mailbox on the domain, and a fixed FromAddress would break on every
+    # new hire, so the identity ARN is the narrowest scope that still works.
     actions   = ["ses:SendRawEmail"]
     resources = [aws_ses_domain_identity.main.arn]
   }
@@ -252,7 +259,17 @@ resource "aws_ebs_volume" "mail" {
   type              = "gp3"
   encrypted         = true
 
-  tags = { Name = "${var.domain_name}-mail-data" }
+  tags = {
+    Name   = "${var.domain_name}-mail-data"
+    Backup = local.snapshot_tag
+  }
+
+  lifecycle {
+    # Flipping enable_mailserver to false must not be able to delete
+    # everyone's mail. Removing this volume on purpose means
+    # `terraform state rm` first -- see the teardown runbook.
+    prevent_destroy = true
+  }
 }
 
 resource "aws_volume_attachment" "mail" {
@@ -359,4 +376,68 @@ resource "aws_route53_record" "dmarc" {
   type    = "TXT"
   ttl     = 600
   records = ["v=DMARC1; p=none; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
+}
+
+# ---------- Backups ----------
+
+# DLM needs a service role. The console creates this silently; in
+# Terraform it is explicit. The AWS managed policy already covers
+# kms:CreateGrant for the encrypted volume.
+resource "aws_iam_role" "dlm" {
+  name_prefix = "${replace(var.domain_name, ".", "-")}-dlm-"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "dlm.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "dlm" {
+  role       = aws_iam_role.dlm.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"
+}
+
+# Every 6 hours rather than nightly. Mail a sender has already been told
+# we accepted is mail the sender has discarded -- between snapshots this
+# disk is the only copy in existence. Snapshots are block-incremental, so
+# four a day costs little more than one.
+resource "aws_dlm_lifecycle_policy" "mail" {
+  description        = "${var.domain_name} mail volume"
+  execution_role_arn = aws_iam_role.dlm.arn
+  state              = "ENABLED"
+
+  policy_details {
+    resource_types = ["VOLUME"]
+
+    target_tags = {
+      Backup = local.snapshot_tag
+    }
+
+    schedule {
+      name = "6-hourly"
+
+      create_rule {
+        interval      = 6
+        interval_unit = "HOURS"
+        times         = ["00:00"]
+      }
+
+      retain_rule {
+        count = 28 # 7 days
+      }
+
+      # Tags are what the teardown cleanup matches on. Without them the
+      # snapshots are unfindable and bill forever.
+      tags_to_add = {
+        Name   = "${var.domain_name}-mail-data"
+        Backup = local.snapshot_tag
+      }
+
+      copy_tags = true
+    }
+  }
 }

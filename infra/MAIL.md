@@ -266,17 +266,49 @@ RTO 20-30 minutes, RPO up to 6 hours (the snapshot interval).
 
 **This is the single most likely "why is mail broken" question in week
 one.** A new AWS account's SES starts in the sandbox: 200 messages per 24
-hours, and outbound mail reaches **only verified addresses**. Mail to
-anyone else silently fails to send — no bounce reaches the sender, because
-SES itself refuses to hand it off.
+hours, 1 per second, and outbound reaches **only verified addresses**.
+
+Receiving is not affected. Inbound mail never touches SES — it arrives
+straight from the internet on port 25. So on day one:
+
+- Someone emails `marcm@mccorlabs.com` from Gmail → arrives fine
+- Marc replies → SES refuses to send it
+
+Mail flows in but not out, which is why this looks half-broken rather than
+obviously blocked.
+
+What a refusal looks like: Postfix takes the message, SES rejects the
+hand-off, and Postfix holds it in the queue and keeps retrying. Enough of
+those and the mail-queue alarm fires at 50 messages. So the symptom you
+actually get is an alert about a queue backing up, and the cause is this.
 
 `./infra/deploy.sh setup` requests production access automatically once
 `enable_mailserver = true`, the first time it runs. Approval takes roughly
-24 hours. Until it's granted:
+24 hours.
 
-- Test sends only to addresses you've verified in the SES console
-  (Identities, Create identity)
-- Real outbound to Gmail, a client, anyone else, will not arrive
+Your alarms are unaffected either way — they go through SNS, not SES.
+Monitoring works from the first minute.
+
+### Testing before production access is granted
+
+Verify one address you control, and you can prove the whole round trip —
+DKIM, DMARC, delivery — without waiting:
+
+```bash
+aws ses verify-email-identity --email-address you@gmail.com
+```
+
+AWS emails that address a confirmation link. Click it, then send from
+`marcm@mccorlabs.com` to it and reply back. In Gmail, open the message,
+"Show original", and look for:
+
+```
+dkim=pass header.d=mccorlabs.com
+dmarc=pass
+```
+
+Verification is per-address, so this is only useful for testing — do not
+try to verify every address your team will ever email.
 
 Check the account's status:
 
@@ -284,7 +316,8 @@ Check the account's status:
 aws sesv2 get-account
 ```
 
-`ProductionAccessEnabled: true` means you're clear.
+`ProductionAccessEnabled: true` means you're clear, and the verified-address
+restriction no longer applies.
 
 ## The nine alarms
 

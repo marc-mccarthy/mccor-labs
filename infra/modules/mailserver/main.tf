@@ -277,7 +277,6 @@ resource "aws_instance" "mail" {
     region        = data.aws_region.current.region
     relay_user    = aws_iam_access_key.smtp.id
     alert_email   = var.alert_email
-    mailbox_names = join(" ", sort(keys(var.mailboxes)))
     param_prefix  = "/${var.domain_name}/mail"
     postmaster    = "postmaster@${var.domain_name}"
     admin_address = "${var.admin_mailbox}@${var.domain_name}"

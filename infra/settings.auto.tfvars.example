@@ -23,9 +23,19 @@ alert_email = ""
 
 # ---------- Safe defaults, change if you like ----------
 
-# Short name used in app resource names (the website, API, database).
-# 3-20 characters: lowercase letters, numbers, dashes. Can't contain
-# "aws", "amazon" or "cognito".
+# Short name for the app itself, used in per-environment resource names
+# (website bucket, Cognito pool, DynamoDB table, Lambda). Deliberately
+# separate from domain_name: domains change -- rebrands, .com to .io, a
+# second domain -- and if resource names derived from the domain, changing
+# it would REPLACE the DynamoDB table and the Cognito user pool, taking the
+# data and every user account with them. Keeping them separate means a
+# domain change touches only DNS, the certificate and CloudFront.
+#
+# DO NOT CHANGE THIS AFTER THE WEBSITE IS DEPLOYED. It renames every app
+# resource, and a rename is a replace.
+#
+# 3-20 characters: lowercase letters, numbers, dashes. Cannot contain "aws",
+# "amazon" or "cognito" -- Cognito domain prefixes reject those words.
 project = "yourproject"
 
 # Email an alert if the month's AWS bill is forecast to pass this (USD).

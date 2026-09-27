@@ -51,16 +51,17 @@ if [[ "$ACTION" == "setup" ]]; then
     cd setup
 
     # setup/ creates the bucket its own state then lives in, so read the
-    # bucket, key and region literally out of setup/main.tf's own backend
+    # bucket, key and region literally out of backend.tf's own backend
     # block rather than recomputing them -- a second computation (here, or
     # from a sibling root's versions.tf) can silently drift from the block
-    # Terraform actually uses. This can't drift: it IS the block.
-    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' main.tf)"
+    # Terraform actually uses. This can't drift: it IS the block. (Lives in
+    # backend.tf, not main.tf -- see that file for why.)
+    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' backend.tf)"
     STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
     STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
     STATE_REGION="$(sed -nE 's/^[[:space:]]*region[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
     if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" || -z "$STATE_REGION" ]]; then
-      echo "Could not read bucket/key/region from setup/main.tf's backend block." >&2
+      echo "Could not read bucket/key/region from backend.tf's backend block." >&2
       exit 1
     fi
 
@@ -81,20 +82,33 @@ if [[ "$ACTION" == "setup" ]]; then
       # bucket yet. The bucket itself is a poor signal -- the same apply
       # that creates the bucket creates everything else too, so the bucket
       # exists long before this root's state is actually migrated into it.
-      # Back up the local state before touching anything, init without a
-      # backend (nothing to reach), apply so the bucket (among everything
-      # else) gets created, then migrate this root's own state into the
-      # bucket it just made. Left uninteractive: this is the one Terraform
-      # command in this script that must show its plan before it moves
-      # real, billable resources -- see the trailing apply's comment.
+      #
+      # `-backend=false` is NOT enough here: with a `backend "s3" {}` block
+      # present in config but no record of it in .terraform/terraform.tfstate,
+      # Terraform treats that as a backend CHANGE and refuses `plan`/`apply`
+      # outright ("Backend initialization required... use -reconfigure or
+      # -migrate-state") -- `-backend=false` only skips *writing* the record,
+      # it doesn't make plan/apply tolerate the mismatch. The block has to be
+      # genuinely absent from config for the first apply, not just unused.
+      # That's why it lives alone in backend.tf: rename it aside so this
+      # root really has no backend block while it creates the bucket, put
+      # it back, then migrate into the bucket it just made.
       cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
-      terraform init -input=false -backend=false
+      mv backend.tf backend.tf.disabled
+      # Restore even if the apply below fails -- a disabled backend file
+      # left behind is a nasty, easy-to-miss state to debug blind. Cleared
+      # right after the deliberate restore so it doesn't also fire (harmlessly,
+      # since the file is back by then) on the script's normal exit.
+      trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
+      terraform init -input=false
       terraform apply -var-file=../settings.auto.tfvars
+      mv -f backend.tf.disabled backend.tf
+      trap - EXIT
       terraform init -input=false -migrate-state -force-copy
-      # The leftover local terraform.tfstate is exactly what -backend=false
-      # would silently prefer over the remote on a later run -- it's the
-      # fuel for the clobber this whole branch exists to avoid. Move it out
-      # of Terraform's search path rather than delete it: right after
+      # The leftover local terraform.tfstate is exactly what a bare local
+      # init would silently prefer over the remote on a later run -- it's
+      # the fuel for the clobber this whole branch exists to avoid. Move it
+      # out of Terraform's search path rather than delete it: right after
       # migration the remote copy is seconds old and unverified by anything
       # but Terraform's own exit code, so the bytes stay recoverable.
       # *.tfstate.* is already gitignored, so neither copy can leak into git.

@@ -402,14 +402,31 @@ gets the mailbox passwords off the laptop.
 
 ## Tearing it down
 
-`prevent_destroy` on the mail volume aborts the WHOLE destroy, not just
-itself. To remove everything on purpose:
+Two resources carry `prevent_destroy`, and either one aborts the WHOLE
+destroy rather than just excepting itself:
+
+- **the mail volume** -- it holds everyone's mail
+- **the Route 53 zone** -- recreating it assigns brand-new name servers, which
+  means going back into the registrar by hand and waiting for propagation with
+  mail and the website down throughout. The records inside are cheap to
+  rebuild; the delegation is not.
+
+Read that second one twice before removing it. Everything else in this repo
+can be rebuilt by `terraform apply`. The registrar step cannot.
+
+To remove everything on purpose:
 
 ```bash
 cd infra/setup
 terraform state rm 'module.mailserver[0].aws_volume_attachment.mail'
 terraform state rm 'module.mailserver[0].aws_ebs_volume.mail'
+terraform state rm 'aws_route53_zone.main'
 terraform destroy -var-file=../settings.auto.tfvars
+
+# The zone survives the destroy above. Delete it only if you are giving up the
+# domain or moving DNS elsewhere -- and expect to redo the registrar step if
+# you ever come back:
+#   aws route53 delete-hosted-zone --id <zone-id>
 
 # The volume and its snapshots survive deliberately. Remove them last:
 aws ec2 delete-volume --volume-id <vol-id>

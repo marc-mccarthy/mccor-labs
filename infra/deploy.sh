@@ -98,7 +98,14 @@ if [[ "$ACTION" == "setup" ]]; then
       # That's why it lives alone in backend.tf: rename it aside so this
       # root really has no backend block while it creates the bucket, put
       # it back, then migrate into the bucket it just made.
-      cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+      # A missing terraform.tfstate is expected on a genuinely fresh account
+      # (nothing to back up yet) and handled by the condition; a real copy
+      # failure -- disk full, permissions -- is not swallowed and aborts
+      # under `set -e` before anything touches state, since the whole point
+      # of this line is having a backup before the migration below.
+      if [[ -f terraform.tfstate ]]; then
+        cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)"
+      fi
       # Set before the rename, not after: the trap body no-ops (nothing to
       # move back yet) until backend.tf.disabled actually exists, so setting
       # it early costs nothing but closes the window where a crash between

@@ -18,20 +18,25 @@ Browser ──> Route 53 ──> CloudFront ──> S3                  (website
 
 Put all of it in your website's git repo, even before the site exists. The
 `app/web` placeholder page stands in until your real frontend is ready. Commit
-everything, including `infra/settings.auto.tfvars`, `infra/backend.hcl` and the
-`.terraform.lock.hcl` files; none of them are secret. The `.gitignore` already
-keeps state files and build zips out.
+`infra/backend.hcl` and the `.terraform.lock.hcl` files; neither is secret.
+`infra/settings.auto.tfvars` is the opposite -- it holds your real domain,
+your alert email and your team's names, so it's gitignored and never
+committed. Commit `infra/settings.auto.tfvars.example` instead, as the
+template, and keep it in sync when you add a variable. The `.gitignore`
+already keeps state files and build zips out too.
 
 ## Layout
 
 ```
 infra/
-  settings.auto.tfvars   <- your project name, domain, alert email. The only file you edit.
-  deploy.sh              <- the one command you run
-  backend.hcl            <- written by setup; commit it
+  settings.auto.tfvars           <- your project name, domain, alert email. Gitignored -- not committed.
+  settings.auto.tfvars.example   <- the committed template; copy it to settings.auto.tfvars
+  deploy.sh                      <- the one command you run
+  backend.hcl                    <- written by setup; commit it
   main.tf, variables.tf, outputs.tf, versions.tf
-  setup/                 <- one-time: state bucket, DNS zone, budget alert
-  modules/               <- certificate, static_site, auth, database, api
+  setup/                         <- one-time: state bucket, DNS zone, budget alert
+  modules/                       <- certificate, static_site, auth, database, api, email, mailserver
+  MAIL.md                        <- running your own mail server (optional, ~$20/month) -- see below
 app/
   api/index.mjs          <- example API (per-user items)
   web/                   <- placeholder page with sign-in; replace with your real site
@@ -42,7 +47,7 @@ app/
 | Piece | Cost |
 |---|---|
 | Domain | whatever Namecheap charges you yearly |
-| Route 53 DNS zone | $0.50/month (the only fixed AWS cost) |
+| Route 53 DNS zone | $0.50/month |
 | HTTPS certificates | $0 |
 | Cognito Lite | $0 up to 10,000 monthly active users (shared by all copies) |
 | Lambda | $0 within 1M requests/month (always free) |
@@ -51,7 +56,11 @@ app/
 | S3 + CloudFront | pennies at low traffic |
 | Budget alerts | $0 |
 
-Personal copies add essentially nothing.
+Personal copies add essentially nothing. The Route 53 zone alone is the only
+*fixed* cost above -- but if you also turn on the optional mail server
+(`enable_mailserver` in `settings.auto.tfvars`), that adds a flat ~$20.38/month
+regardless of headcount. See [`infra/MAIL.md`](infra/MAIL.md) for what that
+buys, its full cost breakdown, and how to run and scale it.
 
 ## One-time setup
 
@@ -172,9 +181,14 @@ terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
   `throttle_rate` and `throttle_burst` in the api module.
 - **Adding routes.** Add a route key to `routes` in the api module (for example
   `"PUT /items/{id}"`) and handle it in `app/api/index.mjs`.
-- **Team email.** Put your mail host's MX/SPF/DKIM records in
-  `infra/setup/main.tf` (there's an example) and run `./infra/deploy.sh setup`.
-  Not at Namecheap: once the name servers point to Route 53, Namecheap's DNS
+- **Team email.** Don't add MX/SPF/DKIM records to `infra/setup/main.tf`
+  yourself -- `setup/main.tf` explicitly leaves mail DNS to whichever mail
+  option you turn on, so hand-adding records there creates a duplicate MX.
+  Turn on `enable_email` (forwarding into an inbox you already own) or
+  `enable_mailserver` (your own mail server) in `settings.auto.tfvars`
+  instead and run `./infra/deploy.sh setup`; see
+  [`infra/MAIL.md`](infra/MAIL.md) for the mail server option. Not at
+  Namecheap: once the name servers point to Route 53, Namecheap's DNS
   records are ignored.
 
 ## Your real frontend

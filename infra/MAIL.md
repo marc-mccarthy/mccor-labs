@@ -414,7 +414,24 @@ Gateway is ~$33/month alone) trips it within a day.
 
 To reduce cost, `t4g.micro` at roughly half the EC2 price works for four
 mailboxes, though Rspamd is happier with the extra memory. Change
-`instance_type` in `settings.auto.tfvars`.
+`instance_type` in `settings.auto.tfvars` and re-run `./deploy.sh setup`;
+Terraform resizes the running instance in place, no data loss.
+
+## Scaling the mail disk
+
+`mail_volume_gb` in `settings.auto.tfvars` sizes the separate EBS volume
+that holds mail (20GB by default). Raising it and re-running
+`./deploy.sh setup` grows the volume, but Terraform only grows the block
+device -- it does not resize the filesystem sitting on it. After the apply
+finishes, SSM into the box and grow the filesystem to match:
+
+```bash
+aws ssm start-session --target <instance-id>
+sudo resize2fs /dev/<mail-device>
+```
+
+Until that runs, `df` on the box still reports the old, smaller size even
+though AWS is billing for the new one.
 
 ## State migration cleanup
 
@@ -447,30 +464,46 @@ destroy rather than just excepting itself:
 Read that second one twice before removing it. Everything else in this repo
 can be rebuilt by `terraform apply`. The registrar step cannot.
 
-To remove everything on purpose:
+To remove everything on purpose, in this order. The `terraform destroy` below
+also destroys `aws_s3_bucket.state` -- the bucket holding the very state
+`destroy` is reading from -- so the state must already be back on your local
+disk before you run it, not after:
 
 ```bash
+# 1. Migrate setup's own state back to local, and leave it local. Skipping
+#    this, or restoring backend.tf before step 3, means `destroy` tears down
+#    the S3 bucket its own state lives in while it is still reading from
+#    that bucket.
 cd infra/setup
+mv backend.tf backend.tf.disabled
+terraform init -migrate-state
+
+# 2. Drop the two prevent_destroy resources from state so `destroy` can run
+#    at all -- Terraform refuses to even plan a destroy that touches them.
 terraform state rm 'module.mailserver[0].aws_volume_attachment.mail'
 terraform state rm 'module.mailserver[0].aws_ebs_volume.mail'
 terraform state rm 'aws_route53_zone.main'
-terraform destroy -var-file=../settings.auto.tfvars
 
-# The zone survives the destroy above. Delete it only if you are giving up the
-# domain or moving DNS elsewhere -- and expect to redo the registrar step if
-# you ever come back:
-#   aws route53 delete-hosted-zone --id <zone-id>
+# 3. Destroy everything else, including the state bucket, while still on
+#    local state. force_destroy is required here -- without it the bucket
+#    destroy fails with BucketNotEmpty (versioned state objects still inside
+#    it) and aborts the whole destroy.
+terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
 
-# The volume and its snapshots survive deliberately. Remove them last:
+# backend.tf.disabled has nothing left to migrate back to -- the bucket it
+# pointed at no longer exists. Leave it disabled, or delete it.
+
+# 4. The zone survives step 2/3 because it was removed from state, not
+#    destroyed. Delete it only if you are giving up the domain or moving DNS
+#    elsewhere -- and expect to redo the registrar step if you ever come back:
+#    aws route53 delete-hosted-zone --id <zone-id>
+
+# 5. The volume and its snapshots survive the same way. Remove them last:
 aws ec2 delete-volume --volume-id <vol-id>
 aws ec2 describe-snapshots --owner-ids self \
   --filters Name=tag:Backup,Values=mccorlabs-com-mail \
   --query 'Snapshots[].SnapshotId' --output text \
   | tr '\t' '\n' | xargs -rn1 aws ec2 delete-snapshot --snapshot-id
-
-# To destroy the state bucket, migrate setup's own state back to local first:
-#   mv setup/backend.tf setup/backend.tf.disabled
-#   terraform -chdir=setup init -migrate-state
 ```
 
 Nothing else survives. Custom CloudWatch metrics stop being published and

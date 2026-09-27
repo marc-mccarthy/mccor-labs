@@ -64,8 +64,11 @@ resource "aws_iam_user" "smtp" {
 
 data "aws_iam_policy_document" "smtp" {
   statement {
+    # Scoped to this one identity, matching modules/email. This key is
+    # long-lived and lives on an internet-facing box, so it gets the
+    # smallest blast radius available.
     actions   = ["ses:SendRawEmail"]
-    resources = ["*"]
+    resources = [aws_ses_domain_identity.main.arn]
   }
 }
 
@@ -337,14 +340,15 @@ resource "aws_route53_record" "mx" {
   records = ["10 ${local.fqdn}"]
 }
 
-# Who is allowed to send as this domain: SES, because that is the relay, and
-# the server's own address for anything that bypasses it.
+# SES is the only sender. The instance's own IP is deliberately absent:
+# AWS blocks outbound 25 so it never sends, and authorising it here
+# would pre-approve spoofing if that block were ever lifted.
 resource "aws_route53_record" "spf" {
   zone_id = var.zone_id
   name    = var.domain_name
   type    = "TXT"
   ttl     = 600
-  records = ["v=spf1 include:amazonses.com ip4:${aws_eip.mail.public_ip} -all"]
+  records = ["v=spf1 include:amazonses.com -all"]
 }
 
 # Start at p=none so you can watch the reports without mail being rejected

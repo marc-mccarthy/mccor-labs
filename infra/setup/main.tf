@@ -131,7 +131,7 @@ variable "admin_mailbox" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type for the mail server. t4g.small is the smallest size that runs the mail stack and its spam filter comfortably; t4g.micro works for a handful of mailboxes at roughly half the price. Changing this replaces nothing -- Terraform resizes the running instance in place."
+  description = "EC2 instance type for the mail server. t4g.small (2GB) is the smallest size that runs the mail stack and its spam filter safely -- it matches docker-mailserver's own recommended figure. t4g.micro (1GB) is below that floor and risks the kernel OOM-killing Rspamd, which fails open and stops filtering silently; do not use it to save money. Changing this resizes in place rather than rebuilding, but the instance stops and starts, so mail is deferred for a few minutes."
   type        = string
   default     = "t4g.small"
 }

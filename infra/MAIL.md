@@ -412,10 +412,21 @@ The budget alarm in `setup/` fires at **$25**: enough margin above $20.38
 for normal variation, tight enough that an accidental extra resource (a NAT
 Gateway is ~$33/month alone) trips it within a day.
 
-To reduce cost, `t4g.micro` at roughly half the EC2 price works for four
-mailboxes, though Rspamd is happier with the extra memory. Change
-`instance_type` in `settings.auto.tfvars` and re-run `./deploy.sh setup`;
-Terraform resizes the running instance in place, no data loss.
+`t4g.micro` halves the EC2 line but is **not recommended**: 1GB is below
+docker-mailserver's documented floor for a stack running Rspamd, and the
+failure mode is bad. The kernel OOM-kills the spam filter, Rspamd fails
+*open*, and mail keeps flowing unfiltered — so you save $6/month and find
+out weeks later, from the spam rather than from an alarm.
+
+To resize in either direction, change `instance_type` in
+`settings.auto.tfvars` and re-run `./deploy.sh setup`. Terraform changes it
+in place rather than rebuilding, so no data is lost — but the instance stops
+and starts, so expect a few minutes during which mail is deferred. Senders
+retry, so nothing is lost.
+
+Go **up** when the `mail-memory` alarm fires more than twice in thirty days.
+That rule exists so you buy headroom when you need it rather than guessing:
+the alarm costs nothing, `t4g.medium` costs ~$12/month more.
 
 ## Scaling the mail disk
 

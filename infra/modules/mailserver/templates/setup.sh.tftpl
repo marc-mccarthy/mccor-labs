@@ -95,7 +95,12 @@ if [ ! -f /swapfile ]; then
   mkswap /swapfile
   echo "/swapfile none swap sw 0 0" >> /etc/fstab
 fi
-swapon -a || true
+# Not silenced: t4g.small is at docker-mailserver's recommended memory floor
+# and swap is what turns a spike into a slow moment instead of an OOM kill.
+# Losing it quietly would remove that protection with no signal.
+if ! swapon -a; then
+  echo "WARNING: swapon failed -- the box is running without swap" >&2
+fi
 
 # ---------- TLS certificate ----------
 # Standalone mode binds port 80, which is why the security group opens it.
@@ -116,12 +121,29 @@ CERTBOT_DIR="/var/mail-data/letsencrypt"
 apt-get install -y certbot
 
 if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
-  for i in $(seq 1 20); do
+  # Wait for DNS to resolve BEFORE asking Let's Encrypt for anything. Their
+  # rate limit counts FAILED validations (5 per hour), so retrying certbot
+  # into unpropagated DNS spends the quota rather than waiting for it -- and
+  # once spent, the wait is an hour regardless of whether DNS is ready.
+  for i in $(seq 1 60); do
+    getent hosts "$FQDN" >/dev/null 2>&1 && break
+    echo "waiting for $FQDN to resolve before requesting a certificate"
+    sleep 10
+  done
+
+  if ! getent hosts "$FQDN" >/dev/null 2>&1; then
+    echo "FATAL: $FQDN does not resolve; refusing to spend Let's Encrypt validation quota" >&2
+    exit 1
+  fi
+
+  # Three attempts, not twenty: if DNS resolves and certbot still fails, the
+  # cause is not propagation and more tries will not fix it.
+  for i in 1 2 3; do
     certbot certonly --standalone --non-interactive --agree-tos \
       --config-dir "$CERTBOT_DIR" --work-dir "$CERTBOT_DIR/work" \
       --logs-dir "$CERTBOT_DIR/logs" \
       -m "$ALERT_EMAIL" -d "$FQDN" && break
-    echo "certbot failed (DNS may not have propagated yet); retrying in 60s"
+    echo "certbot attempt $i failed; retrying in 60s"
     sleep 60
   done
 fi
@@ -216,69 +238,90 @@ services:
       retries: 0
 COMPOSE
 
-docker compose up -d
-
-# Wait for the CONTAINER, not for Postfix to be listening. docker-mailserver
-# refuses to start Dovecot until at least one mailbox exists, and gives up
-# after 120 seconds -- so waiting for a listening SMTP port before creating
-# the mailboxes deadlocks: it waits for us, we wait for it, and it restarts
-# forever. Creating an account only writes a config file, which works the
-# moment the container can exec.
-for i in $(seq 1 60); do
-  docker exec mailserver test -d /tmp/docker-mailserver 2>/dev/null && break
-  sleep 2
-done
-
-if ! docker exec mailserver test -d /tmp/docker-mailserver 2>/dev/null; then
-  echo "FATAL: mailserver container never became reachable" >&2
-  exit 1
-fi
-
 # ---------- the people ----------
-# Mailboxes are read from Parameter Store at run time rather than baked
-# into user-data. Templating them in would mean every new hire replaces
-# the instance, since user_data_replace_on_change is set.
+# Mailboxes are written DIRECTLY to docker-mailserver's accounts file, before
+# the container starts, and never through `docker exec`.
 #
-# The heredoc delimiter is quoted ('SYNC') so bash writes its body
-# byte-for-byte: NAME, LOCAL, PASS, ADDR and the parameter-expansion on
-# NAME are left untouched for sync-accounts.sh to expand when IT runs, not
-# when this boot script writes the file. Only region, param_prefix and
-# domain are meant to be filled in here, by Terraform, at plan time -- the
-# parameter expansion is written with a doubled leading dollar sign so
-# Terraform's templatefile() treats it as literal text, not an expression.
+# That ordering is not a preference. DMS refuses to start Dovecot until at
+# least one account exists and shuts down after 120 seconds if none appears.
+# Creating accounts through `docker exec` therefore needs a running container
+# that is itself waiting for the accounts -- a deadlock, and even once broken
+# a race, because the container is restarting every two minutes while the
+# loop runs. Writing the file first removes the container from the problem
+# entirely: it boots with its accounts already present.
+#
+# The file format is DMS's own: one "address|{SCHEME}hash" line per mailbox.
+# openssl produces SHA512-CRYPT, which is what DMS expects, so no container
+# and no dovecot tooling is needed to hash a password.
+#
+# Passwords come from Parameter Store rather than user-data, so adding a
+# person never replaces the instance.
+ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
+
 cat > /opt/mail/sync-accounts.sh <<'SYNC'
 #!/usr/bin/env bash
-# Creates any mailbox that exists in Parameter Store but not yet on this
-# server. Safe to re-run. Never deletes: removing someone is deliberate.
+# Writes any mailbox that exists in Parameter Store but not yet in the
+# accounts file. Safe to re-run: existing lines are left exactly as they are,
+# so re-running never changes anyone's password. Never deletes -- removing
+# someone is a deliberate, separate act.
+#
+# Works whether or not the mail server is running. If it is, the container is
+# told to reload at the end; if it is not, it will read the file when it starts.
 set -euo pipefail
 
-aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
-    --with-decryption --query 'Parameters[].[Name,Value]' --output text |
+ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
+touch "$ACCOUNTS"
+chmod 600 "$ACCOUNTS"
+ADDED=0
+
 while read -r NAME PASS; do
+  [ -n "$NAME" ] || continue
   LOCAL="$${NAME##*/}"
   # Names beginning with _ are not mailboxes (_relay_password).
   case "$LOCAL" in _*) continue ;; esac
   ADDR="$LOCAL@${domain}"
-  if docker exec mailserver setup email list 2>/dev/null | grep -q "^\* $ADDR"; then
+
+  if grep -q "^$ADDR|" "$ACCOUNTS" 2>/dev/null; then
     continue
   fi
-  echo "creating $ADDR"
-  docker exec mailserver setup email add "$ADDR" "$PASS"
-done
+
+  # -6 selects SHA512-CRYPT. The hash is generated here, on the host, so this
+  # never depends on the container being up.
+  HASH="$(openssl passwd -6 "$PASS")"
+  echo "$ADDR|{SHA512-CRYPT}$HASH" >> "$ACCOUNTS"
+  echo "added $ADDR"
+  ADDED=$((ADDED + 1))
+done < <(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
+           --with-decryption --query 'Parameters[].[Name,Value]' --output text)
+
+if [ "$ADDED" -gt 0 ] && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  echo "reloading mailserver to pick up $ADDED new mailbox(es)"
+  docker restart mailserver >/dev/null
+fi
+
+echo "accounts file now has $(grep -c '|' "$ACCOUNTS" 2>/dev/null || echo 0) mailbox(es)"
 SYNC
 chmod +x /opt/mail/sync-accounts.sh
 /opt/mail/sync-accounts.sh
 
-# Only now can Dovecot start, so this is where waiting for a listening SMTP
-# port belongs. Fail closed: a box that never opens 25 is not a mail server,
-# and it is better to know at boot than from a bounced message.
+if [ ! -s "$ACCOUNTS" ]; then
+  echo "FATAL: no mailboxes were written to $ACCOUNTS -- the mail server would not start" >&2
+  exit 1
+fi
+
+# ---------- start the mail server ----------
+# Accounts exist by this point, so Dovecot starts on the first attempt.
+docker compose up -d
+
+# Fail closed: a box that never opens 25 is not a mail server, and it is
+# better to know at boot than from a bounced message days later.
 for i in $(seq 1 60); do
   docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp && break
   sleep 5
 done
 
 if ! docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp; then
-  echo "FATAL: postfix is not listening on 25 after account creation" >&2
+  echo "FATAL: postfix is not listening on 25" >&2
   docker logs --tail 40 mailserver >&2 || true
   exit 1
 fi
@@ -318,6 +361,12 @@ CWCFG
 # which nothing else detects.
 cat > /etc/cron.daily/mail-health <<HEALTH
 #!/bin/bash
+# cron runs with a minimal PATH (/usr/bin:/bin), which does NOT include
+# /usr/local/bin where the AWS CLI installs itself. Without this every alert
+# below would fail to find "aws" and this whole script would be decorative.
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
+export PATH
+
 TOPIC="${alerts_topic_arn}"
 REGION="${region}"
 alert() { aws sns publish --region "\$REGION" --topic-arn "\$TOPIC" --subject "mail: \$1" --message "\$2" || true; }
@@ -327,9 +376,22 @@ if [ -f "\$CERT" ] && ! openssl x509 -checkend \$((21*86400)) -noout -in "\$CERT
   alert "certificate expiring" "The TLS certificate for ${fqdn} expires within 21 days and has not renewed."
 fi
 
+# The container being down yields no output at all, not a zero -- so default
+# it. An unset value here made the comparison below fail with "integer
+# expression expected" every single day, which is how a health check becomes
+# noise people learn to ignore.
 QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)
+QUEUED=\$(printf '%s' "\$QUEUED" | tr -dc '0-9')
+if [ -z "\$QUEUED" ]; then QUEUED=0; fi
+
 if [ "\$QUEUED" -gt 50 ]; then
   alert "mail queue backing up" "\$QUEUED messages are queued. The SES relay credential is the usual cause."
+fi
+
+# The mail server being down entirely is worth knowing about, and CloudWatch
+# cannot see inside the box to tell.
+if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  alert "mail server not running" "The mailserver container is not running on \$(hostname)."
 fi
 HEALTH
 chmod +x /etc/cron.daily/mail-health

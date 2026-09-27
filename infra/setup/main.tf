@@ -190,6 +190,18 @@ resource "aws_route53_zone" "main" {
   name          = var.domain_name
   comment       = "Managed by Terraform (infra/setup)"
   force_destroy = var.force_destroy
+
+  lifecycle {
+    # Recreating this zone gets a brand-new set of four name servers, which
+    # means going back into the registrar by hand and waiting for propagation
+    # with mail and the website down throughout. The records inside are cheap
+    # to rebuild by apply; the delegation is not, and it is the one step here
+    # that cannot be automated.
+    #
+    # Note this aborts the WHOLE destroy, not just itself -- see the teardown
+    # section of MAIL.md, which depends on this block existing.
+    prevent_destroy = true
+  }
 }
 
 # ---------- Mail DNS ----------

@@ -239,7 +239,11 @@ resource "aws_iam_instance_profile" "instance" {
 # Mail lives on its own disk. Rebuild or resize the server and the mail is
 # untouched, because it was never on the root volume.
 resource "aws_ebs_volume" "mail" {
-  availability_zone = aws_instance.mail.availability_zone
+  # Pinned to the same AZ as the subnet, NOT read off the instance. On
+  # instance replacement the instance's AZ becomes "known after apply",
+  # which forces replacement of this volume -- and availability_zone is
+  # ForceNew, so that is data loss. Do not "simplify" this line.
+  availability_zone = data.aws_availability_zones.available.names[0]
   size              = var.mail_volume_gb
   type              = "gp3"
   encrypted         = true
@@ -277,6 +281,7 @@ resource "aws_instance" "mail" {
     param_prefix  = "/${var.domain_name}/mail"
     postmaster    = "postmaster@${var.domain_name}"
     admin_address = "${var.admin_mailbox}@${var.domain_name}"
+    mail_device   = "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.mail.id, "-", "")}"
   })
 
   # Containers must not be able to reach instance credentials: one hop is

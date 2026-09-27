@@ -56,6 +56,11 @@ if [[ "$ACTION" == "setup" ]]; then
     # from a sibling root's versions.tf) can silently drift from the block
     # Terraform actually uses. This can't drift: it IS the block. (Lives in
     # backend.tf, not main.tf -- see that file for why.)
+    # If a prior run's trap ever failed to restore backend.tf, this sed on
+    # the missing file fails under `set -e` and the script aborts here --
+    # loudly, before the -z check below even runs, rather than silently
+    # proceeding with no backend block. Not something to lean on instead of
+    # the trap, but worth knowing it's there.
     BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' backend.tf)"
     STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
     STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
@@ -94,12 +99,15 @@ if [[ "$ACTION" == "setup" ]]; then
       # root really has no backend block while it creates the bucket, put
       # it back, then migrate into the bucket it just made.
       cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
-      mv backend.tf backend.tf.disabled
-      # Restore even if the apply below fails -- a disabled backend file
-      # left behind is a nasty, easy-to-miss state to debug blind. Cleared
-      # right after the deliberate restore so it doesn't also fire (harmlessly,
-      # since the file is back by then) on the script's normal exit.
+      # Set before the rename, not after: the trap body no-ops (nothing to
+      # move back yet) until backend.tf.disabled actually exists, so setting
+      # it early costs nothing but closes the window where a crash between
+      # the rename and the trap could leave the file disabled with nothing
+      # watching it. Cleared right after the deliberate restore below so it
+      # doesn't also fire (harmlessly, since the file is back by then) on
+      # the script's normal exit.
       trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
+      mv backend.tf backend.tf.disabled
       terraform init -input=false
       terraform apply -var-file=../settings.auto.tfvars
       mv -f backend.tf.disabled backend.tf

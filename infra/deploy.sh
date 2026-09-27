@@ -29,6 +29,30 @@ fi
 export AWS_PROFILE
 unset TF_WORKSPACE # this script picks the workspace itself
 
+# ---------- settings from 1Password ----------
+# settings.auto.tfvars is GENERATED from settings.auto.tfvars.tpl, whose
+# values are op:// references rather than literals. Edit values in 1Password
+# (Development vault, item "mccor-labs-infra"); editing the generated file is
+# pointless because the next run overwrites it.
+#
+# Fails closed on purpose. A stale settings file is worse than none: an
+# expired 1Password session would otherwise let a deploy quietly run against
+# whatever values happened to be on disk -- including, in the case of the
+# mailboxes map, an empty one, which would delete every mailbox password.
+if [[ -f settings.auto.tfvars.tpl ]]; then
+  if ! command -v op >/dev/null; then
+    echo "1Password CLI (op) not found, but settings.auto.tfvars.tpl exists." >&2
+    echo "Install it, or write settings.auto.tfvars by hand from the template." >&2
+    exit 1
+  fi
+  if ! op inject -i settings.auto.tfvars.tpl -o settings.auto.tfvars --force; then
+    echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
+    echo "Refusing to continue: deploying with stale settings risks applying an" >&2
+    echo "empty mailboxes map, which would destroy the mailbox passwords." >&2
+    exit 1
+  fi
+fi
+
 if [[ -n "$ENV_ID" ]]; then
   if [[ ! "$ENV_ID" =~ ^[a-z][a-z0-9]{0,7}$ ]]; then
     echo "ENV_ID must be 1-8 lowercase letters or numbers, starting with a letter (e.g. mm)." >&2

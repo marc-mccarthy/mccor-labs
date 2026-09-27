@@ -29,6 +29,18 @@ terraform {
       version = "~> 3.6"
     }
   }
+
+  # This root creates the bucket its own state then lives in, so the very
+  # first run is local and migrates afterwards -- see deploy.sh. Written
+  # literally because backend blocks cannot use variables; matches
+  # local.state_bucket below.
+  backend "s3" {
+    bucket       = "mccorlabs-com-tfstate"
+    key          = "setup/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+    encrypt      = true
+  }
 }
 
 provider "aws" {

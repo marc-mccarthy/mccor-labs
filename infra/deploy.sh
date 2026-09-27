@@ -49,8 +49,53 @@ fi
 if [[ "$ACTION" == "setup" ]]; then
   (
     cd setup
-    terraform init -input=false
-    terraform apply -var-file=../settings.auto.tfvars
+
+    # setup/ creates the bucket its own state then lives in, so read the
+    # bucket name literally out of setup/main.tf's own backend block rather
+    # than recomputing it -- a second computation (here, or from a sibling
+    # root's versions.tf) can silently drift from the block Terraform
+    # actually uses. This can't drift: it IS the block.
+    STATE_BUCKET="$(sed -nE '/backend "s3" \{/,/^  \}/ s/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' main.tf)"
+    if [[ -z "$STATE_BUCKET" ]]; then
+      echo "Could not find the state bucket name in setup/main.tf's backend block." >&2
+      exit 1
+    fi
+
+    # First run ever: no local record of having initialized against a
+    # backend, and the bucket that backend needs doesn't exist yet. Init
+    # without a backend (nothing to reach), apply so the bucket (among
+    # everything else) gets created, then migrate this root's own state
+    # into the bucket it just made. Every later run has both a local
+    # backend record and a real bucket, so it skips straight to plain init.
+    if [[ ! -f .terraform/terraform.tfstate ]] && ! aws s3api head-bucket --bucket "$STATE_BUCKET" 2>/dev/null; then
+      terraform init -input=false -backend=false
+      terraform apply -input=false -var-file=../settings.auto.tfvars
+      terraform init -input=false -migrate-state -force-copy
+    else
+      terraform init -input=false
+    fi
+
+    terraform apply -input=false -var-file=../settings.auto.tfvars
+
+    # SES starts sandboxed: 200 messages a day, verified recipients only.
+    # No Terraform resource covers production access (aws_sesv2_account_details
+    # doesn't exist in the provider), so this stays a scripted step here
+    # instead of a manual console visit. Only relevant once the mail server
+    # itself is on. Safe to re-run: a repeat request while pending or
+    # already granted returns an error, which is expected, not a failure.
+    if grep -qE '^\s*enable_mailserver\s*=\s*true' ../settings.auto.tfvars; then
+      DOMAIN_NAME="$(grep -oE 'domain_name *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
+      ALERT_EMAIL="$(grep -oE 'alert_email *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
+      aws sesv2 put-account-details \
+        --production-access-enabled \
+        --mail-type TRANSACTIONAL \
+        --website-url "https://${DOMAIN_NAME}" \
+        --additional-contact-email-addresses "${ALERT_EMAIL}" \
+        --contact-language EN 2>/dev/null \
+        && echo ">>> SES production access requested (approval ~24h)" \
+        || echo ">>> SES production access already requested or granted"
+    fi
+
     echo
     echo "Next: enter these name servers in Namecheap (Custom DNS):"
     terraform output -json name_servers

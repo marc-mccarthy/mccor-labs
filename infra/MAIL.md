@@ -6,15 +6,15 @@ costs nothing extra.
 
 ## What exists
 
-| Piece | What it does |
-|---|---|
-| EC2 `t4g.small`, Debian 12 ARM | Runs the mail stack |
-| Separate encrypted EBS volume | Holds the mail, so rebuilding the server never touches it |
-| `docker-mailserver` | Postfix + Dovecot + Rspamd spam filtering + fail2ban |
-| Elastic IP | Fixed address, so DNS stays valid across reboots |
-| Route53 | A, MX, SPF, DMARC, 3 DKIM CNAMEs, autodiscover, autoconfig |
-| SES | Outbound relay only. Does not store your mail. |
-| SSM Parameter Store | Holds the mailbox passwords, encrypted |
+| Piece                          | What it does                                               |
+| ------------------------------ | ---------------------------------------------------------- |
+| EC2 `t4g.small`, Debian 12 ARM | Runs the mail stack                                        |
+| Separate encrypted EBS volume  | Holds the mail, so rebuilding the server never touches it  |
+| `docker-mailserver`            | Postfix + Dovecot + Rspamd spam filtering + fail2ban       |
+| Elastic IP                     | Fixed address, so DNS stays valid across reboots           |
+| Route53                        | A, MX, SPF, DMARC, 3 DKIM CNAMEs, autodiscover, autoconfig |
+| SES                            | Outbound relay only. Does not store your mail.             |
+| SSM Parameter Store            | Holds the mailbox passwords, encrypted                     |
 
 ### Why sending goes through SES
 
@@ -31,7 +31,7 @@ account -- it is the last hop that hands mail to the internet, not a service
 holding your mailboxes.
 
 Receiving is entirely yours: the internet delivers straight to your instance
-on port 25, which AWS does *not* block inbound.
+on port 25, which AWS does _not_ block inbound.
 
 ## Turning it on
 
@@ -41,7 +41,13 @@ Three steps, in order. Step 2 is manual and cannot be skipped.
 
     ./infra/deploy.sh setup
 
-Created the state bucket, the Route53 zone, and the budget alarm.
+Created the state bucket, the Route53 zone, and the budget alarm. The very
+first time this runs, the state bucket doesn't exist yet, so it applies
+locally, then migrates its own state into the bucket it just created;
+`deploy.sh` handles this automatically -- every run after that is a plain
+`terraform init`. Once `enable_mailserver` is true (step 3), this command
+also requests SES production access if it hasn't already been requested or
+granted; approval takes about 24 hours.
 
 ### 2. Point Namecheap at Route53 (you must do this)
 
@@ -53,10 +59,10 @@ answer DNS for it.
    **Custom DNS**
 3. Enter these four, one per row:
 
-       ns-1154.awsdns-16.org
-       ns-1701.awsdns-20.co.uk
-       ns-356.awsdns-44.com
-       ns-746.awsdns-29.net
+   ns-1154.awsdns-16.org
+   ns-1701.awsdns-20.co.uk
+   ns-356.awsdns-44.com
+   ns-746.awsdns-29.net
 
 4. Save, then wait. Usually minutes, occasionally a few hours.
 
@@ -93,11 +99,11 @@ One per person. Have each person change theirs after first sign-in:
 
 There is no webmail in this setup. People use a mail app.
 
-| Setting | Value |
-|---|---|
-| Username | full address, e.g. `marcm@mccorlabs.com` |
-| Password | from `terraform output` above |
-| Incoming (IMAP) | `mail.mccorlabs.com`, port **993**, SSL/TLS |
+| Setting         | Value                                        |
+| --------------- | -------------------------------------------- |
+| Username        | full address, e.g. `marcm@mccorlabs.com`     |
+| Password        | from `terraform output` above                |
+| Incoming (IMAP) | `mail.mccorlabs.com`, port **993**, SSL/TLS  |
 | Outgoing (SMTP) | `mail.mccorlabs.com`, port **587**, STARTTLS |
 
 Enter these by hand. The `autodiscover` and `autoconfig` DNS records exist
@@ -175,7 +181,7 @@ spam.
 
 ## Deliverability
 
-Getting mail *accepted* by Gmail and Outlook is the hard part of running your
+Getting mail _accepted_ by Gmail and Outlook is the hard part of running your
 own server. What is already handled:
 
 - **SPF** names SES and the server's own IP as allowed senders
@@ -188,21 +194,21 @@ After a week of clean sending, tighten DMARC to `p=quarantine`, then
 Test your score at https://www.mail-tester.com -- send it a message and aim
 for 9/10 or better.
 
-Reverse DNS is *not* configured. It matters less when relaying through SES,
+Reverse DNS is _not_ configured. It matters less when relaying through SES,
 since the connecting IP is SES's. If you later stop relaying and send direct,
 request both the port 25 unblock and a PTR record for the Elastic IP through
 the AWS "Request to Remove Email Sending Limitations" form.
 
 ## Cost
 
-| Item | Monthly |
-|---|---|
-| EC2 `t4g.small` | ~$12 |
-| EBS, 20 GB mail + 20 GB root | ~$3.20 |
-| Route53 hosted zone | $0.50 |
-| SES | ~$0.10 at low volume |
-| Elastic IP (attached) | $0 |
-| **Total** | **~$16/month, flat** |
+| Item                         | Monthly              |
+| ---------------------------- | -------------------- |
+| EC2 `t4g.small`              | ~$12                 |
+| EBS, 20 GB mail + 20 GB root | ~$3.20               |
+| Route53 hosted zone          | $0.50                |
+| SES                          | ~$0.10 at low volume |
+| Elastic IP (attached)        | $0                   |
+| **Total**                    | **~$16/month, flat** |
 
 Flat regardless of headcount. Four people on Google Workspace would be ~$28
 and rising with each hire.

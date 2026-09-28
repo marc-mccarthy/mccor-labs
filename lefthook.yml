@@ -1,0 +1,35 @@
+# Fast on commit, strict on push. A 90-second commit trains people into
+# --no-verify, after which hooks protect nothing.
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,css,json,md,yml,yaml}'
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
+    lint:
+      glob: '*.{ts,tsx}'
+      run: pnpm eslint --fix --no-warn-ignored {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: pnpm -F web exec tsc --noEmit
+      fail_text: 'Type errors. Fix before pushing.'
+    lint:
+      run: pnpm -F web lint
+      fail_text: 'Lint errors. Fix before pushing.'
+    format-check:
+      run: pnpm format:check
+      fail_text: 'Formatting drift. Run: pnpm format'
+    test:
+      run: pnpm -F web test:run
+      fail_text: 'Unit/integration tests failing.'
+    build:
+      run: pnpm build
+      fail_text: 'Production build failed.'
+    e2e:
+      run: pnpm -F web test:e2e:smoke
+      fail_text: 'Smoke tests failing.'

@@ -12,8 +12,9 @@
   "scripts": {
     "recon": "node scripts/recon-reference-sites.mjs",
     "capture": "node scripts/capture-reference-site.mjs",
-    "dev": "op run --env-file=app/web/.env.template -- pnpm -F web dev",
-    "build": "op run --env-file=app/web/.env.template -- pnpm -F web build",
+    "//dev": "The web app reads no environment variables yet (no process.env anywhere in app/web/src) and app/web/.env.template has never existed, so the op run wrapper these two scripts carried injected nothing and failed on the missing template. When the app does need a secret, add the template and restore the wrapper HERE rather than wrapping every script: op authorization is per-process and TTY-bound, so op on the dev/build path means a biometric prompt per invocation.",
+    "dev": "pnpm -F web dev",
+    "build": "pnpm -F web build",
     "build:raw": "pnpm -F web build",
     "test": "pnpm -F web test",
     "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",
@@ -28,6 +29,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "jiti": "^2.7.0",
+    "lefthook": "2.1.14",
     "prettier": "3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript-eslint": "^8.70.1"

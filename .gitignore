@@ -24,6 +24,7 @@ node_modules/
 # Next.js build output and static export
 app/web/.next/
 app/web/out/
+app/web/tsconfig.tsbuildinfo
 
 # Test artefacts
 test-results/

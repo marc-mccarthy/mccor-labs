@@ -256,6 +256,25 @@ COMPOSE
 #
 # Passwords come from Parameter Store rather than user-data, so adding a
 # person never replaces the instance.
+# ---------- lockout policy ----------
+# Written BEFORE the container is created, like the accounts file and for the
+# same reason: docker-mailserver copies this into fail2ban's jail.d during its
+# one-time setup, which `docker restart` does NOT re-run. A file added later
+# is simply ignored until the container is recreated.
+#
+# The shipped defaults are bantime 1w / findtime 1w / maxretry 6, and the
+# counter is per-IP rather than per-user. Five people configuring mail clients
+# from one office address share those six attempts, and a week-long lockout
+# for six typos is a support call, not security. An hour stops brute force
+# just as dead -- a bot making thousands of attempts is banned within seconds
+# either way -- while a mistyped password costs an hour at worst.
+cat > /var/mail-data/config/fail2ban-jail.cf <<'JAIL'
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+JAIL
+
 ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
 
 cat > /opt/mail/sync-accounts.sh <<'SYNC'

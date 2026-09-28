@@ -29,7 +29,10 @@ export default tseslint.config(
 
   {
     files: ['app/web/**/*.{ts,tsx}'],
-    extends: [...tseslint.configs.strictTypeChecked, ...tseslint.configs.stylisticTypeChecked],
+    extends: [
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -56,8 +59,7 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
-          selector:
-            'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
+          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
           message:
             'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
         },
@@ -67,10 +69,7 @@ export default tseslint.config(
 
   {
     files: ['app/web/src/**/*.{ts,tsx}'],
-    ignores: [
-      'app/web/src/components/motion/**',
-      'app/web/src/components/effects/**',
-    ],
+    ignores: ['app/web/src/components/motion/**', 'app/web/src/components/effects/**'],
     rules: {
       'no-restricted-imports': [
         'error',

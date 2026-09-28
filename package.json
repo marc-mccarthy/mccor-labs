@@ -12,9 +12,9 @@
   "scripts": {
     "recon": "node scripts/recon-reference-sites.mjs",
     "capture": "node scripts/capture-reference-site.mjs",
-    "//dev": "The web app reads no environment variables yet (no process.env anywhere in app/web/src) and app/web/.env.template has never existed, so the op run wrapper these two scripts carried injected nothing and failed on the missing template. When the app does need a secret, add the template and restore the wrapper HERE rather than wrapping every script: op authorization is per-process and TTY-bound, so op on the dev/build path means a biometric prompt per invocation.",
-    "dev": "pnpm -F web dev",
-    "build": "pnpm -F web build",
+    "//dev": "op authorization is per-process and TTY-bound (a prompt per invocation), so only dev/build are wrapped rather than every script; build:raw is the unwrapped escape hatch for a build against an unconfigured/locked vault.",
+    "dev": "op run --env-file=app/web/.env.template -- pnpm -F web dev",
+    "build": "op run --env-file=app/web/.env.template -- pnpm -F web build",
     "build:raw": "pnpm -F web build",
     "test": "pnpm -F web test",
     "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",

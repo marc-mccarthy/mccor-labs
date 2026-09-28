@@ -45,6 +45,23 @@ if [[ -f settings.auto.tfvars.tpl ]]; then
     echo "Install it, or write settings.auto.tfvars by hand from the template." >&2
     exit 1
   fi
+  # Non-interactive auth, when it has been set up. 1Password authorization via
+  # the desktop app is per-process and TTY-bound, so every run of this script
+  # earns its own Touch ID prompt no matter how recently the last one passed.
+  # A service account token sidesteps that entirely -- op never consults the
+  # app. The token lives in the login Keychain, not in a file and not in the
+  # shell profile: exported globally it would shadow interactive op use and
+  # break anything reading the Private vault, which a service account cannot
+  # see. Scoped here, it affects only this script.
+  #   Create:  op service-account create mccor-labs-deploy --vault Development:read_items --raw
+  #   Store:   security add-generic-password -a "$USER" -s mccor-labs-op-sa -w '<token>' -U
+  # Absent the Keychain item this is a no-op and op falls back to the app.
+  if _op_token=$(security find-generic-password -s mccor-labs-op-sa -w 2>/dev/null) \
+     && [[ -n "$_op_token" ]]; then
+    export OP_SERVICE_ACCOUNT_TOKEN="$_op_token"
+  fi
+  unset _op_token
+
   if ! op inject -i settings.auto.tfvars.tpl -o settings.auto.tfvars --force; then
     echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
     echo "Refusing to continue: deploying with stale settings risks applying an" >&2

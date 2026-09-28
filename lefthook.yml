@@ -1,35 +1,41 @@
 # Fast on commit, strict on push. A 90-second commit trains people into
 # --no-verify, after which hooks protect nothing.
+#
+# Hooks prepend Homebrew's bin so pnpm resolves to the 12.6.0 that
+# packageManager pins. The self-managing pnpm shim that git's own PATH finds
+# first tries to install pnpm@12.6.0 from npm, where no macos-arm64 build of
+# it is published, so every hook command fails. Prepending a directory that
+# does not exist is a no-op, so this stays harmless on CI and on Linux.
 pre-commit:
   parallel: true
   commands:
     format:
       glob: '*.{ts,tsx,css,json,md,yml,yaml}'
-      run: pnpm prettier --write {staged_files}
+      run: PATH=/opt/homebrew/bin:$PATH pnpm prettier --write {staged_files}
       stage_fixed: true
     lint:
       glob: '*.{ts,tsx}'
-      run: pnpm eslint --fix --no-warn-ignored {staged_files}
+      run: PATH=/opt/homebrew/bin:$PATH pnpm eslint --fix --no-warn-ignored {staged_files}
       stage_fixed: true
 
 pre-push:
   parallel: false
   commands:
     typecheck:
-      run: pnpm -F web exec tsc --noEmit
+      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web exec tsc --noEmit
       fail_text: 'Type errors. Fix before pushing.'
     lint:
-      run: pnpm -F web lint
+      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web lint
       fail_text: 'Lint errors. Fix before pushing.'
     format-check:
-      run: pnpm format:check
+      run: PATH=/opt/homebrew/bin:$PATH pnpm format:check
       fail_text: 'Formatting drift. Run: pnpm format'
     test:
-      run: pnpm -F web test:run
+      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web test:run
       fail_text: 'Unit/integration tests failing.'
     build:
-      run: pnpm build
+      run: PATH=/opt/homebrew/bin:$PATH pnpm build
       fail_text: 'Production build failed.'
     e2e:
-      run: pnpm -F web test:e2e:smoke
+      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web test:e2e:smoke
       fail_text: 'Smoke tests failing.'

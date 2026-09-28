@@ -11,7 +11,14 @@
   "packageManager": "pnpm@12.6.0",
   "scripts": {
     "recon": "node scripts/recon-reference-sites.mjs",
-    "capture": "node scripts/capture-reference-site.mjs"
+    "capture": "node scripts/capture-reference-site.mjs",
+    "dev": "op run --env-file=app/web/.env.template -- pnpm -F web dev",
+    "build": "op run --env-file=app/web/.env.template -- pnpm -F web build",
+    "build:raw": "pnpm -F web build",
+    "test": "pnpm -F web test",
+    "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the last version whose bundled browser revision matches the chromium-1228 already in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a newer revision and triggers a ~500MB download onto a volume at 89% capacity. Re-pin only alongside a deliberate `playwright install`.",
   "devDependencies": {

@@ -13,8 +13,6 @@ settings.auto.tfvars
 
 # Node tooling for scripts/
 node_modules/
-pnpm-lock.yaml
-package-lock.json
 
 **/console*
 **/ui-preferences/
@@ -22,3 +20,19 @@ package-lock.json
 **/.playwright-mcp/
 **/superpowers/
 **/.superpowers/
+
+# Next.js build output and static export
+app/web/.next/
+app/web/out/
+
+# Test artefacts
+test-results/
+playwright-report/
+.playwright/
+
+# Environment values come from 1Password via op run; .env.template is committed.
+# A .env.local should never exist in this project, but ignore it if one appears.
+.env.local
+
+# Media working directory
+.media-work/

@@ -6,12 +6,12 @@ Draft copy for `/about`. Phase 2 converts this into
 
 **Status of each bio:**
 
-| Person | Source | Needs |
-|---|---|---|
-| Marc McCarthy | Owner-supplied facts, rewritten | Review of wording only |
-| Nate B. | Role owner-supplied (consultation specialist, not a developer); rest **invented** | Surname, real details, his sign-off |
-| Kirsten H. | **Invented** | Surname, real details, her sign-off |
-| Ashley T. | **Invented** | Surname, real details, her sign-off |
+| Person        | Source                                                                            | Needs                               |
+| ------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
+| Marc McCarthy | Owner-supplied facts, rewritten                                                   | Review of wording only              |
+| Nate B.       | Role owner-supplied (consultation specialist, not a developer); rest **invented** | Surname, real details, his sign-off |
+| Kirsten H.    | **Invented**                                                                      | Surname, real details, her sign-off |
+| Ashley T.     | **Invented**                                                                      | Surname, real details, her sign-off |
 
 Everyone is based in the Twin Cities metro, which is accurate for the whole
 team and is the one detail carried across all four.

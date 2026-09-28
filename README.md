@@ -44,20 +44,20 @@ app/
 
 ## Cost
 
-| Piece | Cost |
-|---|---|
-| Domain | whatever Namecheap charges you yearly |
-| Route 53 DNS zone | $0.50/month |
-| HTTPS certificates | $0 |
-| Cognito Lite | $0 up to 10,000 monthly active users (shared by all copies) |
-| Lambda | $0 within 1M requests/month (always free) |
-| DynamoDB | $0 within 25 GB + 25 read/write units (main uses 5 each, each copy 1) |
-| API Gateway HTTP API | $1.00 per million requests |
-| S3 + CloudFront | pennies at low traffic |
-| Budget alerts | $0 |
+| Piece                | Cost                                                                  |
+| -------------------- | --------------------------------------------------------------------- |
+| Domain               | whatever Namecheap charges you yearly                                 |
+| Route 53 DNS zone    | $0.50/month                                                           |
+| HTTPS certificates   | $0                                                                    |
+| Cognito Lite         | $0 up to 10,000 monthly active users (shared by all copies)           |
+| Lambda               | $0 within 1M requests/month (always free)                             |
+| DynamoDB             | $0 within 25 GB + 25 read/write units (main uses 5 each, each copy 1) |
+| API Gateway HTTP API | $1.00 per million requests                                            |
+| S3 + CloudFront      | pennies at low traffic                                                |
+| Budget alerts        | $0                                                                    |
 
 Personal copies add essentially nothing. The Route 53 zone alone is the only
-*fixed* cost above -- but if you also turn on the optional mail server
+_fixed_ cost above -- but if you also turn on the optional mail server
 (`enable_mailserver` in `settings.auto.tfvars`), that adds a flat ~$20.38/month
 regardless of headcount. See [`infra/MAIL.md`](infra/MAIL.md) for what that
 buys, its full cost breakdown, and how to run and scale it.

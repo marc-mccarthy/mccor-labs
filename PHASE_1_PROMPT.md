@@ -128,22 +128,22 @@ corpus at docs/ui-references/ has tier-1 captures.
 
 These are settled. An implementing agent should not revisit them.
 
-| Area | Decision |
-|---|---|
-| Framework | Next.js 16.3.6, App Router, static export (`output: 'export'`, `trailingSlash: true`) |
-| Runtime | React 19.3.0, TypeScript strict |
-| Styling | Tailwind CSS 4.3.3 with `@theme` tokens, shadcn/ui as owned source |
-| Animation | Motion 13.4.4 as the single JS animation system (phase 3) |
-| Tests | Vitest 5, Playwright 1.61.0 pinned at the repo root |
-| Tooling | ESLint 10 flat config, Prettier 3.9.9, Lefthook 2.1.14 — all at the root |
-| Hooks | Fast pre-commit (format + lint on staged files), strict pre-push (typecheck, lint, format, tests, build, smoke) |
-| Layout | pnpm workspace, site at `app/web` named `web`, Lambda stays at `app/api` |
-| Theme | Dark only. `#070a12` base, `#527bff` accent, `#3d6bff` brand for large display only. Twelve contrast pairs measured, zero failures |
-| Entity | McCor Labs LLC, Minnesota |
-| Contact | `marcm@mccorlabs.com` |
-| Booking | `NEXT_PUBLIC_BOOKING_URL` from 1Password; production build fails without it |
-| Tagline | "A small senior team building websites, applications and AI features for companies that need them to actually work." |
-| Deploy | Static export to the existing S3 + CloudFront. Phase 4, owner-implemented |
+| Area      | Decision                                                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Framework | Next.js 16.3.6, App Router, static export (`output: 'export'`, `trailingSlash: true`)                                              |
+| Runtime   | React 19.3.0, TypeScript strict                                                                                                    |
+| Styling   | Tailwind CSS 4.3.3 with `@theme` tokens, shadcn/ui as owned source                                                                 |
+| Animation | Motion 13.4.4 as the single JS animation system (phase 3)                                                                          |
+| Tests     | Vitest 5, Playwright 1.61.0 pinned at the repo root                                                                                |
+| Tooling   | ESLint 10 flat config, Prettier 3.9.9, Lefthook 2.1.14 — all at the root                                                           |
+| Hooks     | Fast pre-commit (format + lint on staged files), strict pre-push (typecheck, lint, format, tests, build, smoke)                    |
+| Layout    | pnpm workspace, site at `app/web` named `web`, Lambda stays at `app/api`                                                           |
+| Theme     | Dark only. `#070a12` base, `#527bff` accent, `#3d6bff` brand for large display only. Twelve contrast pairs measured, zero failures |
+| Entity    | McCor Labs LLC, Minnesota                                                                                                          |
+| Contact   | `marcm@mccorlabs.com`                                                                                                              |
+| Booking   | `NEXT_PUBLIC_BOOKING_URL` from 1Password; production build fails without it                                                        |
+| Tagline   | "A small senior team building websites, applications and AI features for companies that need them to actually work."               |
+| Deploy    | Static export to the existing S3 + CloudFront. Phase 4, owner-implemented                                                          |
 
 ## Still open — none block phase 1
 

@@ -17,14 +17,14 @@ Analytics. They record pageviews, referrers, entry/exit pages, device and countr
 and (if configured) custom events such as form submissions or booking-link clicks.
 Neither one sets cookies or tracks individuals across sites.
 
-| | Plausible | Umami |
-|---|---|---|
-| Hosted price | from ~$9/mo | free tier on Umami Cloud |
-| Self-host | yes, official Docker Compose | yes, official Docker |
-| Script weight | < 1 KB | ~2 KB |
-| Cookies | none | none |
-| Licence | AGPL-3.0 | MIT |
-| Data location | EU (hosted) | wherever you host it |
+|               | Plausible                    | Umami                    |
+| ------------- | ---------------------------- | ------------------------ |
+| Hosted price  | from ~$9/mo                  | free tier on Umami Cloud |
+| Self-host     | yes, official Docker Compose | yes, official Docker     |
+| Script weight | < 1 KB                       | ~2 KB                    |
+| Cookies       | none                         | none                     |
+| Licence       | AGPL-3.0                     | MIT                      |
+| Data location | EU (hosted)                  | wherever you host it     |
 
 **Why this matters for a marketing site.** Without it there is no way to know which
 pages lead to booked calls, whether anyone reaches the Work page, or where traffic

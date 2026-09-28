@@ -70,6 +70,7 @@ Everyone here is in the Twin Cities metro.
 people who will actually review your code.
 
 **You will:**
+
 - Build features across the stack on client websites and applications
 - Have every pull request reviewed properly, and review others'
 - Write the tests for what you build
@@ -77,6 +78,7 @@ people who will actually review your code.
 - Ask the question nobody else asked
 
 **We are looking for:**
+
 - Working knowledge of JavaScript or TypeScript and one back-end language
 - Evidence you can finish something — a project, a course, a contribution,
   anything you took to done
@@ -96,6 +98,7 @@ experience for this role.
 projects rather than tickets.
 
 **You will:**
+
 - Own the delivery of a client project end to end, with support
 - Make architectural calls and explain them to people who are paying
 - Review the Software Engineer I's work, and mean it
@@ -104,6 +107,7 @@ projects rather than tickets.
 - Help decide what we say yes and no to
 
 **We are looking for:**
+
 - Three or more years building and maintaining production software
 - Comfort across the stack, and honesty about where your depth actually is
 - Experience inheriting someone else's codebase without rewriting it on reflex
@@ -119,6 +123,7 @@ projects rather than tickets.
 to be right rather than impressive.
 
 **You will:**
+
 - Build LLM features, MCP servers and retrieval systems into client products
 - Build the evaluation alongside the feature, so quality is measurable
 - Model cost and latency before we commit a client to an approach
@@ -127,6 +132,7 @@ to be right rather than impressive.
 - Keep up with a field that moves faster than anyone can comfortably track
 
 **We are looking for:**
+
 - Shipped LLM work in production, not only prototypes
 - Understanding of evaluation: how you know an output is good, and how you know
   it stayed good
@@ -144,6 +150,7 @@ to be right rather than impressive.
 this firm is found and understood.
 
 **You will:**
+
 - Own how the firm presents itself — this site, its content, its search
   presence
 - Turn delivered projects into case studies that are specific rather than vague
@@ -153,6 +160,7 @@ this firm is found and understood.
 - Work directly with engineers who will happily explain the technical substance
 
 **We are looking for:**
+
 - Demonstrable B2B marketing results, ideally in technical services
 - Ability to write about software without either dumbing it down or bluffing
 - Comfort with being the only marketing person in the room

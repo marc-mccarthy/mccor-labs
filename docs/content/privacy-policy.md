@@ -17,14 +17,14 @@ widget, or loading a font from a CDN each require an edit here.
 
 ## Unresolved before publishing
 
-| Item | Status |
-|---|---|
-| Legal entity name | **Resolved: McCor Labs LLC.** |
-| Jurisdiction | Resolved: Minnesota, United States. A Minnesota LLC |
-| Postal address | **PLACEHOLDER ONLY** — a fabricated Blaine, MN PO box is used below so the page can be built and reviewed. It must be replaced with a real box before publishing |
-| Retention period | Proposed 24 months; owner to confirm |
-| CloudFront access logging | Deferred to phase 4, when the CloudFront work is done. Both branches are written below; delete whichever does not apply once logging is decided |
-| Booking provider | Resolved: Google Calendar appointment scheduling (`calendar.app.google`) |
+| Item                      | Status                                                                                                                                                           |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legal entity name         | **Resolved: McCor Labs LLC.**                                                                                                                                    |
+| Jurisdiction              | Resolved: Minnesota, United States. A Minnesota LLC                                                                                                              |
+| Postal address            | **PLACEHOLDER ONLY** — a fabricated Blaine, MN PO box is used below so the page can be built and reviewed. It must be replaced with a real box before publishing |
+| Retention period          | Proposed 24 months; owner to confirm                                                                                                                             |
+| CloudFront access logging | Deferred to phase 4, when the CloudFront work is done. Both branches are written below; delete whichever does not apply once logging is decided                  |
+| Booking provider          | Resolved: Google Calendar appointment scheduling (`calendar.app.google`)                                                                                         |
 
 **On the postal address.** The address below is fabricated and is a known placeholder — the owner has accepted it for now so the page can be built and reviewed. It must be replaced with a real PO box before publishing, because a privacy policy's address is how a person or a regulator reaches the data controller. A real box in Blaine costs a small annual fee at any USPS branch.
 
@@ -101,7 +101,7 @@ Nothing is collected in your browser. Specifically:
 If you have turned on a "do not track" or "global privacy control" signal,
 there is nothing here for it to switch off.
 
-The site does store a small amount of information *in your own browser* to
+The site does store a small amount of information _in your own browser_ to
 remember your preferences — for example, that you have already seen the intro
 animation, or whether you turned sound on or off. This never leaves your device,
 is never sent to us, and you can clear it at any time through your browser
@@ -122,10 +122,10 @@ with:] We do not keep server access logs for this website.
 
 We keep this list short on purpose.
 
-| Who | What they get | Why |
-|---|---|---|
-| **Amazon Web Services** | Contact form submissions in transit and at rest; the email itself | They host this site and run the email delivery. Data is processed in the US East (N. Virginia) region |
-| **Google** (Calendar appointment scheduling) | Whatever you enter when you book a call — typically your name, email address and any note you add | Only if you click through to book. Google's own privacy policy applies from that point |
+| Who                                          | What they get                                                                                     | Why                                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Amazon Web Services**                      | Contact form submissions in transit and at rest; the email itself                                 | They host this site and run the email delivery. Data is processed in the US East (N. Virginia) region |
+| **Google** (Calendar appointment scheduling) | Whatever you enter when you book a call — typically your name, email address and any note you add | Only if you click through to book. Google's own privacy policy applies from that point                |
 
 That is the complete list. We do not use a CRM, an email marketing platform, an
 analytics provider, an advertising network, or a chat widget.

@@ -6,13 +6,13 @@ for a role detail page, LinkedIn, or a job board.
 
 **Before publishing any of these, the owner must supply or explicitly decline:**
 
-| Missing | Consequence of leaving it out |
-|---|---|
-| Salary range | Not legally required (Minnesota's pay-transparency law starts at 30 employees), but many strong candidates filter out postings without one. Costs candidate quality. |
-| Benefits — health, retirement, PTO | Every posting below says "discussed at offer stage". If real benefits exist, say so; it is a competitive advantage for a small firm. |
-| Remote / hybrid / in-office policy | Currently stated as "Twin Cities metro, hybrid". Correct this if wrong — it is the single most-filtered field on a job board. |
-| EEO statement | Omitted rather than invented. Add the firm's real position. |
-| Employment type for each role | Assumed full-time except marketing, which is flagged flexible. |
+| Missing                            | Consequence of leaving it out                                                                                                                                        |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Salary range                       | Not legally required (Minnesota's pay-transparency law starts at 30 employees), but many strong candidates filter out postings without one. Costs candidate quality. |
+| Benefits — health, retirement, PTO | Every posting below says "discussed at offer stage". If real benefits exist, say so; it is a competitive advantage for a small firm.                                 |
+| Remote / hybrid / in-office policy | Currently stated as "Twin Cities metro, hybrid". Correct this if wrong — it is the single most-filtered field on a job board.                                        |
+| EEO statement                      | Omitted rather than invented. Add the firm's real position.                                                                                                          |
+| Employment type for each role      | Assumed full-time except marketing, which is flagged flexible.                                                                                                       |
 
 Nothing below invents a benefit, a salary, a client name or a metric.
 

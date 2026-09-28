@@ -38,6 +38,7 @@ using a keyboard or a screen reader. You get the code, and it is code your own
 developers can read.
 
 **Deliverables:**
+
 - Design direction and page designs
 - Production front end with a typed content layer
 - Accessibility review against WCAG 2.2 AA
@@ -60,6 +61,7 @@ smallest thing that answers the real question, then build out from what you
 learn rather than from what was assumed at the start.
 
 **Deliverables:**
+
 - Technical design and data model
 - Working application, deployed
 - Authentication, authorisation and audit where the domain needs them
@@ -83,6 +85,7 @@ and are direct about the cases where a language model is the wrong tool and a
 query would do.
 
 **Deliverables:**
+
 - Feasibility assessment, including where AI is the wrong answer
 - MCP server or LLM feature, integrated with your systems
 - Evaluation harness and a quality baseline you can re-run
@@ -104,6 +107,7 @@ nobody wants to touch. We tell you what we actually think, including when the
 answer is that your existing plan is fine.
 
 **Deliverables:**
+
 - Architecture or code review with prioritised, specific findings
 - Written recommendations, ordered by what they cost and what they save
 - Pairing sessions with your developers
@@ -123,6 +127,7 @@ getting useful results out of AI tooling. Sessions are hands-on and small, and
 you keep the written material afterwards. Marc leads this work.
 
 **Deliverables:**
+
 - Curriculum built from your team's current gaps
 - Hands-on sessions on your codebase
 - Written reference material that outlasts the session
@@ -149,7 +154,7 @@ different bet:
 first six words, which matters for a visitor who reads nothing else, and "small
 senior team" does real work — it pre-empts the "can four people handle this?"
 objection by framing size as the reason quality is possible. Option 3 is the
-better *line* but buries what the firm does behind a personality claim.
+better _line_ but buries what the firm does behind a personality claim.
 
 The live value is in `app/web/src/content/site.ts`. Options 1 and 3 are kept
 above as a record of what was considered and rejected, not as live

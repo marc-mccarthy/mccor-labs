@@ -22,6 +22,8 @@
   },
   "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the last version whose bundled browser revision matches the chromium-1228 already in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a newer revision and triggers a ~500MB download onto a volume at 89% capacity. Re-pin only alongside a deliberate `playwright install`.",
   "devDependencies": {
-    "@playwright/test": "1.61.0"
+    "@playwright/test": "1.61.0",
+    "prettier": "3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1"
   }
 }

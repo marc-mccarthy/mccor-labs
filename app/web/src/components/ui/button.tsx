@@ -18,7 +18,9 @@ const buttonVariants = cva(
       size: {
         sm: 'h-9 px-4',
         md: 'h-11 px-6',
-        lg: 'h-13 px-8 text-base',
+        // text-base resolves to the --color-base colour utility here, not a font
+        // size, so lg uses an arbitrary value to get the intended size bump.
+        lg: 'h-13 px-8 text-[1rem]',
       },
     },
     defaultVariants: { variant: 'primary', size: 'md' },

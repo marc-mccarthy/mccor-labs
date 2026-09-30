@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { Button, buttonVariants } from './button'
+import { Button } from './button'
+
+// Every colour and size assertion below reads the rendered element's
+// className, never buttonVariants(). cn() runs tailwind-merge over the cva
+// string, and a dropped class is only observable after that merge.
+function classesOf(name: string): string[] {
+  return screen.getByRole('button', { name }).className.split(/\s+/)
+}
 
 describe('Button', () => {
   it('renders its label', () => {
@@ -23,21 +30,38 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Sending' })).toBeDisabled()
   })
 
-  it('gives lg a font-size bump, not the text-base colour utility', () => {
-    // variant: 'link' has no text-base of its own, so this isolates the size
-    // fix from primary's deliberate (and separately pinned) colour use below.
-    const classes = buttonVariants({ variant: 'link', size: 'lg' })
-    expect(classes).toContain('text-[1rem]')
-    expect(classes).not.toContain('text-base')
+  it('keeps both the accent-fill label colour and the base font size on primary', () => {
+    render(<Button>Primary</Button>)
+    const classes = classesOf('Primary')
+    expect(classes).toContain('bg-accent')
+    expect(classes).toContain('text-on-accent')
+    expect(classes).toContain('text-sm')
   })
 
-  it('keeps text-base as the deliberate colour pairing on the primary variant', () => {
-    expect(buttonVariants({ variant: 'primary' })).toContain('text-base')
+  it('keeps the accent-fill label colour when lg bumps the font size', () => {
+    render(<Button size="lg">Large</Button>)
+    const classes = classesOf('Large')
+    expect(classes).toContain('text-on-accent')
+    expect(classes).toContain('text-[1rem]')
+    expect(classes).not.toContain('text-sm')
+  })
+
+  it('keeps the link variant its own colour at the lg size', () => {
+    render(
+      <Button variant="link" size="lg">
+        Read more
+      </Button>,
+    )
+    const classes = classesOf('Read more')
+    expect(classes).toContain('text-accent')
+    expect(classes).toContain('text-[1rem]')
   })
 
   it('defaults to the primary variant at the md size', () => {
-    const classes = buttonVariants()
+    render(<Button>Default</Button>)
+    const classes = classesOf('Default')
     expect(classes).toContain('bg-accent')
-    expect(classes).toContain('h-11 px-6')
+    expect(classes).toContain('h-11')
+    expect(classes).toContain('px-6')
   })
 })

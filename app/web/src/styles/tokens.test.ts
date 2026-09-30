@@ -40,6 +40,7 @@ const PAIRS: readonly [string, string, number, string][] = [
   ['accent', 'base', 4.5, 'link on page'],
   ['accent', 'surface', 4.5, 'link on card'],
   ['base', 'accent', 4.5, 'dark label on accent button'],
+  ['on-accent', 'accent', 4.5, 'accent button label under its own token'],
   ['brand', 'base', 3.0, 'brand as large display type'],
   ['border-strong', 'base', 3.0, 'control border on page'],
   ['border-strong', 'surface', 3.0, 'control border on card'],
@@ -59,6 +60,7 @@ describe('design tokens', () => {
       'text',
       'brand',
       'accent',
+      'on-accent',
     ]) {
       expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
         /^#[0-9a-f]{6}$/,

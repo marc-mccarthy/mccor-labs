@@ -18,6 +18,10 @@
   --color-brand: #3d6bff;
   /* Links, small text, button fill, focus rings — 5.31:1 on base. */
   --color-accent: #527bff;
+  /* Label colour on an accent fill. Same value as --color-base; a separate
+     token because `base` collides with Tailwind's font-size step, so
+     `text-base` emits a colour and tailwind-merge groups it with font sizes. */
+  --color-on-accent: #070a12;
 
   --color-glow-violet: #7c5cff;
   --color-glow-cyan: #22d3ee;

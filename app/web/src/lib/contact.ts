@@ -1,3 +1,5 @@
+import { ui } from '@/content/ui'
+
 export interface ContactRequest {
   name: string
   email: string
@@ -24,17 +26,15 @@ export function validateContact(request: ContactRequest): ContactErrors {
   const email = request.email.trim()
   const message = request.message.trim()
 
-  if (name.length < 1) errors.name = 'Please tell us your name.'
-  else if (name.length > 100) errors.name = 'That name is too long.'
+  if (name.length < 1) errors.name = ui.contactErrorName
+  else if (name.length > 100) errors.name = ui.contactErrorNameLength
 
-  if (!EMAIL.test(email)) errors.email = 'Please enter a valid email address.'
+  if (!EMAIL.test(email)) errors.email = ui.contactErrorEmail
 
-  if ((request.company ?? '').length > 100)
-    errors.company = 'That company name is too long.'
+  if ((request.company ?? '').length > 100) errors.company = ui.contactErrorCompanyLength
 
-  if (message.length < 10) errors.message = 'Please add a little more detail.'
-  else if (message.length > 5000)
-    errors.message = 'Please shorten this to under 5000 characters.'
+  if (message.length < 10) errors.message = ui.contactErrorMessage
+  else if (message.length > 5000) errors.message = ui.contactErrorMessageLength
 
   return errors
 }

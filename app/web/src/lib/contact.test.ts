@@ -32,6 +32,14 @@ describe('validateContact', () => {
   it('rejects an over-long message rather than sending it', () => {
     expect(validateContact({ ...valid, message: 'x'.repeat(5001) }).message).toBeTruthy()
   })
+
+  it('rejects a name over 100 characters', () => {
+    expect(validateContact({ ...valid, name: 'x'.repeat(101) }).name).toBeTruthy()
+  })
+
+  it('rejects a company name over 100 characters', () => {
+    expect(validateContact({ ...valid, company: 'x'.repeat(101) }).company).toBeTruthy()
+  })
 })
 
 describe('submitContact', () => {
@@ -81,5 +89,21 @@ describe('submitContact', () => {
       ok: false,
       error: 'server',
     })
+  })
+
+  // The client does not filter a filled honeypot itself: per spec, the server
+  // discards a honeypot submission silently (`{ ok: true }` without sending
+  // it on), so the client's job is only to forward the field, not to decide.
+  it('forwards a filled honeypot to the server rather than filtering it client-side', async () => {
+    const filled = { ...valid, honeypot: 'a bot wrote this' }
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+    const result = await submitContact(filled, 'https://api.test/contact')
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.test/contact',
+      expect.objectContaining({ body: JSON.stringify(filled) }),
+    )
+    expect(result).toEqual({ ok: true })
   })
 })

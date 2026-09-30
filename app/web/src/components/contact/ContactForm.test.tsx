@@ -29,7 +29,7 @@ describe('ContactForm with an endpoint', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
     render(<ContactForm endpoint="https://api.test/contact" />)
     await userEvent.click(screen.getByRole('button', { name: ui.formSubmit }))
-    expect(await screen.findByText('Please tell us your name.')).toBeInTheDocument()
+    expect(await screen.findByText(ui.contactErrorName)).toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 

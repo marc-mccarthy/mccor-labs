@@ -23,9 +23,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   if (endpoint === null) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
-        <p className="text-text">
-          Our contact form is not live yet — book a call or email us directly.
-        </p>
+        <p className="text-text">{ui.contactNotLive}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <BookingCta />
           <Button asChild variant="link">
@@ -89,7 +87,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     >
       <div>
         <label htmlFor="name" className="mb-1 block text-sm text-text">
-          Name
+          {ui.contactLabelName}
         </label>
         <input
           id="name"
@@ -107,7 +105,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
       <div>
         <label htmlFor="email" className="mb-1 block text-sm text-text">
-          Email
+          {ui.contactLabelEmail}
         </label>
         <input
           id="email"
@@ -126,17 +124,18 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
       <div>
         <label htmlFor="company" className="mb-1 block text-sm text-text">
-          Company <span className="text-muted">(optional)</span>
+          {ui.contactLabelCompany}{' '}
+          <span className="text-muted">{ui.contactOptional}</span>
         </label>
         <input id="company" name="company" className={FIELD} />
       </div>
 
       <div>
         <label htmlFor="budget" className="mb-1 block text-sm text-text">
-          Budget <span className="text-muted">(optional)</span>
+          {ui.contactLabelBudget} <span className="text-muted">{ui.contactOptional}</span>
         </label>
         <select id="budget" name="budget" className={FIELD} defaultValue="">
-          <option value="">Prefer not to say</option>
+          <option value="">{ui.contactBudgetPlaceholder}</option>
           {site.budgetOptions.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -147,7 +146,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
       <div>
         <label htmlFor="message" className="mb-1 block text-sm text-text">
-          Message
+          {ui.contactLabelMessage}
         </label>
         <textarea
           id="message"
@@ -167,7 +166,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       {/* Honeypot: hidden from sight and from the keyboard, but present in the
           DOM so naive bots fill it. Not display:none, which some bots detect. */}
       <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-        <label htmlFor="honeypot">Leave this empty</label>
+        <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>
         <input id="honeypot" name="honeypot" tabIndex={-1} aria-hidden="true" />
       </div>
 

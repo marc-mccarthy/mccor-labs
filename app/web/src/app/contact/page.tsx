@@ -1,5 +1,10 @@
 import type { Metadata } from 'next'
+
+import { ContactForm } from '@/components/contact/ContactForm'
+import { Container } from '@/components/layout/Container'
+import { Section } from '@/components/layout/Section'
 import { PageHeader } from '@/components/sections/PageHeader'
+import { env } from '@/lib/env'
 
 export const metadata: Metadata = {
   title: 'Contact',
@@ -8,9 +13,16 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <PageHeader
-      title="Contact"
-      description="Tell us about the project, or book a call directly."
-    />
+    <>
+      <PageHeader
+        title="Contact"
+        description="Tell us about the project, or book a call directly."
+      />
+      <Section className="pt-0">
+        <Container>
+          <ContactForm endpoint={env.contactEndpoint} />
+        </Container>
+      </Section>
+    </>
   )
 }

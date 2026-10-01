@@ -11,7 +11,7 @@
   "packageManager": "pnpm@12.6.0",
   "scripts": {
     "recon": "node scripts/recon-reference-sites.mjs",
-    "capture": "node scripts/capture-reference-site.mjs",
+    "capture": "node scripts/capture-ui-references.mjs",
     "//dev": "op authorization is per-process and TTY-bound (a prompt per invocation), so only dev/build are wrapped rather than every script; build:raw is the unwrapped escape hatch for a build against an unconfigured/locked vault.",
     "dev": "op run --env-file=app/web/.env.template -- pnpm -F web dev",
     "build": "op run --env-file=app/web/.env.template -- pnpm -F web build",
@@ -21,7 +21,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
-  "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the last version whose bundled browser revision matches the chromium-1228 already in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a newer revision and triggers a ~500MB download onto a volume at 89% capacity. Re-pin only alongside a deliberate `playwright install`.",
+  "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the version whose bundled browser revision matches the revision installed in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a different revision, and the suite then cannot launch a browser until someone runs `playwright install` and downloads one. Re-pin only alongside a deliberate `playwright install`.",
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.61.0",

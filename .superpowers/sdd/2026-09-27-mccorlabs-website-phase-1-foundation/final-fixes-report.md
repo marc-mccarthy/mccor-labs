@@ -184,3 +184,111 @@ legitimately judged on: each glow against `base` at WCAG 1.4.11's 3:1 for a non-
 that must exist, which nothing covered before.
 
 Verification: `vitest run src/styles/tokens.test.ts` 18 tests passed.
+
+Commit `be393a5`.
+
+## 7. Findings 9, 20, 21.1 and 22 — four stale or broken references
+
+**Finding 9.** `package.json`'s `capture` script pointed at `scripts/capture-reference-site.mjs`.
+`ls scripts/` lists `capture-ui-references.mjs`, `lib`, `recon-reference-sites.mjs` and
+`verify-site-selectors.mjs` — no such file as the one the script named. Repointed at
+`scripts/capture-ui-references.mjs`, which `node --check` parses cleanly. I did not execute it,
+since it drives a browser against live sites.
+
+**Finding 20.** The `"//"` comment justified the exact Playwright pin with "a volume at 89%
+capacity", which measurement had falsified. Rewrote it to the reason that is actually true — the
+exact pin matches the browser revision installed in `~/Library/Caches/ms-playwright`, and a caret
+range floats to a version wanting a different revision, after which the suite cannot launch a
+browser until someone downloads one. `ls ~/Library/Caches/ms-playwright/` now shows
+`chromium-1228` present, alongside `chromium-1223`, `chromium-1247` and three Firefox revisions.
+The pin and the warning against widening it are kept.
+
+**Finding 21.1.** Added a paragraph to `README.md` after the requirements line recording that pnpm
+12.6.0 comes from Homebrew, that `/opt/homebrew/bin` must come first on `PATH`, and that a plain
+`pnpm` here is a self-installing shim which tries to fetch `pnpm@12.6.0` from npm where that
+version does not exist — so commands and git hooks die silently rather than reporting an error.
+
+**Finding 22.** Rewrote the "Note on tracking" in `docs/website-design/PHASE-1-CARRY-FORWARD.md`.
+Measured the current state rather than taking the review's word: `.gitignore:27-28` narrows the
+ignore to `infra/**/superpowers/` and `infra/**/.superpowers/`; `git ls-files docs/superpowers/`
+returns 8 files; `git ls-files .superpowers/` returns 88; `git check-ignore -v` on the spec exits 1,
+meaning it is not ignored. The note now says a `git clean` no longer destroys the phase 2 plan, and
+keeps the one part that is still true — `**/ui-references/` is still ignored, so the captured
+reference corpus still needs backing up outside git.
+
+Two notes on that file for the owner:
+
+1. It is edited at its new `docs/website-design/` path, as instructed, which means this commit adds
+   that path to the index while the deletion of the old `docs/PHASE-1-CARRY-FORWARD.md` stays
+   unstaged in the other session's working tree. Until that session commits its deletions, both
+   paths are tracked.
+2. The same note's closing sentence previously said "This document and the prompt template live
+   directly under `docs/`". They no longer do — the other session moved them. I left the location
+   claim out of the rewrite rather than restating it, since the directory layout is that session's
+   in-flight work, not mine to assert.
+
+Commit `fa0de45`.
+
+---
+
+## End-state verification
+
+| Check | Result |
+|---|---|
+| `pnpm -F web exec vitest run` | **9 files, 68 tests, all passed** (1.15s). Was 9 files / 64 tests; the four added are the `on-accent`/`accent-hover` pair, the two glow pairs, and the split of the booking CTA test into two cases. |
+| `pnpm -F web lint` | **exit 0** |
+| `pnpm -F web exec tsc --noEmit` | **exit 0** |
+| `pnpm -F web test:e2e` | **28 passed** on Firefox headless (7.9s), matching the recorded figure |
+
+`git status --short` shows only the other session's `infra/` modifications and its documentation
+reorganisation, plus the one `docs/website-design/` file this wave had to edit.
+
+## What I could not do, and one thing to know
+
+**`pnpm build` through `op run` no longer completes.** It failed with
+`NEXT_PUBLIC_BOOKING_URL is required for a production build`. The cause is not the branch: while
+this fix wave was running, another session committed `4c78266`, "chore: replace a real booking URL
+with a placeholder", and the 1Password item's `booking_url` field is now empty —
+`op read op://Development/mccorlabs/booking_url` returns an empty string, and
+`op item get mccorlabs --format json` shows the field's value as null, while `site_url` still reads
+`https://mccorlabs.com`. `op whoami` succeeds as a service account, so this is the item's content,
+not an auth failure.
+
+That failing build also deleted `app/web/out/`, which the e2e suite serves. To get a real e2e
+result I rebuilt through `pnpm build:raw` with the two public values supplied on the command line.
+The first such rebuild used the real calendar URL, since I did not yet know it had just been
+scrubbed; on finding commit `4c78266` I immediately rebuilt with
+`NEXT_PUBLIC_BOOKING_URL=https://calendar.app.google/EXAMPLE` and re-ran the suite, which passed
+28/28 again. The real value is now absent from the whole working tree and from `app/web/out/`:
+`grep -rl` over the tree returns 0 hits and `git grep` at HEAD returns 0.
+
+It does survive in three files under `app/web/.next/dev/`, which belong to a `next dev` server
+another session is running (PID 51787) and which predate the scrub. `.next/` is gitignored, so
+nothing reaches history, but that server's cache should be cleared when it is next stopped — I did
+not touch it, since deleting a live dev server's cache is not mine to do.
+
+**Someone needs to repopulate `booking_url` in the `mccorlabs` item** before the next
+`pnpm build`, or every build through `op run` will keep failing this way. I did not write to the
+vault.
+
+**Finding 5d is untouched** — the Motion rule still lists only `motion` and `motion/react`, not
+`motion/mini`, `motion/react-client` or `framer-motion`. It was outside this wave's scope.
+
+## Update: the vault was restored, and the build was re-verified through `op run`
+
+The owner restored `booking_url` in the `mccorlabs` item (now version 4). With that in place the
+build and the e2e suite were re-run the normal way, replacing the `build:raw` workaround described
+above:
+
+| Check | Result |
+|---|---|
+| `pnpm build` (through `op run`) | **exit 0** |
+| `git status --short app/web/` immediately after that build | **empty** — item 2's fix holds, neither `tsconfig.json` nor `next-env.d.ts` is dirtied |
+| `pnpm -F web test:e2e` against the `op`-built export | **28 passed** on Firefox headless (15.7s) |
+
+So the earlier `NEXT_PUBLIC_BOOKING_URL is required for a production build` failure was the cleared
+vault field, not anything on this branch. `src/lib/env.ts` was not touched and needs no fallback —
+failing when the value is absent is the spec's intended behaviour.
+
+`app/web/src/lib/env.test.ts` was changed by commit `4c78266`, not by this wave. Nothing here edits
+it, and the suite passes against its current contents.

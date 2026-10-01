@@ -212,6 +212,12 @@ everything else here.
 
 Requirements: Node 24 (see `.node-version`), pnpm 12, and the 1Password CLI (`op`), signed in.
 
+Install pnpm from Homebrew (`brew install pnpm`), which is where 12.6.0 comes from
+on this machine, and make sure `/opt/homebrew/bin` is on your `PATH` before any
+other pnpm: a plain `pnpm` here resolves to a self-installing shim that tries to
+fetch `pnpm@12.6.0` from npm, where that version does not exist, so every command
+and every git hook dies silently rather than reporting an error.
+
 ### Running it locally
 
 ```bash

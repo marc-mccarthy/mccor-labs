@@ -2,6 +2,9 @@ node_modules/
 pnpm-lock.yaml
 app/web/.next/
 app/web/out/
+# next build regenerates these; Prettier must not police them
+app/web/next-env.d.ts
+app/web/tsconfig.json
 test-results/
 playwright-report/
 docs/ui-references/

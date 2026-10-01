@@ -164,3 +164,23 @@ the source are all in comments, which are not AST `Literal` nodes.
 
 Not changed: Finding 5d, the Motion rule's missing `motion/mini`, `motion/react-client` and
 `framer-motion` entry points. It was not in the fix wave's scope.
+
+Commit `fdc96ce`.
+
+## 6. Finding 11's missing glow pair
+
+`app/web/src/styles/tokens.test.ts`. The reviewer measured `--color-text` `#eef2f8` on
+`--color-glow-violet` `#7c5cff` at 3.8684:1, which fails AA for text at any size. I recomputed it
+with the same formula and got the same figure, and `--color-text` on `--color-glow-cyan` `#22d3ee`
+at 1.6085:1.
+
+A threshold assertion cannot express "text must not sit on the glow": asserting the ratio stays
+*below* 4.5 would fail if someone legitimately darkened a glow, which is not a regression. So the
+constraint is recorded as the spec states it — the spec, line 553-555, says the gradient glow "is a
+_light source_ behind content. It never sits under text and never carries meaning" — in a comment
+carrying both measured figures, and the pairs that *are* asserted are the ones the glow is
+legitimately judged on: each glow against `base` at WCAG 1.4.11's 3:1 for a non-text graphic
+(`glow-violet` 4.5533:1, `glow-cyan` 10.9503:1). Both glows were also added to the list of tokens
+that must exist, which nothing covered before.
+
+Verification: `vitest run src/styles/tokens.test.ts` 18 tests passed.

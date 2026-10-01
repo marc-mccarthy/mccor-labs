@@ -56,3 +56,21 @@ TSC_EXIT=0   (no output)
 ```
 
 So the committed form typechecks with and without build output.
+
+Verification after the commit: `pnpm build` exit 0, `git status --short` shows neither
+`app/web/tsconfig.json` nor `app/web/next-env.d.ts`, and `pnpm -F web exec tsc --noEmit` exits 0
+under the newly committed config.
+
+Commit `1ae89eb`.
+
+## 3. Finding 7 — the no-endpoint contact assertion is now unconditional
+
+`app/web/tests/e2e/contact.spec.ts:13-20` wrapped its only assertion in
+`if ((await submit.count()) === 0)`. A wrongly rendered submit button made the condition false,
+no assertion ran, and the test reported green — the shape the ledger rejected for
+`a11y.spec.ts`.
+
+Replaced the guard with two unconditional assertions, `await expect(submit).toHaveCount(0)` and
+`await expect(mailto.first()).toBeVisible()`, and a comment recording why they are safe to run
+unconditionally: the fixture is built with no `NEXT_PUBLIC_CONTACT_ENDPOINT`. Name and intent
+unchanged.

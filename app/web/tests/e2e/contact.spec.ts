@@ -14,8 +14,12 @@ test.describe('contact route', () => {
     await page.goto('/contact/')
     const submit = page.getByRole('button', { name: /send message/i })
     const mailto = page.locator('a[href^="mailto:"]')
-    if ((await submit.count()) === 0) {
-      await expect(mailto.first()).toBeVisible()
-    }
+    // The fixture is built with no NEXT_PUBLIC_CONTACT_ENDPOINT, which is a
+    // build-time fact this suite controls, so both assertions run
+    // unconditionally. Guarding them on the button's absence would make the
+    // test pass in exactly the case it exists to catch: a submit button
+    // rendered with nowhere to submit to.
+    await expect(submit).toHaveCount(0)
+    await expect(mailto.first()).toBeVisible()
   })
 })

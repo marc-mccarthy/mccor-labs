@@ -18,6 +18,7 @@ node_modules/
 **/ui-preferences/
 **/ui-references/
 **/.playwright-mcp/
+**/.playwright-cli/
 **/superpowers/
 **/.superpowers/
 

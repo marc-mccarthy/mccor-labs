@@ -74,3 +74,29 @@ Replaced the guard with two unconditional assertions, `await expect(submit).toHa
 `await expect(mailto.first()).toBeVisible()`, and a comment recording why they are safe to run
 unconditionally: the fixture is built with no `NEXT_PUBLIC_CONTACT_ENDPOINT`. Name and intent
 unchanged.
+
+Commit `57401cc`.
+
+## 4. Finding 8 — both booking CTA branches covered independently
+
+`app/web/src/components/layout/layout.test.tsx:22-32` imported `env` at module scope and branched
+on `env.bookingUrl === null`. Under `NODE_ENV=test` with no `NEXT_PUBLIC_BOOKING_URL` that is
+always `null`, so the `else` branch — the one that actually ships, carrying
+`target="_blank" rel="noopener noreferrer"` — never ran and the anti-tabnabbing assertion was
+dead.
+
+Replaced the single branching test with two independent cases over a `vi.mock('@/lib/env', …)`
+whose object is created by `vi.hoisted` so the mock factory can see it. A `beforeEach` resets
+`bookingUrl` to `null`, and each case sets what it needs:
+
+- "falls back to an email link when booking is not configured" — `bookingUrl: null`, asserts the
+  `mailto:` href.
+- "links to the booking url in a new tab when booking is configured" — a configured URL, asserts
+  `href`, `target="_blank"`, and `rel` containing both `noopener` and `noreferrer`.
+
+No `if`/`else` remains, so neither case can silently not run. The booking case queries by
+`ui.bookCall`, which only the configured branch renders, so its passing is itself evidence that
+the branch executed.
+
+Verification: `vitest run` 9 files / 66 tests passed, `pnpm -F web lint` exit 0,
+`tsc --noEmit` exit 0.

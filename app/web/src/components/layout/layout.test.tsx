@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Footer } from './Footer'
 import { Header } from './Header'
@@ -6,9 +6,28 @@ import { SkipLink } from './SkipLink'
 import { footerNav, nav } from '@/content/nav'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
-import { env } from '@/lib/env'
+
+// BookingCta reads env.bookingUrl at render time. The real module derives it
+// from process.env, which under NODE_ENV=test is always unset — so without a
+// mock only the mailto branch would ever run and the branch that actually
+// ships, the one carrying rel="noopener noreferrer", would have no coverage.
+const mocked = vi.hoisted(() => ({
+  env: {
+    siteUrl: 'https://mccorlabs.com',
+    bookingUrl: null as string | null,
+    contactEndpoint: null as string | null,
+  },
+}))
+
+vi.mock('@/lib/env', () => mocked)
+
+const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
 
 describe('Header', () => {
+  beforeEach(() => {
+    mocked.env.bookingUrl = null
+  })
+
   it('renders every primary nav destination', () => {
     render(<Header />)
     for (const item of nav) {
@@ -19,16 +38,23 @@ describe('Header', () => {
     }
   })
 
-  it('offers a working call to action whether or not booking is configured', () => {
+  it('falls back to an email link when booking is not configured', () => {
+    mocked.env.bookingUrl = null
     render(<Header />)
-    if (env.bookingUrl === null) {
-      const cta = screen.getByRole('link', { name: ui.contactFallback })
-      expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
-    } else {
-      const cta = screen.getByRole('link', { name: ui.bookCall })
-      expect(cta).toHaveAttribute('href', env.bookingUrl)
-      expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
-    }
+    const cta = screen.getByRole('link', { name: ui.contactFallback })
+    expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
+  })
+
+  it('links to the booking url in a new tab when booking is configured', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    render(<Header />)
+    const cta = screen.getByRole('link', { name: ui.bookCall })
+    expect(cta).toHaveAttribute('href', BOOKING_URL)
+    expect(cta).toHaveAttribute('target', '_blank')
+    // target="_blank" without both of these lets the opened page reach back
+    // through window.opener — reverse tabnabbing.
+    expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 })
 

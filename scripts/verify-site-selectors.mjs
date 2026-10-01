@@ -126,7 +126,18 @@ async function enterRoute(page, route, attempt = 0) {
 
   // The gate is often present in the DOM before it is wired up. y-n10 measurably ignores a click
   // at 2.5s and accepts the identical click at 9s.
-  if (entry.settleBeforeMs) await page.waitForTimeout(entry.settleBeforeMs)
+  //
+  // Prefer the site's OWN readiness signal where it publishes one. pacomepertant adds a `show`
+  // class to the button at ~11.8s while the button itself exists from ~2.3s, and the delay varies
+  // with connection speed, so no fixed number is correct — a 3s wait clicked an inert button and
+  // the gate never opened. Fall back to settleBeforeMs for gates with no such signal.
+  if (entry.readySelector) {
+    await page
+      .waitForSelector(entry.readySelector, { timeout: entry.readyTimeoutMs ?? 30000 })
+      .catch(() => {})
+  } else if (entry.settleBeforeMs) {
+    await page.waitForTimeout(entry.settleBeforeMs)
+  }
 
   const pre = await page.evaluate((sel) => {
     const els = document.querySelectorAll(sel)

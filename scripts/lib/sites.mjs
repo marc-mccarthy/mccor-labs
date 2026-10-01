@@ -188,9 +188,14 @@ export const SITES = [
           // page.mouse.move+down+up at the same measured rect centre does NOT (loader stays).
           // The opposite of y-n10. Hence an explicit per-route method.
           method: 'locator',
-          // MEASURED: 3s works, and waiting LONGER stops working — at ~30s after load the click
-          // no longer enters. The gate is timing-sensitive in both directions.
-          settleBeforeMs: 3000,
+          // MEASURED 2026-10-01: wait for the `show` CLASS, not a fixed delay. `button.enter`
+          // exists at ~2.3s but is inert; the site adds `show` at ~11.8s, and only then does a
+          // click enter. The previous fixed `settleBeforeMs: 3000` therefore clicked a present
+          // but not-yet-live button and the gate never opened — GATE_NOT_ENTERED at all four
+          // viewports, reproduced twice. The delay is also connection-dependent, so no fixed
+          // number is correct; `show` is the site's own readiness signal.
+          readySelector: 'main button.enter.show',
+          readyTimeoutMs: 30000,
           verifiedViewports: ['wide', 'desktop', 'tablet', 'mobile'],
           note: "substring match required; 'enter without sound' also exists. Sound is design intent, so the with-sound variant is chosen.",
         },
@@ -226,7 +231,17 @@ export const SITES = [
           bio: 'main > div.wrapper:nth-of-type(1)',
           'work-thumbnails': 'main > div.wrapper:nth-of-type(2)',
           contact: 'main > div.wrapper:nth-of-type(3)',
-          'image-trail': '.image-trail',
+          // MEASURED 2026-10-01: pointer-driven, so the site does not render it on a touch
+          // device. Identical width and wait, the only difference being mobile emulation:
+          //   isMobile:true  -> .image-trail = 0
+          //   isMobile:false -> .image-trail = 1
+          // That is real responsive behaviour — an image trail follows a cursor and a touch
+          // device has none — not a stale selector and not a timing race. Declared desktop-side
+          // only so the checker does not demand it where the site deliberately omits it.
+          'image-trail': {
+            selector: '.image-trail',
+            viewports: ['wide', 'desktop', 'tablet'],
+          },
           socials: '.socials',
           credits: 'p.credits',
         },

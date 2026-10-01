@@ -18,6 +18,10 @@
   --color-brand: #3d6bff;
   /* Links, small text, button fill, focus rings — 5.31:1 on base. */
   --color-accent: #527bff;
+  /* Hover fill for an accent control. Lighter than --color-accent so the state
+     change is visible, and 6.68:1 against --color-on-accent, where
+     --color-brand would be 4.47:1 and fail AA for a small label. */
+  --color-accent-hover: #6d90ff;
   /* Label colour on an accent fill. Same value as --color-base; a separate
      token because `base` collides with Tailwind's font-size step, so
      `text-base` emits a colour and tailwind-merge groups it with font sizes. */

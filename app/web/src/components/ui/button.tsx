@@ -12,7 +12,7 @@ const buttonVariants = cva(
         // Dark label on the accent fill: 5.31:1. text-on-accent rather than
         // text-base because `base` is also a font-size step, so tailwind-merge
         // would group the colour with the sizes and drop one of them.
-        primary: 'bg-accent text-on-accent hover:bg-brand',
+        primary: 'bg-accent text-on-accent hover:bg-accent-hover',
         secondary: 'bg-surface text-text border border-border-strong hover:bg-elevated',
         ghost: 'text-text hover:bg-surface',
         link: 'text-accent underline-offset-4 hover:underline',

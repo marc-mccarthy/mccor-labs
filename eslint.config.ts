@@ -125,6 +125,21 @@ export default tseslint.config(
               message:
                 'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
             },
+            {
+              name: 'motion/mini',
+              message:
+                'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
+            },
+            {
+              name: 'motion/react-client',
+              message:
+                'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
+            },
+            {
+              name: 'framer-motion',
+              message:
+                'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
+            },
           ],
           patterns: [
             {

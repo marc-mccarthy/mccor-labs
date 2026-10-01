@@ -33,3 +33,26 @@ exist. The pair `['on-accent', 'accent', 4.5, ...]` was already present at line 
 
 Verification: `vitest run` 9 files / 65 tests passed (one more than the previous 64, the new
 pair), `pnpm -F web lint` exit 0, Prettier clean on all three files.
+
+Commit `90a7210`.
+
+## 2. Finding 3 — commit the tsconfig form that `next build` produces
+
+`pnpm build` rewrites `app/web/tsconfig.json` (`jsx: "preserve"` becomes `"react-jsx"`,
+`.next/dev/types/**/*.ts` is appended to `include`, and every array is expanded to one entry per
+line) and appends two imports to `app/web/next-env.d.ts`. Commit `2c8241f` had silenced
+`format:check` on both; the rewrite itself still happened on every build, and `pnpm build` runs
+on pre-push.
+
+Committed both files in the form the build produces, so the rewrite is now a no-op.
+
+Before committing, I checked the case the change could break: a fresh clone with no `.next/`
+directory, where `next-env.d.ts`'s new `import "./.next/types/routes.d.ts"` has nothing to
+resolve to. Probe — move `app/web/.next` and `app/web/tsconfig.tsbuildinfo` aside, run
+`pnpm -F web exec tsc --noEmit` cold, restore both:
+
+```
+TSC_EXIT=0   (no output)
+```
+
+So the committed form typechecks with and without build output.

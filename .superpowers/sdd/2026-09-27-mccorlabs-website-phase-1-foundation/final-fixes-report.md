@@ -100,3 +100,67 @@ the branch executed.
 
 Verification: `vitest run` 9 files / 66 tests passed, `pnpm -F web lint` exit 0,
 `tsc --noEmit` exit 0.
+
+Commit `ea780cc`.
+
+### Caveat on item 2 found later
+
+While probing the lint rules for item 5, `app/web/next-env.d.ts` turned up modified again, but to
+a different form than before — `./.next/dev/types/...` instead of the committed
+`./.next/types/...`:
+
+```diff
+-import "./.next/types/routes.d.ts";
++import "./.next/dev/types/routes.d.ts";
+```
+
+I could not reproduce it: after restoring the file, `pnpm -F web lint` left the tree clean,
+`pnpm -F web exec eslint` on an existing file left it clean, and the same on a newly created file
+left it clean. `ps` shows a `next dev` server running in this repository (PID 51787, `next-server
+v16.3.6`), started by another session; it is a plausible writer of the dev-path form, but I did
+not isolate the cause and so do not claim it. What is measured: with the build form committed,
+`pnpm build` leaves both files unmodified, and so does `pnpm -F web lint`.
+
+## 5. Findings 5 and 6 — ESLint rule gaps closed, plus a text-base guard
+
+`eslint.config.ts`. Four changes:
+
+1. The colour rule gains a `TemplateElement[value.raw=/…/]` selector. A `TemplateLiteral`'s parts
+   are `TemplateElement` nodes whose `value` is an object, so the existing `Literal[value=/…/]`
+   selector could never see a hex or `rgb()` written inside backticks.
+2. The colour rule's glob widens from `app/web/src/**/*.tsx` to `app/web/src/**/*.{ts,tsx}`,
+   keeping the `app/web/src/styles/**` exclusion. `src/content/` and `src/lib/` are `.ts`, and
+   `src/content/` is where phase 2 puts data that can carry colour values.
+3. The lazy-effects import group gains `**/components/effects/**` and the relative forms
+   `./effects/*`, `./effects/**`, `../effects/*`, `../effects/**`, `../../effects/*`,
+   `../../effects/**`. Relative sibling imports are already a house convention — `Header.tsx`
+   imports `./BookingCta` and `./Container` that way — so the relative form was the likely one to
+   be written.
+4. A new `text-base` guard, as `Literal` and `TemplateElement` selectors, scoped to
+   `app/web/src/**/*.tsx`.
+
+`no-restricted-syntax` does not merge across flat-config blocks — the last matching block replaces
+the whole option array — so the colour selectors are declared once as a shared const and restated
+in the `.tsx` block that also carries the `text-base` selectors. Without that, adding the
+`text-base` block would have silently removed the colour rule from every `.tsx` file.
+
+Probe: six files written under `app/web/src/`, linted, then deleted in the same command.
+
+| Probe | File | Result |
+|---|---|---|
+| A | `` const c = `#ff0000` `` and `` `linear-gradient(rgb(1, 2, 3), transparent)` `` in `.tsx` | **error**, both lines, template-literal message |
+| B | `export const brandHex = '#ff0000'` in `src/content/__probeB.ts` | **error** |
+| C | `export const libHex = '#ff0000'` in `src/lib/__probeC.ts` | **error** |
+| D | `import * as Fx from '../effects/Fx'` in `src/components/sections/__probeD.tsx` | **error**, `no-restricted-imports` |
+| E | `className="text-base font-medium"` in `.tsx` | **error**, text-base message |
+| F | `style={{ color: '#ff0000' }}` in `.tsx` (control, previously caught) | **error**, still caught |
+
+All six were previously silent except F. `git status --short` after deleting the probes matched the
+baseline.
+
+`PATH=/opt/homebrew/bin:$PATH pnpm -F web lint` exits 0 on the existing code under all four rules,
+so no current file trips the widened globs or the new guard. The three `text-base` occurrences in
+the source are all in comments, which are not AST `Literal` nodes.
+
+Not changed: Finding 5d, the Motion rule's missing `motion/mini`, `motion/react-client` and
+`framer-motion` entry points. It was not in the fix wave's scope.

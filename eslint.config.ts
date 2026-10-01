@@ -8,6 +8,41 @@ import prettierConfig from 'eslint-config-prettier/flat'
 // validation error) when handed this package's already-flat Linter.Config[] export.
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 
+// no-restricted-syntax does not merge across flat-config blocks: the last block that
+// matches a file replaces the whole option array. The colour selectors therefore have to be
+// repeated in the .tsx block that also carries the text-base selector, so they are declared
+// once here.
+const rawColourSelectors = [
+  {
+    // A plain string literal: style={{ color: '#ff0000' }} or className="bg-[#ff0000]".
+    selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
+    message:
+      'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
+  },
+  {
+    // A template literal's own text. Its parts are TemplateElement nodes whose `value` is an
+    // object, not a string, so the Literal selector above cannot see them.
+    selector:
+      'TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
+    message:
+      'No raw colour values in components, including inside a template literal. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
+  },
+]
+
+const textBaseMessage =
+  'Do not use text-base. The --color-base token makes Tailwind emit text-base as a colour utility, not a font size, and tailwind-merge groups it with the font sizes so one of the two is dropped. Use text-on-accent for a dark label on an accent fill, or text-[1rem] for a 1rem font size.'
+
+const textBaseSelectors = [
+  {
+    selector: 'Literal[value=/\\btext-base\\b/]',
+    message: textBaseMessage,
+  },
+  {
+    selector: 'TemplateElement[value.raw=/\\btext-base\\b/]',
+    message: textBaseMessage,
+  },
+]
+
 export default tseslint.config(
   {
     ignores: [
@@ -53,17 +88,22 @@ export default tseslint.config(
 
   // Project rules that enforce the spec's architecture.
   {
+    // .ts as well as .tsx: src/content/ and src/lib/ are .ts, and src/content/ is where the
+    // typed data — gradient stops, chart colours, media slots — will carry colour values.
+    files: ['app/web/src/**/*.{ts,tsx}'],
+    ignores: ['app/web/src/styles/**'],
+    rules: {
+      'no-restricted-syntax': ['error', ...rawColourSelectors],
+    },
+  },
+
+  {
+    // The text-base trap is a className concern, so it is scoped to components, and the
+    // colour selectors are restated because this block replaces the option array above.
     files: ['app/web/src/**/*.tsx'],
     ignores: ['app/web/src/styles/**'],
     rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
-          message:
-            'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...rawColourSelectors, ...textBaseSelectors],
     },
   },
 
@@ -88,7 +128,19 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              group: ['**/components/effects/*'],
+              // Both the alias form and the relative sibling form, which is already a house
+              // convention (Header.tsx imports ./BookingCta and ./Container that way). The
+              // ** variants catch an effect nested a directory deeper.
+              group: [
+                '**/components/effects/*',
+                '**/components/effects/**',
+                './effects/*',
+                './effects/**',
+                '../effects/*',
+                '../effects/**',
+                '../../effects/*',
+                '../../effects/**',
+              ],
               message:
                 'Effects must be loaded with next/dynamic so no page pays for an effect it does not render.',
             },

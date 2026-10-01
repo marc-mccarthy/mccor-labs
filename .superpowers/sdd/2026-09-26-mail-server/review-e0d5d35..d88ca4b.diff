@@ -1,0 +1,115 @@
+# Review package: e0d5d35..HEAD
+
+## Commits
+d88ca4b fix(mailserver): keep ACME store on the persistent volume
+
+## Files changed
+ infra/modules/mailserver/templates/setup.sh.tftpl | 45 +++++++++++++++++++++--
+ 1 file changed, 41 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/infra/modules/mailserver/templates/setup.sh.tftpl b/infra/modules/mailserver/templates/setup.sh.tftpl
+index e16c52a..4a52766 100644
+--- a/infra/modules/mailserver/templates/setup.sh.tftpl
++++ b/infra/modules/mailserver/templates/setup.sh.tftpl
+@@ -68,37 +68,74 @@ mount -a
+ 
+ if ! mountpoint -q /var/mail-data; then
+   echo "FATAL: /var/mail-data did not mount" >&2
+   exit 1
+ fi
+ 
+ mkdir -p /var/mail-data/{mail-data,mail-state,mail-logs,config,letsencrypt}
+ 
+ # ---------- TLS certificate ----------
+ # Standalone mode binds port 80, which is why the security group opens it.
++#
++# The ACME store lives on the persistent MAIL volume, not the root volume.
++# Let's Encrypt allows 5 certificates per name set per week; with the store
++# on the disposable root disk, a handful of instance replacements locks
++# issuance for over a day. On the mail volume a rebuilt instance finds its
++# existing certificate and issues nothing.
++#
++# certbot's defaults are not symlinked to this path: "apt-get install
++# certbot" creates /etc/letsencrypt as a real directory first, so a later
++# "ln -sfn ... /etc/letsencrypt" would land *inside* it rather than replace
++# it, and certbot would keep writing to the root volume. Explicit
++# --config-dir/--work-dir/--logs-dir flags are used everywhere instead, and
++# reused by the renewal timer override below.
++CERTBOT_DIR="/var/mail-data/letsencrypt"
+ apt-get install -y certbot
+-if [ ! -d "/etc/letsencrypt/live/$FQDN" ]; then
++
++if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
+   for i in $(seq 1 20); do
+     certbot certonly --standalone --non-interactive --agree-tos \
++      --config-dir "$CERTBOT_DIR" --work-dir "$CERTBOT_DIR/work" \
++      --logs-dir "$CERTBOT_DIR/logs" \
+       -m "$ALERT_EMAIL" -d "$FQDN" && break
+     echo "certbot failed (DNS may not have propagated yet); retrying in 60s"
+     sleep 60
+   done
+ fi
+ 
++if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
++  echo "FATAL: no certificate for $FQDN" >&2
++  exit 1
++fi
++
+ # Renewal has to pause the mail server's port 80 listener; there isn't one,
+ # but stopping the stack keeps certbot from colliding with anything later.
+-cat > /etc/letsencrypt/renewal-hooks/deploy/reload-mail.sh <<'HOOK'
++mkdir -p "$CERTBOT_DIR/renewal-hooks/deploy"
++cat > "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh" <<'HOOK'
+ #!/bin/sh
+ docker restart mailserver 2>/dev/null || true
+ HOOK
+-chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-mail.sh
++chmod +x "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh"
++
++# Debian's certbot package ships a systemd timer that runs "certbot renew"
++# against the default directories, so it would never find a certificate
++# stored here and renewal would silently do nothing until the certificate
++# expired -- Let's Encrypt stopped sending expiry-warning emails in June
++# 2025, so there would be no signal until mail delivery broke. Override the
++# packaged unit to pass the same non-default directories.
++mkdir -p /etc/systemd/system/certbot.service.d
++cat > /etc/systemd/system/certbot.service.d/override.conf <<OVERRIDE
++[Service]
++ExecStart=
++ExecStart=/usr/bin/certbot renew --config-dir $CERTBOT_DIR --work-dir $CERTBOT_DIR/work --logs-dir $CERTBOT_DIR/logs --quiet
++OVERRIDE
++systemctl daemon-reload
+ 
+ # ---------- secrets ----------
+ get_param() {
+   aws ssm get-parameter --region "$REGION" --name "$1" --with-decryption \
+     --query Parameter.Value --output text
+ }
+ 
+ RELAY_PASSWORD="$(get_param "$PARAM_PREFIX/_relay_password")"
+ 
+ # ---------- the mail server ----------
+@@ -116,21 +153,21 @@ services:
+     ports:
+       - "25:25"
+       - "465:465"
+       - "587:587"
+       - "993:993"
+     volumes:
+       - /var/mail-data/mail-data/:/var/mail/
+       - /var/mail-data/mail-state/:/var/mail-state/
+       - /var/mail-data/mail-logs/:/var/log/mail/
+       - /var/mail-data/config/:/tmp/docker-mailserver/
+-      - /etc/letsencrypt:/etc/letsencrypt:ro
++      - /var/mail-data/letsencrypt:/etc/letsencrypt:ro
+       - /etc/localtime:/etc/localtime:ro
+     environment:
+       - SSL_TYPE=letsencrypt
+       - ENABLE_RSPAMD=1
+       - ENABLE_OPENDKIM=0
+       - ENABLE_OPENDMARC=0
+       - ENABLE_CLAMAV=0
+       - ENABLE_FAIL2BAN=1
+       - POSTMASTER_ADDRESS=${postmaster}
+       - RELAY_HOST=email-smtp.$REGION.amazonaws.com

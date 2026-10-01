@@ -1,0 +1,36 @@
+# Review package: ced9dc5..HEAD
+
+## Commits
+1547f9d fix(infra): expose alerts_topic_arn from setup so the runbook's SNS check works
+
+## Files changed
+ infra/setup/main.tf | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+## Diff
+diff --git a/infra/setup/main.tf b/infra/setup/main.tf
+index e54c689..af8f14e 100644
+--- a/infra/setup/main.tf
++++ b/infra/setup/main.tf
+@@ -313,16 +313,21 @@ output "mail_client_settings" {
+ output "mail_server_ip" {
+   description = "Fixed address of the server"
+   value       = var.enable_mailserver ? module.mailserver[0].public_ip : null
+ }
+ 
+ output "mail_instance_id" {
+   description = "Shell access: aws ssm start-session --target <this>"
+   value       = var.enable_mailserver ? module.mailserver[0].instance_id : null
+ }
+ 
++output "alerts_topic_arn" {
++  description = "SNS topic the alarms publish to. The email subscription must be confirmed before anything alerts."
++  value       = var.enable_mailserver ? module.mailserver[0].alerts_topic_arn : null
++}
++
+ # terraform output -json mailbox_passwords
+ output "mailbox_passwords" {
+   description = "First-login password per mailbox"
+   value       = var.enable_mailserver ? module.mailserver[0].passwords : null
+   sensitive   = true
+ }

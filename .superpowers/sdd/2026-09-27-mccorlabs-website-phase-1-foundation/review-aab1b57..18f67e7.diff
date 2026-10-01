@@ -1,0 +1,1135 @@
+# Review package: aab1b57..18f67e7
+
+## Commits
+18f67e7 style(web): format eslint.config.ts
+5d19243 feat(web): design tokens with contrast verified in a test
+
+## Files changed
+ app/web/package.json              |   6 +-
+ app/web/postcss.config.mjs        |   2 +
+ app/web/src/lib/cn.ts             |   6 +
+ app/web/src/styles/globals.css    |  62 ++++++-
+ app/web/src/styles/tokens.test.ts |  82 +++++++++
+ eslint.config.ts                  |  13 +-
+ pnpm-lock.yaml                    | 345 ++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 506 insertions(+), 10 deletions(-)
+
+## Diff
+diff --git a/app/web/package.json b/app/web/package.json
+index 75078cd..b01835b 100644
+--- a/app/web/package.json
++++ b/app/web/package.json
+@@ -8,28 +8,32 @@
+     "build": "next build",
+     "start": "next start",
+     "lint": "eslint .",
+     "test": "vitest",
+     "test:run": "vitest run",
+     "test:e2e": "playwright test -c playwright.config.ts",
+     "test:e2e:smoke": "playwright test -c playwright.config.ts --grep @smoke",
+     "test:a11y": "playwright test -c playwright.config.ts tests/e2e/a11y.spec.ts"
+   },
+   "dependencies": {
++    "clsx": "^2.1.1",
+     "next": "16.3.6",
+     "react": "19.3.0",
+-    "react-dom": "19.3.0"
++    "react-dom": "19.3.0",
++    "tailwind-merge": "^3.7.0"
+   },
+   "devDependencies": {
++    "@tailwindcss/postcss": "4.3.3",
+     "@testing-library/dom": "^10",
+     "@testing-library/jest-dom": "^6",
+     "@testing-library/react": "^16",
+     "@types/node": "^22",
+     "@types/react": "^19",
+     "@types/react-dom": "^19",
+     "@vitejs/plugin-react": "^5",
+     "jsdom": "^27",
++    "tailwindcss": "4.3.3",
+     "typescript": "^5",
+     "vite-tsconfig-paths": "^5",
+     "vitest": "^5"
+   }
+ }
+diff --git a/app/web/postcss.config.mjs b/app/web/postcss.config.mjs
+new file mode 100644
+index 0000000..49f7a44
+--- /dev/null
++++ b/app/web/postcss.config.mjs
+@@ -0,0 +1,2 @@
++const config = { plugins: { '@tailwindcss/postcss': {} } }
++export default config
+diff --git a/app/web/src/lib/cn.ts b/app/web/src/lib/cn.ts
+new file mode 100644
+index 0000000..b057456
+--- /dev/null
++++ b/app/web/src/lib/cn.ts
+@@ -0,0 +1,6 @@
++import { clsx, type ClassValue } from 'clsx'
++import { twMerge } from 'tailwind-merge'
++
++export function cn(...inputs: ClassValue[]): string {
++  return twMerge(clsx(inputs))
++}
+diff --git a/app/web/src/styles/globals.css b/app/web/src/styles/globals.css
+index 60d9a91..b08e335 100644
+--- a/app/web/src/styles/globals.css
++++ b/app/web/src/styles/globals.css
+@@ -1,2 +1,60 @@
+-/* Tokens land in Task 6. This file exists from Task 3 so
+-   prettier-plugin-tailwindcss can resolve tailwindStylesheet. */
++@import 'tailwindcss';
++
++/* The single source of colour truth. Every ratio here is verified by
++   src/styles/tokens.test.ts against WCAG 2.2 thresholds. Do not change a
++   value without running that test. */
++@theme {
++  --color-base: #070a12;
++  --color-surface: #0d121d;
++  --color-elevated: #151c2b;
++  /* Decorative hairline only — 1.29:1. Never use for an input or control. */
++  --color-border: #1d2534;
++  /* Control and input borders — 3.47:1 on base. */
++  --color-border-strong: #5a6780;
++  --color-muted: #8a94a6;
++  --color-text: #eef2f8;
++  /* Large display type and non-text graphics only: 4.47:1 fails AA for body
++     text by 0.03. Use --color-accent for anything small or interactive. */
++  --color-brand: #3d6bff;
++  /* Links, small text, button fill, focus rings — 5.31:1 on base. */
++  --color-accent: #527bff;
++
++  --color-glow-violet: #7c5cff;
++  --color-glow-cyan: #22d3ee;
++}
++
++:root {
++  color-scheme: dark;
++}
++
++@layer base {
++  * {
++    min-width: 0;
++  }
++
++  html {
++    -webkit-text-size-adjust: 100%;
++  }
++
++  body {
++    background-color: var(--color-base);
++    color: var(--color-text);
++    -webkit-font-smoothing: antialiased;
++  }
++
++  :focus-visible {
++    outline: 2px solid var(--color-accent);
++    outline-offset: 2px;
++  }
++
++  @media (prefers-reduced-motion: reduce) {
++    *,
++    *::before,
++    *::after {
++      animation-duration: 0.01ms !important;
++      animation-iteration-count: 1 !important;
++      transition-duration: 0.01ms !important;
++      scroll-behavior: auto !important;
++    }
++  }
++}
+diff --git a/app/web/src/styles/tokens.test.ts b/app/web/src/styles/tokens.test.ts
+new file mode 100644
+index 0000000..bff522f
+--- /dev/null
++++ b/app/web/src/styles/tokens.test.ts
+@@ -0,0 +1,82 @@
++import { describe, expect, it } from 'vitest'
++import { readFileSync } from 'node:fs'
++import { join } from 'node:path'
++
++function tokens(): Record<string, string> {
++  const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
++  const out: Record<string, string> = {}
++  for (const match of css.matchAll(/--color-([a-z-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
++    out[match[1]!] = match[2]!.toLowerCase()
++  }
++  return out
++}
++
++function channel(value: number): number {
++  const c = value / 255
++  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
++}
++
++function luminance(hex: string): number {
++  const n = Number.parseInt(hex.slice(1), 16)
++  return (
++    0.2126 * channel((n >> 16) & 255) +
++    0.7152 * channel((n >> 8) & 255) +
++    0.0722 * channel(n & 255)
++  )
++}
++
++function contrast(a: string, b: string): number {
++  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number]
++  return (hi + 0.05) / (lo + 0.05)
++}
++
++// Every pair the spec commits to, with its required ratio.
++const PAIRS: readonly [string, string, number, string][] = [
++  ['text', 'base', 4.5, 'body text on page'],
++  ['text', 'surface', 4.5, 'text on card'],
++  ['text', 'elevated', 4.5, 'text on raised surface'],
++  ['muted', 'base', 4.5, 'secondary text on page'],
++  ['muted', 'surface', 4.5, 'secondary text on card'],
++  ['accent', 'base', 4.5, 'link on page'],
++  ['accent', 'surface', 4.5, 'link on card'],
++  ['base', 'accent', 4.5, 'dark label on accent button'],
++  ['brand', 'base', 3.0, 'brand as large display type'],
++  ['border-strong', 'base', 3.0, 'control border on page'],
++  ['border-strong', 'surface', 3.0, 'control border on card'],
++  ['accent', 'base', 3.0, 'focus ring on page'],
++]
++
++describe('design tokens', () => {
++  it('defines every token the components rely on', () => {
++    const t = tokens()
++    for (const name of [
++      'base',
++      'surface',
++      'elevated',
++      'border',
++      'border-strong',
++      'muted',
++      'text',
++      'brand',
++      'accent',
++    ]) {
++      expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
++        /^#[0-9a-f]{6}$/,
++      )
++    }
++  })
++
++  it.each(PAIRS)('%s on %s meets %s:1 (%s)', (fg, bg, required) => {
++    const t = tokens()
++    const ratio = contrast(t[fg]!, t[bg]!)
++    expect(ratio).toBeGreaterThanOrEqual(required)
++  })
++
++  it('keeps the decorative border decorative, not a control border', () => {
++    const t = tokens()
++    // --color-border is intentionally low contrast (a hairline). If someone
++    // raises it to control-border levels, --color-border-strong has become
++    // redundant and the distinction has been lost.
++    expect(contrast(t.border!, t.base!)).toBeLessThan(3)
++  })
++})
+diff --git a/eslint.config.ts b/eslint.config.ts
+index 1688198..c731bb9 100644
+--- a/eslint.config.ts
++++ b/eslint.config.ts
+@@ -22,21 +22,24 @@ export default tseslint.config(
+       'docs/ui-references/**',
+       'test-results/**',
+       'playwright-report/**',
+     ],
+   },
+ 
+   ...nextCoreWebVitals,
+ 
+   {
+     files: ['app/web/**/*.{ts,tsx}'],
+-    extends: [...tseslint.configs.strictTypeChecked, ...tseslint.configs.stylisticTypeChecked],
++    extends: [
++      ...tseslint.configs.strictTypeChecked,
++      ...tseslint.configs.stylisticTypeChecked,
++    ],
+     languageOptions: {
+       parserOptions: {
+         projectService: true,
+         // A relative tsconfigRootDir does not resolve here; typescript-eslint requires an
+         // absolute path, so it is derived from this config file's own directory.
+         tsconfigRootDir: join(import.meta.dirname, 'app/web'),
+       },
+     },
+   },
+ 
+@@ -49,35 +52,31 @@ export default tseslint.config(
+   },
+ 
+   // Project rules that enforce the spec's architecture.
+   {
+     files: ['app/web/src/**/*.tsx'],
+     ignores: ['app/web/src/styles/**'],
+     rules: {
+       'no-restricted-syntax': [
+         'error',
+         {
+-          selector:
+-            'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
++          selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
+           message:
+             'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
+         },
+       ],
+     },
+   },
+ 
+   {
+     files: ['app/web/src/**/*.{ts,tsx}'],
+-    ignores: [
+-      'app/web/src/components/motion/**',
+-      'app/web/src/components/effects/**',
+-    ],
++    ignores: ['app/web/src/components/motion/**', 'app/web/src/components/effects/**'],
+     rules: {
+       'no-restricted-imports': [
+         'error',
+         {
+           paths: [
+             {
+               name: 'motion',
+               message:
+                 'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
+             },
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 383e918..6652364 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -192,30 +192,39 @@ importers:
+         version: 3.9.9
+       prettier-plugin-tailwindcss:
+         specifier: ^0.8.1
+         version: 0.8.1(prettier@3.9.9)
+       typescript-eslint:
+         specifier: ^8.70.1
+         version: 8.70.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+ 
+   app/web:
+     dependencies:
++      clsx:
++        specifier: ^2.1.1
++        version: 2.1.1
+       next:
+         specifier: 16.3.6
+         version: 16.3.6(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.61.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+       react:
+         specifier: 19.3.0
+         version: 19.3.0
+       react-dom:
+         specifier: 19.3.0
+         version: 19.3.0(react@19.3.0)
++      tailwind-merge:
++        specifier: ^3.7.0
++        version: 3.7.0
+     devDependencies:
++      '@tailwindcss/postcss':
++        specifier: 4.3.3
++        version: 4.3.3
+       '@testing-library/dom':
+         specifier: ^10
+         version: 10.4.2
+       '@testing-library/jest-dom':
+         specifier: ^6
+         version: 6.9.1
+       '@testing-library/react':
+         specifier: ^16
+         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+       '@types/node':
+@@ -226,38 +235,45 @@ importers:
+         version: 19.3.0
+       '@types/react-dom':
+         specifier: ^19
+         version: 19.3.0(@types/react@19.3.0)
+       '@vitejs/plugin-react':
+         specifier: ^5
+         version: 5.2.0(supports-color@7.2.0)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+       jsdom:
+         specifier: ^27
+         version: 27.4.0(supports-color@7.2.0)
++      tailwindcss:
++        specifier: 4.3.3
++        version: 4.3.3
+       typescript:
+         specifier: ^5
+         version: 5.9.3
+       vite-tsconfig-paths:
+         specifier: ^5
+         version: 5.1.4(supports-color@7.2.0)(typescript@5.9.3)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+       vitest:
+         specifier: ^5
+         version: 5.0.2(@types/node@22.20.4)(jsdom@27.4.0(supports-color@7.2.0))(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+ 
+ packages:
+ 
+   '@acemir/cssom@0.9.31':
+     resolution: {integrity: sha512-ZnR3GSaH+/vJ0YlHau21FjfLYjMpYVIzTD8M8vIEQvIGxeOXyXdzCI140rrCY862p/C/BbzWsjc1dgnM9mkoTA==}
+ 
+   '@adobe/css-tools@4.5.0':
+     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
+ 
++  '@alloc/quick-lru@5.3.0':
++    resolution: {integrity: sha512-U4+70Pc5ZS9osnCBCE5Jha/ciHM+Yp+CNMNC/7HvYbNRk1Ldd+f7qO65W5qfhu/TCv+/ozljlXXe9Nj8419DMA==}
++    engines: {node: '>=10'}
++
+   '@asamuzakjp/css-color@4.1.2':
+     resolution: {integrity: sha512-NfBUvBaYgKIuq6E/RBLY1m0IohzNHAYyaJGuTK79Z23uNwmz2jl1mPsC5ZxCCxylinKhT1Amn5oNTlx1wN8cQg==}
+ 
+   '@asamuzakjp/dom-selector@6.8.1':
+     resolution: {integrity: sha512-MvRz1nCqW0fsy8Qz4dnLIvhOlMzqDVBabZx6lH+YywFDdjXhMY37SmpV1XFX3JzG5GWHn63j6HX6QPr3lZXHvQ==}
+ 
+   '@asamuzakjp/nwsapi@2.3.9':
+     resolution: {integrity: sha512-n8GuYSrI9bF7FFZ/SjhwevlHc8xaVlb/7HmHelnc/PZXBD2ZR49NnN9sMMuDdEGPeeRQ5d0hqlSlEpgCX3Wl0Q==}
+ 
+   '@babel/code-frame@7.29.7':
+@@ -836,20 +852,112 @@ packages:
+ 
+   '@rolldown/pluginutils@1.0.1':
+     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+ 
+   '@rtsao/scc@1.1.0':
+     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+ 
+   '@swc/helpers@0.5.23':
+     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
+ 
++  '@tailwindcss/node@4.3.3':
++    resolution: {integrity: sha512-/T8IKEsf9VTU6tLjgC7+sv2mOPtQxzE2jMw7u4Tt40Tx+QSZxpzh95/H6cMKoja9XuW7iMdLJYBB0o9G1CaAgg==}
++
++  '@tailwindcss/oxide-android-arm64@4.3.3':
++    resolution: {integrity: sha512-Y85A2gmPSkl5Ve5qR86GL4HT509cFqQh1aes9p3sSkyTPwt0Pppf3GkwGe4JPACcRYjgJIEhQgM6dBClnr0NYw==}
++    engines: {node: '>= 20'}
++    cpu: [arm64]
++    os: [android]
++
++  '@tailwindcss/oxide-darwin-arm64@4.3.3':
++    resolution: {integrity: sha512-BiaWatpBcERQFDlOjRDpIVXuFK5PJez5SA4JMg6VYZdBYU+qKfV/vqjcIs+IYmtitf1xYQZTwXvU/8y4lfZUGw==}
++    engines: {node: '>= 20'}
++    cpu: [arm64]
++    os: [darwin]
++
++  '@tailwindcss/oxide-darwin-x64@4.3.3':
++    resolution: {integrity: sha512-fAeUqfV5ndhxRwai8cXGzdLvul9utWOmeTkv69unv4ZXixjn61Z+p9lCWdwOwA3TYboG3BwdVuN/RDjhBRl0mw==}
++    engines: {node: '>= 20'}
++    cpu: [x64]
++    os: [darwin]
++
++  '@tailwindcss/oxide-freebsd-x64@4.3.3':
++    resolution: {integrity: sha512-iyf5bV6+wnAlflVeEy7R25dupxTNECZN5QMI0qNT6eT+EgaGdZcKhGkr5SdoaWiLJ3spLqIY9VCeSGrwmtg4kw==}
++    engines: {node: '>= 20'}
++    cpu: [x64]
++    os: [freebsd]
++
++  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.3':
++    resolution: {integrity: sha512-aAYUprJAJQWWbRrPvtjdroZ56Md+JM8pMiopS6xGEwDfLhqj+2ver2p4nU4Mb3CRqcMmNBjo8KkUgcxhkzVQGQ==}
++    engines: {node: '>= 20'}
++    cpu: [arm]
++    os: [linux]
++
++  '@tailwindcss/oxide-linux-arm64-gnu@4.3.3':
++    resolution: {integrity: sha512-nDxldcEENOxZRzC2uu9jrutZdAAQtb+8WWDCSnWL1zvBk1+FN+x6MtDViPB5AJMfttVCUhehGWus3XBPgatM/w==}
++    engines: {node: '>= 20'}
++    cpu: [arm64]
++    os: [linux]
++    libc: [glibc]
++
++  '@tailwindcss/oxide-linux-arm64-musl@4.3.3':
++    resolution: {integrity: sha512-Md44bD6veX/PC5iyF8cDVnw4HBIANZepRZZ7a8DQOvkfo5WUBwcp6iAuCUz23u+4SUkhJlD3eL7hNdW8ezd/kA==}
++    engines: {node: '>= 20'}
++    cpu: [arm64]
++    os: [linux]
++    libc: [musl]
++
++  '@tailwindcss/oxide-linux-x64-gnu@4.3.3':
++    resolution: {integrity: sha512-tx7us1muwOKAKWao2v/GaafFeQboE6aj88vC6ziN2NCGcRm8gWUhwjzg+YdVB1e4boAtdtma4L43onunI6NS4w==}
++    engines: {node: '>= 20'}
++    cpu: [x64]
++    os: [linux]
++    libc: [glibc]
++
++  '@tailwindcss/oxide-linux-x64-musl@4.3.3':
++    resolution: {integrity: sha512-SJxX60smvHgasZoBy11dX6YRjXJFovwWBoedhbQPOBzgFWBHGB+TVPWB9BxzR7TTxU8FQZAI2AyiNCMzFm8Img==}
++    engines: {node: '>= 20'}
++    cpu: [x64]
++    os: [linux]
++    libc: [musl]
++
++  '@tailwindcss/oxide-wasm32-wasi@4.3.3':
++    resolution: {integrity: sha512-jx1+rPhY/5Ympkktd656HBWEBLxP7dH06losBLjjf5vgCODXvi9KhtftWcMIwTFIDqBr7cRnQkdLnAG+IOlGvQ==}
++    engines: {node: '>=14.0.0'}
++    cpu: [wasm32]
++    bundledDependencies:
++      - '@napi-rs/wasm-runtime'
++      - '@emnapi/core'
++      - '@emnapi/runtime'
++      - '@tybys/wasm-util'
++      - '@emnapi/wasi-threads'
++      - tslib
++
++  '@tailwindcss/oxide-win32-arm64-msvc@4.3.3':
++    resolution: {integrity: sha512-3rc292Ca2ceK6Ulcc/bAVnTs/3nDtoPhyEKlgPv+yQJQi/JS/AMJlqzxvlDacL1nekbrcf6bTqp/jV4qgnPxNQ==}
++    engines: {node: '>= 20'}
++    cpu: [arm64]
++    os: [win32]
++
++  '@tailwindcss/oxide-win32-x64-msvc@4.3.3':
++    resolution: {integrity: sha512-yJ0pwIVc/nYeGoV02WtsN8KYyLQv7kyI2wDnkezyJlGGjkd4QLwDGAwl47YpPJeuI0M0ObaXGSPjvWDPeTPggw==}
++    engines: {node: '>= 20'}
++    cpu: [x64]
++    os: [win32]
++
++  '@tailwindcss/oxide@4.3.3':
++    resolution: {integrity: sha512-krXjAikiaFSPaK/FkAQT5UTx3VormQaiZ5hBFlJZ9UFQGB/rwg1MZIhHAG9smMQRTdyJxP6Qt5MwMtdyU5FWrA==}
++    engines: {node: '>= 20'}
++
++  '@tailwindcss/postcss@4.3.3':
++    resolution: {integrity: sha512-JTSZZGQi1AyKirbLN3azmjVzef92tcX7h+iSqPdaeStyFpGpDlKvvpxeOE8njhbUanbRwr3z8DyzhICWnMtQeg==}
++
+   '@testing-library/dom@10.4.2':
+     resolution: {integrity: sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q==}
+     engines: {node: '>=18'}
+ 
+   '@testing-library/jest-dom@6.9.1':
+     resolution: {integrity: sha512-zIcONa+hVtVSSep9UT3jZ5rizo2BsxgyDYU7WFD5eICBE7no3881HGeb/QkGfsJs6JTkY1aQhT7rIPC7e+0nnA==}
+     engines: {node: '>=14', npm: '>=6', yarn: '>=1'}
+ 
+   '@testing-library/react@16.3.3':
+     resolution: {integrity: sha512-Uo193NgQbPMz6lrrhtRQQFcMC6Re/ELLFbbuVL30WDlZxlpZf9/lMHTAVxPRLw1q1iu9OJmR1c2BLiENRstdBg==}
+@@ -1257,20 +1365,24 @@ packages:
+     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
+     engines: {node: '>=18'}
+ 
+   chalk@4.1.2:
+     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
+     engines: {node: '>=10'}
+ 
+   client-only@0.0.1:
+     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
+ 
++  clsx@2.1.1:
++    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
++    engines: {node: '>=6'}
++
+   color-convert@2.0.1:
+     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
+     engines: {node: '>=7.0.0'}
+ 
+   color-name@1.1.4:
+     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+ 
+   concat-map@0.0.1:
+     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+ 
+@@ -1366,20 +1478,24 @@ packages:
+   dunder-proto@1.0.1:
+     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
+     engines: {node: '>= 0.4'}
+ 
+   electron-to-chromium@1.5.439:
+     resolution: {integrity: sha512-qu6QIPXhsb+CRcAiTMNjR4A1y/7tCYKkKjr5CZXRVih6qkDf79peZ2BpEU3qoDBNCRrcy3Mra3X9nG5oruuA7Q==}
+ 
+   emoji-regex@9.2.2:
+     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
+ 
++  enhanced-resolve@5.25.1:
++    resolution: {integrity: sha512-nGXts5znJzmWPu+mIE9izCOzdg63oJca2mDzGWWTth7sr4aCToKcoyFVBQwN75Ij5Pf6p510EwkTqViTRzDV+w==}
++    engines: {node: '>=10.13.0'}
++
+   entities@8.1.0:
+     resolution: {integrity: sha512-kxL7msIffSuh9aaFAMD7rxAIuTRMAHMeBtgHW2yUdWw732ZNh4MehkF2gdjvtdmikkaIP9bFDDJOPlsvm7avrA==}
+     engines: {node: '>=20.19.0'}
+ 
+   es-abstract-get@1.0.0:
+     resolution: {integrity: sha512-6PMWXpdhshVvFp+FoWYs1EvG1Nj0tvk0dZM+XcK0xMEM1czRVcP6ohqPWHy6qPagSpC8j4+p89WXlT+xXJs/fg==}
+     engines: {node: '>= 0.4'}
+ 
+   es-abstract@1.24.2:
+     resolution: {integrity: sha512-2FpH9Q5i2RRwyEP1AylXe6nYLR5OhaJTZwmlcP0dL/+JCbgg7yyEo/sEK6HeGZRf3dFpWwThaRHVApXSkW3xeg==}
+@@ -1669,20 +1785,23 @@ packages:
+     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
+     engines: {node: '>= 0.4'}
+ 
+   globrex@0.1.2:
+     resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
+ 
+   gopd@1.2.0:
+     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
+     engines: {node: '>= 0.4'}
+ 
++  graceful-fs@4.2.11:
++    resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
++
+   has-bigints@1.1.0:
+     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
+     engines: {node: '>= 0.4'}
+ 
+   has-flag@4.0.0:
+     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
+     engines: {node: '>=8'}
+ 
+   has-property-descriptors@1.0.2:
+     resolution: {integrity: sha512-55JNKuIW+vq4Ke1BjOTjM2YctQIvCT7GFzHwmfZPGo5wnrgkid0YQtnAleFSqumZm4az3n2BS+erby5ipJdgrg==}
+@@ -1973,90 +2092,164 @@ packages:
+     os: [win32]
+ 
+   lefthook@2.1.14:
+     resolution: {integrity: sha512-Y9TL1dmpRlIdSp73SJ6bb+xAZ4s2SinGTK3pgC9PRWMSjMr2iOfowPGnlSOfAo5fu6S5rdiItsQDxeLEWCGk4g==}
+     hasBin: true
+ 
+   levn@0.4.1:
+     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
+     engines: {node: '>= 0.8.0'}
+ 
++  lightningcss-android-arm64@1.32.0:
++    resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm64]
++    os: [android]
++
+   lightningcss-android-arm64@1.33.0:
+     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [android]
+ 
++  lightningcss-darwin-arm64@1.32.0:
++    resolution: {integrity: sha512-RzeG9Ju5bag2Bv1/lwlVJvBE3q6TtXskdZLLCyfg5pt+HLz9BqlICO7LZM7VHNTTn/5PRhHFBSjk5lc4cmscPQ==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm64]
++    os: [darwin]
++
+   lightningcss-darwin-arm64@1.33.0:
+     resolution: {integrity: sha512-Sciaz8eenNTKn9b3t7+xr0ipTp9YxKQY4npwQ3mrRuL0BAVHBLyZxofhaKBAVtzmtRZ/zTyo0/to4B1uWG/Djg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [darwin]
+ 
++  lightningcss-darwin-x64@1.32.0:
++    resolution: {integrity: sha512-U+QsBp2m/s2wqpUYT/6wnlagdZbtZdndSmut/NJqlCcMLTWp5muCrID+K5UJ6jqD2BFshejCYXniPDbNh73V8w==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [x64]
++    os: [darwin]
++
+   lightningcss-darwin-x64@1.33.0:
+     resolution: {integrity: sha512-Z5UPAxzrjlWNNyGy6i65cJzzvgJ5D3T6wMvs+gWpY9d7qRhANrxqAp6LhxIgZhWEw18RfJTGcRxjuLIBr+m8XQ==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [darwin]
+ 
++  lightningcss-freebsd-x64@1.32.0:
++    resolution: {integrity: sha512-JCTigedEksZk3tHTTthnMdVfGf61Fky8Ji2E4YjUTEQX14xiy/lTzXnu1vwiZe3bYe0q+SpsSH/CTeDXK6WHig==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [x64]
++    os: [freebsd]
++
+   lightningcss-freebsd-x64@1.33.0:
+     resolution: {integrity: sha512-QQM/Ti/hQajJwCY+RiWuCZ9sdtI/XQk7nDK5vC8kkdwixezOlDgvDx7+RT+QjK6FcFT4MpsuoBnHIo/O3StRRg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [freebsd]
+ 
++  lightningcss-linux-arm-gnueabihf@1.32.0:
++    resolution: {integrity: sha512-x6rnnpRa2GL0zQOkt6rts3YDPzduLpWvwAF6EMhXFVZXD4tPrBkEFqzGowzCsIWsPjqSK+tyNEODUBXeeVHSkw==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm]
++    os: [linux]
++
+   lightningcss-linux-arm-gnueabihf@1.33.0:
+     resolution: {integrity: sha512-N7FVBe6iS24MlM6R/4RBTxGhQheZGs7tiQ9U32UtF75NzP5Q7xWPRqLBCKxlRQRk3rY1jCIPLzx7WzOhuUIRLQ==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm]
+     os: [linux]
+ 
++  lightningcss-linux-arm64-gnu@1.32.0:
++    resolution: {integrity: sha512-0nnMyoyOLRJXfbMOilaSRcLH3Jw5z9HDNGfT/gwCPgaDjnx0i8w7vBzFLFR1f6CMLKF8gVbebmkUN3fa/kQJpQ==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm64]
++    os: [linux]
++    libc: [glibc]
++
+   lightningcss-linux-arm64-gnu@1.33.0:
+     resolution: {integrity: sha512-j2v/itmy4HlNxlc6voKXYgBqNi0Ng2LShg4z7GufpEgs05P+2suBVyi9I6YHq5uoVFx9ETin3eCEhLVyXGQnKg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [linux]
+     libc: [glibc]
+ 
++  lightningcss-linux-arm64-musl@1.32.0:
++    resolution: {integrity: sha512-UpQkoenr4UJEzgVIYpI80lDFvRmPVg6oqboNHfoH4CQIfNA+HOrZ7Mo7KZP02dC6LjghPQJeBsvXhJod/wnIBg==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm64]
++    os: [linux]
++    libc: [musl]
++
+   lightningcss-linux-arm64-musl@1.33.0:
+     resolution: {integrity: sha512-yiO5ROMuYQgXbC60yjZU5CYSFZGKXL0HFATXt9mHJn1+zW55oCtMI9NfcVhYLMFDL7gV7oBPon/EmMMGg2OvtQ==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [linux]
+     libc: [musl]
+ 
++  lightningcss-linux-x64-gnu@1.32.0:
++    resolution: {integrity: sha512-V7Qr52IhZmdKPVr+Vtw8o+WLsQJYCTd8loIfpDaMRWGUZfBOYEJeyJIkqGIDMZPwPx24pUMfwSxxI8phr/MbOA==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [x64]
++    os: [linux]
++    libc: [glibc]
++
+   lightningcss-linux-x64-gnu@1.33.0:
+     resolution: {integrity: sha512-ar+Ju7LmcN0Jo4FpL4hpFybwNG9/3A/Br5KW2n2jyODg3MEZXaDYADdemoNS+BDNfMgKvylJLj4S5tyRActuAg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [linux]
+     libc: [glibc]
+ 
++  lightningcss-linux-x64-musl@1.32.0:
++    resolution: {integrity: sha512-bYcLp+Vb0awsiXg/80uCRezCYHNg1/l3mt0gzHnWV9XP1W5sKa5/TCdGWaR/zBM2PeF/HbsQv/j2URNOiVuxWg==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [x64]
++    os: [linux]
++    libc: [musl]
++
+   lightningcss-linux-x64-musl@1.33.0:
+     resolution: {integrity: sha512-RYiYbkokw0trfKqqzfF55lginwEPrD3OJDfTuJzFs1MK6iFnDenaz1fqLLtX4ITG3OktJQXOeTaw1awrBAlZPw==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [linux]
+     libc: [musl]
+ 
++  lightningcss-win32-arm64-msvc@1.32.0:
++    resolution: {integrity: sha512-8SbC8BR40pS6baCM8sbtYDSwEVQd4JlFTOlaD3gWGHfThTcABnNDBda6eTZeqbofalIJhFx0qKzgHJmcPTnGdw==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [arm64]
++    os: [win32]
++
+   lightningcss-win32-arm64-msvc@1.33.0:
+     resolution: {integrity: sha512-1K+MPfLSFVpphzpdbfkhlWk6wBrTObBzS2T6db10PNOZgR9GoVsAWzwNyuhUYYbTp23j+4RrncfujZ4uAzXvwA==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [win32]
+ 
++  lightningcss-win32-x64-msvc@1.32.0:
++    resolution: {integrity: sha512-Amq9B/SoZYdDi1kFrojnoqPLxYhQ4Wo5XiL8EVJrVsB8ARoC1PWW6VGtT0WKCemjy8aC+louJnjS7U18x3b06Q==}
++    engines: {node: '>= 12.0.0'}
++    cpu: [x64]
++    os: [win32]
++
+   lightningcss-win32-x64-msvc@1.33.0:
+     resolution: {integrity: sha512-OlEICDx/Xl0FqSp4bry8zFnCvGpig3Gl4gCquvYwHuqJKEC1+n9NgDniFvqHGmMv1ZkqDJrDqKKSykTDX+ehuA==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [x64]
+     os: [win32]
+ 
++  lightningcss@1.32.0:
++    resolution: {integrity: sha512-NXYBzinNrblfraPGyrbPoD19C1h9lfI/1mzgWYvXUTe414Gz/X1FD2XBZSZM7rRTrMA8JL3OtAaGifrIKhQ5yQ==}
++    engines: {node: '>= 12.0.0'}
++
+   lightningcss@1.33.0:
+     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
+     engines: {node: '>= 12.0.0'}
+ 
+   locate-path@6.0.0:
+     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
+     engines: {node: '>=10'}
+ 
+   lodash.merge@4.6.2:
+     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
+@@ -2069,20 +2262,23 @@ packages:
+     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
+     engines: {node: 20 || >=22}
+ 
+   lru-cache@5.1.1:
+     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
+ 
+   lz-string@1.5.0:
+     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
+     hasBin: true
+ 
++  magic-string@0.30.21:
++    resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
++
+   magic-string@1.4.2:
+     resolution: {integrity: sha512-vG+rjFRj1PqdIBozIxAGMjPlOhaVe+GXpbttY/iSK7rGcJRMlwNJO7dcUwmUqkymsFLJiNGI06t4D7Fr7yRC9g==}
+ 
+   math-intrinsics@1.1.0:
+     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
+     engines: {node: '>= 0.4'}
+ 
+   mdn-data@2.27.1:
+     resolution: {integrity: sha512-9Yubnt3e8A0OKwxYSXyhLymGW4sCufcLG6VdiDdUGVkPhpqLxlvP5vl1983gQjJl3tqbrM731mjaZaP68AgosQ==}
+ 
+@@ -2532,20 +2728,30 @@ packages:
+     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
+     engines: {node: '>=8'}
+ 
+   supports-preserve-symlinks-flag@1.0.0:
+     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
+     engines: {node: '>= 0.4'}
+ 
+   symbol-tree@3.2.4:
+     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
+ 
++  tailwind-merge@3.7.0:
++    resolution: {integrity: sha512-XPPUyAc+cvspz3lHTcR/QgPfW2A0lv/xQNIjX3HGhLR+Nq2lHaLq5MtTesHn8GUr3W3DguT2KT5x3NVgRtYwmA==}
++
++  tailwindcss@4.3.3:
++    resolution: {integrity: sha512-gOhV3P7ufE62QDGg1zVaTgCR+EtPv92k2nIhVcVKcLmxT1sUBsQGhnZj175j+MqRt4zLF7ic+sCYjfhxMxj7YQ==}
++
++  tapable@2.3.3:
++    resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
++    engines: {node: '>=6'}
++
+   tinybench@6.2.0:
+     resolution: {integrity: sha512-78U2TlB2CnVenajOFzf3BKSm0J6oz5L0NV7g32LCPccvYc0lbWvys4d3uUUCS2B1N8PAf2+aekR8i1KbC3HO7Q==}
+     engines: {node: '>=20.0.0'}
+ 
+   tinyexec@1.3.1:
+     resolution: {integrity: sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==}
+     engines: {node: '>=18'}
+ 
+   tinyglobby@0.2.17:
+     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
+@@ -2820,20 +3026,22 @@ packages:
+ 
+   zod@4.6.5:
+     resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+ 
+ snapshots:
+ 
+   '@acemir/cssom@0.9.31': {}
+ 
+   '@adobe/css-tools@4.5.0': {}
+ 
++  '@alloc/quick-lru@5.3.0': {}
++
+   '@asamuzakjp/css-color@4.1.2':
+     dependencies:
+       '@csstools/css-calc': 3.4.1(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
+       '@csstools/css-color-parser': 4.2.4(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
+       '@csstools/css-parser-algorithms': 4.0.1(@csstools/css-tokenizer@4.0.2)
+       '@csstools/css-tokenizer': 4.0.2
+       lru-cache: 11.5.3
+ 
+   '@asamuzakjp/dom-selector@6.8.1':
+     dependencies:
+@@ -3307,20 +3515,89 @@ snapshots:
+   '@rolldown/pluginutils@1.0.0-rc.3': {}
+ 
+   '@rolldown/pluginutils@1.0.1': {}
+ 
+   '@rtsao/scc@1.1.0': {}
+ 
+   '@swc/helpers@0.5.23':
+     dependencies:
+       tslib: 2.8.1
+ 
++  '@tailwindcss/node@4.3.3':
++    dependencies:
++      '@jridgewell/remapping': 2.3.5
++      enhanced-resolve: 5.25.1
++      jiti: 2.7.0
++      lightningcss: 1.32.0
++      magic-string: 0.30.21
++      source-map-js: 1.2.1
++      tailwindcss: 4.3.3
++
++  '@tailwindcss/oxide-android-arm64@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-darwin-arm64@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-darwin-x64@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-freebsd-x64@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-linux-arm64-gnu@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-linux-arm64-musl@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-linux-x64-gnu@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-linux-x64-musl@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-wasm32-wasi@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-win32-arm64-msvc@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide-win32-x64-msvc@4.3.3':
++    optional: true
++
++  '@tailwindcss/oxide@4.3.3':
++    optionalDependencies:
++      '@tailwindcss/oxide-android-arm64': 4.3.3
++      '@tailwindcss/oxide-darwin-arm64': 4.3.3
++      '@tailwindcss/oxide-darwin-x64': 4.3.3
++      '@tailwindcss/oxide-freebsd-x64': 4.3.3
++      '@tailwindcss/oxide-linux-arm-gnueabihf': 4.3.3
++      '@tailwindcss/oxide-linux-arm64-gnu': 4.3.3
++      '@tailwindcss/oxide-linux-arm64-musl': 4.3.3
++      '@tailwindcss/oxide-linux-x64-gnu': 4.3.3
++      '@tailwindcss/oxide-linux-x64-musl': 4.3.3
++      '@tailwindcss/oxide-wasm32-wasi': 4.3.3
++      '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
++      '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
++
++  '@tailwindcss/postcss@4.3.3':
++    dependencies:
++      '@alloc/quick-lru': 5.3.0
++      '@tailwindcss/node': 4.3.3
++      '@tailwindcss/oxide': 4.3.3
++      postcss: 8.5.28
++      tailwindcss: 4.3.3
++
+   '@testing-library/dom@10.4.2':
+     dependencies:
+       '@babel/code-frame': 7.29.7
+       '@babel/runtime': 7.29.7
+       '@types/aria-query': 5.0.4
+       aria-query: 5.3.0
+       dom-accessibility-api: 0.5.16
+       lz-string: 1.5.0
+       picocolors: 1.1.1
+       pretty-format: 27.5.1
+@@ -3747,20 +4024,22 @@ snapshots:
+ 
+   chai@6.2.2: {}
+ 
+   chalk@4.1.2:
+     dependencies:
+       ansi-styles: 4.3.0
+       supports-color: 7.2.0
+ 
+   client-only@0.0.1: {}
+ 
++  clsx@2.1.1: {}
++
+   color-convert@2.0.1:
+     dependencies:
+       color-name: 1.1.4
+ 
+   color-name@1.1.4: {}
+ 
+   concat-map@0.0.1: {}
+ 
+   convert-source-map@2.0.0: {}
+ 
+@@ -3854,20 +4133,25 @@ snapshots:
+   dunder-proto@1.0.1:
+     dependencies:
+       call-bind-apply-helpers: 1.0.2
+       es-errors: 1.3.0
+       gopd: 1.2.0
+ 
+   electron-to-chromium@1.5.439: {}
+ 
+   emoji-regex@9.2.2: {}
+ 
++  enhanced-resolve@5.25.1:
++    dependencies:
++      graceful-fs: 4.2.11
++      tapable: 2.3.3
++
+   entities@8.1.0: {}
+ 
+   es-abstract-get@1.0.0:
+     dependencies:
+       es-errors: 1.3.0
+       es-object-atoms: 1.1.2
+       is-callable: 1.2.7
+       object-inspect: 1.13.4
+ 
+   es-abstract@1.24.2:
+@@ -4309,20 +4593,22 @@ snapshots:
+ 
+   globalthis@1.0.4:
+     dependencies:
+       define-properties: 1.2.1
+       gopd: 1.2.0
+ 
+   globrex@0.1.2: {}
+ 
+   gopd@1.2.0: {}
+ 
++  graceful-fs@4.2.11: {}
++
+   has-bigints@1.1.0: {}
+ 
+   has-flag@4.0.0: {}
+ 
+   has-property-descriptors@1.0.2:
+     dependencies:
+       es-define-property: 1.0.1
+ 
+   has-proto@1.2.0:
+     dependencies:
+@@ -4622,53 +4908,102 @@ snapshots:
+       lefthook-openbsd-arm64: 2.1.14
+       lefthook-openbsd-x64: 2.1.14
+       lefthook-windows-arm64: 2.1.14
+       lefthook-windows-x64: 2.1.14
+ 
+   levn@0.4.1:
+     dependencies:
+       prelude-ls: 1.2.1
+       type-check: 0.4.0
+ 
++  lightningcss-android-arm64@1.32.0:
++    optional: true
++
+   lightningcss-android-arm64@1.33.0:
+     optional: true
+ 
++  lightningcss-darwin-arm64@1.32.0:
++    optional: true
++
+   lightningcss-darwin-arm64@1.33.0:
+     optional: true
+ 
++  lightningcss-darwin-x64@1.32.0:
++    optional: true
++
+   lightningcss-darwin-x64@1.33.0:
+     optional: true
+ 
++  lightningcss-freebsd-x64@1.32.0:
++    optional: true
++
+   lightningcss-freebsd-x64@1.33.0:
+     optional: true
+ 
++  lightningcss-linux-arm-gnueabihf@1.32.0:
++    optional: true
++
+   lightningcss-linux-arm-gnueabihf@1.33.0:
+     optional: true
+ 
++  lightningcss-linux-arm64-gnu@1.32.0:
++    optional: true
++
+   lightningcss-linux-arm64-gnu@1.33.0:
+     optional: true
+ 
++  lightningcss-linux-arm64-musl@1.32.0:
++    optional: true
++
+   lightningcss-linux-arm64-musl@1.33.0:
+     optional: true
+ 
++  lightningcss-linux-x64-gnu@1.32.0:
++    optional: true
++
+   lightningcss-linux-x64-gnu@1.33.0:
+     optional: true
+ 
++  lightningcss-linux-x64-musl@1.32.0:
++    optional: true
++
+   lightningcss-linux-x64-musl@1.33.0:
+     optional: true
+ 
++  lightningcss-win32-arm64-msvc@1.32.0:
++    optional: true
++
+   lightningcss-win32-arm64-msvc@1.33.0:
+     optional: true
+ 
++  lightningcss-win32-x64-msvc@1.32.0:
++    optional: true
++
+   lightningcss-win32-x64-msvc@1.33.0:
+     optional: true
+ 
++  lightningcss@1.32.0:
++    dependencies:
++      detect-libc: 2.1.2
++    optionalDependencies:
++      lightningcss-android-arm64: 1.32.0
++      lightningcss-darwin-arm64: 1.32.0
++      lightningcss-darwin-x64: 1.32.0
++      lightningcss-freebsd-x64: 1.32.0
++      lightningcss-linux-arm-gnueabihf: 1.32.0
++      lightningcss-linux-arm64-gnu: 1.32.0
++      lightningcss-linux-arm64-musl: 1.32.0
++      lightningcss-linux-x64-gnu: 1.32.0
++      lightningcss-linux-x64-musl: 1.32.0
++      lightningcss-win32-arm64-msvc: 1.32.0
++      lightningcss-win32-x64-msvc: 1.32.0
++
+   lightningcss@1.33.0:
+     dependencies:
+       detect-libc: 2.1.2
+     optionalDependencies:
+       lightningcss-android-arm64: 1.33.0
+       lightningcss-darwin-arm64: 1.33.0
+       lightningcss-darwin-x64: 1.33.0
+       lightningcss-freebsd-x64: 1.33.0
+       lightningcss-linux-arm-gnueabihf: 1.33.0
+       lightningcss-linux-arm64-gnu: 1.33.0
+@@ -4689,20 +5024,24 @@ snapshots:
+       js-tokens: 4.0.0
+ 
+   lru-cache@11.5.3: {}
+ 
+   lru-cache@5.1.1:
+     dependencies:
+       yallist: 3.1.1
+ 
+   lz-string@1.5.0: {}
+ 
++  magic-string@0.30.21:
++    dependencies:
++      '@jridgewell/sourcemap-codec': 1.6.0
++
+   magic-string@1.4.2:
+     dependencies:
+       '@jridgewell/sourcemap-codec': 1.6.0
+ 
+   math-intrinsics@1.1.0: {}
+ 
+   mdn-data@2.27.1: {}
+ 
+   merge2@1.4.1: {}
+ 
+@@ -5177,20 +5516,26 @@ snapshots:
+       '@babel/core': 7.29.7(supports-color@7.2.0)
+ 
+   supports-color@7.2.0:
+     dependencies:
+       has-flag: 4.0.0
+ 
+   supports-preserve-symlinks-flag@1.0.0: {}
+ 
+   symbol-tree@3.2.4: {}
+ 
++  tailwind-merge@3.7.0: {}
++
++  tailwindcss@4.3.3: {}
++
++  tapable@2.3.3: {}
++
+   tinybench@6.2.0: {}
+ 
+   tinyexec@1.3.1: {}
+ 
+   tinyglobby@0.2.17:
+     dependencies:
+       fdir: 6.5.0(picomatch@4.0.7)
+       picomatch: 4.0.7
+ 
+   tldts-core@7.4.15: {}

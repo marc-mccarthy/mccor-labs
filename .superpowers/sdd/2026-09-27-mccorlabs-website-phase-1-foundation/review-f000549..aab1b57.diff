@@ -1,0 +1,321 @@
+# Review package: f000549..aab1b57
+
+## Commits
+aab1b57 fix(web): resolve pnpm in git hooks via Homebrew PATH
+d4431d8 fix(infra): non-interactive 1Password auth for deploy.sh
+0dd5135 chore(web): pre-push verification gate
+
+## Files changed
+ infra/deploy.sh     |  17 +++++++++
+ lefthook.yml        |  41 +++++++++++++++++++++
+ package.json        |   6 ++--
+ pnpm-lock.yaml      | 100 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ pnpm-workspace.yaml |   2 ++
+ 5 files changed, 164 insertions(+), 2 deletions(-)
+
+## Diff
+diff --git a/infra/deploy.sh b/infra/deploy.sh
+index f089366..b8f9cfe 100644
+--- a/infra/deploy.sh
++++ b/infra/deploy.sh
+@@ -38,20 +38,37 @@ unset TF_WORKSPACE # this script picks the workspace itself
+ # Fails closed on purpose. A stale settings file is worse than none: an
+ # expired 1Password session would otherwise let a deploy quietly run against
+ # whatever values happened to be on disk -- including, in the case of the
+ # mailboxes map, an empty one, which would delete every mailbox password.
+ if [[ -f settings.auto.tfvars.tpl ]]; then
+   if ! command -v op >/dev/null; then
+     echo "1Password CLI (op) not found, but settings.auto.tfvars.tpl exists." >&2
+     echo "Install it, or write settings.auto.tfvars by hand from the template." >&2
+     exit 1
+   fi
++  # Non-interactive auth, when it has been set up. 1Password authorization via
++  # the desktop app is per-process and TTY-bound, so every run of this script
++  # earns its own Touch ID prompt no matter how recently the last one passed.
++  # A service account token sidesteps that entirely -- op never consults the
++  # app. The token lives in the login Keychain, not in a file and not in the
++  # shell profile: exported globally it would shadow interactive op use and
++  # break anything reading the Private vault, which a service account cannot
++  # see. Scoped here, it affects only this script.
++  #   Create:  op service-account create mccor-labs-deploy --vault Development:read_items --raw
++  #   Store:   security add-generic-password -a "$USER" -s mccor-labs-op-sa -w '<token>' -U
++  # Absent the Keychain item this is a no-op and op falls back to the app.
++  if _op_token=$(security find-generic-password -s mccor-labs-op-sa -w 2>/dev/null) \
++     && [[ -n "$_op_token" ]]; then
++    export OP_SERVICE_ACCOUNT_TOKEN="$_op_token"
++  fi
++  unset _op_token
++
+   if ! op inject -i settings.auto.tfvars.tpl -o settings.auto.tfvars --force; then
+     echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
+     echo "Refusing to continue: deploying with stale settings risks applying an" >&2
+     echo "empty mailboxes map, which would destroy the mailbox passwords." >&2
+     exit 1
+   fi
+ fi
+ 
+ if [[ -n "$ENV_ID" ]]; then
+   if [[ ! "$ENV_ID" =~ ^[a-z][a-z0-9]{0,7}$ ]]; then
+diff --git a/lefthook.yml b/lefthook.yml
+new file mode 100644
+index 0000000..9a41b49
+--- /dev/null
++++ b/lefthook.yml
+@@ -0,0 +1,41 @@
++# Fast on commit, strict on push. A 90-second commit trains people into
++# --no-verify, after which hooks protect nothing.
++#
++# Hooks prepend Homebrew's bin so pnpm resolves to the 12.6.0 that
++# packageManager pins. The self-managing pnpm shim that git's own PATH finds
++# first tries to install pnpm@12.6.0 from npm, where no macos-arm64 build of
++# it is published, so every hook command fails. Prepending a directory that
++# does not exist is a no-op, so this stays harmless on CI and on Linux.
++pre-commit:
++  parallel: true
++  commands:
++    format:
++      glob: '*.{ts,tsx,css,json,md,yml,yaml}'
++      run: PATH=/opt/homebrew/bin:$PATH pnpm prettier --write {staged_files}
++      stage_fixed: true
++    lint:
++      glob: '*.{ts,tsx}'
++      run: PATH=/opt/homebrew/bin:$PATH pnpm eslint --fix --no-warn-ignored {staged_files}
++      stage_fixed: true
++
++pre-push:
++  parallel: false
++  commands:
++    typecheck:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web exec tsc --noEmit
++      fail_text: 'Type errors. Fix before pushing.'
++    lint:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web lint
++      fail_text: 'Lint errors. Fix before pushing.'
++    format-check:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm format:check
++      fail_text: 'Formatting drift. Run: pnpm format'
++    test:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web test:run
++      fail_text: 'Unit/integration tests failing.'
++    build:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm build
++      fail_text: 'Production build failed.'
++    e2e:
++      run: PATH=/opt/homebrew/bin:$PATH pnpm -F web test:e2e:smoke
++      fail_text: 'Smoke tests failing.'
+diff --git a/package.json b/package.json
+index 8637aa8..82405bd 100644
+--- a/package.json
++++ b/package.json
+@@ -5,31 +5,33 @@
+   "type": "module",
+   "description": "Infrastructure and tooling for mccor-labs. Node surface exists only to run scripts/.",
+   "engines": {
+     "node": ">=24",
+     "pnpm": ">=10"
+   },
+   "packageManager": "pnpm@12.6.0",
+   "scripts": {
+     "recon": "node scripts/recon-reference-sites.mjs",
+     "capture": "node scripts/capture-reference-site.mjs",
+-    "dev": "op run --env-file=app/web/.env.template -- pnpm -F web dev",
+-    "build": "op run --env-file=app/web/.env.template -- pnpm -F web build",
++    "//dev": "The web app reads no environment variables yet (no process.env anywhere in app/web/src) and app/web/.env.template has never existed, so the op run wrapper these two scripts carried injected nothing and failed on the missing template. When the app does need a secret, add the template and restore the wrapper HERE rather than wrapping every script: op authorization is per-process and TTY-bound, so op on the dev/build path means a biometric prompt per invocation.",
++    "dev": "pnpm -F web dev",
++    "build": "pnpm -F web build",
+     "build:raw": "pnpm -F web build",
+     "test": "pnpm -F web test",
+     "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",
+     "format": "prettier --write .",
+     "format:check": "prettier --check ."
+   },
+   "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the last version whose bundled browser revision matches the chromium-1228 already in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a newer revision and triggers a ~500MB download onto a volume at 89% capacity. Re-pin only alongside a deliberate `playwright install`.",
+   "devDependencies": {
+     "@playwright/test": "1.61.0",
+     "eslint": "^9.39.5",
+     "eslint-config-next": "16.3.6",
+     "eslint-config-prettier": "^10.1.8",
+     "eslint-plugin-jsx-a11y": "^6.10.2",
+     "jiti": "^2.7.0",
++    "lefthook": "2.1.14",
+     "prettier": "3.9.9",
+     "prettier-plugin-tailwindcss": "^0.8.1",
+     "typescript-eslint": "^8.70.1"
+   }
+ }
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 4c588d1..383e918 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -177,20 +177,23 @@ importers:
+         version: 16.3.6(@typescript-eslint/parser@8.70.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+       eslint-config-prettier:
+         specifier: ^10.1.8
+         version: 10.1.8(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
+       eslint-plugin-jsx-a11y:
+         specifier: ^6.10.2
+         version: 6.10.2(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))
+       jiti:
+         specifier: ^2.7.0
+         version: 2.7.0
++      lefthook:
++        specifier: 2.1.14
++        version: 2.1.14
+       prettier:
+         specifier: 3.9.9
+         version: 3.9.9
+       prettier-plugin-tailwindcss:
+         specifier: ^0.8.1
+         version: 0.8.1(prettier@3.9.9)
+       typescript-eslint:
+         specifier: ^8.70.1
+         version: 8.70.1(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+ 
+@@ -1912,20 +1915,74 @@ packages:
+   keyv@4.5.4:
+     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
+ 
+   language-subtag-registry@0.3.23:
+     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
+ 
+   language-tags@1.0.9:
+     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
+     engines: {node: '>=0.10'}
+ 
++  lefthook-darwin-arm64@2.1.14:
++    resolution: {integrity: sha512-VMUAqY81+8ph7Mc0iROd3JWqj2sOuK7SYDyd8ZgzYVKChCt+Nnz8ehd4gUwprJy7QI28IFSUh1M3wnIRiYh+fA==}
++    cpu: [arm64]
++    os: [darwin]
++
++  lefthook-darwin-x64@2.1.14:
++    resolution: {integrity: sha512-uSmjcPRU+yB+D6vk+u6WJDnyHlB+XIv1QZw97N2+qNGG2bNSLH/7MuJ6puCdJv+lVPBEO5wBjE3JIbaEzPOQCw==}
++    cpu: [x64]
++    os: [darwin]
++
++  lefthook-freebsd-arm64@2.1.14:
++    resolution: {integrity: sha512-po/pmjbp/7BjE9RFfeDnh+CeNsA0d+utppOYKB425I7mgI1GcmT8GAZ9DDut4DIutNjVqKL/lzrj+F87Gm40Rg==}
++    cpu: [arm64]
++    os: [freebsd]
++
++  lefthook-freebsd-x64@2.1.14:
++    resolution: {integrity: sha512-+KiXiFjJf7YdHUYjzhDsklcA5bAFZN+pNcz/NbBftrhVTwzNALNoK+SYEKt+9QJsrzL6tpDWmHHFpeLGp+8t8w==}
++    cpu: [x64]
++    os: [freebsd]
++
++  lefthook-linux-arm64@2.1.14:
++    resolution: {integrity: sha512-bjeJB16ftJaPWGTedssh8ZrqRy1ACfQuTV7a0O3NU1FoIsJtfHOm0o0mV4cPf4q+ZCVCwq1Xf2I11qUpuJFV4Q==}
++    cpu: [arm64]
++    os: [linux]
++
++  lefthook-linux-x64@2.1.14:
++    resolution: {integrity: sha512-gYExzjU2w3uKrP1MklbHENS1cXUdCQRIiEJkykI7q4RjhIHi+mQEUAZLxZw93a6jE2pNWaO0me5tB8EbEt4/GQ==}
++    cpu: [x64]
++    os: [linux]
++
++  lefthook-openbsd-arm64@2.1.14:
++    resolution: {integrity: sha512-MCW76gTlEMBF3Ds8O63UTxjaSguha/5zT0U3Vr719I1sXueSpttfRmm/5YfIB4MygB116yA/Vi+DsizT/X0kcg==}
++    cpu: [arm64]
++    os: [openbsd]
++
++  lefthook-openbsd-x64@2.1.14:
++    resolution: {integrity: sha512-salAc1PAhLI6xrB9pth5UxALQlTOGvZAfaAvgFwixhkdu8D//uW8zS3faFq31ktd1bDAy5wDI8p9yg+fF5+2uA==}
++    cpu: [x64]
++    os: [openbsd]
++
++  lefthook-windows-arm64@2.1.14:
++    resolution: {integrity: sha512-q3JC6lBrYLzkhXEhfnmFxJF47gSd5JeDweH3aNrHoLGX/KkRiOrk9RSyoRwSuGq03EYxSkJhl1FLj2GUxF7VqQ==}
++    cpu: [arm64]
++    os: [win32]
++
++  lefthook-windows-x64@2.1.14:
++    resolution: {integrity: sha512-WwIxdwW1lDAaJUU3ETcKlCtdqluGr3Cy+LjKvP4QIQnFf0FEXL78THstIkZ6k6qhfUn7/WvyqSIf0cbTAKw2nQ==}
++    cpu: [x64]
++    os: [win32]
++
++  lefthook@2.1.14:
++    resolution: {integrity: sha512-Y9TL1dmpRlIdSp73SJ6bb+xAZ4s2SinGTK3pgC9PRWMSjMr2iOfowPGnlSOfAo5fu6S5rdiItsQDxeLEWCGk4g==}
++    hasBin: true
++
+   levn@0.4.1:
+     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
+     engines: {node: '>= 0.8.0'}
+ 
+   lightningcss-android-arm64@1.33.0:
+     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
+     engines: {node: '>= 12.0.0'}
+     cpu: [arm64]
+     os: [android]
+ 
+@@ -4517,20 +4574,63 @@ snapshots:
+   keyv@4.5.4:
+     dependencies:
+       json-buffer: 3.0.1
+ 
+   language-subtag-registry@0.3.23: {}
+ 
+   language-tags@1.0.9:
+     dependencies:
+       language-subtag-registry: 0.3.23
+ 
++  lefthook-darwin-arm64@2.1.14:
++    optional: true
++
++  lefthook-darwin-x64@2.1.14:
++    optional: true
++
++  lefthook-freebsd-arm64@2.1.14:
++    optional: true
++
++  lefthook-freebsd-x64@2.1.14:
++    optional: true
++
++  lefthook-linux-arm64@2.1.14:
++    optional: true
++
++  lefthook-linux-x64@2.1.14:
++    optional: true
++
++  lefthook-openbsd-arm64@2.1.14:
++    optional: true
++
++  lefthook-openbsd-x64@2.1.14:
++    optional: true
++
++  lefthook-windows-arm64@2.1.14:
++    optional: true
++
++  lefthook-windows-x64@2.1.14:
++    optional: true
++
++  lefthook@2.1.14:
++    optionalDependencies:
++      lefthook-darwin-arm64: 2.1.14
++      lefthook-darwin-x64: 2.1.14
++      lefthook-freebsd-arm64: 2.1.14
++      lefthook-freebsd-x64: 2.1.14
++      lefthook-linux-arm64: 2.1.14
++      lefthook-linux-x64: 2.1.14
++      lefthook-openbsd-arm64: 2.1.14
++      lefthook-openbsd-x64: 2.1.14
++      lefthook-windows-arm64: 2.1.14
++      lefthook-windows-x64: 2.1.14
++
+   levn@0.4.1:
+     dependencies:
+       prelude-ls: 1.2.1
+       type-check: 0.4.0
+ 
+   lightningcss-android-arm64@1.33.0:
+     optional: true
+ 
+   lightningcss-darwin-arm64@1.33.0:
+     optional: true
+diff --git a/pnpm-workspace.yaml b/pnpm-workspace.yaml
+index f3b6a8a..6dcb644 100644
+--- a/pnpm-workspace.yaml
++++ b/pnpm-workspace.yaml
+@@ -1,2 +1,4 @@
+ packages:
+   - 'app/*'
++allowBuilds:
++  lefthook: true

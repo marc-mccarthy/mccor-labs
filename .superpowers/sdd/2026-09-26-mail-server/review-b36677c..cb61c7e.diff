@@ -1,0 +1,74 @@
+# Review package: b36677c..cb61c7e
+
+## Commits
+cb61c7e fix(mailserver): scope SES send policy to the domain identity, drop EIP from SPF
+
+## Files changed
+ infra/modules/mailserver/main.tf | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/infra/modules/mailserver/main.tf b/infra/modules/mailserver/main.tf
+index 9815e1a..d3c6415 100644
+--- a/infra/modules/mailserver/main.tf
++++ b/infra/modules/mailserver/main.tf
+@@ -57,22 +57,25 @@ resource "aws_route53_record" "dkim" {
+ 
+ # An IAM user whose only power is handing mail to SES. Its access key doubles
+ # as an SMTP password through a documented conversion, which is why the server
+ # can authenticate to SES with plain SMTP.
+ resource "aws_iam_user" "smtp" {
+   name = "${replace(var.domain_name, ".", "-")}-mail-relay"
+ }
+ 
+ data "aws_iam_policy_document" "smtp" {
+   statement {
++    # Scoped to this one identity, matching modules/email. This key is
++    # long-lived and lives on an internet-facing box, so it gets the
++    # smallest blast radius available.
+     actions   = ["ses:SendRawEmail"]
+-    resources = ["*"]
++    resources = [aws_ses_domain_identity.main.arn]
+   }
+ }
+ 
+ resource "aws_iam_user_policy" "smtp" {
+   name   = "send-mail"
+   user   = aws_iam_user.smtp.name
+   policy = data.aws_iam_policy_document.smtp.json
+ }
+ 
+ resource "aws_iam_access_key" "smtp" {
+@@ -330,28 +333,29 @@ resource "aws_route53_record" "mail_a" {
+ 
+ # Where the world delivers mail for this domain.
+ resource "aws_route53_record" "mx" {
+   zone_id = var.zone_id
+   name    = var.domain_name
+   type    = "MX"
+   ttl     = 600
+   records = ["10 ${local.fqdn}"]
+ }
+ 
+-# Who is allowed to send as this domain: SES, because that is the relay, and
+-# the server's own address for anything that bypasses it.
++# SES is the only sender. The instance's own IP is deliberately absent:
++# AWS blocks outbound 25 so it never sends, and authorising it here
++# would pre-approve spoofing if that block were ever lifted.
+ resource "aws_route53_record" "spf" {
+   zone_id = var.zone_id
+   name    = var.domain_name
+   type    = "TXT"
+   ttl     = 600
+-  records = ["v=spf1 include:amazonses.com ip4:${aws_eip.mail.public_ip} -all"]
++  records = ["v=spf1 include:amazonses.com -all"]
+ }
+ 
+ # Start at p=none so you can watch the reports without mail being rejected
+ # while DNS settles. Tighten to quarantine, then reject, once it is clean.
+ resource "aws_route53_record" "dmarc" {
+   zone_id = var.zone_id
+   name    = "_dmarc.${var.domain_name}"
+   type    = "TXT"
+   ttl     = 600
+   records = ["v=DMARC1; p=none; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]

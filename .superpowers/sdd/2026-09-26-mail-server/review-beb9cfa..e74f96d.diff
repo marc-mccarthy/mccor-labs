@@ -1,0 +1,430 @@
+# Review package: beb9cfa..HEAD
+
+## Commits
+e74f96d fix(docs): correct README against the current settings/mail-DNS design, reorder MAIL.md teardown
+66431d6 fix(infra): make instance_type/mail_volume_gb actually resize the mail server
+
+## Files changed
+ README.md                                         | 40 ++++++++++------
+ infra/MAIL.md                                     | 57 ++++++++++++++++++-----
+ infra/modules/mailserver/templates/setup.sh.tftpl | 13 +++++-
+ infra/settings.auto.tfvars.example                | 11 +++++
+ infra/setup/main.tf                               | 36 ++++++++++++--
+ 5 files changed, 126 insertions(+), 31 deletions(-)
+
+## Diff
+diff --git a/README.md b/README.md
+index 6184328..f69f823 100644
+--- a/README.md
++++ b/README.md
+@@ -11,54 +11,63 @@ Browser ──> Route 53 ──> CloudFront ──> S3                  (website
+    ├──────> Cognito hosted sign-in page                     (logins)
+    │
+    └──────> API Gateway HTTP API ──> Lambda ──> DynamoDB    (your data)
+              (checks the login token first)
+ ```
+ 
+ ## Where this goes
+ 
+ Put all of it in your website's git repo, even before the site exists. The
+ `app/web` placeholder page stands in until your real frontend is ready. Commit
+-everything, including `infra/settings.auto.tfvars`, `infra/backend.hcl` and the
+-`.terraform.lock.hcl` files; none of them are secret. The `.gitignore` already
+-keeps state files and build zips out.
++`infra/backend.hcl` and the `.terraform.lock.hcl` files; neither is secret.
++`infra/settings.auto.tfvars` is the opposite -- it holds your real domain,
++your alert email and your team's names, so it's gitignored and never
++committed. Commit `infra/settings.auto.tfvars.example` instead, as the
++template, and keep it in sync when you add a variable. The `.gitignore`
++already keeps state files and build zips out too.
+ 
+ ## Layout
+ 
+ ```
+ infra/
+-  settings.auto.tfvars   <- your project name, domain, alert email. The only file you edit.
+-  deploy.sh              <- the one command you run
+-  backend.hcl            <- written by setup; commit it
++  settings.auto.tfvars           <- your project name, domain, alert email. Gitignored -- not committed.
++  settings.auto.tfvars.example   <- the committed template; copy it to settings.auto.tfvars
++  deploy.sh                      <- the one command you run
++  backend.hcl                    <- written by setup; commit it
+   main.tf, variables.tf, outputs.tf, versions.tf
+-  setup/                 <- one-time: state bucket, DNS zone, budget alert
+-  modules/               <- certificate, static_site, auth, database, api
++  setup/                         <- one-time: state bucket, DNS zone, budget alert
++  modules/                       <- certificate, static_site, auth, database, api, email, mailserver
++  MAIL.md                        <- running your own mail server (optional, ~$20/month) -- see below
+ app/
+   api/index.mjs          <- example API (per-user items)
+   web/                   <- placeholder page with sign-in; replace with your real site
+ ```
+ 
+ ## Cost
+ 
+ | Piece | Cost |
+ |---|---|
+ | Domain | whatever Namecheap charges you yearly |
+-| Route 53 DNS zone | $0.50/month (the only fixed AWS cost) |
++| Route 53 DNS zone | $0.50/month |
+ | HTTPS certificates | $0 |
+ | Cognito Lite | $0 up to 10,000 monthly active users (shared by all copies) |
+ | Lambda | $0 within 1M requests/month (always free) |
+ | DynamoDB | $0 within 25 GB + 25 read/write units (main uses 5 each, each copy 1) |
+ | API Gateway HTTP API | $1.00 per million requests |
+ | S3 + CloudFront | pennies at low traffic |
+ | Budget alerts | $0 |
+ 
+-Personal copies add essentially nothing.
++Personal copies add essentially nothing. The Route 53 zone alone is the only
++*fixed* cost above -- but if you also turn on the optional mail server
++(`enable_mailserver` in `settings.auto.tfvars`), that adds a flat ~$20.38/month
++regardless of headcount. See [`infra/MAIL.md`](infra/MAIL.md) for what that
++buys, its full cost breakdown, and how to run and scale it.
+ 
+ ## One-time setup
+ 
+ **You need:** Terraform 1.16+, AWS CLI 2.32+ (for `aws login`), bash (macOS/Linux,
+ or WSL / Git Bash on Windows), and an AWS account on the **Paid** plan (the Free
+ plan closes the account after six months).
+ 
+ ### 1. Log in
+ 
+ ```bash
+@@ -165,23 +174,28 @@ terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
+ 
+ - **Email cap.** Cognito's built-in email sender is free but only for a small
+   number of messages per day. Before real users arrive, set up Amazon SES and
+   point the user pool's `email_configuration` at it.
+ - **Sessions.** The placeholder page doesn't refresh tokens, so users sign in
+   again after 60 minutes.
+ - **Rate limits.** The API allows 10 requests/second (bursts of 20). Adjust
+   `throttle_rate` and `throttle_burst` in the api module.
+ - **Adding routes.** Add a route key to `routes` in the api module (for example
+   `"PUT /items/{id}"`) and handle it in `app/api/index.mjs`.
+-- **Team email.** Put your mail host's MX/SPF/DKIM records in
+-  `infra/setup/main.tf` (there's an example) and run `./infra/deploy.sh setup`.
+-  Not at Namecheap: once the name servers point to Route 53, Namecheap's DNS
++- **Team email.** Don't add MX/SPF/DKIM records to `infra/setup/main.tf`
++  yourself -- `setup/main.tf` explicitly leaves mail DNS to whichever mail
++  option you turn on, so hand-adding records there creates a duplicate MX.
++  Turn on `enable_email` (forwarding into an inbox you already own) or
++  `enable_mailserver` (your own mail server) in `settings.auto.tfvars`
++  instead and run `./infra/deploy.sh setup`; see
++  [`infra/MAIL.md`](infra/MAIL.md) for the mail server option. Not at
++  Namecheap: once the name servers point to Route 53, Namecheap's DNS
+   records are ignored.
+ 
+ ## Your real frontend
+ 
+ Once you have a build step (React, Vue, etc.), delete the `aws_s3_object.web`
+ resource in `infra/main.tf` and upload your build instead. Keep `config.js`,
+ which Terraform still writes. Run these from `infra/` right after a deploy
+ (Terraform remembers which environment you deployed last). Replace
+ `../dist` with wherever your build output lands:
+ 
+diff --git a/infra/MAIL.md b/infra/MAIL.md
+index 97532b5..21ce761 100644
+--- a/infra/MAIL.md
++++ b/infra/MAIL.md
+@@ -407,21 +407,38 @@ openssl s_client -connect mail.mccorlabs.com:993 -brief
+ 
+ Flat regardless of headcount. AWS has charged for every public IPv4 address,
+ attached or not, since February 2024 — the Elastic IP is not free.
+ 
+ The budget alarm in `setup/` fires at **$25**: enough margin above $20.38
+ for normal variation, tight enough that an accidental extra resource (a NAT
+ Gateway is ~$33/month alone) trips it within a day.
+ 
+ To reduce cost, `t4g.micro` at roughly half the EC2 price works for four
+ mailboxes, though Rspamd is happier with the extra memory. Change
+-`instance_type` in `settings.auto.tfvars`.
++`instance_type` in `settings.auto.tfvars` and re-run `./deploy.sh setup`;
++Terraform resizes the running instance in place, no data loss.
++
++## Scaling the mail disk
++
++`mail_volume_gb` in `settings.auto.tfvars` sizes the separate EBS volume
++that holds mail (20GB by default). Raising it and re-running
++`./deploy.sh setup` grows the volume, but Terraform only grows the block
++device -- it does not resize the filesystem sitting on it. After the apply
++finishes, SSM into the box and grow the filesystem to match:
++
++```bash
++aws ssm start-session --target <instance-id>
++sudo resize2fs /dev/<mail-device>
++```
++
++Until that runs, `df` on the box still reports the old, smaller size even
++though AWS is billing for the new one.
+ 
+ ## State migration cleanup
+ 
+ The first `./infra/deploy.sh setup` run moves `setup/`'s own Terraform state
+ into S3, and leaves timestamped local copies behind as a safety net:
+ 
+ - `terraform.tfstate.pre-migrate.<timestamp>` — the state as it was right
+   before migration started
+ - `terraform.tfstate.migrated-<timestamp>` — the local state file, moved out
+   of Terraform's search path right after migration succeeded
+@@ -440,44 +457,60 @@ destroy rather than just excepting itself:
+ 
+ - **the mail volume** -- it holds everyone's mail
+ - **the Route 53 zone** -- recreating it assigns brand-new name servers, which
+   means going back into the registrar by hand and waiting for propagation with
+   mail and the website down throughout. The records inside are cheap to
+   rebuild; the delegation is not.
+ 
+ Read that second one twice before removing it. Everything else in this repo
+ can be rebuilt by `terraform apply`. The registrar step cannot.
+ 
+-To remove everything on purpose:
++To remove everything on purpose, in this order. The `terraform destroy` below
++also destroys `aws_s3_bucket.state` -- the bucket holding the very state
++`destroy` is reading from -- so the state must already be back on your local
++disk before you run it, not after:
+ 
+ ```bash
++# 1. Migrate setup's own state back to local, and leave it local. Skipping
++#    this, or restoring backend.tf before step 3, means `destroy` tears down
++#    the S3 bucket its own state lives in while it is still reading from
++#    that bucket.
+ cd infra/setup
++mv backend.tf backend.tf.disabled
++terraform init -migrate-state
++
++# 2. Drop the two prevent_destroy resources from state so `destroy` can run
++#    at all -- Terraform refuses to even plan a destroy that touches them.
+ terraform state rm 'module.mailserver[0].aws_volume_attachment.mail'
+ terraform state rm 'module.mailserver[0].aws_ebs_volume.mail'
+ terraform state rm 'aws_route53_zone.main'
+-terraform destroy -var-file=../settings.auto.tfvars
+ 
+-# The zone survives the destroy above. Delete it only if you are giving up the
+-# domain or moving DNS elsewhere -- and expect to redo the registrar step if
+-# you ever come back:
+-#   aws route53 delete-hosted-zone --id <zone-id>
++# 3. Destroy everything else, including the state bucket, while still on
++#    local state. force_destroy is required here -- without it the bucket
++#    destroy fails with BucketNotEmpty (versioned state objects still inside
++#    it) and aborts the whole destroy.
++terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
++
++# backend.tf.disabled has nothing left to migrate back to -- the bucket it
++# pointed at no longer exists. Leave it disabled, or delete it.
+ 
+-# The volume and its snapshots survive deliberately. Remove them last:
++# 4. The zone survives step 2/3 because it was removed from state, not
++#    destroyed. Delete it only if you are giving up the domain or moving DNS
++#    elsewhere -- and expect to redo the registrar step if you ever come back:
++#    aws route53 delete-hosted-zone --id <zone-id>
++
++# 5. The volume and its snapshots survive the same way. Remove them last:
+ aws ec2 delete-volume --volume-id <vol-id>
+ aws ec2 describe-snapshots --owner-ids self \
+   --filters Name=tag:Backup,Values=mccorlabs-com-mail \
+   --query 'Snapshots[].SnapshotId' --output text \
+   | tr '\t' '\n' | xargs -rn1 aws ec2 delete-snapshot --snapshot-id
+-
+-# To destroy the state bucket, migrate setup's own state back to local first:
+-#   mv setup/backend.tf setup/backend.tf.disabled
+-#   terraform -chdir=setup init -migrate-state
+ ```
+ 
+ Nothing else survives. Custom CloudWatch metrics stop being published and
+ cost nothing; SES production access and its suppression list persist and
+ are free.
+ 
+ Verify no flag blocks destroy:
+ 
+ ```bash
+ cd /Users/mj/repos/mccor-labs/infra
+diff --git a/infra/modules/mailserver/templates/setup.sh.tftpl b/infra/modules/mailserver/templates/setup.sh.tftpl
+index b89aea4..012d216 100644
+--- a/infra/modules/mailserver/templates/setup.sh.tftpl
++++ b/infra/modules/mailserver/templates/setup.sh.tftpl
+@@ -11,20 +11,31 @@ RELAY_USER="${relay_user}"
+ ALERT_EMAIL="${alert_email}"
+ PARAM_PREFIX="${param_prefix}"
+ 
+ hostnamectl set-hostname "$FQDN"
+ echo "127.0.1.1 $FQDN ${fqdn}" >> /etc/hosts
+ 
+ export DEBIAN_FRONTEND=noninteractive
+ apt-get update
+ apt-get install -y ca-certificates curl gnupg unzip
+ 
++# Security updates only, applied automatically. This box is internet-facing
++# on four ports (25, 80, 587, 993) and is meant to run for years without
++# anyone logging in. Automatic REBOOTS are deliberately not enabled: a mail
++# server rebooting unattended mid-delivery is worse than a delayed kernel
++# patch, so the operator reboots deliberately, on their own schedule.
++apt-get install -y unattended-upgrades
++cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'
++APT::Periodic::Update-Package-Lists "1";
++APT::Periodic::Unattended-Upgrade "1";
++AUTO
++
+ # ---------- tools ----------
+ curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscli.zip
+ unzip -q /tmp/awscli.zip -d /tmp
+ /tmp/aws/install
+ 
+ # Debian cloud images ship no snapd, so the agent is installed from AWS's own
+ # .deb. This is the only way onto the box -- there is no SSH port and no key --
+ # so a failure here must stop the boot rather than be swallowed.
+ curl -fsSL https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb \
+   -o /tmp/amazon-ssm-agent.deb
+@@ -280,19 +291,19 @@ cat > /etc/cron.daily/mail-health <<HEALTH
+ #!/bin/bash
+ TOPIC="${alerts_topic_arn}"
+ REGION="${region}"
+ alert() { aws sns publish --region "\$REGION" --topic-arn "\$TOPIC" --subject "mail: \$1" --message "\$2" || true; }
+ 
+ CERT=$CERTBOT_DIR/live/${fqdn}/cert.pem
+ if [ -f "\$CERT" ] && ! openssl x509 -checkend \$((21*86400)) -noout -in "\$CERT" >/dev/null; then
+   alert "certificate expiring" "The TLS certificate for ${fqdn} expires within 21 days and has not renewed."
+ fi
+ 
+-QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || echo 0)
++QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)
+ if [ "\$QUEUED" -gt 50 ]; then
+   alert "mail queue backing up" "\$QUEUED messages are queued. The SES relay credential is the usual cause."
+ fi
+ HEALTH
+ chmod +x /etc/cron.daily/mail-health
+ 
+ touch /var/lib/mail-setup-complete
+ echo "mail server ready"
+diff --git a/infra/settings.auto.tfvars.example b/infra/settings.auto.tfvars.example
+index 18255c5..0a06ec2 100644
+--- a/infra/settings.auto.tfvars.example
++++ b/infra/settings.auto.tfvars.example
+@@ -60,20 +60,31 @@ enable_mailserver = false
+ # "jdoe" becomes jdoe@<domain_name>, shown as "Jane Doe".
+ mailboxes = {
+   # jdoe = "Jane Doe"
+ }
+ 
+ # Which mailbox receives postmaster@, abuse@ and the DMARC reports.
+ # Name one deliberately -- left unset it would fall to whoever sorts
+ # first alphabetically, and would move when you hire someone.
+ admin_mailbox = ""
+ 
++# EC2 instance type. Bump this to resize the server -- Terraform resizes
++# the running instance in place, no data loss. t4g.micro works for a
++# handful of mailboxes at roughly half the price of the default below.
++# instance_type = "t4g.small"
++
++# Size in GB of the separate disk holding mail. Terraform only grows this
++# volume, never shrinks it, and growing it here is only half the job: the
++# box itself then needs `resize2fs` run on the mail filesystem before the
++# extra space is usable. See MAIL.md's scaling section.
++# mail_volume_gb = 20
++
+ # ---------------------------------------------------------------
+ # Mail forwarding (alternative to the mail server above -- you cannot
+ # have both, they each need the domain's MX record).
+ #
+ # Addresses that forward into an inbox you already own. No per-user
+ # cost and nothing to sign into.
+ # ---------------------------------------------------------------
+ 
+ # enable_email    = true
+ # mail_forward_to = ""                     # defaults to alert_email
+diff --git a/infra/setup/main.tf b/infra/setup/main.tf
+index 48dc60f..e0e7b25 100644
+--- a/infra/setup/main.tf
++++ b/infra/setup/main.tf
+@@ -123,34 +123,58 @@ variable "admin_mailbox" {
+   description = "Which mailbox receives postmaster@, abuse@ and DMARC reports. Must be a key in mailboxes."
+   type        = string
+   default     = ""
+ 
+   validation {
+     condition     = !var.enable_mailserver || contains(keys(var.mailboxes), var.admin_mailbox)
+     error_message = "admin_mailbox must name one of the mailboxes. Left to chance it falls to whoever sorts first alphabetically, and moves when you hire someone."
+   }
+ }
+ 
++variable "instance_type" {
++  description = "EC2 instance type for the mail server. t4g.small is the smallest size that runs the mail stack and its spam filter comfortably; t4g.micro works for a handful of mailboxes at roughly half the price. Changing this replaces nothing -- Terraform resizes the running instance in place."
++  type        = string
++  default     = "t4g.small"
++}
++
++variable "mail_volume_gb" {
++  description = "Size in GB of the separate EBS volume holding mail, kept off the root disk so rebuilding the server never touches mail. Terraform only grows the volume -- it never shrinks it. After apply, the box itself still needs `resize2fs` run on the mail filesystem before the extra space is usable; see MAIL.md."
++  type        = number
++  default     = 20
++}
++
+ variable "force_destroy" {
+   description = "Set true only when removing everything for good. While false, Terraform refuses to delete a state bucket or DNS zone that still has contents."
+   type        = bool
+   default     = false
+ }
+ 
+ # ---------- Terraform state bucket ----------
+ 
+ # Named from domain_name, which you already own, so the name is globally
+ # unique without leaking the account id: mccorlabs.com -> mccorlabs-com-tfstate.
+ locals {
+   state_bucket = "${replace(var.domain_name, ".", "-")}-tfstate"
+ }
+ 
++# backend.tf hardcodes this same bucket name as a literal string -- backend
++# blocks cannot reference variables or locals, so it can't be derived the
++# way local.state_bucket is above. A comment there claims the two match;
++# this check fails loudly at plan/apply time if they ever diverge, instead
++# of leaving a silent mismatch for the comment to lie about.
++check "state_bucket_matches_backend" {
++  assert {
++    condition     = local.state_bucket == "mccorlabs-com-tfstate"
++    error_message = "local.state_bucket (${local.state_bucket}) no longer matches the literal bucket name hardcoded in backend.tf (mccorlabs-com-tfstate). Update backend.tf to match, then migrate setup's state to the new bucket name."
++  }
++}
++
+ resource "aws_s3_bucket" "state" {
+   bucket        = local.state_bucket
+   force_destroy = var.force_destroy
+ }
+ 
+ # Versioning lets you recover a previous state file if something goes wrong.
+ resource "aws_s3_bucket_versioning" "state" {
+   bucket = aws_s3_bucket.state.id
+ 
+   versioning_configuration {
+@@ -250,25 +274,27 @@ module "email" {
+   recipients    = var.mail_recipients
+   force_destroy = var.force_destroy
+ }
+ 
+ # ---------- Your own mail server (optional) ----------
+ 
+ module "mailserver" {
+   count  = var.enable_mailserver ? 1 : 0
+   source = "../modules/mailserver"
+ 
+-  domain_name   = var.domain_name
+-  zone_id       = aws_route53_zone.main.zone_id
+-  mailboxes     = var.mailboxes
+-  admin_mailbox = var.admin_mailbox
+-  alert_email   = var.alert_email
++  domain_name    = var.domain_name
++  zone_id        = aws_route53_zone.main.zone_id
++  mailboxes      = var.mailboxes
++  admin_mailbox  = var.admin_mailbox
++  alert_email    = var.alert_email
++  instance_type  = var.instance_type
++  mail_volume_gb = var.mail_volume_gb
+ }
+ 
+ # ---------- Backend settings for the main configuration ----------
+ 
+ resource "local_file" "backend" {
+   filename        = "${path.module}/../backend.hcl"
+   file_permission = "0644"
+   content         = <<-EOT
+     # Written by infra/setup. Commit this file.
+     bucket       = "${aws_s3_bucket.state.bucket}"

@@ -1,0 +1,314 @@
+# Review package: 5268510..HEAD
+
+## Commits
+fda1fad fix(infra): detect setup/ state migration by the state object, not the bucket
+9bbacf8 feat(infra): remote encrypted state for setup, scripted SES sandbox exit
+
+## Files changed
+ infra/MAIL.md       | 66 +++++++++++++++++++++++++++++------------------------
+ infra/deploy.sh     | 54 +++++++++++++++++++++++++++++++++++++++++--
+ infra/setup/main.tf | 12 ++++++++++
+ 3 files changed, 100 insertions(+), 32 deletions(-)
+
+## Diff
+diff --git a/infra/MAIL.md b/infra/MAIL.md
+index 955e2bd..d1846ba 100644
+--- a/infra/MAIL.md
++++ b/infra/MAIL.md
+@@ -1,69 +1,75 @@
+ # Mail on mccorlabs.com
+ 
+ Your own mail server, on your own EC2 instance, holding your own mailboxes.
+ No Google Workspace, no Microsoft, no per-seat fee. Adding a fifth person
+ costs nothing extra.
+ 
+ ## What exists
+ 
+-| Piece | What it does |
+-|---|---|
+-| EC2 `t4g.small`, Debian 12 ARM | Runs the mail stack |
+-| Separate encrypted EBS volume | Holds the mail, so rebuilding the server never touches it |
+-| `docker-mailserver` | Postfix + Dovecot + Rspamd spam filtering + fail2ban |
+-| Elastic IP | Fixed address, so DNS stays valid across reboots |
+-| Route53 | A, MX, SPF, DMARC, 3 DKIM CNAMEs, autodiscover, autoconfig |
+-| SES | Outbound relay only. Does not store your mail. |
+-| SSM Parameter Store | Holds the mailbox passwords, encrypted |
++| Piece                          | What it does                                               |
++| ------------------------------ | ---------------------------------------------------------- |
++| EC2 `t4g.small`, Debian 12 ARM | Runs the mail stack                                        |
++| Separate encrypted EBS volume  | Holds the mail, so rebuilding the server never touches it  |
++| `docker-mailserver`            | Postfix + Dovecot + Rspamd spam filtering + fail2ban       |
++| Elastic IP                     | Fixed address, so DNS stays valid across reboots           |
++| Route53                        | A, MX, SPF, DMARC, 3 DKIM CNAMEs, autodiscover, autoconfig |
++| SES                            | Outbound relay only. Does not store your mail.             |
++| SSM Parameter Store            | Holds the mailbox passwords, encrypted                     |
+ 
+ ### Why sending goes through SES
+ 
+ Two problems with sending straight from an EC2 box, both real:
+ 
+ 1. **AWS blocks outbound port 25 on every instance.** Getting it unblocked
+    means a form submitted as the root user and roughly 48 hours, and AWS can
+    say no.
+ 2. **A brand-new IP has no reputation.** Gmail and Outlook treat mail from
+    unknown addresses as suspicious, and it lands in spam or is rejected.
+ 
+ Relaying through SES on port 587 sidesteps both. SES is in your own AWS
+ account -- it is the last hop that hands mail to the internet, not a service
+ holding your mailboxes.
+ 
+ Receiving is entirely yours: the internet delivers straight to your instance
+-on port 25, which AWS does *not* block inbound.
++on port 25, which AWS does _not_ block inbound.
+ 
+ ## Turning it on
+ 
+ Three steps, in order. Step 2 is manual and cannot be skipped.
+ 
+ ### 1. Base infrastructure (done)
+ 
+     ./infra/deploy.sh setup
+ 
+-Created the state bucket, the Route53 zone, and the budget alarm.
++Created the state bucket, the Route53 zone, and the budget alarm. The very
++first time this runs, the state bucket doesn't exist yet, so it applies
++locally, then migrates its own state into the bucket it just created;
++`deploy.sh` handles this automatically -- every run after that is a plain
++`terraform init`. Once `enable_mailserver` is true (step 3), this command
++also requests SES production access if it hasn't already been requested or
++granted; approval takes about 24 hours.
+ 
+ ### 2. Point Namecheap at Route53 (you must do this)
+ 
+ Namecheap keeps owning the domain. You are only changing which nameservers
+ answer DNS for it.
+ 
+ 1. Sign in to Namecheap, Domain List, Manage next to `mccorlabs.com`
+ 2. Find **Nameservers**, change the dropdown from Namecheap BasicDNS to
+    **Custom DNS**
+ 3. Enter these four, one per row:
+ 
+-       ns-1154.awsdns-16.org
+-       ns-1701.awsdns-20.co.uk
+-       ns-356.awsdns-44.com
+-       ns-746.awsdns-29.net
++   ns-1154.awsdns-16.org
++   ns-1701.awsdns-20.co.uk
++   ns-356.awsdns-44.com
++   ns-746.awsdns-29.net
+ 
+ 4. Save, then wait. Usually minutes, occasionally a few hours.
+ 
+ Check it took effect:
+ 
+     dig +short NS mccorlabs.com
+ 
+ When that lists the four `awsdns` names, you are ready for step 3.
+ 
+ ### 3. Build the mail server
+@@ -86,25 +92,25 @@ mailboxes.
+ 
+ One per person. Have each person change theirs after first sign-in:
+ 
+     aws ssm start-session --target $(terraform output -raw mail_instance_id)
+     docker exec -it mailserver setup email update marcm@mccorlabs.com
+ 
+ ## How people read their mail
+ 
+ There is no webmail in this setup. People use a mail app.
+ 
+-| Setting | Value |
+-|---|---|
+-| Username | full address, e.g. `marcm@mccorlabs.com` |
+-| Password | from `terraform output` above |
+-| Incoming (IMAP) | `mail.mccorlabs.com`, port **993**, SSL/TLS |
++| Setting         | Value                                        |
++| --------------- | -------------------------------------------- |
++| Username        | full address, e.g. `marcm@mccorlabs.com`     |
++| Password        | from `terraform output` above                |
++| Incoming (IMAP) | `mail.mccorlabs.com`, port **993**, SSL/TLS  |
+ | Outgoing (SMTP) | `mail.mccorlabs.com`, port **587**, STARTTLS |
+ 
+ Enter these by hand. The `autodiscover` and `autoconfig` DNS records exist
+ but nothing serves the XML they point at yet, so clients cannot configure
+ themselves from just an address.
+ 
+ On iPhone: Settings, Apps, Mail, Mail Accounts, Add Account, Other.
+ 
+ If you do want webmail later, Roundcube runs on the same box behind the
+ existing certificate.
+@@ -168,48 +174,48 @@ From your laptop:
+     dig +short MX mccorlabs.com            # should be 10 mail.mccorlabs.com
+     dig +short TXT mccorlabs.com           # SPF
+     openssl s_client -connect mail.mccorlabs.com:993 -brief
+ 
+ Best end-to-end test: send from a personal Gmail to `marcm@mccorlabs.com`,
+ then reply from the mail client and confirm it arrives without landing in
+ spam.
+ 
+ ## Deliverability
+ 
+-Getting mail *accepted* by Gmail and Outlook is the hard part of running your
++Getting mail _accepted_ by Gmail and Outlook is the hard part of running your
+ own server. What is already handled:
+ 
+ - **SPF** names SES and the server's own IP as allowed senders
+ - **DKIM** signing is done by SES on the way out, with the three CNAMEs in place
+ - **DMARC** starts at `p=none`, which reports without rejecting
+ 
+ After a week of clean sending, tighten DMARC to `p=quarantine`, then
+ `p=reject`, in `modules/mailserver/main.tf`.
+ 
+ Test your score at https://www.mail-tester.com -- send it a message and aim
+ for 9/10 or better.
+ 
+-Reverse DNS is *not* configured. It matters less when relaying through SES,
++Reverse DNS is _not_ configured. It matters less when relaying through SES,
+ since the connecting IP is SES's. If you later stop relaying and send direct,
+ request both the port 25 unblock and a PTR record for the Elastic IP through
+ the AWS "Request to Remove Email Sending Limitations" form.
+ 
+ ## Cost
+ 
+-| Item | Monthly |
+-|---|---|
+-| EC2 `t4g.small` | ~$12 |
+-| EBS, 20 GB mail + 20 GB root | ~$3.20 |
+-| Route53 hosted zone | $0.50 |
+-| SES | ~$0.10 at low volume |
+-| Elastic IP (attached) | $0 |
+-| **Total** | **~$16/month, flat** |
++| Item                         | Monthly              |
++| ---------------------------- | -------------------- |
++| EC2 `t4g.small`              | ~$12                 |
++| EBS, 20 GB mail + 20 GB root | ~$3.20               |
++| Route53 hosted zone          | $0.50                |
++| SES                          | ~$0.10 at low volume |
++| Elastic IP (attached)        | $0                   |
++| **Total**                    | **~$16/month, flat** |
+ 
+ Flat regardless of headcount. Four people on Google Workspace would be ~$28
+ and rising with each hire.
+ 
+ To halve it, `t4g.micro` at ~$6/month works for four mailboxes, though Rspamd
+ is happier with the extra memory. Change `instance_type` in
+ `settings.auto.tfvars`.
+ 
+ ## Backups
+ 
+diff --git a/infra/deploy.sh b/infra/deploy.sh
+index b4b6a23..c9974d6 100644
+--- a/infra/deploy.sh
++++ b/infra/deploy.sh
+@@ -42,22 +42,72 @@ fi
+ 
+ if ! aws sts get-caller-identity --query Arn --output text >/dev/null; then
+   echo "AWS login not working. Run 'aws login', then try again (see README, 'Log in')." >&2
+   exit 1
+ fi
+ 
+ # ---------- one-time setup ----------
+ if [[ "$ACTION" == "setup" ]]; then
+   (
+     cd setup
+-    terraform init -input=false
+-    terraform apply -var-file=../settings.auto.tfvars
++
++    # setup/ creates the bucket its own state then lives in, so read the
++    # bucket and key literally out of setup/main.tf's own backend block
++    # rather than recomputing them -- a second computation (here, or from a
++    # sibling root's versions.tf) can silently drift from the block
++    # Terraform actually uses. This can't drift: it IS the block.
++    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' main.tf)"
++    STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
++    STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
++    if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" ]]; then
++      echo "Could not find the state bucket/key in setup/main.tf's backend block." >&2
++      exit 1
++    fi
++
++    # First run ever: this root's own state object doesn't exist in the
++    # bucket yet. The bucket itself is a poor signal -- the same apply that
++    # creates the bucket creates everything else too, so the bucket exists
++    # long before this root's state is actually migrated into it (that's
++    # exactly the gap between "bucket exists" and "my state lives there").
++    # Init without a backend (nothing to reach), apply so the bucket (among
++    # everything else) gets created, then migrate this root's own state
++    # into the bucket it just made. Once the state object exists, every
++    # later run skips straight to plain init.
++    if ! aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" >/dev/null 2>&1; then
++      terraform init -input=false -backend=false
++      terraform apply -input=false -var-file=../settings.auto.tfvars
++      terraform init -input=false -migrate-state -force-copy
++    else
++      terraform init -input=false
++    fi
++
++    terraform apply -input=false -var-file=../settings.auto.tfvars
++
++    # SES starts sandboxed: 200 messages a day, verified recipients only.
++    # No Terraform resource covers production access (aws_sesv2_account_details
++    # doesn't exist in the provider), so this stays a scripted step here
++    # instead of a manual console visit. Only relevant once the mail server
++    # itself is on. Safe to re-run: a repeat request while pending or
++    # already granted returns an error, which is expected, not a failure.
++    if grep -qE '^\s*enable_mailserver\s*=\s*true' ../settings.auto.tfvars; then
++      DOMAIN_NAME="$(grep -oE 'domain_name *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
++      ALERT_EMAIL="$(grep -oE 'alert_email *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
++      aws sesv2 put-account-details \
++        --production-access-enabled \
++        --mail-type TRANSACTIONAL \
++        --website-url "https://${DOMAIN_NAME}" \
++        --additional-contact-email-addresses "${ALERT_EMAIL}" \
++        --contact-language EN 2>/dev/null \
++        && echo ">>> SES production access requested (approval ~24h)" \
++        || echo ">>> SES production access already requested or granted"
++    fi
++
+     echo
+     echo "Next: enter these name servers in Namecheap (Custom DNS):"
+     terraform output -json name_servers
+   )
+   exit 0
+ fi
+ 
+ if [[ ! -f backend.hcl ]]; then
+   echo "backend.hcl not found. Run './infra/deploy.sh setup' first." >&2
+   exit 1
+diff --git a/infra/setup/main.tf b/infra/setup/main.tf
+index 534c7a9..e54c689 100644
+--- a/infra/setup/main.tf
++++ b/infra/setup/main.tf
+@@ -22,20 +22,32 @@ terraform {
+     }
+     archive = {
+       source  = "hashicorp/archive"
+       version = "~> 2.8"
+     }
+     random = {
+       source  = "hashicorp/random"
+       version = "~> 3.6"
+     }
+   }
++
++  # This root creates the bucket its own state then lives in, so the very
++  # first run is local and migrates afterwards -- see deploy.sh. Written
++  # literally because backend blocks cannot use variables; matches
++  # local.state_bucket below.
++  backend "s3" {
++    bucket       = "mccorlabs-com-tfstate"
++    key          = "setup/terraform.tfstate"
++    region       = "us-east-1"
++    use_lockfile = true
++    encrypt      = true
++  }
+ }
+ 
+ provider "aws" {
+   region = "us-east-1"
+ 
+   default_tags {
+     tags = {
+       Project   = var.project
+       ManagedBy = "terraform"
+     }

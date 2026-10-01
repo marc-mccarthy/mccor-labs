@@ -1,0 +1,183 @@
+# Review package: 0edb728..HEAD
+
+## Commits
+e33515a fix(infra): move setup/'s backend block to its own file so bootstrap can disable it
+
+## Files changed
+ infra/deploy.sh        | 44 +++++++++++++++++++++++++++++---------------
+ infra/setup/backend.tf | 25 +++++++++++++++++++++++++
+ infra/setup/main.tf    | 15 +++------------
+ 3 files changed, 57 insertions(+), 27 deletions(-)
+
+## Diff
+diff --git a/infra/deploy.sh b/infra/deploy.sh
+index 320ef88..c090212 100644
+--- a/infra/deploy.sh
++++ b/infra/deploy.sh
+@@ -44,64 +44,78 @@ if ! aws sts get-caller-identity --query Arn --output text >/dev/null; then
+   echo "AWS login not working. Run 'aws login', then try again (see README, 'Log in')." >&2
+   exit 1
+ fi
+ 
+ # ---------- one-time setup ----------
+ if [[ "$ACTION" == "setup" ]]; then
+   (
+     cd setup
+ 
+     # setup/ creates the bucket its own state then lives in, so read the
+-    # bucket, key and region literally out of setup/main.tf's own backend
++    # bucket, key and region literally out of backend.tf's own backend
+     # block rather than recomputing them -- a second computation (here, or
+     # from a sibling root's versions.tf) can silently drift from the block
+-    # Terraform actually uses. This can't drift: it IS the block.
+-    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' main.tf)"
++    # Terraform actually uses. This can't drift: it IS the block. (Lives in
++    # backend.tf, not main.tf -- see that file for why.)
++    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' backend.tf)"
+     STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
+     STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
+     STATE_REGION="$(sed -nE 's/^[[:space:]]*region[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
+     if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" || -z "$STATE_REGION" ]]; then
+-      echo "Could not read bucket/key/region from setup/main.tf's backend block." >&2
++      echo "Could not read bucket/key/region from backend.tf's backend block." >&2
+       exit 1
+     fi
+ 
+     # Three outcomes, never two. "Migrated" and "not migrated" are the only
+     # states we may act on; anything else (403, throttle, endpoint error,
+     # dead credentials) must abort. Guessing "not migrated" would run the
+     # bootstrap path against stale local state and -force-copy it over the
+     # real thing -- sts:GetCallerIdentity above proves credentials exist,
+     # not that they can read this object, so that guard doesn't cover this.
+     # --region is passed explicitly: the backend pins one, the CLI profile
+     # has its own, and a mismatch must be an error, not a false 404.
+     if PROBE_ERR="$(aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" \
+       --region "$STATE_REGION" 2>&1 >/dev/null)"; then
+       # State object exists: already migrated. Nothing to bootstrap.
+       terraform init -input=false
+     elif grep -qE '\(404\)|Not Found' <<<"$PROBE_ERR"; then
+       # First run ever: this root's own state object doesn't exist in the
+       # bucket yet. The bucket itself is a poor signal -- the same apply
+       # that creates the bucket creates everything else too, so the bucket
+       # exists long before this root's state is actually migrated into it.
+-      # Back up the local state before touching anything, init without a
+-      # backend (nothing to reach), apply so the bucket (among everything
+-      # else) gets created, then migrate this root's own state into the
+-      # bucket it just made. Left uninteractive: this is the one Terraform
+-      # command in this script that must show its plan before it moves
+-      # real, billable resources -- see the trailing apply's comment.
++      #
++      # `-backend=false` is NOT enough here: with a `backend "s3" {}` block
++      # present in config but no record of it in .terraform/terraform.tfstate,
++      # Terraform treats that as a backend CHANGE and refuses `plan`/`apply`
++      # outright ("Backend initialization required... use -reconfigure or
++      # -migrate-state") -- `-backend=false` only skips *writing* the record,
++      # it doesn't make plan/apply tolerate the mismatch. The block has to be
++      # genuinely absent from config for the first apply, not just unused.
++      # That's why it lives alone in backend.tf: rename it aside so this
++      # root really has no backend block while it creates the bucket, put
++      # it back, then migrate into the bucket it just made.
+       cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)" 2>/dev/null || true
+-      terraform init -input=false -backend=false
++      mv backend.tf backend.tf.disabled
++      # Restore even if the apply below fails -- a disabled backend file
++      # left behind is a nasty, easy-to-miss state to debug blind. Cleared
++      # right after the deliberate restore so it doesn't also fire (harmlessly,
++      # since the file is back by then) on the script's normal exit.
++      trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
++      terraform init -input=false
+       terraform apply -var-file=../settings.auto.tfvars
++      mv -f backend.tf.disabled backend.tf
++      trap - EXIT
+       terraform init -input=false -migrate-state -force-copy
+-      # The leftover local terraform.tfstate is exactly what -backend=false
+-      # would silently prefer over the remote on a later run -- it's the
+-      # fuel for the clobber this whole branch exists to avoid. Move it out
+-      # of Terraform's search path rather than delete it: right after
++      # The leftover local terraform.tfstate is exactly what a bare local
++      # init would silently prefer over the remote on a later run -- it's
++      # the fuel for the clobber this whole branch exists to avoid. Move it
++      # out of Terraform's search path rather than delete it: right after
+       # migration the remote copy is seconds old and unverified by anything
+       # but Terraform's own exit code, so the bytes stay recoverable.
+       # *.tfstate.* is already gitignored, so neither copy can leak into git.
+       mv -f terraform.tfstate "terraform.tfstate.migrated-$(date +%Y%m%d-%H%M%S)"
+     else
+       echo "Cannot tell whether setup/ state is already in s3://${STATE_BUCKET}/${STATE_KEY}:" >&2
+       echo "  $PROBE_ERR" >&2
+       echo "Refusing to guess -- guessing wrong overwrites real state. Fix access, then re-run." >&2
+       exit 1
+     fi
+diff --git a/infra/setup/backend.tf b/infra/setup/backend.tf
+new file mode 100644
+index 0000000..24e9e35
+--- /dev/null
++++ b/infra/setup/backend.tf
+@@ -0,0 +1,25 @@
++# This root creates the bucket its own state then lives in, so the very
++# first apply has to run with no backend configured at all -- not merely
++# `-backend=false`, which only skips writing the backend record and still
++# leaves `plan`/`apply` refusing to proceed once a `backend "s3" {}` block
++# is present in config but unconfirmed in .terraform/terraform.tfstate
++# ("Backend initialization required... use -reconfigure or -migrate-state").
++# Terraform sees that combination as a backend CHANGE, not as "no backend",
++# and there is no flag that makes plan/apply tolerate it.
++#
++# So this block lives alone in its own file: deploy.sh renames this file
++# aside for the bootstrap apply (no backend block in play at all -> a plain
++# local init works), then restores it and migrates. Every later run finds
++# this file present from the start and never has to touch it.
++#
++# Written literally because backend blocks cannot use variables; matches
++# local.state_bucket in main.tf.
++terraform {
++  backend "s3" {
++    bucket       = "mccorlabs-com-tfstate"
++    key          = "setup/terraform.tfstate"
++    region       = "us-east-1"
++    use_lockfile = true
++    encrypt      = true
++  }
++}
+diff --git a/infra/setup/main.tf b/infra/setup/main.tf
+index af8f14e..cd8e988 100644
+--- a/infra/setup/main.tf
++++ b/infra/setup/main.tf
+@@ -22,34 +22,25 @@ terraform {
+     }
+     archive = {
+       source  = "hashicorp/archive"
+       version = "~> 2.8"
+     }
+     random = {
+       source  = "hashicorp/random"
+       version = "~> 3.6"
+     }
+   }
+-
+-  # This root creates the bucket its own state then lives in, so the very
+-  # first run is local and migrates afterwards -- see deploy.sh. Written
+-  # literally because backend blocks cannot use variables; matches
+-  # local.state_bucket below.
+-  backend "s3" {
+-    bucket       = "mccorlabs-com-tfstate"
+-    key          = "setup/terraform.tfstate"
+-    region       = "us-east-1"
+-    use_lockfile = true
+-    encrypt      = true
+-  }
+ }
+ 
++# The backend block lives in its own file, backend.tf -- see the comment
++# there for why it can't stay in this one.
++
+ provider "aws" {
+   region = "us-east-1"
+ 
+   default_tags {
+     tags = {
+       Project   = var.project
+       ManagedBy = "terraform"
+     }
+   }
+ }

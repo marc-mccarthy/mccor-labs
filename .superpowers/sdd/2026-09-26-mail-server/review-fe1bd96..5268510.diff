@@ -1,0 +1,37 @@
+# Review package: fe1bd96..HEAD
+
+## Commits
+5268510 fix(mailserver): make the disk alarm's dimension set actually match the published metric
+
+## Files changed
+ infra/modules/mailserver/templates/setup.sh.tftpl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+## Diff
+diff --git a/infra/modules/mailserver/templates/setup.sh.tftpl b/infra/modules/mailserver/templates/setup.sh.tftpl
+index 59175fe..b89aea4 100644
+--- a/infra/modules/mailserver/templates/setup.sh.tftpl
++++ b/infra/modules/mailserver/templates/setup.sh.tftpl
+@@ -255,21 +255,21 @@ done
+ # Two custom metrics, both inside the CloudWatch free tier.
+ curl -fsSL https://amazoncloudwatch-agent.s3.amazonaws.com/debian/arm64/latest/amazon-cloudwatch-agent.deb \
+   -o /tmp/cwagent.deb
+ dpkg -i /tmp/cwagent.deb
+ 
+ cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'CWCFG'
+ {
+   "metrics": {
+     "append_dimensions": { "InstanceId": "$${aws:InstanceId}" },
+     "metrics_collected": {
+-      "disk": { "resources": ["/var/mail-data"], "measurement": ["disk_used_percent"], "metrics_collection_interval": 300 },
++      "disk": { "resources": ["/var/mail-data"], "measurement": ["disk_used_percent"], "metrics_collection_interval": 300, "aggregation_dimensions": [["InstanceId","path","fstype"]] },
+       "mem":  { "measurement": ["mem_available_percent"], "metrics_collection_interval": 300 }
+     }
+   }
+ }
+ CWCFG
+ 
+ /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+   -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
+ 
+ # Two things CloudWatch cannot see. Let's Encrypt stopped sending expiry

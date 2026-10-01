@@ -19,8 +19,13 @@ node_modules/
 **/ui-references/
 **/.playwright-mcp/
 **/.playwright-cli/
-**/superpowers/
-**/.superpowers/
+
+# Specs, plans and SDD execution records (ledger, task briefs/reports, review
+# diffs) are authored project history and belong in git, not out here. This
+# applies to the top-level docs/superpowers/ and .superpowers/ trees; infra/
+# keeps its own copies ignored below since that work is still in flight.
+infra/**/superpowers/
+infra/**/.superpowers/
 
 # Next.js build output and static export
 app/web/.next/

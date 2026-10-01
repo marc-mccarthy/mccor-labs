@@ -204,6 +204,107 @@ aws s3 sync ../dist "s3://$(terraform output -raw site_bucket)" --delete --exclu
 aws cloudfront create-invalidation --distribution-id "$(terraform output -raw cloudfront_distribution_id)" --paths "/*" --profile terraform
 ```
 
+## The website
+
+The marketing site lives in `app/web`. It is a Next.js app that builds to plain
+static files, deployed to the same S3 bucket and CloudFront distribution as
+everything else here.
+
+Requirements: Node 24 (see `.node-version`), pnpm 12, and the 1Password CLI (`op`), signed in.
+
+### Running it locally
+
+```bash
+pnpm install
+pnpm dev                      # via `op run`; needs the 1Password CLI, signed in
+```
+
+`pnpm install` installs lefthook and asks to run its build script -- lefthook is
+what writes the git hooks, and pnpm blocks dependency build scripts by default.
+Approving it is necessary but on its own it was not sufficient: the hook files
+only appeared once a `lefthook.yml` with active jobs existed in the repo root.
+That file is committed, so a fresh clone gets the hooks. If they are missing,
+run `pnpm approve-builds lefthook` and then `pnpm exec lefthook install`. Always
+confirm, because a missing hook means every check silently passes:
+
+```bash
+test -f .git/hooks/pre-commit && echo "hooks installed"
+```
+
+- The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
+- Values live in 1Password, in the `Development` vault under the `mccorlabs` item (no hyphen). The references are in `app/web/.env.template`, which is committed because it holds `op://` paths, not values.
+- A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.
+- `pnpm build:raw` skips `op run` entirely. It is the escape hatch for building against an unconfigured or locked vault; the environment-dependent values come out empty.
+
+The site runs at http://localhost:3000.
+
+### Editing content
+
+All copy lives in `app/web/src/content/`. Services, team members, process stages
+and navigation are typed, so a missing field is a build error rather than a blank
+space on the page. No copy lives in components.
+
+### Checks
+
+`git commit` formats and lints the files in that commit, taking a couple of
+seconds. `git push` runs the full gate: type-check, lint, format check, unit
+tests, a production build and smoke tests. To run most of it by hand:
+
+```bash
+pnpm verify
+```
+
+`pnpm verify` is type-check, lint, format check, unit tests and the build. The
+end-to-end tests are separate:
+
+```bash
+pnpm -F web test:e2e           # full suite
+pnpm -F web test:e2e:smoke     # the @smoke subset, which is what pre-push runs
+```
+
+Those run **Firefox headless**, and only Firefox -- it is the one engine the
+Playwright config declares. On a fresh machine, install it first:
+
+```bash
+pnpm exec playwright install firefox
+```
+
+Browsers go into the shared `~/Library/Caches/ms-playwright/` cache, not into the
+repo, so other projects on the machine share them. Adding a second engine to
+`app/web/playwright.config.ts` means installing that engine's browser revision
+too.
+
+To bypass the hooks -- for a work-in-progress commit on a branch, never on main:
+
+```bash
+LEFTHOOK=0 git commit -m "wip"
+```
+
+### Building and deploying
+
+```bash
+pnpm build
+```
+
+That writes `app/web/out/`. To deploy it:
+
+```bash
+aws s3 sync app/web/out/ "s3://$(cd infra && terraform output -raw site_bucket)/" --delete
+aws cloudfront create-invalidation \
+  --distribution-id "$(cd infra && terraform output -raw cloudfront_distribution_id)" \
+  --paths '/*'
+```
+
+CloudFront invalidation is not instant; allow a few minutes.
+
+**Routes other than `/` do not work in production yet.** The CloudFront
+distribution needs a URI-rewrite function and real 404 error responses before
+`/services/` resolves to anything other than the home page. See the _CloudFront
+handoff_ section of
+`docs/superpowers/specs/2026-09-27-mccorlabs-website-design.md`. Everything
+builds and passes locally regardless, because a local static server resolves
+directory indexes and CloudFront does not.
+
 ## What Terraform doesn't do
 
 - Create your AWS account, or run `aws login` for you

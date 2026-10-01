@@ -27,9 +27,14 @@ Stay on the current branch — the plan does not create or switch branches.
 - **Thirteen tasks, thirteen commits.** One per task, with the message the plan
   specifies.
 - **No deployment.** No `aws` command runs at any point in phase 1.
-- **No manual intervention expected.** `pnpm approve-builds lefthook` is
-  non-interactive when the package is named, and Playwright's browser is already
-  cached, so nothing downloads.
+- **Manual intervention was required, twice.** `pnpm approve-builds lefthook`
+  did not install the git hooks on its own — they appeared only once
+  `lefthook.yml` contained active jobs for it to install against; confirmed with
+  `test -f .git/hooks/pre-commit`. Neither Playwright browser was already
+  cached under the pinned version — see the corrected hard rule below — so both
+  had to be downloaded before any e2e test could run. The e2e suite itself runs
+  Firefox headless (`app/web/playwright.config.ts` declares a single `firefox`
+  project), not Chromium, at the owner's preference.
 - **Three tasks deliberately break things** to prove the safety net works — a
   lint rule must fire, a git hook must reformat a file, a push must be refused.
   A rule that never fires and a hook that never installed both look identical to
@@ -70,10 +75,26 @@ HARD RULES, from the plan's Global Constraints:
 - Never create, edit or delete anything under infra/. Reading it is fine. Where
   infrastructure is needed, write the contract and report it to the owner.
 - Nothing is deployed in phase 1. No aws command runs at any point.
-- Never run `playwright install`. @playwright/test is pinned to exactly 1.61.0
-  at the repo root to match the already-cached chromium-1228. The disk is at
-  89% capacity. Never widen that pin to a caret range, and never add Playwright
-  to app/web — two versions in one repo is the hazard the pin guards against.
+- `chromium-1228` was not cached — `~/Library/Caches/ms-playwright/` held only
+  `chromium-1223` and `chromium-1247` — so Playwright 1.61.0 could not launch
+  and every e2e test failed at 0ms with `Executable doesn't exist at
+  .../chromium_headless_shell-1228/...`. The disk was at 26% capacity with
+  39 GB free, not 89%. With the owner's approval, `pnpm exec playwright install
+  chromium` and then `pnpm exec playwright install firefox` installed
+  `chromium-1228` and `firefox-1532` (Firefox 151.0, 98.8 MiB). @playwright/test
+  stayed pinned to exactly 1.61.0 at the repo root throughout — never widen
+  that pin to a caret range, and never add Playwright to app/web — two
+  versions in one repo is the hazard the pin guards against.
+- The test runner is the pnpm-installed `@playwright/test` package (invoked via
+  `pnpm exec playwright test`), not Homebrew's `playwright-cli` (formula
+  0.1.22, "run playwright mcp commands from terminal"). The Homebrew CLI has no
+  `test` subcommand, no assertions, no reporters and no axe integration, so it
+  cannot execute a `.spec.ts` suite — it remains the right tool for the
+  interactive browser driving the spec's design and shader checks call for,
+  which cannot be automated. Both share the same
+  `~/Library/Caches/ms-playwright/` browser cache, but the Homebrew CLI bundles
+  its own `playwright-core@1.64.0-alpha`, which wants different browser
+  revisions. Never `npm install` anything — pnpm only.
 - The root package.json ALREADY EXISTS and owns the recon/capture scripts, a
   "//" comment and the exact Playwright pin. Task 1 MERGES into it. Never
   overwrite it. Verify nothing was lost, as Task 1 Step 2 instructs.
@@ -134,7 +155,7 @@ These are settled. An implementing agent should not revisit them.
 | Runtime   | React 19.3.0, TypeScript strict                                                                                                    |
 | Styling   | Tailwind CSS 4.3.3 with `@theme` tokens, shadcn/ui as owned source                                                                 |
 | Animation | Motion 13.4.4 as the single JS animation system (phase 3)                                                                          |
-| Tests     | Vitest 5, Playwright 1.61.0 pinned at the repo root                                                                                |
+| Tests     | Vitest 5, Playwright 1.61.0 pinned at the repo root; e2e project is Firefox headless                                               |
 | Tooling   | ESLint 10 flat config, Prettier 3.9.9, Lefthook 2.1.14 — all at the root                                                           |
 | Hooks     | Fast pre-commit (format + lint on staged files), strict pre-push (typecheck, lint, format, tests, build, smoke)                    |
 | Layout    | pnpm workspace, site at `app/web` named `web`, Lambda stays at `app/api`                                                           |
@@ -155,3 +176,33 @@ These are settled. An implementing agent should not revisit them.
    branch for each case and one must be deleted in phase 4.
 4. Nate's, Kirsten's and Ashley's bios are invented and flagged, awaiting their
    own corrections.
+
+## What phase 1 found
+
+Defects in the plan that execution exposed. Whoever writes the phase 2 and 3
+plans needs these.
+
+- `prettier-plugin-tailwindcss` resolves `tailwindStylesheet` eagerly and throws
+  `ENOENT` on a missing file rather than degrading, so `globals.css` had to
+  exist from Task 3.
+- `eslint@^10` is incompatible with `eslint-config-next@16.3.6`, which pulls in
+  `eslint-plugin-react@7.37.5`, whose rules call `context.getFilename()` —
+  removed in ESLint 10. The repo runs ESLint 9.
+- The token name `base` collides with Tailwind's font-size step: `--color-base`
+  makes `.text-base` emit a colour, and `tailwind-merge` groups it with font
+  sizes, so `cn()` silently dropped either a label colour or a font size. It
+  shipped a 3.32:1 hero button before being caught. Fixed by adding
+  `--color-on-accent`.
+- `serve out --single=false` ENABLES SPA fallback rather than disabling it —
+  `serve` v14 treats `--single` as boolean and the string `false` is truthy —
+  so every route test asserted against the home page's `h1`.
+- `pnpm exec` starts its child in a new process group, so Playwright's teardown
+  SIGKILL never reaches `serve`; the orphan holds the port and the next run
+  adopts it. Invoke the bin shim directly.
+- The brief authored visitor-read copy inline in the contact form,
+  contradicting the plan's own rule that copy lives only in `src/content/`.
+- `@testing-library/dom@^11`, `@testing-library/react@^17` and
+  `@testing-library/user-event@^15` do not exist on npm; `^10`, `^16` and
+  `^14.6.7` were used.
+- `next build` rewrites `app/web/tsconfig.json` and `next-env.d.ts` on every
+  run, so a build leaves the tree dirty.

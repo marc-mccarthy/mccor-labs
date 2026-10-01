@@ -238,9 +238,9 @@ describe('env', () => {
 
   it('accepts a google calendar appointment schedule url', async () => {
     const env = await loadEnv({
-      NEXT_PUBLIC_BOOKING_URL: 'https://calendar.app.google/Q1HABsUJA2gGwcWw5',
+      NEXT_PUBLIC_BOOKING_URL: 'https://calendar.app.google/EXAMPLE',
     })
-    expect(env.bookingUrl).toBe('https://calendar.app.google/Q1HABsUJA2gGwcWw5')
+    expect(env.bookingUrl).toBe('https://calendar.app.google/EXAMPLE')
   })
 
   it('strips a trailing slash from the site url so joins do not double up', async () => {

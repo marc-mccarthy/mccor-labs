@@ -105,7 +105,7 @@ not exist. The `Development` vault held only `mccor-labs-infra`, a Terraform
 settings note with no `site_url`, `booking_url` or `contact_endpoint`. I created
 a Secure Note `mccor-labs` in `Development` (id siffypeejemknsfw3l6jhw3ohq) with
 `site_url=https://mccorlabs.com` (the spec's stated default),
-`booking_url=https://calendar.app.google/Q1HABsUJA2gGwcWw5` (the exact URL the
+`booking_url=https://calendar.app.google/EXAMPLE` (the exact URL the
 plan's own Task 7 env test uses as the Google Calendar appointment-schedule
 case — not a URL I invented) and `contact_endpoint` empty (the endpoint is not
 provisioned; env.ts treats empty as unset). All three verified resolvable with

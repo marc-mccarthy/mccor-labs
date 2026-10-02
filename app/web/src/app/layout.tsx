@@ -12,12 +12,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(env.siteUrl),
   title: { default: site.name, template: `%s · ${site.name}` },
   description: site.tagline,
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: { siteName: site.name, type: 'website', locale: 'en' },
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  // data-theme is reserved for a future light mode; it is unused today and
-  // keeps that retrofit to one token block rather than a rewrite.
   return (
     <html lang="en" data-theme="dark">
       <body className="flex min-h-dvh flex-col">

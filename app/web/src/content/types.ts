@@ -16,8 +16,6 @@ export interface TeamMember {
   name: string
   role: string
   bio: string
-  /** Media slot id resolved through the media manifest, or null for a
-   *  non-photographic treatment. */
   mediaSlot: string | null
   links?: readonly { label: string; href: string }[]
 }

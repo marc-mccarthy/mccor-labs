@@ -17,7 +17,6 @@ export function Logo({ size = 'md', showWordmark = true, className }: LogoProps)
 
   return (
     <div className={cn('inline-flex items-center tracking-tight', gap, className)}>
-      {/* Red Stag Vector Mark */}
       <svg
         width={icon}
         height={icon}
@@ -72,7 +71,6 @@ export function Logo({ size = 'md', showWordmark = true, className }: LogoProps)
           </linearGradient>
         </defs>
 
-        {/* Antlers */}
         <g
           stroke="url(#antlers-grad)"
           strokeWidth="4.5"
@@ -89,7 +87,6 @@ export function Logo({ size = 'md', showWordmark = true, className }: LogoProps)
           <path d="M80 42 L94 46" />
         </g>
 
-        {/* Faceted Red Stag Head */}
         <polygon points="64,54 44,60 48,82 64,112" fill="url(#head-left)" />
         <polygon points="64,54 84,60 80,82 64,112" fill="url(#head-right)" />
         <polygon

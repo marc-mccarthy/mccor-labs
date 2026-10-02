@@ -6,8 +6,6 @@ interface PageHeaderProps {
   description: string
 }
 
-/** Every route renders exactly one of these, which is what guarantees one h1
- *  per page. Phase 2 replaces the visual treatment, not the structure. */
 export function PageHeader({ title, description }: PageHeaderProps) {
   return (
     <Section>

@@ -6,7 +6,6 @@ export interface ContactRequest {
   company?: string
   message: string
   budget?: string
-  /** Must stay empty. A bot filling it means the submission is discarded. */
   honeypot: string
 }
 
@@ -39,11 +38,6 @@ export function validateContact(request: ContactRequest): ContactErrors {
   return errors
 }
 
-/**
- * Posts the submission. Validates locally first and never sends a payload it
- * knows to be invalid, so a `validation` response from the server indicates a
- * bug or an attack rather than ordinary user error.
- */
 export async function submitContact(
   request: ContactRequest,
   endpoint: string | null,

@@ -1,6 +1,5 @@
 import type { NavItem } from './types'
 
-/** Primary header navigation. Trailing slashes match next.config trailingSlash. */
 export const nav: readonly NavItem[] = [
   { label: 'Services', href: '/services/' },
   { label: 'Work', href: '/work/' },
@@ -9,7 +8,6 @@ export const nav: readonly NavItem[] = [
   { label: 'Contact', href: '/contact/' },
 ]
 
-/** Footer navigation, including the routes kept out of the header. */
 export const footerNav: readonly NavItem[] = [
   ...nav,
   { label: 'Careers', href: '/careers/' },

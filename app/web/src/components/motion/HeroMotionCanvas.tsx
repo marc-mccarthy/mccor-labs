@@ -104,7 +104,6 @@ export function HeroMotionCanvas({
       ctx.fillStyle = baseColor
       ctx.fillRect(0, 0, width, height)
 
-      // Connect lines between nearby particles
       ctx.strokeStyle = primary
       ctx.lineWidth = 0.8
       for (let i = 0; i < particles.length; i++) {
@@ -128,10 +127,8 @@ export function HeroMotionCanvas({
       }
       ctx.globalAlpha = 1
 
-      // Draw particles & update position
       for (const p of particles) {
         if (!prefersReducedMotion) {
-          // Interactive mouse force
           if (interactive && mouseX > 0 && mouseY > 0) {
             const dx = mouseX - p.x
             const dy = mouseY - p.y
@@ -145,21 +142,18 @@ export function HeroMotionCanvas({
             }
           }
 
-          // Damping to return to base velocity
           p.vx += (p.baseVx - p.vx) * 0.05
           p.vy += (p.baseVy - p.vy) * 0.05
 
           p.x += p.vx
           p.y += p.vy
 
-          // Wrap around edges
           if (p.x < 0) p.x = width
           if (p.x > width) p.x = 0
           if (p.y < 0) p.y = height
           if (p.y > height) p.y = 0
         }
 
-        // Draw particle dot with subtle glow
         ctx.fillStyle = p.color
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
@@ -173,7 +167,6 @@ export function HeroMotionCanvas({
       animationFrameId = requestAnimationFrame(loop)
     }
 
-    // Viewport intersection observer to eliminate CPU usage when off-screen
     const observer = new IntersectionObserver(([entry]) => {
       isVisible = !!entry?.isIntersecting
       if (isVisible && !prefersReducedMotion && !animationFrameId) {
@@ -185,13 +178,11 @@ export function HeroMotionCanvas({
     })
     observer.observe(canvas)
 
-    // Resize observer
     const resizeObserver = new ResizeObserver(() => {
       resize()
     })
     resizeObserver.observe(canvas)
 
-    // Mouse handlers
     const onMouseMove = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect()
       mouseX = e.clientX - rect.left

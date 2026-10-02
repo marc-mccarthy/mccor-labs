@@ -1,5 +1,3 @@
-/** Strings a visitor reads, including accessible names. Copy lives in
- *  content; structural ARIA attributes stay inline in components. */
 export const ui = {
   skipToContent: 'Skip to content',
   openMenu: 'Open menu',

@@ -7,11 +7,6 @@ interface BookingCtaProps {
   size?: 'sm' | 'md' | 'lg'
 }
 
-/**
- * Primary call to action. With no booking URL configured it degrades to an
- * email link rather than rendering a dead button — the same pattern the
- * contact form uses when its endpoint is unset.
- */
 export function BookingCta({ size = 'md' }: BookingCtaProps) {
   if (env.bookingUrl === null) {
     return (

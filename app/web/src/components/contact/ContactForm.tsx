@@ -18,8 +18,6 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
 
-  // No endpoint provisioned yet: offer routes that actually work rather than
-  // a button that silently fails.
   if (endpoint === null) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
@@ -163,8 +161,6 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         )}
       </div>
 
-      {/* Honeypot: hidden from sight and from the keyboard, but present in the
-          DOM so naive bots fill it. Not display:none, which some bots detect. */}
       <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>
         <input id="honeypot" name="honeypot" tabIndex={-1} aria-hidden="true" />

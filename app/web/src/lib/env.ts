@@ -22,10 +22,6 @@ function optionalUrl(name: string, raw: string | undefined): string | null {
   return raw
 }
 
-/**
- * Optional in development, mandatory in a production build. Fails the build
- * rather than allowing a silent degradation that nobody would notice.
- */
 function requiredInProduction(name: string, raw: string | undefined): string | null {
   const value = optionalUrl(name, raw)
   if (value === null && process.env.NODE_ENV === 'production') {
@@ -37,24 +33,16 @@ function requiredInProduction(name: string, raw: string | undefined): string | n
   return value
 }
 
-/** Public configuration, inlined at build time by the static export. */
 export const env = {
   siteUrl: requireUrl(
     'NEXT_PUBLIC_SITE_URL',
     process.env.NEXT_PUBLIC_SITE_URL,
     'https://mccorlabs.com',
   ),
-  /**
-   * Booking destination — a Google Calendar appointment schedule or Cal.com URL.
-   * Required for a production build: without it the primary CTA silently falls
-   * back to email, which would ship a site with no booking link and nothing to
-   * catch it. Optional in development so `pnpm dev` works without 1Password.
-   */
   bookingUrl: requiredInProduction(
     'NEXT_PUBLIC_BOOKING_URL',
     process.env.NEXT_PUBLIC_BOOKING_URL,
   ),
-  /** null means no endpoint is provisioned yet; the form degrades to email. */
   contactEndpoint: optionalUrl(
     'NEXT_PUBLIC_CONTACT_ENDPOINT',
     process.env.NEXT_PUBLIC_CONTACT_ENDPOINT,

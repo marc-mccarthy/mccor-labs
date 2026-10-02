@@ -112,4 +112,54 @@ describe('design tokens', () => {
       .reduce((sum, name) => sum + statSync(join(dir, name)).size, 0)
     expect(total).toBeLessThan(150_000)
   })
+
+  it('defines the type, spacing, radius and motion scales', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    for (const name of [
+      '--text-display-sm',
+      '--text-display-md',
+      '--text-display-lg',
+      '--space-xs',
+      '--space-sm',
+      '--space-md',
+      '--space-lg',
+      '--space-xl',
+      '--space-2xl',
+      '--space-3xl',
+      '--radius-sm',
+      '--radius-md',
+      '--radius-lg',
+      '--radius-xl',
+      '--radius-full',
+      '--duration-pointer',
+      '--duration-standard',
+      '--duration-scene',
+      '--duration-route',
+      '--delay-considered',
+      '--stagger-interval',
+      '--ease-standard',
+      '--ease-pointer',
+      '--ease-route',
+    ]) {
+      expect(css, `${name} is missing from globals.css`).toMatch(new RegExp(`${name}:`))
+    }
+  })
+
+  it('pins --duration-pointer to the spec value', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    expect(css).toMatch(/--duration-pointer:\s*0\.12s/)
+  })
+
+  it('pins --ease-standard to the Material standard curve', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    expect(css).toMatch(/--ease-standard:\s*cubic-bezier\(0\.4,\s*0,\s*0\.2,\s*1\)/)
+  })
+
+  it('builds the display sizes from clamp()', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    for (const name of ['--text-display-sm', '--text-display-md', '--text-display-lg']) {
+      const match = new RegExp(`${name}:\\s*([^;]+);`).exec(css)
+      expect(match?.[1], `${name} is not a clamp()`).toMatch(/^clamp\(/)
+    }
+  })
 })

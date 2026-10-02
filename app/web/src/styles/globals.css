@@ -34,6 +34,36 @@
 
   --font-display: 'Geist Sans', sans-serif;
   --font-mono: 'Geist Mono', monospace;
+
+  --text-display-sm: clamp(1.75rem, 1.5rem + 1.1vw, 2.25rem);
+  --text-display-md: clamp(2.5rem, 2rem + 2.2vw, 3.5rem);
+  --text-display-md--letter-spacing: -0.03em;
+  --text-display-lg: clamp(3.5rem, 2.75rem + 3.2vw, 5.5rem);
+  --text-display-lg--letter-spacing: -0.03em;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --duration-pointer: 0.12s;
+  --duration-standard: 0.3s;
+  --duration-scene: 0.8s;
+  --duration-route: 0.5s;
+  --delay-considered: 50ms;
+  --stagger-interval: 80ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-pointer: cubic-bezier(0, 0, 0.2, 1);
+  --ease-route: cubic-bezier(0.6, 0, 0.25, 1);
 }
 
 :root {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 function tokens(): Record<string, string> {
@@ -97,5 +97,19 @@ describe('design tokens', () => {
     // raises it to control-border levels, --color-border-strong has become
     // redundant and the distinction has been lost.
     expect(contrast(t.border!, t.base!)).toBeLessThan(3)
+  })
+
+  it('defines a display and a mono font token', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    expect(css).toMatch(/--font-display:/)
+    expect(css).toMatch(/--font-mono:/)
+  })
+
+  it('keeps self-hosted font weight under the 150kB budget', () => {
+    const dir = join(import.meta.dirname, '../../public/fonts')
+    const total = readdirSync(dir)
+      .filter((name) => name.endsWith('.woff2'))
+      .reduce((sum, name) => sum + statSync(join(dir, name)).size, 0)
+    expect(total).toBeLessThan(150_000)
   })
 })

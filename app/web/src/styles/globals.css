@@ -1,5 +1,21 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('/fonts/geist-sans-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-base: #08080a;
   --color-surface: #101014;
@@ -15,6 +31,9 @@
 
   --color-glow-red: #ff2a42;
   --color-glow-orange: #ff7a00;
+
+  --font-display: 'Geist Sans', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
 }
 
 :root {

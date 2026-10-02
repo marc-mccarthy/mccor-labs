@@ -23,6 +23,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" data-theme="dark">
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/geist-sans-variable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className="flex min-h-dvh flex-col">
         <SkipLink />
         <Header />

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SkipLink } from '@/components/layout/SkipLink'
+import { LenisProvider } from '@/components/motion/LenisProvider'
 import { site } from '@/content/site'
 import { env } from '@/lib/env'
 import '@/styles/globals.css'
@@ -35,9 +36,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="flex min-h-dvh flex-col">
         <SkipLink />
         <Header />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
+        <LenisProvider>
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+        </LenisProvider>
         <Footer />
       </body>
     </html>

@@ -30,16 +30,16 @@ export default function HomePage() {
                 Senior Engineering & AI Studio
               </div>
 
-              <h1 className="text-4xl font-extrabold tracking-tight text-text drop-shadow-md sm:text-5xl lg:text-6xl">
+              <p className="text-4xl font-extrabold tracking-tight text-text drop-shadow-md sm:text-5xl lg:text-6xl">
                 Swift by Instinct.{' '}
                 <span className="bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent">
                   Engineered to the Core.
                 </span>
-              </h1>
-
-              <p className="mt-6 text-lg text-muted drop-shadow sm:text-xl">
-                {site.tagline}
               </p>
+
+              <h1 className="mt-6 text-lg font-normal text-muted drop-shadow sm:text-xl">
+                {site.tagline}
+              </h1>
 
               <div className="mt-8 flex items-center gap-4">
                 <BookingCta size="lg" />

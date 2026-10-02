@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+import { site } from '@/content/site'
+
 const ROUTES = [
-  { path: '/', heading: /small senior team/i },
+  { path: '/', heading: site.tagline },
   { path: '/services/', heading: 'Services' },
   { path: '/work/', heading: 'Work' },
   { path: '/about/', heading: 'About' },

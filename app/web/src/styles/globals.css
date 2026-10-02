@@ -1,34 +1,20 @@
 @import 'tailwindcss';
 
-/* The single source of colour truth. Every ratio here is verified by
-   src/styles/tokens.test.ts against WCAG 2.2 thresholds. Do not change a
-   value without running that test. */
 @theme {
-  --color-base: #070a12;
-  --color-surface: #0d121d;
-  --color-elevated: #151c2b;
-  /* Decorative hairline only — 1.29:1. Never use for an input or control. */
-  --color-border: #1d2534;
-  /* Control and input borders — 3.47:1 on base. */
-  --color-border-strong: #5a6780;
-  --color-muted: #8a94a6;
-  --color-text: #eef2f8;
-  /* Large display type and non-text graphics only: 4.47:1 fails AA for body
-     text by 0.03. Use --color-accent for anything small or interactive. */
-  --color-brand: #3d6bff;
-  /* Links, small text, button fill, focus rings — 5.31:1 on base. */
-  --color-accent: #527bff;
-  /* Hover fill for an accent control. Lighter than --color-accent so the state
-     change is visible, and 6.68:1 against --color-on-accent, where
-     --color-brand would be 4.47:1 and fail AA for a small label. */
-  --color-accent-hover: #6d90ff;
-  /* Label colour on an accent fill. Same value as --color-base; a separate
-     token because `base` collides with Tailwind's font-size step, so
-     `text-base` emits a colour and tailwind-merge groups it with font sizes. */
-  --color-on-accent: #070a12;
+  --color-base: #08080a;
+  --color-surface: #101014;
+  --color-elevated: #18181f;
+  --color-border: #202028;
+  --color-border-strong: #6b6b7b;
+  --color-muted: #9a9aa8;
+  --color-text: #f5f5f7;
+  --color-brand: #ff3b30;
+  --color-accent: #ff7a00;
+  --color-accent-hover: #ff8f24;
+  --color-on-accent: #08080a;
 
-  --color-glow-violet: #7c5cff;
-  --color-glow-cyan: #22d3ee;
+  --color-glow-red: #ff2a42;
+  --color-glow-orange: #ff7a00;
 }
 
 :root {

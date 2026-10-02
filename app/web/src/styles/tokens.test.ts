@@ -46,19 +46,13 @@ const PAIRS: readonly [string, string, number, string][] = [
   ['border-strong', 'base', 3.0, 'control border on page'],
   ['border-strong', 'surface', 3.0, 'control border on card'],
   ['accent', 'base', 3.0, 'focus ring on page'],
-  // The glows are light sources behind content, not backgrounds for it. The spec is explicit:
-  // the violet-to-cyan gradient glow "is a light source behind content. It never sits under
-  // text and never carries meaning." So the pair asserted here is the one the glow is allowed
-  // to be judged on — a non-text graphic against the page, WCAG 1.4.11's 3:1 — and not a text
-  // pair. For the record, measured with the contrast() above: --color-text #eef2f8 on
-  // --color-glow-violet #7c5cff is 3.8684:1, which FAILS AA for text at any size, and
-  // --color-text on --color-glow-cyan #22d3ee is 1.6085:1, which fails far worse. Neither is
-  // asserted as a threshold, because an assertion that the ratio stays below 4.5 would fail if
-  // someone legitimately darkened a glow. The constraint is "no text on the glow", which lives
-  // in the components; this note exists so phase 3 reads the figures before putting text over
-  // one.
-  ['glow-violet', 'base', 3.0, 'violet glow as a non-text graphic on the page'],
-  ['glow-cyan', 'base', 3.0, 'cyan glow as a non-text graphic on the page'],
+  // The glows are light sources behind content, not backgrounds for it: a glow never sits
+  // under text and never carries meaning, so the pair asserted here is a non-text graphic
+  // against the page — WCAG 1.4.11's 3:1 — and not a text pair. Section 3.7 of
+  // docs/website-design/PHASE-1-CARRY-FORWARD.md carries the measured text-on-glow figures
+  // and why no upper bound is asserted here.
+  ['glow-red', 'base', 3.0, 'crimson red glow as a non-text graphic on the page'],
+  ['glow-orange', 'base', 3.0, 'solar orange glow as a non-text graphic on the page'],
 ]
 
 describe('design tokens', () => {
@@ -76,8 +70,8 @@ describe('design tokens', () => {
       'accent',
       'accent-hover',
       'on-accent',
-      'glow-violet',
-      'glow-cyan',
+      'glow-red',
+      'glow-orange',
     ]) {
       expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
         /^#[0-9a-f]{6}$/,
@@ -89,6 +83,12 @@ describe('design tokens', () => {
     const t = tokens()
     const ratio = contrast(t[fg]!, t[bg]!)
     expect(ratio).toBeGreaterThanOrEqual(required)
+  })
+
+  it('carries no token whose name contradicts its value', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    expect(css).not.toMatch(/--color-glow-violet/)
+    expect(css).not.toMatch(/--color-glow-cyan/)
   })
 
   it('keeps the decorative border decorative, not a control border', () => {

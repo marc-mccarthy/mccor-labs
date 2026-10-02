@@ -392,6 +392,57 @@ on warnings. The override earns its place by keeping the output clean and by
 silencing the `Unused eslint-disable directive` warning, not by unblocking a red
 lint.
 
+### 3.7 `globals.css` carries no comments — the token table lives here
+
+`CONSTRAINTS.md` rule 1 forbids comments in source, and `globals.css` is source.
+Every comment it used to carry is reproduced below, re-measured on 2026-10-02
+with the same `contrast()` function `src/styles/tokens.test.ts` uses. Change a
+value and run `pnpm -F web exec vitest run src/styles/tokens.test.ts` — that test,
+not a comment, is what holds these ratios.
+
+| Token                   | Value     | Measured on `base` | Role, and the constraint                                                                |
+| ----------------------- | --------- | ------------------ | --------------------------------------------------------------------------------------- |
+| `--color-base`          | `#08080a` | —                  | The page. Obsidian black.                                                               |
+| `--color-surface`       | `#101014` | —                  | Card.                                                                                   |
+| `--color-elevated`      | `#18181f` | —                  | Raised surface.                                                                         |
+| `--color-border`        | `#202028` | 1.2375:1           | **Decorative hairline only. Never use for an input or a control** — it cannot meet 3:1. |
+| `--color-border-strong` | `#6b6b7b` | 3.8251:1           | Control and input borders.                                                              |
+| `--color-muted`         | `#9a9aa8` | 7.2054:1           | Secondary text.                                                                         |
+| `--color-text`          | `#f5f5f7` | 18.3779:1          | Body text.                                                                              |
+| `--color-brand`         | `#ff3b30` | 5.6414:1           | Crimson Red. Large display type and non-text graphics.                                  |
+| `--color-accent`        | `#ff7a00` | 7.6572:1           | Solar Orange. Links, small text, button fill, focus rings.                              |
+| `--color-accent-hover`  | `#ff8f24` | —                  | Hover fill for an accent control; 8.7727:1 against `--color-on-accent`.                 |
+| `--color-on-accent`     | `#08080a` | —                  | Label colour on an accent fill; 7.6572:1 on `--color-accent`.                           |
+| `--color-glow-red`      | `#ff2a42` | 5.3951:1           | Ambient light glow behind content.                                                      |
+| `--color-glow-orange`   | `#ff7a00` | 7.6572:1           | Ambient light glow behind content.                                                      |
+
+**`--color-on-accent` holds the same value as `--color-base` on purpose. Do not
+"simplify" it away.** `base` collides with Tailwind's font-size step: the token
+makes Tailwind emit `text-base` as a _colour_ utility, and `tailwind-merge` then
+groups it with the font sizes and drops one of the two. `on-accent` is the
+non-colliding alias that lets a component ask for that dark label colour without
+tripping the collision. Section 3.1 has the full mechanism and the WCAG failure it
+shipped.
+
+**The glows are light sources behind content, not backgrounds for it.** A glow
+never sits under text and never carries meaning, so `tokens.test.ts` judges each
+one as a non-text graphic against the page — WCAG 1.4.11's 3:1 — and asserts no
+upper bound, because an upper bound would fail if someone legitimately darkened a
+glow. For the record, if anyone is tempted to put text over one: `--color-text`
+`#f5f5f7` on `--color-glow-red` `#ff2a42` is **3.4064:1** and on
+`--color-glow-orange` `#ff7a00` is **2.4001:1**. Both fail AA for text at any
+size. The constraint "no text on the glow" lives in the components and in
+`be393a5`.
+
+**Two tokens were deleted because their names lied.** `--color-glow-violet` held
+`#ff2a42` and `--color-glow-cyan` held `#ff7a00` — a red and an orange, left over
+from a superseded blue palette, duplicating `--color-glow-red` and
+`--color-glow-orange` exactly. No component consumed either; the only references
+were in `globals.css` and `tokens.test.ts`. `tokens.test.ts` now asserts their
+absence, so they cannot come back by accident. Any earlier note citing
+`--color-glow-violet #7c5cff` or `--color-glow-cyan #22d3ee` is from before the
+palette change and is wrong about this repository.
+
 ---
 
 ## 4. Architectural rules that bit

@@ -86,6 +86,13 @@ export default tseslint.config(
     rules: { ...jsxA11y.flatConfigs.recommended.rules },
   },
 
+  {
+    files: ['app/web/src/components/motion/**/*.tsx'],
+    rules: {
+      '@next/next/no-img-element': 'off',
+    },
+  },
+
   // Project rules that enforce the spec's architecture.
   {
     // .ts as well as .tsx: src/content/ and src/lib/ are .ts, and src/content/ is where the

@@ -365,6 +365,33 @@ still live: a probe `<img>` with no alt produced `error jsx-a11y/alt-text`. Do
 the same for any future change that touches plugin registration, because a
 silently disabled ruleset looks exactly like a passing one.
 
+### 3.6 `@next/next/no-img-element` is turned off for `components/motion/**`
+
+`eslint.config.ts` carries a block scoped to
+`app/web/src/components/motion/**/*.tsx` that sets
+`'@next/next/no-img-element': 'off'`. **Do not delete it, and do not widen it.**
+
+`VideoMotionHero.tsx` renders a raw `<img>` poster rather than `next/image` on
+purpose: the poster is the LCP element and must paint before the `<video>`
+element attaches and starts fetching. `next/image` adds a client wrapper and its
+own loading sequence, which moves the paint later — the opposite of what the
+poster exists for. The ordering is the whole point of the component, so the rule
+is wrong about this directory specifically.
+
+Scoping, not a `eslint-disable` comment, because comments are forbidden in source
+(`CONSTRAINTS.md` rule 1). The file previously carried
+`{/* eslint-disable-next-line @next/next/no-img-element */}`; the override replaces
+it. Verified by probe: an `<img>` under `components/motion/` reports nothing, the
+same `<img>` under `components/` reports
+`warning @next/next/no-img-element`.
+
+One measured correction to anything that claims otherwise: `no-img-element` is a
+**warning** in this configuration, not an error, so removing the disable comment
+without the override would not have failed `pnpm -F web lint` — `eslint .` exits 0
+on warnings. The override earns its place by keeping the output clean and by
+silencing the `Unused eslint-disable directive` warning, not by unblocking a red
+lint.
+
 ---
 
 ## 4. Architectural rules that bit
@@ -388,6 +415,18 @@ enforced, not merely stated: `eslint.config.ts` carries a
 `hsla()` and `oklch()` literals across `app/web/src/**/*.tsx`, excluding
 `src/styles/**`. Phase 1 proved the rule fires by writing a violation and
 watching it exit 1.
+
+That selector set is **already sufficient** for the two shapes people assume it
+misses, measured on 2026-10-02 against the config as committed in `51554f2`. A
+probe file carrying `<stop stopColor="#ff0000" />` and
+`<text className="text-[#00ff00]">` produced two `no-restricted-syntax` errors,
+at `4:23` and `5:23`. A JSX attribute's string value _is_ a `Literal` node, and
+the arbitrary-value bracket `text-[#00ff00]` is a `Literal` whose value contains
+`#00ff00`, so the one `Literal[value=/#[0-9a-fA-F]{3,8}\b|.../]` selector covers
+both. Do not add `JSXAttribute > Literal` or a second
+`Literal[value=/\[#…\]/]` selector: each is a strict subset of the existing one,
+and ESLint reports once per matching selector, so adding either produces two
+errors for one literal.
 
 The same config block restricts Motion imports to
 `components/motion/**` and `components/effects/**`, forbids importing an effect

@@ -147,18 +147,30 @@ Expected pattern: /small senior team/i
 TypeScript errors:
 
 ```
+$ pnpm -F web exec tsc --noEmit 2>&1 | grep -c 'error TS'
 0
 ```
 
 Lint errors:
 
 ```
+$ pnpm -F web lint 2>&1 | grep -cE '^\s+[0-9]+:[0-9]+\s+error'
 33
 ```
+
+33 is the baseline figure, measured before any repair landed. Re-running that command after
+Task 1 returns 28, because Task 1 removed the five errors in `VideoMotionHero.tsx`. The
+command no longer reproduces its own number here, and that is the point of a baseline: the
+drop from 33 is the evidence the repair worked.
+
+The 33 were never all in one file, despite what Part A of the plan and the project
+`CLAUDE.md` both claim. Measured per file: `Logo.tsx` 14, `HeroMotionCanvas.tsx` 11,
+`VideoMotionHero.tsx` 5, `HeroMotionCanvas.test.tsx` 2, `page.tsx` 1.
 
 Color literals (excluding src/styles/):
 
 ```
+$ grep -rnE '#[0-9a-fA-F]{3,8}|\[#' app/web/src --include='*.tsx' --include='*.ts' | grep -v 'src/styles/' | wc -l
 19
 ```
 
@@ -167,17 +179,20 @@ Comment counts:
 Starting comments (// and /*):
 
 ```
+$ grep -rnE '^\s*(//|/\*)' app/web/src --include='*.ts' --include='*.tsx' | grep -v '\.test\.' | wc -l
 47
 ```
 
 All comment lines including block continuations (// and /* and *):
 
 ```
+$ grep -rnE '^\s*(//|/\*|\*)' app/web/src --include='*.ts' --include='*.tsx' | grep -v '\.test\.' | wc -l
 86
 ```
 
 JSX comments ({/*}):
 
 ```
+$ grep -rn '{/\*' app/web/src --include='*.tsx' | grep -v '\.test\.' | wc -l
 14
 ```

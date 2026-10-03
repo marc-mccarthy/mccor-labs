@@ -68,6 +68,21 @@
 
 :root {
   color-scheme: dark;
+
+  --shiki-foreground: var(--color-text);
+  --shiki-background: var(--color-surface);
+  --shiki-token-comment: var(--color-muted);
+  --shiki-token-string: var(--color-accent);
+  --shiki-token-string-expression: var(--color-accent-hover);
+  --shiki-token-constant: var(--color-glow-orange);
+  --shiki-token-keyword: var(--color-brand);
+  --shiki-token-parameter: var(--color-text);
+  --shiki-token-function: var(--color-glow-red);
+  --shiki-token-punctuation: var(--color-border-strong);
+  --shiki-token-link: var(--color-accent-hover);
+  --shiki-token-inserted: var(--color-accent);
+  --shiki-token-deleted: var(--color-brand);
+  --shiki-token-changed: var(--color-accent-hover);
 }
 
 @layer base {

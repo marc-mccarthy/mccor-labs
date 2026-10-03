@@ -577,6 +577,60 @@ non-photographic treatment. `site.contactEmail` is the admin mailbox from
 `infra/settings.auto.tfvars`, and the booking URL deliberately does **not** live
 in `site.ts` — it is `NEXT_PUBLIC_BOOKING_URL`, read through `src/lib/env.ts`.
 
+### 3.9 Three of the four team portrait sources are not usable headshots
+
+`app/web/scripts/build-portraits.ts` (run via `pnpm -F web portraits`) normalises all
+four sources at `/Users/mj/Downloads/mccor-labs-images/website-images/` into
+400x500 (`marcm`) or 320x400 (the other three) AVIF/WebP pairs with all EXIF,
+IPTC and XMP metadata stripped, and the pipeline itself is correct and finished.
+But three of the four source photos are not professional headshots, and no crop
+strategy fixes that — it is a sourcing problem, not a pipeline one:
+
+- `marcm-profile-pic.jpg` (861x912) is a family snapshot: Marc carrying three
+  young children, one on his shoulders gripping his head, two pressed against
+  his sides, all with faces fully visible. At 861x912 there is no 4:5 sub-crop
+  that excludes them — publishing any crop of it would put identifiable minors
+  on a commercial site with nothing indicating they consented.
+- `mariem-profile-pic.jpg` and `ashleyt-profile-pic.jpg` (both 2816x1536) are a
+  beach-vacation candid (sunglasses on, holding a branded drink, strangers in
+  swimwear in the background) and a lifestyle/interior-design editorial shot,
+  respectively — neither reads as a team headshot.
+- `nateb-profile-pic.jpg` (311x293, visually greyscale) is the one usable
+  source. Its output is duotoned — `.modulate({ saturation: 0 })` then
+  `.tint()` toward the accent-orange token's RGB value — so it reads as warm
+  rather than a flat black-and-white cutout next to colour photos, once the
+  other three exist.
+
+The owner confirmed this after being shown the source pixels directly (the same
+"open it and look" rule constraint 4 of `CONSTRAINTS.md` states for generated
+imagery applies just as much to sourced photos). Decision: ship `nateb` only.
+`src/content/team.ts` sets `mediaSlot: null` for `marcm`, `ashleyt` and
+`mariem`, so `TeamGrid` (Task 31) renders their non-photographic treatment.
+`src/lib/portraits.ts` is typed `Partial<Record<PortraitSlug, Portrait>>` and
+carries only the `nateb` entry; `portraits.test.ts` asserts the metadata-strip
+and size/format/weight properties for `nateb` only.
+
+**The script still builds all four** — `JOBS` in `build-portraits.ts` was
+deliberately not narrowed to `nateb`, so a rerun once real headshots replace
+the three unusable sources is `pnpm -F web portraits` and nothing else. It
+refuses to run with a clear error if any of the four source files is missing.
+Running it today regenerates all eight output files, including the three
+unusable people's; those six are gitignored by nothing in particular — they
+simply must not be `git add`ed. Replacing the three bad sources with real
+headshots at the same filenames makes every published file correct again with
+no code change.
+
+### 3.10 `op item get mccorlabs` can time out under concurrent load
+
+Measured during a session running several agents against the same repository
+at once: `op item get mccorlabs --fields label=site_url` returned
+`[ERROR] ... authorization timeout` twice in a row, then succeeded with
+`https://mccorlabs.com` moments later with no change to the 1Password state.
+`CONSTRAINTS.md`'s existing note that `op whoami` is unreliable but `op item
+get` is a dependable probe held under light load; under concurrent load from
+several processes it does not. A timeout here means retry, not a broken vault
+or a reason to ask the owner to restart 1Password.
+
 ---
 
 ## 4. Architectural rules that bit

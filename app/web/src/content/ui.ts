@@ -4,6 +4,9 @@ export const ui = {
   closeMenu: 'Close menu',
   bookCall: 'Book a 30-minute call',
   contactFallback: 'Email us directly',
+  ctaHeading: 'Have something to build?',
+  ctaBody:
+    'Thirty minutes, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
   formSubmit: 'Send message',
   formSending: 'Sending…',
   formSuccess: 'Thanks — we will reply within one working day.',

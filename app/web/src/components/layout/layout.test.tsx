@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { SkipLink } from './SkipLink'
@@ -55,6 +56,37 @@ describe('Header', () => {
     // through window.opener — reverse tabnabbing.
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+  })
+
+  it('exposes a menu toggle with an accessible name', () => {
+    render(<Header />)
+    expect(screen.getByRole('button', { name: ui.openMenu })).toBeInTheDocument()
+  })
+
+  it('reflects open state in aria-expanded', async () => {
+    render(<Header />)
+    const toggle = screen.getByRole('button', { name: ui.openMenu })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('closes on Escape and returns focus to the toggle', async () => {
+    render(<Header />)
+    const toggle = screen.getByRole('button', { name: ui.openMenu })
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await userEvent.keyboard('{Escape}')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveFocus()
+  })
+
+  it('renders every nav destination when open', async () => {
+    render(<Header />)
+    await userEvent.click(screen.getByRole('button', { name: ui.openMenu }))
+    for (const item of nav) {
+      expect(screen.getAllByRole('link', { name: item.label }).length).toBeGreaterThan(0)
+    }
   })
 })
 

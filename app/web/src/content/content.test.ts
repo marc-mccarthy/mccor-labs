@@ -5,6 +5,8 @@ import { ui } from './ui'
 import { services } from './services'
 import { team } from './team'
 import { proof } from './proof'
+import { process } from './process'
+import { roles } from './careers'
 
 describe('site content', () => {
   it('has a name and tagline', () => {
@@ -104,6 +106,24 @@ describe('proof content', () => {
   it('names no client in a proof point', () => {
     for (const point of proof) {
       expect(point.text).not.toMatch(/\b(Inc|LLC|Corp)\b/)
+    }
+  })
+})
+
+describe('process content', () => {
+  it('numbers the process stages consecutively from one', () => {
+    expect(process.map((stage) => stage.index)).toEqual(process.map((_, i) => i + 1))
+  })
+})
+
+describe('careers content', () => {
+  it('lists five roles', () => {
+    expect(roles).toHaveLength(5)
+  })
+
+  it('prefixes every apply subject exactly', () => {
+    for (const role of roles) {
+      expect(role.applySubject).toMatch(/^Application: /)
     }
   })
 })

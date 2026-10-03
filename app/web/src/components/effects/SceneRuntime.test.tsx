@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { act, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const rendererCtor = vi.fn()
 const rendererDispose = vi.fn()
@@ -160,6 +160,80 @@ describe('SceneRuntime', () => {
         'data-scene-status',
         'fallback',
       )
+    })
+  })
+
+  describe('offscreen pause', () => {
+    type ObserverCallback = (entries: { isIntersecting: boolean }[]) => void
+    let notify: ObserverCallback
+    const disconnect = vi.fn()
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(callback: ObserverCallback) {
+            notify = callback
+          }
+          observe = vi.fn()
+          disconnect = disconnect
+        },
+      )
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('cancels the frame request offscreen, resumes on return, and keeps scene time continuous', async () => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      let frameCallback: FrameRequestCallback = () => undefined
+      let nextId = 0
+      const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+        frameCallback = callback
+        nextId += 1
+        return nextId
+      })
+      const cancelFrame = vi.fn()
+      vi.stubGlobal('requestAnimationFrame', requestFrame)
+      vi.stubGlobal('cancelAnimationFrame', cancelFrame)
+      const sceneRender = vi.fn()
+      const build = vi.fn((): SceneHandle => ({ render: sceneRender, dispose: vi.fn() }))
+
+      const { container, unmount } = render(
+        <SceneRuntime fallback={<div />} build={build} />,
+      )
+      await waitFor(() => {
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+
+      frameCallback(1000)
+      frameCallback(1016)
+      expect(sceneRender).toHaveBeenLastCalledWith(16)
+
+      const requestsBeforePause = requestFrame.mock.calls.length
+      act(() => {
+        notify([{ isIntersecting: false }])
+      })
+      expect(cancelFrame).toHaveBeenCalledWith(nextId)
+      expect(requestFrame).toHaveBeenCalledTimes(requestsBeforePause)
+
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
+      expect(requestFrame).toHaveBeenCalledTimes(requestsBeforePause + 1)
+
+      frameCallback(60_000)
+      expect(sceneRender).toHaveBeenLastCalledWith(16)
+      frameCallback(60_016)
+      expect(sceneRender).toHaveBeenLastCalledWith(32)
+
+      unmount()
+      expect(disconnect).toHaveBeenCalledTimes(1)
     })
   })
 })

@@ -69,6 +69,7 @@ function whenIdleAfterLoad(callback: () => void): () => void {
 export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) {
   const reducedMotion = useReducedMotion()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const rootRef = useRef<HTMLDivElement | null>(null)
   const [status, setStatus] = useState<SceneStatus>('idle')
 
   useEffect(() => {
@@ -91,6 +92,9 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let renderer: import('three').WebGLRenderer | null = null
     let frameId: number | null = null
     let mountedCanvas: HTMLCanvasElement | null = null
+    let observer: IntersectionObserver | null = null
+    let lastTime: number | null = null
+    let sceneTime = 0
 
     const onContextLost = (event: Event) => {
       event.preventDefault()
@@ -122,10 +126,29 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
           setStatus('active')
 
           const loop = (time: number) => {
-            handle?.render(time)
+            if (lastTime !== null) sceneTime += time - lastTime
+            lastTime = time
+            handle?.render(sceneTime)
             frameId = requestAnimationFrame(loop)
           }
-          frameId = requestAnimationFrame(loop)
+          const resume = () => {
+            if (frameId === null && handle) frameId = requestAnimationFrame(loop)
+          }
+          const pause = () => {
+            if (frameId !== null) cancelAnimationFrame(frameId)
+            frameId = null
+            lastTime = null
+          }
+          resume()
+
+          const root = rootRef.current
+          if (root && typeof IntersectionObserver !== 'undefined') {
+            observer = new IntersectionObserver((entries) => {
+              if (entries.at(-1)?.isIntersecting) resume()
+              else pause()
+            })
+            observer.observe(root)
+          }
         })
         .catch(() => {
           if (!cancelled) setStatus('fallback')
@@ -137,6 +160,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     return () => {
       cancelled = true
       cancelIdle()
+      observer?.disconnect()
       if (frameId !== null) cancelAnimationFrame(frameId)
       handle?.dispose()
       if (renderer) {
@@ -148,7 +172,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
   }, [reducedMotion, build])
 
   return (
-    <div className={className} data-scene-status={status}>
+    <div ref={rootRef} className={className} data-scene-status={status}>
       <canvas
         ref={canvasRef}
         aria-hidden="true"

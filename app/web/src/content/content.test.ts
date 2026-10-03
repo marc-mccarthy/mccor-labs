@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { site } from './site'
 import { footerNav, nav } from './nav'
 import { ui } from './ui'
+import { services } from './services'
 
 describe('site content', () => {
   it('has a name and tagline', () => {
@@ -42,5 +43,44 @@ describe('ui strings', () => {
     for (const key of ['skipToContent', 'openMenu', 'closeMenu', 'bookCall'] as const) {
       expect(ui[key], `ui.${key} is missing`).toBeTruthy()
     }
+  })
+})
+
+describe('services content', () => {
+  it('offers five services in the order the spec fixes', () => {
+    expect(services.map((s) => s.slug)).toEqual([
+      'websites',
+      'applications',
+      'ai-engineering',
+      'consulting',
+      'teaching',
+    ])
+  })
+
+  it('gives every service a one-line outcome', () => {
+    for (const service of services) {
+      expect(service.outcome.length, `${service.slug} outcome is empty`).toBeGreaterThan(
+        0,
+      )
+      expect(service.outcome.length, `${service.slug} outcome is too long`).toBeLessThan(
+        120,
+      )
+    }
+  })
+
+  it('gives ai-engineering five capabilities', () => {
+    const aiEngineering = services.find((s) => s.slug === 'ai-engineering')
+    expect(aiEngineering?.capabilities?.map((c) => c.slug)).toEqual([
+      'ai-integration',
+      'workflow-automation',
+      'retrieval-pipelines',
+      'mcp-servers',
+      'evaluation',
+    ])
+  })
+
+  it('claims no delivered work beyond the two the owner supplied', () => {
+    const prose = services.map((s) => s.detail).join(' ')
+    expect(prose).not.toMatch(/hallucination-free|100% accurate|guaranteed/i)
   })
 })

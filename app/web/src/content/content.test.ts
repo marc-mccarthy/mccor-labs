@@ -31,6 +31,10 @@ describe('navigation', () => {
     const hrefs = nav.map((n) => n.href)
     expect(new Set(hrefs).size).toBe(hrefs.length)
   })
+
+  it('does not advertise /work in either nav', () => {
+    expect([...nav, ...footerNav].map((n) => n.href)).not.toContain('/work/')
+  })
 })
 
 describe('ui strings', () => {

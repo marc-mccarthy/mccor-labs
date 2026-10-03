@@ -2,7 +2,6 @@ import type { NavItem } from './types'
 
 export const nav: readonly NavItem[] = [
   { label: 'Services', href: '/services/' },
-  { label: 'Work', href: '/work/' },
   { label: 'Process', href: '/process/' },
   { label: 'About', href: '/about/' },
   { label: 'Contact', href: '/contact/' },

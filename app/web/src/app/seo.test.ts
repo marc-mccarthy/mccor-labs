@@ -17,6 +17,10 @@ describe('sitemap', () => {
     const urls = sitemap().map((e) => e.url)
     expect(new Set(urls).size).toBe(urls.length)
   })
+
+  it('omits /work from the sitemap', () => {
+    expect(sitemap().map((e) => e.url)).not.toContain('https://mccorlabs.com/work/')
+  })
 })
 
 describe('robots', () => {

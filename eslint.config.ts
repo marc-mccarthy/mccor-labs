@@ -147,6 +147,11 @@ export default tseslint.config(
               message:
                 'Import Motion only inside components/motion or components/effects. Elsewhere, use the motion primitives.',
             },
+            {
+              name: 'three',
+              message:
+                'Import three only inside components/effects, through SceneRuntime.',
+            },
           ],
           patterns: [
             {

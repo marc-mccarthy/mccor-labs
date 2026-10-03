@@ -8,6 +8,10 @@ export function readDurationSeconds(name: string): number {
   return raw.endsWith('ms') ? Number.parseFloat(raw) / 1000 : Number.parseFloat(raw)
 }
 
+export function readColorToken(name: string): string {
+  return readToken(name)
+}
+
 export function readEasing(name: string): [number, number, number, number] {
   const raw = readToken(name)
   const match = /cubic-bezier\(([^)]+)\)/.exec(raw)

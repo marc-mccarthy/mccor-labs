@@ -1,0 +1,65 @@
+'use client'
+
+import dynamic from 'next/dynamic'
+import { BookingCta } from '@/components/layout/BookingCta'
+import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
+import { Parallax } from '@/components/motion/Parallax'
+import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
+import { site } from '@/content/site'
+
+const StagScene = dynamic(
+  () => import('@/components/effects/StagScene').then((module) => module.StagScene),
+  { ssr: false },
+)
+
+export function Hero() {
+  return (
+    <section className="relative overflow-hidden">
+      <Parallax>
+        <div className="relative flex min-h-[85vh] items-center">
+          <VideoMotionHero
+            posterSrc="/media/brand/mccor-stag-hero.webp"
+            videoSrc="/media/brand/hero-loop.mp4"
+            webmSrc="/media/brand/hero-loop.webm"
+            altText="McCor Labs dark monolith architecture with glowing red stag"
+            className="absolute inset-0"
+            objectPosition="object-right lg:object-[92%_center]"
+          />
+          <StagScene
+            className="pointer-events-none absolute inset-0 z-5"
+            fallback={<HeroMotionCanvas className="opacity-30" />}
+          />
+          <div
+            className="relative z-10 w-full py-16 sm:py-24"
+            style={{
+              paddingLeft: 'max(24px, calc(100vw / 15))',
+              paddingRight: 'max(24px, calc(100vw / 15))',
+            }}
+          >
+            <div className="max-w-xl lg:max-w-2xl">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-semibold tracking-wider text-muted uppercase backdrop-blur">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                Senior Engineering & AI Studio
+              </div>
+
+              <p className="text-4xl font-extrabold tracking-tight text-text drop-shadow-md sm:text-5xl lg:text-6xl">
+                Swift by Instinct.{' '}
+                <span className="bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent">
+                  Engineered to the Core.
+                </span>
+              </p>
+
+              <h1 className="mt-6 text-lg font-normal text-muted drop-shadow sm:text-xl">
+                {site.tagline}
+              </h1>
+
+              <div className="mt-8 flex items-center gap-4">
+                <BookingCta size="lg" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Parallax>
+    </section>
+  )
+}

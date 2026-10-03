@@ -1,21 +1,66 @@
 'use client'
 
 import Lenis from 'lenis'
-import type { ReactNode, RefObject } from 'react'
-import { createContext, useContext, useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 
-const LenisContext = createContext<RefObject<Lenis | null> | null>(null)
+interface LenisStore {
+  subscribe: (callback: () => void) => () => void
+  getSnapshot: () => Lenis | null
+}
+
+const LenisContext = createContext<LenisStore | null>(null)
+
+function noopUnsubscribe(): undefined {
+  return undefined
+}
+
+function noopSubscribe(): () => undefined {
+  return noopUnsubscribe
+}
+
+function nullSnapshot(): null {
+  return null
+}
 
 export function useLenis(): Lenis | null {
-  return useContext(LenisContext)?.current ?? null
+  const store = useContext(LenisContext)
+  return useSyncExternalStore(
+    store?.subscribe ?? noopSubscribe,
+    store?.getSnapshot ?? nullSnapshot,
+    nullSnapshot,
+  )
 }
 
 export function LenisProvider({ children }: { children: ReactNode }) {
   const instanceRef = useRef<Lenis | null>(null)
+  const listenersRef = useRef(new Set<() => void>())
+  const [store] = useState<LenisStore>(() => ({
+    subscribe(callback) {
+      listenersRef.current.add(callback)
+      return () => {
+        listenersRef.current.delete(callback)
+      }
+    },
+    getSnapshot() {
+      return instanceRef.current
+    },
+  }))
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)')
     let frame: number | null = null
+
+    const notify = () => {
+      for (const listener of listenersRef.current) listener()
+    }
 
     const stop = () => {
       if (frame !== null) {
@@ -24,6 +69,7 @@ export function LenisProvider({ children }: { children: ReactNode }) {
       }
       instanceRef.current?.destroy()
       instanceRef.current = null
+      notify()
     }
 
     const start = () => {
@@ -35,6 +81,7 @@ export function LenisProvider({ children }: { children: ReactNode }) {
         frame = requestAnimationFrame(step)
       }
       frame = requestAnimationFrame(step)
+      notify()
     }
 
     const onChange = () => {
@@ -54,5 +101,5 @@ export function LenisProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return <LenisContext.Provider value={instanceRef}>{children}</LenisContext.Provider>
+  return <LenisContext.Provider value={store}>{children}</LenisContext.Provider>
 }

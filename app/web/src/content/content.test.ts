@@ -3,6 +3,8 @@ import { site } from './site'
 import { footerNav, nav } from './nav'
 import { ui } from './ui'
 import { services } from './services'
+import { team } from './team'
+import { proof } from './proof'
 
 describe('site content', () => {
   it('has a name and tagline', () => {
@@ -82,5 +84,26 @@ describe('services content', () => {
   it('claims no delivered work beyond the two the owner supplied', () => {
     const prose = services.map((s) => s.detail).join(' ')
     expect(prose).not.toMatch(/hallucination-free|100% accurate|guaranteed/i)
+  })
+})
+
+describe('team content', () => {
+  it('lists four people with firm mailboxes', () => {
+    expect(team).toHaveLength(4)
+    for (const member of team) {
+      expect(member.email).toMatch(/@mccorlabs\.com$/)
+    }
+  })
+})
+
+describe('proof content', () => {
+  it('carries exactly two proof points', () => {
+    expect(proof).toHaveLength(2)
+  })
+
+  it('names no client in a proof point', () => {
+    for (const point of proof) {
+      expect(point.text).not.toMatch(/\b(Inc|LLC|Corp)\b/)
+    }
   })
 })

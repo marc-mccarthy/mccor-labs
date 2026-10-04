@@ -200,3 +200,16 @@
     }
   }
 }
+
+@keyframes band-signal {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes band-lede {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}

@@ -34,4 +34,29 @@ describe('PageHeader', () => {
     render(<PageHeader title="Services" description="What we build." image="/a.webp" />)
     expect(screen.getByTestId('header-image').parentElement!.style.transform).toBe('')
   })
+
+  it('adds the signal line and lede animation only with an image', () => {
+    const { unmount } = render(
+      <PageHeader title="Services" description="What we build." image="/a.webp" />,
+    )
+    const signal = screen.getByTestId('header-signal')
+    expect(signal).toHaveClass(
+      'absolute',
+      'h-px',
+      'bg-brand',
+      'hidden',
+      'motion-safe:block',
+      'motion-safe:animate-[band-signal_var(--duration-scene)_var(--ease-standard)_both]',
+    )
+    expect(signal).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.getByText('What we build.').className).toContain(
+      'motion-safe:animate-[band-lede',
+    )
+    expect(screen.getByRole('heading', { level: 1 }).className).not.toContain('animate')
+    expect(screen.getByTestId('header-image').className).not.toContain('animate')
+    unmount()
+    render(<PageHeader title="Careers" description="Join us." />)
+    expect(screen.queryByTestId('header-signal')).not.toBeInTheDocument()
+    expect(screen.getByText('Join us.').className).not.toContain('animate')
+  })
 })

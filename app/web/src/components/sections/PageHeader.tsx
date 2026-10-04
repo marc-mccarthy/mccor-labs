@@ -1,5 +1,6 @@
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
+import { cn } from '@/lib/cn'
 import { Parallax } from '@/components/motion/Parallax'
 
 interface PageHeaderProps {
@@ -12,7 +13,15 @@ export function PageHeader({ title, description, image }: PageHeaderProps) {
   const text = (
     <Container className="relative">
       <h1 className="text-display-md leading-tight font-semibold text-text">{title}</h1>
-      <p className="mt-4 max-w-2xl text-lg text-muted">{description}</p>
+      <p
+        className={cn(
+          'mt-4 max-w-2xl text-lg text-muted',
+          image &&
+            'motion-safe:animate-[band-lede_var(--duration-scene)_var(--ease-standard)_0.4s_both]',
+        )}
+      >
+        {description}
+      </p>
     </Container>
   )
 
@@ -34,6 +43,11 @@ export function PageHeader({ title, description, image }: PageHeaderProps) {
       </div>
       <div className="absolute inset-0 bg-linear-to-t from-base via-base/80 to-transparent sm:bg-linear-to-r sm:via-base/70" />
       {text}
+      <span
+        aria-hidden="true"
+        data-testid="header-signal"
+        className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-px origin-left bg-brand motion-safe:block motion-safe:animate-[band-signal_var(--duration-scene)_var(--ease-standard)_both]"
+      />
     </Section>
   )
 }

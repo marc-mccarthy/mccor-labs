@@ -8,10 +8,10 @@ interface PipelineDiagramProps {
   description: string
 }
 
-const STAGE_GAP = 160
+export const STAGE_GAP = 160
 const ROW_HEIGHT = 64
 const NODE_RADIUS = 20
-const DIAGRAM_HEIGHT = 56
+export const DIAGRAM_HEIGHT = 56
 
 type Place = (index: number) => [number, number]
 

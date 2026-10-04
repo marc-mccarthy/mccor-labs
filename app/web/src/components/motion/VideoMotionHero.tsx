@@ -119,7 +119,7 @@ export function VideoMotionHero({
         src={posterSrc}
         alt={altText}
         className={cn(
-          'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+          'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
           objectPosition,
           videoLoaded ? 'opacity-0' : 'opacity-100',
         )}
@@ -138,7 +138,7 @@ export function VideoMotionHero({
             setVideoLoaded(true)
           }}
           className={cn(
-            'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+            'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
             objectPosition,
             videoLoaded ? 'opacity-100' : 'opacity-0',
           )}

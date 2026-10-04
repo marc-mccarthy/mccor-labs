@@ -23,7 +23,7 @@ export function Logo({ size = 'md', showWordmark = true, className }: LogoProps)
         viewBox="0 0 128 128"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 transition-transform duration-300 hover:scale-105"
+        className="shrink-0 transition-transform duration-(--duration-standard) hover:scale-105"
         aria-hidden="true"
       >
         <defs>

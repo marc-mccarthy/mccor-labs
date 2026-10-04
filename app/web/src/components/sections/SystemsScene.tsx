@@ -40,7 +40,7 @@ export function SystemsScene() {
               loading="lazy"
               data-testid="systems-poster"
               className={cn(
-                'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+                'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
                 videoLoaded ? 'opacity-0' : 'opacity-60',
               )}
             />
@@ -58,7 +58,7 @@ export function SystemsScene() {
                   setVideoLoaded(true)
                 }}
                 className={cn(
-                  'absolute inset-0 h-full w-full object-cover transition-opacity duration-700',
+                  'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
                   videoLoaded ? 'opacity-60' : 'opacity-0',
                 )}
               >

@@ -141,7 +141,7 @@ describe('VideoMotionHero', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
     expect(pause).toHaveBeenCalledTimes(1)
-    const resume = screen.getByRole('button', { name: ui.playVideo })
+    const resume = screen.getByRole('button', { name: ui.pauseVideo })
     expect(resume).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(resume)
     expect(play).toHaveBeenCalledTimes(1)

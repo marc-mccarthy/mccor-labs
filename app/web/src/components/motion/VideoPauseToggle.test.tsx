@@ -11,9 +11,9 @@ describe('VideoPauseToggle', () => {
     expect(button).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('offers play with aria-pressed true while paused', () => {
+  it('keeps the same label with aria-pressed true while paused', () => {
     render(<VideoPauseToggle paused onToggle={() => undefined} />)
-    expect(screen.getByRole('button', { name: ui.playVideo })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: ui.pauseVideo })).toHaveAttribute(
       'aria-pressed',
       'true',
     )

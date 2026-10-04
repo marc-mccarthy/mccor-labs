@@ -10,7 +10,7 @@ export function VideoPauseToggle({ paused, onToggle }: VideoPauseToggleProps) {
     <button
       type="button"
       aria-pressed={paused}
-      aria-label={paused ? ui.playVideo : ui.pauseVideo}
+      aria-label={ui.pauseVideo}
       onClick={onToggle}
       className="absolute right-4 bottom-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-base/60 text-muted backdrop-blur transition-colors duration-(--duration-pointer) ease-(--ease-pointer) hover:text-accent focus-visible:text-accent"
     >

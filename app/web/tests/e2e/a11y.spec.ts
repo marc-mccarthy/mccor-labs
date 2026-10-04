@@ -17,6 +17,11 @@ const PATHS = [
 for (const path of PATHS) {
   test(`${path} has no axe violations`, async ({ page }) => {
     await page.goto(path)
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll('[data-reveal]')]
+        .filter((element) => element.getBoundingClientRect().top < window.innerHeight)
+        .every((element) => getComputedStyle(element).opacity === '1'),
+    )
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze()

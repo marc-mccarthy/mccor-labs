@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/sections/PageHeader'
+import { RoleBlock } from '@/components/sections/RoleBlock'
+import { roles } from '@/content/careers'
 
 export const metadata: Metadata = {
   title: 'Careers',
@@ -7,5 +9,12 @@ export const metadata: Metadata = {
 }
 
 export default function CareersPage() {
-  return <PageHeader title="Careers" description="How we hire, and what we look for." />
+  return (
+    <>
+      <PageHeader title="Careers" description="How we hire, and what we look for." />
+      {roles.map((role) => (
+        <RoleBlock key={role.slug} role={role} />
+      ))}
+    </>
+  )
 }

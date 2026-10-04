@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ContactForm } from './ContactForm'
@@ -18,6 +18,15 @@ describe('ContactForm with no endpoint configured', () => {
 })
 
 describe('ContactForm with an endpoint', () => {
+  beforeEach(() => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+  })
+
   it('labels every field', () => {
     render(<ContactForm endpoint="https://api.test/contact" />)
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()

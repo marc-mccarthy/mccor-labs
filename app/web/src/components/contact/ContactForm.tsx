@@ -3,6 +3,7 @@
 import { useState, type SubmitEvent } from 'react'
 
 import { BookingCta } from '@/components/layout/BookingCta'
+import { Reveal } from '@/components/motion/Reveal'
 import { Button } from '@/components/ui/button'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
@@ -83,83 +84,94 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       noValidate
       className="max-w-xl space-y-5"
     >
-      <div>
-        <label htmlFor="name" className="mb-1 block text-sm text-text">
-          {ui.contactLabelName}
-        </label>
-        <input
-          id="name"
-          name="name"
-          className={FIELD}
-          aria-invalid={errors.name !== undefined}
-          aria-describedby={errors.name === undefined ? undefined : 'name-error'}
-        />
-        {errors.name !== undefined && (
-          <p id="name-error" className="mt-1 text-sm text-accent">
-            {errors.name}
-          </p>
-        )}
-      </div>
+      <Reveal>
+        <div>
+          <label htmlFor="name" className="mb-1 block text-sm text-text">
+            {ui.contactLabelName}
+          </label>
+          <input
+            id="name"
+            name="name"
+            className={FIELD}
+            aria-invalid={errors.name !== undefined}
+            aria-describedby={errors.name === undefined ? undefined : 'name-error'}
+          />
+          {errors.name !== undefined && (
+            <p id="name-error" className="mt-1 text-sm text-accent">
+              {errors.name}
+            </p>
+          )}
+        </div>
+      </Reveal>
 
-      <div>
-        <label htmlFor="email" className="mb-1 block text-sm text-text">
-          {ui.contactLabelEmail}
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          className={FIELD}
-          aria-invalid={errors.email !== undefined}
-          aria-describedby={errors.email === undefined ? undefined : 'email-error'}
-        />
-        {errors.email !== undefined && (
-          <p id="email-error" className="mt-1 text-sm text-accent">
-            {errors.email}
-          </p>
-        )}
-      </div>
+      <Reveal>
+        <div>
+          <label htmlFor="email" className="mb-1 block text-sm text-text">
+            {ui.contactLabelEmail}
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            className={FIELD}
+            aria-invalid={errors.email !== undefined}
+            aria-describedby={errors.email === undefined ? undefined : 'email-error'}
+          />
+          {errors.email !== undefined && (
+            <p id="email-error" className="mt-1 text-sm text-accent">
+              {errors.email}
+            </p>
+          )}
+        </div>
+      </Reveal>
 
-      <div>
-        <label htmlFor="company" className="mb-1 block text-sm text-text">
-          {ui.contactLabelCompany}{' '}
-          <span className="text-muted">{ui.contactOptional}</span>
-        </label>
-        <input id="company" name="company" className={FIELD} />
-      </div>
+      <Reveal>
+        <div>
+          <label htmlFor="company" className="mb-1 block text-sm text-text">
+            {ui.contactLabelCompany}{' '}
+            <span className="text-muted">{ui.contactOptional}</span>
+          </label>
+          <input id="company" name="company" className={FIELD} />
+        </div>
+      </Reveal>
 
-      <div>
-        <label htmlFor="budget" className="mb-1 block text-sm text-text">
-          {ui.contactLabelBudget} <span className="text-muted">{ui.contactOptional}</span>
-        </label>
-        <select id="budget" name="budget" className={FIELD} defaultValue="">
-          <option value="">{ui.contactBudgetPlaceholder}</option>
-          {site.budgetOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Reveal>
+        <div>
+          <label htmlFor="budget" className="mb-1 block text-sm text-text">
+            {ui.contactLabelBudget}{' '}
+            <span className="text-muted">{ui.contactOptional}</span>
+          </label>
+          <select id="budget" name="budget" className={FIELD} defaultValue="">
+            <option value="">{ui.contactBudgetPlaceholder}</option>
+            {site.budgetOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+      </Reveal>
 
-      <div>
-        <label htmlFor="message" className="mb-1 block text-sm text-text">
-          {ui.contactLabelMessage}
-        </label>
-        <textarea
-          id="message"
-          name="message"
-          rows={6}
-          className={FIELD}
-          aria-invalid={errors.message !== undefined}
-          aria-describedby={errors.message === undefined ? undefined : 'message-error'}
-        />
-        {errors.message !== undefined && (
-          <p id="message-error" className="mt-1 text-sm text-accent">
-            {errors.message}
-          </p>
-        )}
-      </div>
+      <Reveal>
+        <div>
+          <label htmlFor="message" className="mb-1 block text-sm text-text">
+            {ui.contactLabelMessage}
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            rows={6}
+            className={FIELD}
+            aria-invalid={errors.message !== undefined}
+            aria-describedby={errors.message === undefined ? undefined : 'message-error'}
+          />
+          {errors.message !== undefined && (
+            <p id="message-error" className="mt-1 text-sm text-accent">
+              {errors.message}
+            </p>
+          )}
+        </div>
+      </Reveal>
 
       <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>

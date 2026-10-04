@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { roles } from '@/content/careers'
 import { process } from '@/content/process'
 import { services } from '@/content/services'
 import { team } from '@/content/team'
@@ -68,5 +69,26 @@ test.describe('about page', () => {
       ).toBeVisible()
     }
     await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(4)
+  })
+})
+
+test.describe('careers page', () => {
+  test('renders every role with an exact application subject @smoke', async ({
+    page,
+  }) => {
+    await page.goto('/careers/')
+    await expect(page.locator('h1')).toHaveCount(1)
+    await expect(page.locator('article')).toHaveCount(roles.length)
+    expect(roles).toHaveLength(5)
+    for (const role of roles) {
+      const link = page.getByRole('link', {
+        name: `Apply for ${role.title}`,
+        exact: true,
+      })
+      const href = (await link.getAttribute('href')) ?? ''
+      const subject = new URL(href).searchParams.get('subject')
+      expect(subject).toBe(role.applySubject)
+      expect(subject).toMatch(/^Application: /)
+    }
   })
 })

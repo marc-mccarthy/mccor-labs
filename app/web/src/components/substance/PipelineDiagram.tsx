@@ -9,58 +9,89 @@ interface PipelineDiagramProps {
 }
 
 const STAGE_GAP = 160
+const ROW_HEIGHT = 64
 const NODE_RADIUS = 20
 const DIAGRAM_HEIGHT = 56
+
+type Place = (index: number) => [number, number]
+
+const horizontal: Place = (index) => [
+  index * STAGE_GAP + STAGE_GAP / 2,
+  DIAGRAM_HEIGHT / 2,
+]
+const vertical: Place = (index) => [
+  DIAGRAM_HEIGHT / 2,
+  index * ROW_HEIGHT + ROW_HEIGHT / 2,
+]
 
 export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
   const reducedMotion = useReducedMotion()
   const { ref, dashOffset } = useScrollDrawn(reducedMotion)
-  const width = stages.length * STAGE_GAP
-  const midY = DIAGRAM_HEIGHT / 2
 
-  return (
-    <figure>
-      <svg
-        ref={ref}
-        role="img"
-        viewBox={`0 0 ${String(width)} ${String(DIAGRAM_HEIGHT)}`}
-        className="w-full overflow-visible"
-      >
-        <title>{description}</title>
-        <desc>{description}</desc>
-        {stages.map((stage, index) =>
-          index === 0 ? null : (
-            <path
-              key={stage}
-              d={`M${String((index - 1) * STAGE_GAP + STAGE_GAP / 2)} ${String(midY)} L${String(index * STAGE_GAP + STAGE_GAP / 2)} ${String(midY)}`}
-              fill="none"
-              stroke="var(--color-border-strong)"
-              strokeWidth={2}
-              pathLength={1}
-              strokeDasharray={1}
-              style={{
-                strokeDashoffset: dashOffset,
-                transition:
-                  'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
-              }}
-            />
-          ),
-        )}
-        {stages.map((stage, index) => (
+  const shapes = (place: Place) => (
+    <>
+      {stages.map((stage, index) => {
+        if (index === 0) return null
+        const [x1, y1] = place(index - 1)
+        const [x2, y2] = place(index)
+        return (
+          <path
+            key={stage}
+            d={`M${String(x1)} ${String(y1)} L${String(x2)} ${String(y2)}`}
+            fill="none"
+            stroke="var(--color-border-strong)"
+            strokeWidth={2}
+            pathLength={1}
+            strokeDasharray={1}
+            style={{
+              strokeDashoffset: dashOffset,
+              transition: 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
+            }}
+          />
+        )
+      })}
+      {stages.map((stage, index) => {
+        const [cx, cy] = place(index)
+        return (
           <circle
             key={stage}
-            cx={index * STAGE_GAP + STAGE_GAP / 2}
-            cy={midY}
+            cx={cx}
+            cy={cy}
             r={NODE_RADIUS}
             fill="var(--color-surface)"
             stroke="var(--color-accent)"
             strokeWidth={2}
           />
-        ))}
+        )
+      })}
+    </>
+  )
+
+  return (
+    <figure className="relative flex gap-4 sm:block">
+      <svg
+        ref={ref}
+        role="img"
+        viewBox={`0 0 ${String(stages.length * STAGE_GAP)} ${String(DIAGRAM_HEIGHT)}`}
+        className="w-full overflow-visible max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:opacity-0"
+      >
+        <title>{description}</title>
+        <desc>{description}</desc>
+        {shapes(horizontal)}
       </svg>
-      <ol className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-muted sm:flex sm:justify-between">
+      <svg
+        aria-hidden="true"
+        viewBox={`0 0 ${String(DIAGRAM_HEIGHT)} ${String(stages.length * ROW_HEIGHT)}`}
+        className="w-14 shrink-0 overflow-visible sm:hidden"
+        style={{ height: `${String(stages.length * 4)}rem` }}
+      >
+        {shapes(vertical)}
+      </svg>
+      <ol className="flex flex-col font-mono text-xs text-muted sm:mt-2 sm:flex-row sm:justify-between">
         {stages.map((stage) => (
-          <li key={stage}>{stage}</li>
+          <li key={stage} className="max-sm:flex max-sm:h-16 max-sm:items-center">
+            {stage}
+          </li>
         ))}
       </ol>
     </figure>

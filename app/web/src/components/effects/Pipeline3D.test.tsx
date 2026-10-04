@@ -171,7 +171,7 @@ describe('PipelineSection', () => {
     expect(container.querySelector('svg desc')?.textContent).toBe(
       retrievalPipeline.description,
     )
-    expect(container.querySelectorAll('svg circle')).toHaveLength(
+    expect(container.querySelectorAll('svg[role="img"] circle')).toHaveLength(
       retrievalPipeline.stages.length,
     )
   })

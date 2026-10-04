@@ -29,13 +29,34 @@ function mockMatchMedia(reduced: boolean) {
 }
 
 describe('PipelineDiagram', () => {
-  it('stacks labels in two columns below sm and a row from sm up', () => {
+  it('draws a vertical column with labels beside nodes below sm and a row from sm up', () => {
     mockMatchMedia(false)
     const { container } = render(
       <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
     )
-    const list = container.querySelector('ol')
-    expect(list).toHaveClass('grid', 'grid-cols-2', 'sm:flex', 'sm:justify-between')
+    const [row, column] = container.querySelectorAll('svg')
+    expect(row).toHaveClass('w-full', 'max-sm:absolute', 'max-sm:opacity-0')
+    expect(column).toHaveClass('sm:hidden')
+    expect(column).toHaveAttribute('aria-hidden', 'true')
+    expect(column?.querySelectorAll('circle')).toHaveLength(STAGES.length)
+    expect(container.querySelector('ol')).toHaveClass(
+      'flex-col',
+      'sm:flex-row',
+      'sm:justify-between',
+    )
+    container.querySelectorAll('li').forEach((item) => {
+      expect(item).toHaveClass('max-sm:h-16')
+    })
+  })
+
+  it('names the diagram once', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    expect(container.querySelectorAll('[role="img"]')).toHaveLength(1)
+    expect(container.querySelectorAll('title')).toHaveLength(1)
+    expect(container.querySelectorAll('desc')).toHaveLength(1)
   })
 
   it('renders a label for every stage', () => {

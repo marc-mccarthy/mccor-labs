@@ -18,7 +18,7 @@ export const lookupRecord = {
   async handler({ id }: { id: string }) {
     const record = await records.find(id)
     if (!record) throw new Error(\`No record with id \${id}\`)
-    return { content: [{ type: 'text', text: JSON.stringify(record) }] }
+    return { content: [{ type: 'text' as const, text: JSON.stringify(record) }] }
   },
 }`,
   },

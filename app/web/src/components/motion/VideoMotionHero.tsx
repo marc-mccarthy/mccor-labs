@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { VideoPauseToggle } from '@/components/motion/VideoPauseToggle'
 import { cn } from '@/lib/cn'
 
 export interface VideoMotionHeroProps {
@@ -26,7 +27,9 @@ function rethrowUnlessAborted(error: unknown) {
 export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptions) {
   const [shouldAttachVideo, setShouldAttachVideo] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const [paused, setPaused] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const pausedRef = useRef(false)
 
   useEffect(() => {
     if (!enabled) return
@@ -55,7 +58,7 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
         const video = videoRef.current
         if (entries.some((entry) => entry.isIntersecting)) {
           setShouldAttachVideo(true)
-          video?.play().catch(rethrowUnlessAborted)
+          if (!pausedRef.current) video?.play().catch(rethrowUnlessAborted)
         } else {
           video?.pause()
         }
@@ -74,6 +77,8 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
         })
         video.load()
       }
+      pausedRef.current = false
+      setPaused(false)
       setShouldAttachVideo(false)
       setVideoLoaded(false)
     }
@@ -97,7 +102,23 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
     }
   }, [enabled, media, onScreenRef])
 
-  return { videoRef, shouldAttachVideo, videoLoaded, setVideoLoaded }
+  const togglePaused = () => {
+    const next = !pausedRef.current
+    pausedRef.current = next
+    setPaused(next)
+    const video = videoRef.current
+    if (next) video?.pause()
+    else video?.play().catch(rethrowUnlessAborted)
+  }
+
+  return {
+    videoRef,
+    shouldAttachVideo,
+    videoLoaded,
+    setVideoLoaded,
+    paused,
+    togglePaused,
+  }
 }
 
 export function VideoMotionHero({
@@ -109,9 +130,14 @@ export function VideoMotionHero({
   objectPosition = 'object-right lg:object-[90%_center]',
   children,
 }: VideoMotionHeroProps) {
-  const { videoRef, shouldAttachVideo, videoLoaded, setVideoLoaded } = useVideoAttach({
-    enabled: Boolean(videoSrc ?? webmSrc),
-  })
+  const {
+    videoRef,
+    shouldAttachVideo,
+    videoLoaded,
+    setVideoLoaded,
+    paused,
+    togglePaused,
+  } = useVideoAttach({ enabled: Boolean(videoSrc ?? webmSrc) })
 
   return (
     <div className={cn('relative w-full overflow-hidden bg-base', className)}>
@@ -152,6 +178,10 @@ export function VideoMotionHero({
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/60 to-transparent"
         aria-hidden="true"
       />
+
+      {shouldAttachVideo && (videoSrc ?? webmSrc) && (
+        <VideoPauseToggle paused={paused} onToggle={togglePaused} />
+      )}
 
       {children && <div className="relative z-10">{children}</div>}
     </div>

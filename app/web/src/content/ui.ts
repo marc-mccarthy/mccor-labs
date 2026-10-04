@@ -2,6 +2,8 @@ export const ui = {
   skipToContent: 'Skip to content',
   openMenu: 'Open menu',
   closeMenu: 'Close menu',
+  pauseVideo: 'Pause background video',
+  playVideo: 'Play background video',
   bookCall: 'Book a 30-minute call',
   contactFallback: 'Email us directly',
   ctaHeading: 'Have something to build?',

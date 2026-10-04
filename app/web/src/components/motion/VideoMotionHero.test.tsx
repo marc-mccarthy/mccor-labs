@@ -1,6 +1,7 @@
-import { act, render } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VideoMotionHero } from './VideoMotionHero'
+import { ui } from '@/content/ui'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -119,5 +120,40 @@ describe('VideoMotionHero', () => {
       vi.runAllTimers()
     })
     expect(container.querySelector('video')).toBeNull()
+  })
+
+  it('shows the pause toggle only while a video is attached', () => {
+    mockMatchMedia(false)
+    renderHero()
+    expect(screen.queryByRole('button')).toBeNull()
+    act(() => {
+      vi.runAllTimers()
+    })
+    expect(screen.getByRole('button', { name: ui.pauseVideo })).toBeInTheDocument()
+  })
+
+  it('pauses and resumes the video from the toggle', () => {
+    mockMatchMedia(false)
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
+    expect(pause).toHaveBeenCalledTimes(1)
+    const resume = screen.getByRole('button', { name: ui.playVideo })
+    expect(resume).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(resume)
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: ui.pauseVideo })).toBeInTheDocument()
+  })
+
+  it('shows no toggle under reduced motion', () => {
+    mockMatchMedia(true)
+    renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })

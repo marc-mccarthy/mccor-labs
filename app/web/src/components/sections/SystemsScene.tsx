@@ -7,6 +7,7 @@ import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
 import { useScrollProgress } from '@/components/motion/useScrollProgress'
+import { VideoPauseToggle } from '@/components/motion/VideoPauseToggle'
 import { useVideoAttach } from '@/components/motion/VideoMotionHero'
 import { ui } from '@/content/ui'
 import { cn } from '@/lib/cn'
@@ -26,7 +27,14 @@ const PIN_HEIGHT = '150vh'
 export function SystemsScene() {
   const ref = useRef<HTMLDivElement>(null)
   const progress = useScrollProgress(ref)
-  const { videoRef, shouldAttachVideo, videoLoaded, setVideoLoaded } = useVideoAttach({
+  const {
+    videoRef,
+    shouldAttachVideo,
+    videoLoaded,
+    setVideoLoaded,
+    paused,
+    togglePaused,
+  } = useVideoAttach({
     enabled: true,
     media: '(min-width: 768px)',
     onScreenRef: ref,
@@ -81,6 +89,9 @@ export function SystemsScene() {
                 {ui.systemsBody}
               </p>
             </Container>
+            {shouldAttachVideo && (
+              <VideoPauseToggle paused={paused} onToggle={togglePaused} />
+            )}
           </div>
         </Pinned>
       </div>

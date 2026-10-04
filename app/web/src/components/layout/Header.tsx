@@ -7,11 +7,9 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Logo } from './Logo'
 import { BookingCta } from './BookingCta'
 import { Container } from './Container'
+import { UNDERLINE } from './underline'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
-
-const UNDERLINE =
-  'relative after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent hover:after:scale-x-100 motion-safe:after:transition-transform motion-safe:after:duration-(--duration-pointer) motion-safe:after:ease-(--ease-pointer) aria-[current=page]:text-text aria-[current=page]:after:scale-x-100 aria-[current=page]:after:bg-linear-to-r aria-[current=page]:after:from-brand aria-[current=page]:after:to-glow-red'
 
 const BAR =
   'origin-center [transform-box:fill-box] motion-safe:transition-[translate,rotate,opacity] motion-safe:duration-(--duration-standard) motion-safe:ease-(--ease-standard)'

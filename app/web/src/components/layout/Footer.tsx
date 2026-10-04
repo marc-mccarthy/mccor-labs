@@ -1,13 +1,19 @@
 import Link from 'next/link'
 
 import { Container } from './Container'
+import { UNDERLINE } from './underline'
 import { footerNav } from '@/content/nav'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-border">
+    <footer className="relative mt-24 border-t border-border">
+      <span
+        aria-hidden="true"
+        data-footer-signal=""
+        className="pointer-events-none absolute inset-x-0 -top-px hidden h-px origin-left bg-brand"
+      />
       <Container className="flex flex-col gap-8 py-12 sm:flex-row sm:justify-between">
         <div>
           <p className="font-semibold text-text">{site.name}</p>
@@ -18,7 +24,7 @@ export function Footer() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm text-muted transition-colors hover:text-text"
+              className={`justify-self-start text-sm text-muted transition-colors hover:text-text ${UNDERLINE}`}
             >
               {item.label}
             </Link>

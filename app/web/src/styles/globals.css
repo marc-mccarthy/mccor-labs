@@ -244,3 +244,21 @@
     }
   }
 }
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes footer-sweep {
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-footer-signal] {
+      display: block;
+      transform: scaleX(0);
+      animation: footer-sweep linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}

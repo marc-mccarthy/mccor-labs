@@ -210,3 +210,22 @@ describe('SkipLink', () => {
     )
   })
 })
+
+describe('Footer signal', () => {
+  it('carries a decorative sweep line hidden until the scroll timeline enables it', () => {
+    const { container } = render(<Footer />)
+    const signal = container.querySelector('[data-footer-signal]')!
+    expect(signal).toHaveAttribute('aria-hidden', 'true')
+    expect(signal).toHaveClass('hidden', 'bg-brand', 'h-px')
+  })
+
+  it('gives every footer link the nav hover underline', () => {
+    render(<Footer />)
+    for (const item of footerNav) {
+      expect(screen.getAllByRole('link', { name: item.label })[0]).toHaveClass(
+        'hover:after:scale-x-100',
+        'motion-safe:after:duration-(--duration-pointer)',
+      )
+    }
+  })
+})

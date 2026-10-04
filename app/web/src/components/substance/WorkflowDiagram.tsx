@@ -96,7 +96,7 @@ export function WorkflowDiagram({ steps, description }: WorkflowDiagramProps) {
           )
         })}
       </svg>
-      <ol className="mt-2 flex justify-between font-mono text-xs text-muted">
+      <ol className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-xs text-muted sm:flex sm:justify-between">
         {steps.map((step) => (
           <li key={step.label}>
             <p>{step.label}</p>

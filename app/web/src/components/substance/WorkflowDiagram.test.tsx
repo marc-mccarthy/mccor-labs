@@ -25,6 +25,15 @@ function mockMatchMedia(reduced: boolean) {
 }
 
 describe('WorkflowDiagram', () => {
+  it('stacks labels in two columns below sm and a row from sm up', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
+    )
+    const list = container.querySelector('ol')
+    expect(list).toHaveClass('grid', 'grid-cols-2', 'sm:flex', 'sm:justify-between')
+  })
+
   it('renders a label for every step', () => {
     mockMatchMedia(false)
     render(<WorkflowDiagram steps={STEPS} description={DESCRIPTION} />)

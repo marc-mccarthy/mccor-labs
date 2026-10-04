@@ -29,6 +29,15 @@ function mockMatchMedia(reduced: boolean) {
 }
 
 describe('PipelineDiagram', () => {
+  it('stacks labels in two columns below sm and a row from sm up', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    const list = container.querySelector('ol')
+    expect(list).toHaveClass('grid', 'grid-cols-2', 'sm:flex', 'sm:justify-between')
+  })
+
   it('renders a label for every stage', () => {
     mockMatchMedia(false)
     const { getAllByRole } = render(

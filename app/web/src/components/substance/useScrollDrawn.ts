@@ -55,5 +55,5 @@ export function useScrollDrawn(reducedMotion: boolean) {
         }),
   })
 
-  return { ref, drawn: isDrawn, edgeStyle, nodeStroke }
+  return { ref, edgeStyle, nodeStroke }
 }

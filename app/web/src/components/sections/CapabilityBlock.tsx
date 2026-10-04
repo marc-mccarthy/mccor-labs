@@ -1,11 +1,18 @@
 import type { ReactNode } from 'react'
 import { CodeBlock } from '@/components/substance/CodeBlock'
+import { IntegrationDiagram } from '@/components/substance/IntegrationDiagram'
 import { PipelineDiagram } from '@/components/substance/PipelineDiagram'
 import { WorkflowDiagram } from '@/components/substance/WorkflowDiagram'
 import type { Capability } from '@/content/types'
-import { codeSamples, retrievalPipeline, workflowApprovalGate } from '@/content/substance'
+import {
+  codeSamples,
+  integrationSurfaces,
+  retrievalPipeline,
+  workflowApprovalGate,
+} from '@/content/substance'
 
 const diagrams: Readonly<Record<string, () => ReactNode>> = {
+  'integration-surfaces': () => <IntegrationDiagram {...integrationSurfaces} />,
   'workflow-approval-gate': () => <WorkflowDiagram {...workflowApprovalGate} />,
   'retrieval-pipeline': () => <PipelineDiagram {...retrievalPipeline} />,
 }

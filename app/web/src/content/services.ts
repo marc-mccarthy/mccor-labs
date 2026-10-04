@@ -57,7 +57,7 @@ export const services: readonly Service[] = [
         title: 'Named integration surfaces',
         summary:
           'LLM features and MCP servers connected to named integration surfaces in your systems, not a standalone demo.',
-        substance: { kind: 'code', ref: 'mcp-tool-definition' },
+        substance: { kind: 'diagram', ref: 'integration-surfaces' },
       },
       {
         slug: 'workflow-automation',

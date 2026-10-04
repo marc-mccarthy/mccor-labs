@@ -88,6 +88,17 @@ describe('CapabilityBlock', () => {
     expect(screen.getByRole('img')).toBeInTheDocument()
   })
 
+  it('renders the named integration surfaces inside a permission boundary', async () => {
+    mockMatchMedia()
+    const { CapabilityBlock: Real } = await actual()
+    const capability = ai.capabilities!.find((c) => c.slug === 'ai-integration')!
+    const { container } = render(await Real({ capability }))
+    for (const surface of ['CRM', 'Ticketing', 'Data warehouse', 'Records DB']) {
+      expect(screen.getByText(surface)).toBeInTheDocument()
+    }
+    expect(container.querySelectorAll('svg rect')).toHaveLength(1)
+  })
+
   it('throws on an unknown ref instead of rendering nothing', async () => {
     const { CapabilityBlock: Real } = await actual()
     const capability: Capability = {

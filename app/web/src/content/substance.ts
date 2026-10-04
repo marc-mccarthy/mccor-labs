@@ -5,23 +5,6 @@ export interface CodeSample {
 }
 
 export const codeSamples: Readonly<Record<string, CodeSample>> = {
-  'mcp-tool-definition': {
-    filename: 'tools/lookup-record.ts',
-    lang: 'typescript',
-    code: `import { z } from 'zod'
-import { records } from '../db/records'
-
-export const lookupRecord = {
-  name: 'lookup_record',
-  description: 'Fetch one record by id from the system of record.',
-  inputSchema: z.object({ id: z.string().min(1) }),
-  async handler({ id }: { id: string }) {
-    const record = await records.find(id)
-    if (!record) throw new Error(\`No record with id \${id}\`)
-    return { content: [{ type: 'text' as const, text: JSON.stringify(record) }] }
-  },
-}`,
-  },
   'mcp-server-transport': {
     filename: 'server.ts',
     lang: 'typescript',
@@ -83,4 +66,15 @@ export const retrievalPipeline: PipelineSample = {
     'Reranking',
     'Evaluation',
   ],
+}
+
+export interface IntegrationSample {
+  surfaces: readonly string[]
+  description: string
+}
+
+export const integrationSurfaces: IntegrationSample = {
+  description:
+    'An LLM feature reaching four named systems, CRM, ticketing, data warehouse and records database, only through one explicit permission boundary.',
+  surfaces: ['CRM', 'Ticketing', 'Data warehouse', 'Records DB'],
 }

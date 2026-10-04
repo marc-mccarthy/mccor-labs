@@ -48,7 +48,7 @@ export function IntegrationDiagram({ surfaces, description }: IntegrationDiagram
         {surfaces.map((surface, index) => (
           <circle
             key={surface}
-            cx={BOUNDARY_PADDING + SURFACE_GAP * index + SURFACE_GAP / 2}
+            cx={((index + 0.5) * width) / surfaces.length}
             cy={midY}
             r={SURFACE_RADIUS}
             fill="var(--color-surface)"
@@ -57,7 +57,12 @@ export function IntegrationDiagram({ surfaces, description }: IntegrationDiagram
           />
         ))}
       </svg>
-      <ol className="mt-2 flex justify-between font-mono text-xs text-text">
+      <ol
+        className="mt-2 grid text-center font-mono text-xs text-text"
+        style={{
+          gridTemplateColumns: `repeat(${String(surfaces.length)}, minmax(0, 1fr))`,
+        }}
+      >
         {surfaces.map((surface) => (
           <li key={surface}>{surface}</li>
         ))}

@@ -46,8 +46,8 @@ describe('PipelineDiagram', () => {
     expect(column?.querySelectorAll('circle')).toHaveLength(STAGES.length)
     expect(container.querySelector('ol')).toHaveClass(
       'flex-col',
-      'sm:flex-row',
-      'sm:justify-between',
+      'sm:grid',
+      'sm:text-center',
     )
     container.querySelectorAll('li').forEach((item) => {
       expect(item).toHaveClass('max-sm:h-16')
@@ -104,6 +104,26 @@ describe('PipelineDiagram', () => {
     expect(paths.length).toBeGreaterThan(0)
     paths.forEach((path) => {
       expect(path.style.strokeDashoffset).toBe('0')
+    })
+  })
+
+  it('centres each label column on its node', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    const svg = container.querySelector('svg')
+    const width = Number(svg?.getAttribute('viewBox')?.split(' ')[2])
+    const count = STAGES.length
+    expect(container.querySelector('ol')?.style.gridTemplateColumns).toBe(
+      `repeat(${String(count)}, minmax(0, 1fr))`,
+    )
+    svg?.querySelectorAll('circle').forEach((node, index) => {
+      const x =
+        node.tagName === 'rect'
+          ? Number(node.getAttribute('x')) + Number(node.getAttribute('width')) / 2
+          : Number(node.getAttribute('cx'))
+      expect(x / width).toBeCloseTo((index + 0.5) / count)
     })
   })
 })

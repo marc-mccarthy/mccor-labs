@@ -87,7 +87,12 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
       >
         {shapes(vertical)}
       </svg>
-      <ol className="flex flex-col font-mono text-xs text-muted sm:mt-2 sm:flex-row sm:justify-between">
+      <ol
+        className="flex flex-col font-mono text-xs text-muted sm:mt-2 sm:grid sm:text-center"
+        style={{
+          gridTemplateColumns: `repeat(${String(stages.length)}, minmax(0, 1fr))`,
+        }}
+      >
         {stages.map((stage) => (
           <li key={stage} className="max-sm:flex max-sm:h-16 max-sm:items-center">
             {stage}

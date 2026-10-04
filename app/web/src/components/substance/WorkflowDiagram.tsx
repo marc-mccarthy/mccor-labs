@@ -117,14 +117,17 @@ export function WorkflowDiagram({ steps, description }: WorkflowDiagramProps) {
       >
         {shapes(vertical)}
       </svg>
-      <ol className="flex flex-col font-mono text-xs text-muted sm:mt-2 sm:flex-row sm:justify-between">
+      <ol
+        className="flex flex-col font-mono text-xs text-muted sm:mt-2 sm:grid sm:text-center"
+        style={{ gridTemplateColumns: `repeat(${String(steps.length)}, minmax(0, 1fr))` }}
+      >
         {steps.map((step) => (
           <li
             key={step.label}
             className="max-sm:flex max-sm:h-16 max-sm:flex-col max-sm:justify-center"
           >
             <p>{step.label}</p>
-            {step.gate ? <p className="max-sm:pl-4">{GATE_LABEL[step.gate]}</p> : null}
+            {step.gate ? <p>{GATE_LABEL[step.gate]}</p> : null}
           </li>
         ))}
       </ol>

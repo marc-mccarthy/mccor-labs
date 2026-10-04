@@ -52,3 +52,28 @@ test.describe('routes', () => {
     await expect(page.locator('h1')).toContainText(/does not exist/i)
   })
 })
+
+test.describe('home page assembly', () => {
+  test('the home page renders seven sections in order @smoke', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('section')).toHaveCount(7)
+  })
+
+  test('no effect chunk loads before the load event', async ({ page }) => {
+    const seen: string[] = []
+    let loaded = false
+    let before = 0
+    page.on('response', (r) => {
+      if (/chunks\/.*\.js$/.test(r.url())) seen.push(r.url())
+    })
+    page.on('load', () => {
+      loaded = true
+      before = seen.length
+    })
+    await page.goto('/', { waitUntil: 'load' })
+    expect(loaded).toBe(true)
+    await page.mouse.wheel(0, 4000)
+    await page.waitForTimeout(1000)
+    expect(seen.length).toBeGreaterThan(before)
+  })
+})

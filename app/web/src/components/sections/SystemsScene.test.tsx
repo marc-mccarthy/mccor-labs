@@ -52,6 +52,9 @@ describe('SystemsScene', () => {
     const { container } = render(<SystemsScene />)
     expect(screen.getByRole('heading', { name: ui.systemsHeading })).toBeInTheDocument()
     expect(screen.getByText(ui.systemsBody)).toBeInTheDocument()
+    expect(screen.getByTestId('systems-poster').getAttribute('src') ?? '').toContain(
+      'systems-lattice.webp',
+    )
     expect(container.querySelector('[style*="sticky"]')).toBeNull()
   })
 })

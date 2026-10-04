@@ -41,11 +41,13 @@ describe('ProcessScroller', () => {
     ).toBeInTheDocument()
   })
 
-  it('pins the track with sticky positioning when motion is allowed', () => {
+  it('pins the track from md up and stacks it below md when motion is allowed', () => {
     mockMatchMedia(false)
     render(<ProcessScroller />)
     const heading = screen.getByRole('heading', { name: process[0]!.title })
-    expect(hasStickyAncestor(heading)).toBe(true)
+    expect(hasStickyAncestor(heading)).toBe(false)
+    expect(heading.closest('.md\\:sticky')).not.toBeNull()
+    expect(heading.closest('ol')).toHaveClass('flex-col', 'md:flex-row')
   })
 
   it('renders stacked with no sticky positioning under reduced motion', () => {

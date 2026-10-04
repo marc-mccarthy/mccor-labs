@@ -56,6 +56,31 @@ test.describe('process page', () => {
   })
 })
 
+test.describe('process stages by width', () => {
+  for (const [width, pinned] of [
+    [390, false],
+    [1440, true],
+  ] as const) {
+    test(`at ${String(width)}px the stages are ${pinned ? 'pinned' : 'stacked'}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 })
+      await page.goto('/')
+      const first = page.getByRole('heading', { level: 3, name: process[0]!.title })
+      const last = page.getByRole('heading', { level: 3, name: process.at(-1)!.title })
+      const sticky = await first.evaluate((node) => {
+        for (let el: Element | null = node; el; el = el.parentElement) {
+          if (getComputedStyle(el).position === 'sticky') return true
+        }
+        return false
+      })
+      expect(sticky).toBe(pinned)
+      const [a, b] = await Promise.all([first.boundingBox(), last.boundingBox()])
+      expect((b?.y ?? 0) > (a?.y ?? 0)).toBe(!pinned)
+    })
+  }
+})
+
 test.describe('about page', () => {
   test('states the team size and lists four people with mailto links @smoke', async ({
     page,

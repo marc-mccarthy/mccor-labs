@@ -16,7 +16,7 @@ const NodeLatticeScene = dynamic(
   { ssr: false },
 )
 
-const PIN_HEIGHT = '200vh'
+const PIN_HEIGHT = '150vh'
 
 export function SystemsScene() {
   const ref = useRef<HTMLDivElement>(null)

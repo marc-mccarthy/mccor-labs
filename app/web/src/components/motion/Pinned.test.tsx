@@ -47,4 +47,17 @@ describe('Pinned', () => {
     )
     expect(screen.getByText('content')).not.toHaveAttribute('aria-hidden')
   })
+  it('pins only from md up when asked, with the height carried as a variable', () => {
+    mockMatchMedia(false)
+    render(
+      <Pinned height="200vh" from="md">
+        <p>content</p>
+      </Pinned>,
+    )
+    const inner = screen.getByText('content').parentElement!
+    expect(getComputedStyle(inner).position).not.toBe('sticky')
+    expect(inner).toHaveClass('md:sticky', 'md:top-0')
+    expect(inner.parentElement).toHaveClass('md:h-(--pin-height)')
+    expect(inner.parentElement!.style.getPropertyValue('--pin-height')).toBe('200vh')
+  })
 })

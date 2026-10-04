@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, type CSSProperties } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
@@ -10,7 +10,7 @@ import { SectionHeading } from '@/components/ui/section-heading'
 import { process } from '@/content/process'
 
 const VIEWPORT_UNITS = 100
-const PIN_UNITS = 300
+const PIN_UNITS = 200
 const PIN_START = VIEWPORT_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
 const PIN_END = PIN_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
 
@@ -64,27 +64,33 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
     )
   }
 
-  const shift = pinnedFraction(progress) * ((process.length - 1) / process.length) * 100
+  const fraction = pinnedFraction(progress)
+  const track = {
+    '--shift-md': `${String(fraction * (process.length - 1) * 100)}%`,
+    '--shift-lg': `${String(fraction * (process.length - 2) * 50)}%`,
+  } as CSSProperties
 
   return (
-    <Section className="py-0 sm:py-0">
+    <Section className="md:py-0">
       <div ref={ref}>
-        <Pinned height={`${String(PIN_UNITS)}vh`}>
-          <div className="flex h-screen flex-col justify-center overflow-hidden">
+        <Pinned height={`${String(PIN_UNITS)}vh`} from="md">
+          <div className="md:flex md:h-screen md:flex-col md:justify-center md:overflow-hidden">
             <ProcessHeading heading={heading} />
-            <ol
-              className="flex"
-              style={{
-                width: `${String(process.length * 100)}%`,
-                transform: `translateX(-${String(shift)}%)`,
-              }}
-            >
-              {process.map((stage) => (
-                <li key={stage.index} className="flex-1 px-4 sm:px-6">
-                  <StageCard stage={stage} />
-                </li>
-              ))}
-            </ol>
+            <Container>
+              <ol
+                className="flex flex-col gap-6 md:-translate-x-(--shift-md) md:flex-row md:gap-0 lg:-translate-x-(--shift-lg)"
+                style={track}
+              >
+                {process.map((stage) => (
+                  <li
+                    key={stage.index}
+                    className="md:w-full md:shrink-0 md:pr-6 lg:w-1/2"
+                  >
+                    <StageCard stage={stage} />
+                  </li>
+                ))}
+              </ol>
+            </Container>
           </div>
         </Pinned>
       </div>

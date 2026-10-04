@@ -77,3 +77,43 @@ describe('Reveal when the animation chunk fails', () => {
     vi.doUnmock('./features')
   })
 })
+
+describe('Reveal once the animation chunk loads', () => {
+  function mockRect(top: number) {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      top,
+      bottom: top + 100,
+    } as DOMRect)
+  }
+
+  it('leaves content already in the viewport visible instead of hiding it to animate', async () => {
+    mockMatchMedia(false)
+    mockRect(0)
+    const { container } = render(
+      <Reveal>
+        <p>content</p>
+      </Reveal>,
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    const wrapper = container.querySelector<HTMLElement>('[data-reveal="shown"]')
+    expect(wrapper).not.toBeNull()
+    expect(wrapper?.style.opacity).toBe('')
+    expect(wrapper?.style.transform).toBe('')
+    vi.restoreAllMocks()
+  })
+
+  it('still hides content below the fold so it can rise into view', async () => {
+    mockMatchMedia(false)
+    mockRect(window.innerHeight + 100)
+    const { container } = render(
+      <Reveal>
+        <p>content</p>
+      </Reveal>,
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    const wrapper = container.querySelector<HTMLElement>('[data-reveal=""]')
+    expect(wrapper).not.toBeNull()
+    expect(wrapper?.style.opacity).toBe('0')
+    vi.restoreAllMocks()
+  })
+})

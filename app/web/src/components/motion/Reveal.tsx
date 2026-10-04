@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { LazyMotion, m } from 'motion/react'
 import { loadDomAnimationFeatures } from './features'
 import { readDurationSeconds, readEasing } from './tokens'
@@ -13,18 +13,25 @@ export interface RevealProps {
 
 const RISE_DISTANCE = 24
 
-type FeaturePhase = 'pending' | 'ready' | 'failed'
+type FeaturePhase = 'pending' | 'ready' | 'shown' | 'failed'
+
+function isInViewport(element: HTMLElement | null): boolean {
+  if (!element) return false
+  const rect = element.getBoundingClientRect()
+  return rect.top < window.innerHeight && rect.bottom > 0
+}
 
 export function Reveal({ children, delay }: RevealProps) {
   const reducedMotion = useReducedMotion()
   const [phase, setPhase] = useState<FeaturePhase>('pending')
+  const placeholder = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (reducedMotion) return undefined
     let cancelled = false
     loadDomAnimationFeatures().then(
       () => {
-        if (!cancelled) setPhase('ready')
+        if (!cancelled) setPhase(isInViewport(placeholder.current) ? 'shown' : 'ready')
       },
       () => {
         if (!cancelled) setPhase('failed')
@@ -40,7 +47,11 @@ export function Reveal({ children, delay }: RevealProps) {
   }
 
   if (phase !== 'ready') {
-    return <div data-reveal={phase}>{children}</div>
+    return (
+      <div ref={placeholder} data-reveal={phase}>
+        {children}
+      </div>
+    )
   }
 
   return (

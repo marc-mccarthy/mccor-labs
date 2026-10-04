@@ -11,7 +11,11 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <PageHeader title="About" description={about.opening} />
+      <PageHeader
+        title="About"
+        description={about.opening}
+        image="/media/brand/header-about.webp"
+      />
       <TeamGrid />
     </>
   )

@@ -14,6 +14,7 @@ export default function ProcessPage() {
       <PageHeader
         title="Process"
         description="How an engagement runs, from first call to launch."
+        image="/media/brand/header-process.webp"
       />
       <ProcessScroller heading={ui.processStagesHeading} />
     </>

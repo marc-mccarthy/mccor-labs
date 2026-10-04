@@ -17,8 +17,9 @@ export default function ContactPage() {
       <PageHeader
         title="Contact"
         description="Tell us about the project, or book a call directly."
+        image="/media/brand/cta-terminus.webp"
       />
-      <Section className="pt-0">
+      <Section>
         <Container>
           <ContactForm endpoint={env.contactEndpoint} />
         </Container>

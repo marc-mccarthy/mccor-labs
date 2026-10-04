@@ -11,7 +11,11 @@ export const metadata: Metadata = {
 export default function ServicesPage() {
   return (
     <>
-      <PageHeader title="Services" description="What we build, and how we price it." />
+      <PageHeader
+        title="Services"
+        description="What we build, and how we price it."
+        image="/media/brand/header-services.webp"
+      />
       {services.map((service) => (
         <ServiceBlock key={service.slug} service={service} />
       ))}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import { Logo } from './Logo'
 import { BookingCta } from './BookingCta'
@@ -12,6 +12,15 @@ import { ui } from '@/content/ui'
 
 const UNDERLINE =
   'relative after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent hover:after:scale-x-100 motion-safe:after:transition-transform motion-safe:after:duration-(--duration-pointer) motion-safe:after:ease-(--ease-pointer) aria-[current=page]:text-text aria-[current=page]:after:scale-x-100 aria-[current=page]:after:bg-linear-to-r aria-[current=page]:after:from-brand aria-[current=page]:after:to-glow-red'
+
+const BAR =
+  'origin-center [transform-box:fill-box] motion-safe:transition-[translate,rotate,opacity] motion-safe:duration-(--duration-standard) motion-safe:ease-(--ease-standard)'
+
+const MOBILE_NAV =
+  'border-t border-border md:hidden motion-safe:transition-[display,opacity,translate] motion-safe:transition-discrete motion-safe:duration-(--duration-standard) motion-safe:ease-(--ease-standard) motion-safe:starting:-translate-y-2 motion-safe:starting:opacity-0 motion-safe:[&[hidden]]:-translate-y-2 motion-safe:[&[hidden]]:opacity-0 motion-safe:[&[hidden]]:duration-(--duration-pointer)'
+
+const MOBILE_ITEM =
+  'motion-safe:transition-[opacity,translate] motion-safe:duration-(--duration-standard) motion-safe:ease-(--ease-standard) motion-safe:delay-[calc(var(--i)*var(--stagger-interval))] motion-safe:starting:translate-y-2 motion-safe:starting:opacity-0'
 
 function stripTrailingSlash(path: string) {
   return path.length > 1 ? path.replace(/\/+$/, '') : path
@@ -89,36 +98,58 @@ export function Header() {
             strokeLinecap="round"
             aria-hidden="true"
           >
-            {open ? (
-              <path d="M4 4 L16 16 M16 4 L4 16" />
-            ) : (
-              <path d="M3 5 H17 M3 10 H17 M3 15 H17" />
-            )}
+            <line
+              x1="3"
+              y1="5"
+              x2="17"
+              y2="5"
+              className={`${BAR} ${open ? 'translate-y-[5px] rotate-45' : ''}`}
+            />
+            <line
+              x1="3"
+              y1="10"
+              x2="17"
+              y2="10"
+              className={`${BAR} ${open ? 'opacity-0' : ''}`}
+            />
+            <line
+              x1="3"
+              y1="15"
+              x2="17"
+              y2="15"
+              className={`${BAR} ${open ? '-translate-y-[5px] -rotate-45' : ''}`}
+            />
           </svg>
         </button>
       </Container>
-      <nav
-        id="mobile-nav"
-        aria-label="Primary"
-        hidden={!open}
-        className="border-t border-border md:hidden"
-      >
-        <Container className="flex flex-col gap-4 py-4">
-          {nav.map((item) => (
-            <Link
+      <nav id="mobile-nav" aria-label="Primary" hidden={!open} className={MOBILE_NAV}>
+        <Container className="flex flex-col gap-1 py-4">
+          {nav.map((item, index) => (
+            <div
               key={item.href}
-              href={item.href}
-              onClick={() => {
-                setOpen(false)
-              }}
-              aria-current={
-                stripTrailingSlash(item.href) === current ? 'page' : undefined
-              }
-              className="text-sm text-muted transition-colors hover:text-text aria-[current=page]:text-text"
+              style={{ '--i': index } as CSSProperties}
+              className={MOBILE_ITEM}
             >
-              {item.label}
-            </Link>
+              <Link
+                href={item.href}
+                onClick={() => {
+                  setOpen(false)
+                }}
+                aria-current={
+                  stripTrailingSlash(item.href) === current ? 'page' : undefined
+                }
+                className="flex min-h-11 items-center text-sm text-muted transition-colors hover:text-text aria-[current=page]:text-text"
+              >
+                {item.label}
+              </Link>
+            </div>
           ))}
+          <div
+            style={{ '--i': nav.length } as CSSProperties}
+            className={`${MOBILE_ITEM} pt-3 [&_a]:w-full [&>span]:block`}
+          >
+            <BookingCta />
+          </div>
         </Container>
       </nav>
     </header>

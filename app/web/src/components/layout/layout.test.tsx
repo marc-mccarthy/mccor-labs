@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Footer } from './Footer'
 import { Header } from './Header'
@@ -124,6 +124,70 @@ describe('Header', () => {
     await userEvent.click(screen.getByRole('button', { name: ui.openMenu }))
     for (const item of nav) {
       expect(screen.getAllByRole('link', { name: item.label }).length).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('Header mobile menu', () => {
+  beforeEach(() => {
+    mocked.env.bookingUrl = null
+    navigation.pathname = '/'
+  })
+
+  function menu() {
+    return document.getElementById('mobile-nav')!
+  }
+
+  it('flips the hidden attribute with the toggle', async () => {
+    render(<Header />)
+    expect(menu()).toHaveAttribute('hidden')
+    await userEvent.click(screen.getByRole('button', { name: ui.openMenu }))
+    expect(menu()).not.toHaveAttribute('hidden')
+    await userEvent.click(screen.getByRole('button', { name: ui.closeMenu }))
+    expect(menu()).toHaveAttribute('hidden')
+  })
+
+  it('gives every menu link a 44px target', () => {
+    render(<Header />)
+    const links = within(menu()).getAllByRole('link', { hidden: true })
+    for (const item of nav) {
+      const link = links.find((el) => el.textContent === item.label)
+      expect(link).toHaveClass('min-h-11')
+    }
+  })
+
+  it('offers the booking call in the open menu', async () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    render(<Header />)
+    await userEvent.click(screen.getByRole('button', { name: ui.openMenu }))
+    expect(within(menu()).getByRole('link', { name: ui.bookCall })).toHaveAttribute(
+      'href',
+      BOOKING_URL,
+    )
+  })
+
+  it('staggers items and gates the animation behind motion-safe', () => {
+    render(<Header />)
+    const items = Array.from(menu().querySelectorAll<HTMLElement>('[style*="--i"]'))
+    expect(items.map((el) => el.style.getPropertyValue('--i'))).toEqual(
+      Array.from({ length: nav.length + 1 }, (_, i) => String(i)),
+    )
+    expect(menu()).toHaveClass(
+      'motion-safe:transition-discrete',
+      'motion-safe:starting:opacity-0',
+    )
+    expect(items[0]).toHaveClass(
+      'motion-safe:delay-[calc(var(--i)*var(--stagger-interval))]',
+    )
+  })
+
+  it('draws the menu icon as three lines that only transition when motion is allowed', () => {
+    render(<Header />)
+    const toggle = screen.getByRole('button', { name: ui.openMenu })
+    const lines = toggle.querySelectorAll('line')
+    expect(lines).toHaveLength(3)
+    for (const line of lines) {
+      expect(line).toHaveClass('motion-safe:transition-[translate,rotate,opacity]')
     }
   })
 })

@@ -33,7 +33,7 @@ export function Hero() {
           <Container className="relative z-10 pt-16 pb-8 sm:pt-24">
             <div className="max-w-xl lg:max-w-3xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-semibold tracking-wider text-muted uppercase backdrop-blur">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
                 Senior Engineering & AI Studio
               </div>
 

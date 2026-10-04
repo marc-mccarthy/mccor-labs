@@ -68,7 +68,7 @@ export function TeamGrid() {
             <article key={member.slug} className="flex flex-col gap-4">
               <Media member={member} position={index + 1} />
               <h3 className="text-xl font-semibold text-text">{member.name}</h3>
-              <p className="font-mono text-sm text-accent">{member.role}</p>
+              <p className="font-mono text-sm text-muted">{member.role}</p>
               <p className="text-sm text-muted">{member.bio}</p>
               <a
                 href={`mailto:${member.email}`}

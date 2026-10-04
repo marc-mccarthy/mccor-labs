@@ -21,7 +21,7 @@ function pinnedFraction(progress: number): number {
 function StageCard({ stage }: { stage: (typeof process)[number] }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-6">
-      <p className="font-mono text-sm text-accent">
+      <p className="font-mono text-sm text-muted">
         {String(stage.index).padStart(2, '0')} · {stage.duration}
       </p>
       <h3 className="text-2xl font-semibold text-text">{stage.title}</h3>

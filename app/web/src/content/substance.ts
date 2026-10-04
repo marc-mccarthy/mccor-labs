@@ -9,6 +9,7 @@ export const codeSamples: Readonly<Record<string, CodeSample>> = {
     filename: 'tools/lookup-record.ts',
     lang: 'typescript',
     code: `import { z } from 'zod'
+import { records } from '../db/records'
 
 export const lookupRecord = {
   name: 'lookup_record',
@@ -36,11 +37,14 @@ await server.connect(transport)`,
     filename: 'evals/answers.eval.ts',
     lang: 'typescript',
     code: `import { expect, it } from 'vitest'
+import { answer } from '../src/answer'
+import { BASELINE, score } from './score'
+import { refundPolicy } from './cases/refund-policy'
 
 it('answers from the retrieved context, not from memory', async () => {
-  const result = await answer(case.question, case.documents)
+  const result = await answer(refundPolicy.question, refundPolicy.documents)
   expect(result.citations).not.toHaveLength(0)
-  expect(score(result.text, case.expected)).toBeGreaterThanOrEqual(BASELINE)
+  expect(score(result.text, refundPolicy.expected)).toBeGreaterThanOrEqual(BASELINE)
 })`,
   },
 }

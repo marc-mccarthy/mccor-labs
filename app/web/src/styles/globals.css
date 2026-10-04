@@ -262,3 +262,9 @@
     }
   }
 }
+
+@keyframes signal-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}

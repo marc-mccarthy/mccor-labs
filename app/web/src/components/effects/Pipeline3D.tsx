@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
-import { readColorToken } from '../motion/tokens'
+import { useCallback, useRef } from 'react'
 import { buildCloud, CLOUD_COUNT, PIPELINE_SEED, stagePosition } from './pipelinePath'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
+import { useProgressRef } from './useProgressRef'
 
 export interface Pipeline3DProps {
   stages: readonly string[]
@@ -23,7 +23,7 @@ function buildPipeline(
   labels: HTMLElement[],
   progressRef: { current: number },
 ): SceneHandle {
-  const { THREE, canvas, renderer } = context
+  const { THREE, canvas, renderer, color, fitToCanvas } = context
   const stagePoints = Array.from(
     { length: stageCount },
     (_, index) => new THREE.Vector3(...stagePosition(index)),
@@ -36,10 +36,7 @@ function buildPipeline(
     new THREE.BufferAttribute(buildCloud(PIPELINE_SEED, CLOUD_COUNT, stageCount), 3),
   )
   const material = new THREE.PointsMaterial({
-    color: new THREE.Color().setStyle(
-      readColorToken('--color-accent'),
-      THREE.LinearSRGBColorSpace,
-    ),
+    color: color('--color-accent'),
     size: POINT_SIZE,
     transparent: true,
     opacity: 0.8,
@@ -69,17 +66,11 @@ function buildPipeline(
     })
   }
 
-  const resize = () => {
-    const { clientWidth: width, clientHeight: height } = canvas
-    if (width === 0 || height === 0) return
-    renderer.setSize(width, height, false)
+  const stopFitting = fitToCanvas((width, height) => {
     camera.aspect = width / height
     camera.updateProjectionMatrix()
     drawn = -1
-  }
-  const resizeObserver = new ResizeObserver(resize)
-  resizeObserver.observe(canvas)
-  resize()
+  })
 
   return {
     render: () => {
@@ -94,7 +85,7 @@ function buildPipeline(
       renderer.render(scene, camera)
     },
     dispose: () => {
-      resizeObserver.disconnect()
+      stopFitting()
       geometry.dispose()
       material.dispose()
     },
@@ -102,11 +93,8 @@ function buildPipeline(
 }
 
 export function Pipeline3D({ stages, progress, className }: Pipeline3DProps) {
-  const progressRef = useRef(progress)
+  const progressRef = useProgressRef(progress)
   const labelsRef = useRef<HTMLDivElement | null>(null)
-  useEffect(() => {
-    progressRef.current = progress
-  }, [progress])
   const stageCount = stages.length
   const build = useCallback(
     (context: SceneContext) =>
@@ -118,7 +106,7 @@ export function Pipeline3D({ stages, progress, className }: Pipeline3DProps) {
         ),
         progressRef,
       ),
-    [stageCount],
+    [stageCount, progressRef],
   )
 
   return (

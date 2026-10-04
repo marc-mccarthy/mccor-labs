@@ -1,4 +1,4 @@
-import { mulberry32 } from './nodeLattice'
+import { mulberry32 } from './random'
 
 export const PIPELINE_SEED = 0x70697065
 export const CLOUD_COUNT = 240

@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, type ReactNode } from 'react'
-import { readColorToken } from '../motion/tokens'
+import { useCallback, type ReactNode } from 'react'
 import { buildNodeLayout, LATTICE_SEED, NODE_COUNT } from './nodeLattice'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
+import { useProgressRef } from './useProgressRef'
 
 export interface NodeLatticeSceneProps {
   progress: number
@@ -53,10 +53,8 @@ function buildLattice(
   context: SceneContext,
   progressRef: { current: number },
 ): SceneHandle {
-  const { THREE, canvas, renderer } = context
+  const { THREE, renderer, color, fitToCanvas } = context
   const layout = buildNodeLayout(LATTICE_SEED, NODE_COUNT)
-  const color = (name: string) =>
-    new THREE.Color().setStyle(readColorToken(name), THREE.LinearSRGBColorSpace)
 
   const uniforms = {
     uProgress: { value: 0 },
@@ -102,17 +100,11 @@ function buildLattice(
 
   let drawn = -1
 
-  const resize = () => {
-    const { clientWidth: width, clientHeight: height } = canvas
-    if (width === 0 || height === 0) return
-    renderer.setSize(width, height, false)
+  const stopFitting = fitToCanvas((width, height) => {
     camera.aspect = width / height
     camera.updateProjectionMatrix()
     drawn = -1
-  }
-  const resizeObserver = new ResizeObserver(resize)
-  resizeObserver.observe(canvas)
-  resize()
+  })
 
   return {
     render: () => {
@@ -126,7 +118,7 @@ function buildLattice(
       renderer.render(scene, camera)
     },
     dispose: () => {
-      resizeObserver.disconnect()
+      stopFitting()
       nodeGeometry.dispose()
       edgeGeometry.dispose()
       material.dispose()
@@ -140,13 +132,10 @@ export function NodeLatticeScene({
   className,
   fallback = null,
 }: NodeLatticeSceneProps) {
-  const progressRef = useRef(progress)
-  useEffect(() => {
-    progressRef.current = progress
-  }, [progress])
+  const progressRef = useProgressRef(progress)
   const build = useCallback(
     (context: SceneContext) => buildLattice(context, progressRef),
-    [],
+    [progressRef],
   )
   return <SceneRuntime className={className} fallback={fallback} build={build} />
 }

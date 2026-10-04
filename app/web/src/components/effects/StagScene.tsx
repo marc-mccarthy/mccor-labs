@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useState, type ReactNode } from 'react'
-import { readColorToken, readDurationSeconds } from '../motion/tokens'
+import type { ReactNode } from 'react'
+import { readDurationSeconds } from '../motion/tokens'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
 import { buildScatterPositions, buildSeeds } from './stagAttributes'
 
@@ -84,12 +84,10 @@ function assembleSeconds(): number {
     : FALLBACK_ASSEMBLE_SECONDS
 }
 
-function buildStag(context: SceneContext, onError: () => void): SceneHandle {
-  const { THREE, canvas, renderer, pixelRatio } = context
+function buildStag(context: SceneContext): SceneHandle {
+  const { THREE, canvas, renderer, pixelRatio, color, fail } = context
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
-  const color = (name: string) =>
-    new THREE.Color().setStyle(readColorToken(name), THREE.LinearSRGBColorSpace)
   const uniforms = {
     uTime: { value: 0 },
     uProgress: { value: assembled ? 1 : 0 },
@@ -172,7 +170,7 @@ function buildStag(context: SceneContext, onError: () => void): SceneHandle {
       scene.add(points)
       resize()
     })
-    .catch(onError)
+    .catch(fail)
 
   return {
     render: (time) => {
@@ -202,15 +200,5 @@ function buildStag(context: SceneContext, onError: () => void): SceneHandle {
 }
 
 export function StagScene({ className, fallback }: StagSceneProps) {
-  const [failed, setFailed] = useState(false)
-  const build = useCallback(
-    (context: SceneContext) =>
-      buildStag(context, () => {
-        setFailed(true)
-      }),
-    [],
-  )
-
-  if (failed) return <div className={className}>{fallback}</div>
-  return <SceneRuntime className={className} fallback={fallback} build={build} />
+  return <SceneRuntime className={className} fallback={fallback} build={buildStag} />
 }

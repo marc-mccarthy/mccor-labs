@@ -1,4 +1,4 @@
-function readToken(name: string): string {
+export function readToken(name: string): string {
   if (typeof window === 'undefined') return ''
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
@@ -6,10 +6,6 @@ function readToken(name: string): string {
 export function readDurationSeconds(name: string): number {
   const raw = readToken(name)
   return raw.endsWith('ms') ? Number.parseFloat(raw) / 1000 : Number.parseFloat(raw)
-}
-
-export function readColorToken(name: string): string {
-  return readToken(name)
 }
 
 export function readEasing(name: string): [number, number, number, number] {

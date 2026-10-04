@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { readToken } from '../motion/tokens'
 import { useReducedMotion } from '../motion/useReducedMotion'
 
 export type SceneStatus = 'idle' | 'active' | 'fallback'
@@ -11,6 +12,9 @@ export interface SceneContext {
   canvas: HTMLCanvasElement
   renderer: import('three').WebGLRenderer
   pixelRatio: number
+  color: (name: string) => import('three').Color
+  fail: () => void
+  fitToCanvas: (onResize: (width: number, height: number) => void) => () => void
 }
 
 export interface SceneHandle {
@@ -96,6 +100,20 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let lastTime: number | null = null
     let sceneTime = 0
 
+    const teardown = () => {
+      observer?.disconnect()
+      if (frameId !== null) cancelAnimationFrame(frameId)
+      frameId = null
+      handle?.dispose()
+      handle = null
+      if (renderer) {
+        mountedCanvas?.removeEventListener('webglcontextlost', onContextLost)
+        renderer.forceContextLoss()
+        renderer.dispose()
+        renderer = null
+      }
+    }
+
     const onContextLost = (event: Event) => {
       event.preventDefault()
       if (frameId !== null) cancelAnimationFrame(frameId)
@@ -122,7 +140,33 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
           nextRenderer.setPixelRatio(pixelRatio)
           renderer = nextRenderer
           canvas.addEventListener('webglcontextlost', onContextLost)
-          handle = build({ THREE, canvas, renderer: nextRenderer, pixelRatio })
+          const fitToCanvas: SceneContext['fitToCanvas'] = (onResize) => {
+            const resize = () => {
+              const { clientWidth: width, clientHeight: height } = canvas
+              if (width === 0 || height === 0) return
+              nextRenderer.setSize(width, height, false)
+              onResize(width, height)
+            }
+            const resizeObserver = new ResizeObserver(resize)
+            resizeObserver.observe(canvas)
+            resize()
+            return () => {
+              resizeObserver.disconnect()
+            }
+          }
+          handle = build({
+            THREE,
+            canvas,
+            renderer: nextRenderer,
+            pixelRatio,
+            color: (name) =>
+              new THREE.Color().setStyle(readToken(name), THREE.LinearSRGBColorSpace),
+            fail: () => {
+              teardown()
+              setStatus('fallback')
+            },
+            fitToCanvas,
+          })
           setStatus('active')
 
           const loop = (time: number) => {
@@ -160,14 +204,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     return () => {
       cancelled = true
       cancelIdle()
-      observer?.disconnect()
-      if (frameId !== null) cancelAnimationFrame(frameId)
-      handle?.dispose()
-      if (renderer) {
-        mountedCanvas?.removeEventListener('webglcontextlost', onContextLost)
-        renderer.forceContextLoss()
-        renderer.dispose()
-      }
+      teardown()
     }
   }, [reducedMotion, build])
 

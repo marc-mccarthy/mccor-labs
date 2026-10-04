@@ -68,6 +68,7 @@ vi.mock('three', () => ({
 }))
 
 import { NodeLatticeScene } from './NodeLatticeScene'
+import { resetWebGL2Probe } from './SceneRuntime'
 import { NODE_COUNT } from './nodeLattice'
 
 class StubResizeObserver {
@@ -89,6 +90,7 @@ function mockMatchMedia(reduced: boolean) {
 }
 
 function mockWebGL2(available: boolean) {
+  resetWebGL2Probe()
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(((id: string) =>
     id === 'webgl2' && available ? { getExtension: vi.fn(() => null) } : null) as never)
 }

@@ -17,7 +17,7 @@ vi.mock('three', () => ({
   },
 }))
 
-import { SceneRuntime, type SceneHandle } from './SceneRuntime'
+import { SceneRuntime, resetWebGL2Probe, type SceneHandle } from './SceneRuntime'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -40,6 +40,7 @@ function mockWebGL2(available: boolean) {
 describe('SceneRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetWebGL2Probe()
   })
 
   it('renders the fallback and never constructs a renderer under reduced motion', () => {
@@ -185,6 +186,32 @@ describe('SceneRuntime', () => {
       vi.unstubAllGlobals()
     })
 
+    it('stays idle with no renderer until the first intersection', async () => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const build = vi.fn((): SceneHandle => ({ render: vi.fn(), dispose: vi.fn() }))
+
+      const { container } = render(<SceneRuntime fallback={<div />} build={build} />)
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+        'data-scene-status',
+        'idle',
+      )
+      expect(rendererCtor).not.toHaveBeenCalled()
+
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
+      await waitFor(() => {
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+      expect(rendererCtor).toHaveBeenCalledTimes(1)
+    })
+
     it('cancels the frame request offscreen, resumes on return, and keeps scene time continuous', async () => {
       mockMatchMedia(false)
       mockWebGL2(true)
@@ -204,6 +231,9 @@ describe('SceneRuntime', () => {
       const { container, unmount } = render(
         <SceneRuntime fallback={<div />} build={build} />,
       )
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
       await waitFor(() => {
         expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
           'data-scene-status',

@@ -40,12 +40,19 @@ export function loadThree(): Promise<typeof import('three')> {
   return threeModulePromise
 }
 
+let webgl2Support: boolean | null = null
+
+export function resetWebGL2Probe(): void {
+  webgl2Support = null
+}
+
 function supportsWebGL2(): boolean {
+  if (webgl2Support !== null) return webgl2Support
   const probe = document.createElement('canvas')
   const context = probe.getContext('webgl2')
-  if (!context) return false
-  context.getExtension('WEBGL_lose_context')?.loseContext()
-  return true
+  webgl2Support = context !== null
+  context?.getExtension('WEBGL_lose_context')?.loseContext()
+  return webgl2Support
 }
 
 function whenIdleAfterLoad(callback: () => void): () => void {
@@ -108,11 +115,28 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let observer: IntersectionObserver | null = null
     let lastTime: number | null = null
     let sceneTime = 0
+    let visible = false
+    let started = false
+    let cancelIdle: (() => void) | null = null
+
+    const loop = (time: number) => {
+      if (lastTime !== null) sceneTime += time - lastTime
+      lastTime = time
+      handle?.render(sceneTime)
+      frameId = requestAnimationFrame(loop)
+    }
+    const resume = () => {
+      if (frameId === null && handle && visible) frameId = requestAnimationFrame(loop)
+    }
+    const pause = () => {
+      if (frameId !== null) cancelAnimationFrame(frameId)
+      frameId = null
+      lastTime = null
+    }
 
     const teardown = () => {
       observer?.disconnect()
-      if (frameId !== null) cancelAnimationFrame(frameId)
-      frameId = null
+      pause()
       handle?.dispose()
       handle = null
       if (renderer) {
@@ -125,8 +149,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     const onContextLost = (event: Event) => {
       event.preventDefault()
-      if (frameId !== null) cancelAnimationFrame(frameId)
-      frameId = null
+      pause()
       handle?.dispose()
       handle = null
       setStatus('fallback')
@@ -178,41 +201,39 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
           })
           setStatus('active')
 
-          const loop = (time: number) => {
-            if (lastTime !== null) sceneTime += time - lastTime
-            lastTime = time
-            handle?.render(sceneTime)
-            frameId = requestAnimationFrame(loop)
-          }
-          const resume = () => {
-            if (frameId === null && handle) frameId = requestAnimationFrame(loop)
-          }
-          const pause = () => {
-            if (frameId !== null) cancelAnimationFrame(frameId)
-            frameId = null
-            lastTime = null
-          }
           resume()
-
-          const root = rootRef.current
-          if (root && typeof IntersectionObserver !== 'undefined') {
-            observer = new IntersectionObserver((entries) => {
-              if (entries.at(-1)?.isIntersecting) resume()
-              else pause()
-            })
-            observer.observe(root)
-          }
         })
         .catch(() => {
           if (!cancelled) setStatus('fallback')
         })
     }
 
-    const cancelIdle = whenIdleAfterLoad(start)
+    const startOnce = () => {
+      if (started) return
+      started = true
+      cancelIdle = whenIdleAfterLoad(start)
+    }
+
+    const root = rootRef.current
+    if (root && typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver((entries) => {
+        visible = entries.at(-1)?.isIntersecting ?? false
+        if (visible) {
+          startOnce()
+          resume()
+        } else {
+          pause()
+        }
+      })
+      observer.observe(root)
+    } else {
+      visible = true
+      startOnce()
+    }
 
     return () => {
       cancelled = true
-      cancelIdle()
+      cancelIdle?.()
       teardown()
       setCanvasKey((key) => key + 1)
     }

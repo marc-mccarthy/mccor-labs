@@ -78,6 +78,7 @@ vi.mock('three', () => {
 import { PipelineSection } from '../sections/PipelineSection'
 import { retrievalPipeline } from '@/content/substance'
 import { Pipeline3D } from './Pipeline3D'
+import { resetWebGL2Probe } from './SceneRuntime'
 
 class StubResizeObserver {
   observe = vi.fn()
@@ -98,6 +99,7 @@ function mockMatchMedia(reduced: boolean) {
 }
 
 function mockWebGL2(available: boolean) {
+  resetWebGL2Probe()
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(((id: string) =>
     id === 'webgl2' && available ? { getExtension: vi.fn(() => null) } : null) as never)
 }

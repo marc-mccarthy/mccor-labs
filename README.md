@@ -250,6 +250,19 @@ All copy lives in `app/web/src/content/`. Services, team members, process stages
 and navigation are typed, so a missing field is a build error rather than a blank
 space on the page. No copy lives in components.
 
+### How the site is built
+
+- Lenis drives scroll. It is not constructed under `prefers-reduced-motion`, and
+  pinned sections fall back to normal flow.
+- The three.js scenes (hero, systems, pipeline) load lazily through
+  `SceneRuntime` after the page has loaded, and fall back to static posters when
+  WebGL2 is missing or motion is reduced. Under reduced motion three.js is never
+  fetched.
+- Diagrams and code blocks are built from typed content, not sourced as images.
+- Accessibility is gated: axe (WCAG 2.2 AA) and keyboard-trap tests must pass.
+  Performance is reported, apart from CLS, INP, font and LCP-image size, which
+  are hard gates in `app/web/tests/e2e/budgets.spec.ts`.
+
 ### Checks
 
 `git commit` formats and lints the files in that commit, taking a couple of

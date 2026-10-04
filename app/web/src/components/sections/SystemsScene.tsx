@@ -39,7 +39,7 @@ export function SystemsScene() {
               className="pointer-events-none absolute inset-0 z-5"
             />
             <Container className="relative z-10">
-              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-text drop-shadow-md sm:text-4xl">
+              <h2 className="max-w-2xl text-display-md leading-tight font-semibold text-text drop-shadow-md">
                 {ui.systemsHeading}
               </h2>
               <p className="mt-4 max-w-xl text-lg text-muted drop-shadow">

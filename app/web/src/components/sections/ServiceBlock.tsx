@@ -9,7 +9,7 @@ export function ServiceBlock({ service }: { service: Service }) {
     <Section>
       <Anchor id={service.slug} />
       <Container className="flex flex-col gap-8">
-        <h2 className="text-3xl font-semibold tracking-tight text-text">
+        <h2 className="text-display-sm leading-tight font-semibold tracking-tight text-text">
           {service.title}
         </h2>
         <p className="max-w-3xl text-lg text-muted">{service.detail}</p>

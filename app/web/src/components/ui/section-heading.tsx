@@ -4,7 +4,10 @@ import { cn } from '@/lib/cn'
 export function SectionHeading({ className, children, ...props }: ComponentProps<'h2'>) {
   return (
     <h2
-      className={cn('text-3xl font-semibold tracking-tight text-text', className)}
+      className={cn(
+        'text-display-sm leading-tight font-semibold tracking-tight text-text',
+        className,
+      )}
       {...props}
     >
       {children}

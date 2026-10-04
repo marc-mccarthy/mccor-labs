@@ -14,7 +14,7 @@ export function RoleBlock({ role }: { role: Role }) {
         <Reveal>
           <article className="flex flex-col gap-6">
             <p className="font-mono text-sm text-accent">{role.level}</p>
-            <h2 className="text-3xl font-semibold tracking-tight text-text">
+            <h2 className="text-display-sm leading-tight font-semibold tracking-tight text-text">
               {role.title}
             </h2>
             <p className="max-w-2xl text-lg text-muted">{role.summary}</p>

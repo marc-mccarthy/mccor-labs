@@ -44,7 +44,7 @@ export function LegalPage({ document }: { document: LegalDocument }) {
     <Section>
       <Container>
         <article className="flex max-w-prose flex-col gap-4 leading-relaxed">
-          <h1 className="text-4xl font-semibold tracking-tight text-text sm:text-5xl">
+          <h1 className="text-display-md leading-tight font-semibold text-text">
             {document.title}
           </h1>
           <p className="text-muted">{document.description}</p>

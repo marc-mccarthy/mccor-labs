@@ -48,6 +48,10 @@ describe('SceneRuntime', () => {
     resetWebGL2Probe()
   })
 
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('renders the fallback and never constructs a renderer under reduced motion', () => {
     mockMatchMedia(true)
     mockWebGL2(true)
@@ -203,7 +207,6 @@ describe('SceneRuntime', () => {
     unmount()
     expect(rendererDispose).toHaveBeenCalledTimes(1)
     expect(resizeDisconnect).toHaveBeenCalledTimes(1)
-    vi.unstubAllGlobals()
   })
 
   describe('offscreen pause', () => {

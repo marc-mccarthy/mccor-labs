@@ -39,7 +39,7 @@ function buildPipeline(
     color: color('--color-accent'),
     size: POINT_SIZE,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.3,
   })
   const scene = new THREE.Scene()
   scene.add(new THREE.Points(geometry, material))

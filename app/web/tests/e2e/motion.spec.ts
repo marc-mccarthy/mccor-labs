@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { ROUTES, trackThreeRequests } from './support'
+import { ROUTES, trackSceneRequests, trackThreeRequests } from './support'
 
 test.use({ contextOptions: { reducedMotion: 'reduce' } })
 
@@ -24,10 +24,11 @@ test('no video autoplays under reduced motion', async ({ page }) => {
 
 for (const path of ROUTES) {
   test.describe(`reduced motion on ${path}`, () => {
-    test('is static, native-scrolling, unpinned and never fetches three', async ({
+    test('is static, native-scrolling, unpinned and never fetches three or a scene', async ({
       page,
     }) => {
       const threeRequests = trackThreeRequests(page)
+      const sceneRequests = trackSceneRequests(page)
       await page.goto(path)
       await expect(page.locator('h1')).toBeVisible()
       await page.keyboard.press('End')
@@ -69,14 +70,16 @@ for (const path of ROUTES) {
       expect(statuses.filter((status) => status !== 'fallback')).toEqual([])
 
       expect(await threeRequests()).toEqual([])
+      expect(await sceneRequests()).toEqual([])
     })
   })
 }
 
-test('the home page mounts all three scenes and each falls back without fetching three', async ({
+test('the home page shows all three scene fallbacks without fetching three or a scene', async ({
   page,
 }) => {
   const threeRequests = trackThreeRequests(page)
+  const sceneRequests = trackSceneRequests(page)
   await page.goto('/')
   await page.waitForTimeout(1500)
   const statuses = await page
@@ -84,4 +87,5 @@ test('the home page mounts all three scenes and each falls back without fetching
     .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-scene-status')))
   expect(statuses).toEqual(['fallback', 'fallback', 'fallback'])
   expect(await threeRequests()).toEqual([])
+  expect(await sceneRequests()).toEqual([])
 })

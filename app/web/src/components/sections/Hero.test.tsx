@@ -77,6 +77,7 @@ describe('Hero', () => {
   })
 
   it('keeps the h1 and call to action outside the video and scene wrappers', async () => {
+    mockMatchMedia(false)
     const { container } = render(<Hero />)
     const h1 = screen.getByRole('heading', { level: 1 })
     const cta = screen.getByRole('link', { name: ui.bookCall })

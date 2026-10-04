@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { SectionHeading } from '@/components/ui/section-heading'
@@ -8,9 +9,11 @@ import { PipelineDiagram } from '@/components/substance/PipelineDiagram'
 import { retrievalPipeline } from '@/content/substance'
 import { ui } from '@/content/ui'
 
-const Pipeline3D = dynamic(
-  () => import('@/components/effects/Pipeline3D').then((module) => module.Pipeline3D),
-  { ssr: false },
+const Pipeline3D = motionScene(
+  dynamic(
+    () => import('@/components/effects/Pipeline3D').then((module) => module.Pipeline3D),
+    { ssr: false },
+  ),
 )
 
 export function PipelineSection() {

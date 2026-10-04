@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { BookingCta } from '@/components/layout/BookingCta'
 import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
@@ -9,9 +10,11 @@ import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
 import { Badge } from '@/components/ui/badge'
 import { site } from '@/content/site'
 
-const StagScene = dynamic(
-  () => import('@/components/effects/StagScene').then((module) => module.StagScene),
-  { ssr: false },
+const StagScene = motionScene(
+  dynamic(
+    () => import('@/components/effects/StagScene').then((module) => module.StagScene),
+    { ssr: false },
+  ),
 )
 
 export function Hero() {

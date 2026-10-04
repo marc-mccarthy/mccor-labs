@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { motionScene } from '@/components/motion/motionScene'
 import { useRef } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
@@ -10,12 +11,14 @@ import { useVideoAttach } from '@/components/motion/VideoMotionHero'
 import { ui } from '@/content/ui'
 import { cn } from '@/lib/cn'
 
-const NodeLatticeScene = dynamic(
-  () =>
-    import('@/components/effects/NodeLatticeScene').then(
-      (module) => module.NodeLatticeScene,
-    ),
-  { ssr: false },
+const NodeLatticeScene = motionScene(
+  dynamic(
+    () =>
+      import('@/components/effects/NodeLatticeScene').then(
+        (module) => module.NodeLatticeScene,
+      ),
+    { ssr: false },
+  ),
 )
 
 const PIN_HEIGHT = '150vh'

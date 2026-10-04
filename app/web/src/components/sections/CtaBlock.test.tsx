@@ -67,6 +67,13 @@ describe('CtaBlock', () => {
     expect(screen.getByRole('heading', { name: ui.ctaHeading })).toBeInTheDocument()
   })
 
+  it('puts a decorative, lazily loaded image behind the card', () => {
+    render(<CtaBlock />)
+    const image = screen.getByTestId('cta-image')
+    expect(image).toHaveAttribute('alt', '')
+    expect(image).toHaveAttribute('loading', 'lazy')
+  })
+
   it('renders its heading through SectionHeading', () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: false,

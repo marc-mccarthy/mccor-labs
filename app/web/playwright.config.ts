@@ -14,7 +14,20 @@ export default defineConfig({
   // Firefox headless, at the owner's preference. Headless is the default, so
   // no flag is needed. Only this engine is installed, so adding a second
   // project means installing its browser revision first.
-  projects: [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }],
+  projects: [
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testIgnore: /budgets\.spec\.ts/,
+    },
+    // Timing gates measure wall clock and must not share the CPU with other workers.
+    {
+      name: 'budgets',
+      testMatch: /budgets\.spec\.ts/,
+      fullyParallel: false,
+      dependencies: ['firefox'],
+    },
+  ],
   webServer: {
     // Serves the real exported build, not the dev server.
     //

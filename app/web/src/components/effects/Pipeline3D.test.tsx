@@ -140,4 +140,11 @@ describe('PipelineSection', () => {
       retrievalPipeline.stages.length,
     )
   })
+
+  it('sizes to its content with no minimum-height band', () => {
+    mockMatchMedia(true)
+    mockWebGL2(false)
+    const { container } = render(<PipelineSection />)
+    expect(container.querySelector('[class*="min-h-"]')).toBeNull()
+  })
 })

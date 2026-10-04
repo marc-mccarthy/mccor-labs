@@ -54,7 +54,7 @@ export const services: readonly Service[] = [
     capabilities: [
       {
         slug: 'ai-integration',
-        title: 'AI integration',
+        title: 'Named integration surfaces',
         summary:
           'LLM features and MCP servers connected to named integration surfaces in your systems, not a standalone demo.',
         substance: { kind: 'code', ref: 'mcp-tool-definition' },

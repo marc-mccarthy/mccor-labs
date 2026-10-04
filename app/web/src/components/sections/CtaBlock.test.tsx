@@ -74,6 +74,14 @@ describe('CtaBlock', () => {
     expect(image).toHaveAttribute('loading', 'lazy')
   })
 
+  it('adds a decorative, lazily loaded striding stag', () => {
+    render(<CtaBlock />)
+    const stag = screen.getByTestId('cta-stag')
+    expect(stag).toHaveAttribute('src', '/media/brand/mccor-stag-stride.webp')
+    expect(stag).toHaveAttribute('alt', '')
+    expect(stag).toHaveAttribute('loading', 'lazy')
+  })
+
   it('renders its heading through SectionHeading', () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: false,

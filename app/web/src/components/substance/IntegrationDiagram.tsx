@@ -36,7 +36,7 @@ export function IntegrationDiagram({ surfaces, description }: IntegrationDiagram
           height={DIAGRAM_HEIGHT - BOUNDARY_PADDING}
           rx={12}
           fill="none"
-          stroke="var(--color-accent)"
+          stroke="var(--color-border-strong)"
           strokeWidth={2}
           pathLength={1}
           strokeDasharray={1}

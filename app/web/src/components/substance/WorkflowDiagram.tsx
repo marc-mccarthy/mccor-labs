@@ -25,8 +25,8 @@ const GATE_LABEL: Record<'human' | 'cost', string> = {
 }
 
 const GATE_STROKE: Record<'human' | 'cost', string> = {
-  human: 'var(--color-brand)',
-  cost: 'var(--color-accent-hover)',
+  human: 'var(--color-glow-red)',
+  cost: 'var(--color-text)',
 }
 
 type Place = (index: number) => [number, number]
@@ -73,7 +73,7 @@ export function WorkflowDiagram({ steps, description }: WorkflowDiagramProps) {
               cy={cy}
               r={NODE_RADIUS}
               fill="var(--color-surface)"
-              stroke="var(--color-accent)"
+              stroke="var(--color-brand)"
               strokeWidth={2}
             />
           )

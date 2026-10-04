@@ -59,7 +59,7 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
             cy={cy}
             r={NODE_RADIUS}
             fill="var(--color-surface)"
-            stroke="var(--color-accent)"
+            stroke="var(--color-brand)"
             strokeWidth={2}
           />
         )

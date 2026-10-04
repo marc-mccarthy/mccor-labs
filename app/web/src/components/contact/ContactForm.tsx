@@ -97,7 +97,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.name === undefined ? undefined : 'name-error'}
           />
           {errors.name !== undefined && (
-            <p id="name-error" className="mt-1 text-sm text-accent">
+            <p id="name-error" className="mt-1 text-sm text-brand">
               {errors.name}
             </p>
           )}
@@ -118,7 +118,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.email === undefined ? undefined : 'email-error'}
           />
           {errors.email !== undefined && (
-            <p id="email-error" className="mt-1 text-sm text-accent">
+            <p id="email-error" className="mt-1 text-sm text-brand">
               {errors.email}
             </p>
           )}
@@ -166,7 +166,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.message === undefined ? undefined : 'message-error'}
           />
           {errors.message !== undefined && (
-            <p id="message-error" className="mt-1 text-sm text-accent">
+            <p id="message-error" className="mt-1 text-sm text-brand">
               {errors.message}
             </p>
           )}

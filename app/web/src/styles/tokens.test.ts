@@ -46,7 +46,6 @@ const PAIRS: readonly [string, string, number, string][] = [
   ['border-strong', 'surface', 3.0, 'control border on card'],
   ['accent', 'base', 3.0, 'focus ring on page'],
   ['glow-red', 'base', 3.0, 'crimson red glow as a non-text graphic on the page'],
-  ['glow-orange', 'base', 3.0, 'solar orange glow as a non-text graphic on the page'],
 ]
 
 describe('design tokens', () => {
@@ -65,7 +64,6 @@ describe('design tokens', () => {
       'accent-hover',
       'on-accent',
       'glow-red',
-      'glow-orange',
     ]) {
       expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
         /^#[0-9a-f]{6}$/,
@@ -83,6 +81,7 @@ describe('design tokens', () => {
     const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
     expect(css).not.toMatch(/--color-glow-violet/)
     expect(css).not.toMatch(/--color-glow-cyan/)
+    expect(css).not.toMatch(/--color-glow-orange/)
   })
 
   it('keeps the decorative border decorative, not a control border', () => {

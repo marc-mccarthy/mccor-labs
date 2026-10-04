@@ -73,7 +73,7 @@ function buildLattice(
     uMinX: { value: layout.minX },
     uRangeX: { value: layout.rangeX },
     uColorRed: { value: color('--color-glow-red') },
-    uColorOrange: { value: color('--color-glow-orange') },
+    uColorOrange: { value: color('--color-accent') },
   }
   const material = new THREE.ShaderMaterial({
     uniforms,

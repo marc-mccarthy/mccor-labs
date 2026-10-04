@@ -30,7 +30,6 @@
   --color-on-accent: #08080a;
 
   --color-glow-red: #ff2a42;
-  --color-glow-orange: #ff7a00;
 
   --font-display: 'Geist Sans', sans-serif;
   --font-mono: 'Geist Mono', monospace;
@@ -74,7 +73,7 @@
   --shiki-token-comment: var(--color-muted);
   --shiki-token-string: var(--color-accent);
   --shiki-token-string-expression: var(--color-accent-hover);
-  --shiki-token-constant: var(--color-glow-orange);
+  --shiki-token-constant: var(--color-accent);
   --shiki-token-keyword: var(--color-brand);
   --shiki-token-parameter: var(--color-text);
   --shiki-token-function: var(--color-glow-red);

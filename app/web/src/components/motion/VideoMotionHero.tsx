@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { cn } from '@/lib/cn'
 
 export interface VideoMotionHeroProps {
@@ -13,38 +13,51 @@ export interface VideoMotionHeroProps {
   children?: ReactNode
 }
 
-export function VideoMotionHero({
-  posterSrc,
-  videoSrc,
-  webmSrc,
-  altText = 'McCor Labs hero visual',
-  className,
-  objectPosition = 'object-right lg:object-[90%_center]',
-  children,
-}: VideoMotionHeroProps) {
+interface VideoAttachOptions {
+  enabled: boolean
+  media?: string
+  onScreenRef?: RefObject<Element | null>
+}
+
+export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptions) {
   const [shouldAttachVideo, setShouldAttachVideo] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    if (!videoSrc && !webmSrc) return
+    if (!enabled) return
 
     const reducedMotion =
       typeof window !== 'undefined' && typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
         : false
     if (reducedMotion) return
+    if (media && !window.matchMedia(media).matches) return
 
     const conn = (navigator as unknown as { connection?: { saveData?: boolean } })
       .connection
     if (conn?.saveData) return
 
     let timeoutId = 0
+    let observer: IntersectionObserver | undefined
     const attachVideo = () => {
-      setShouldAttachVideo(true)
+      const target = onScreenRef?.current
+      if (!target) {
+        setShouldAttachVideo(true)
+        return
+      }
+      observer?.disconnect()
+      observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer?.disconnect()
+          setShouldAttachVideo(true)
+        }
+      })
+      observer.observe(target)
     }
     const releaseVideo = () => {
       window.clearTimeout(timeoutId)
+      observer?.disconnect()
       window.removeEventListener('load', attachVideo)
       const video = videoRef.current
       if (video) {
@@ -70,11 +83,28 @@ export function VideoMotionHero({
     window.addEventListener('pageshow', restoreVideo)
     return () => {
       window.clearTimeout(timeoutId)
+      observer?.disconnect()
       window.removeEventListener('load', attachVideo)
       window.removeEventListener('pagehide', releaseVideo)
       window.removeEventListener('pageshow', restoreVideo)
     }
-  }, [videoSrc, webmSrc])
+  }, [enabled, media, onScreenRef])
+
+  return { videoRef, shouldAttachVideo, videoLoaded, setVideoLoaded }
+}
+
+export function VideoMotionHero({
+  posterSrc,
+  videoSrc,
+  webmSrc,
+  altText = 'McCor Labs hero visual',
+  className,
+  objectPosition = 'object-right lg:object-[90%_center]',
+  children,
+}: VideoMotionHeroProps) {
+  const { videoRef, shouldAttachVideo, videoLoaded, setVideoLoaded } = useVideoAttach({
+    enabled: Boolean(videoSrc ?? webmSrc),
+  })
 
   return (
     <div className={cn('relative w-full overflow-hidden bg-base', className)}>

@@ -9,7 +9,6 @@ describe('ContactForm with no endpoint configured', () => {
   it('shows a real way to make contact instead of a dead button', () => {
     render(<ContactForm endpoint={null} />)
     expect(screen.queryByRole('button', { name: ui.formSubmit })).not.toBeInTheDocument()
-    // The mailto is always present; the booking link only when configured.
     expect(screen.getByRole('link', { name: /mccorlabs\.com/i })).toHaveAttribute(
       'href',
       `mailto:${site.contactEmail}`,

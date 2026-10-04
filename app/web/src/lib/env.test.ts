@@ -9,7 +9,6 @@ async function loadEnv(values: Record<string, string | undefined>) {
   return (await import('./env')).env
 }
 
-// Next's global.d.ts declares NODE_ENV readonly; cast to assign it in tests.
 const mutableEnv = process.env as Record<string, string | undefined>
 
 afterEach(() => {

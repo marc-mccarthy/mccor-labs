@@ -38,13 +38,6 @@ test('the skip link is the first focusable element @smoke', async ({ page }) => 
   await expect(focused).toHaveText(/skip to content/i)
 })
 
-// Covers the global `:focus-visible` rule in globals.css, not form fields. The
-// brief named the contact form's Name input, but /contact/ renders no form while
-// NEXT_PUBLIC_CONTACT_ENDPOINT is unprovisioned — ContactForm degrades to the
-// booking link plus a mailto, which contact.spec.ts asserts deliberately. A
-// header nav link is present in both shapes, so this does not break when the
-// endpoint lands. Form-field focus coverage is deferred to phase 2, when the
-// endpoint exists and the form actually renders.
 test('an interactive element shows a visible focus indicator', async ({ page }) => {
   await page.goto('/contact/')
   const outline = await page

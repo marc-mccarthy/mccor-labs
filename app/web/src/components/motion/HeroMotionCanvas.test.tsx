@@ -4,7 +4,6 @@ import { HeroMotionCanvas } from './HeroMotionCanvas'
 
 describe('HeroMotionCanvas', () => {
   beforeEach(() => {
-    // Mock HTMLCanvasElement.prototype.getContext
     const mockCtx = {
       fillRect: vi.fn(),
       beginPath: vi.fn(),
@@ -20,7 +19,6 @@ describe('HeroMotionCanvas', () => {
       mockCtx as unknown as CanvasRenderingContext2D,
     )
 
-    // Mock IntersectionObserver
     class MockIntersectionObserver {
       observe = vi.fn()
       unobserve = vi.fn()
@@ -35,7 +33,6 @@ describe('HeroMotionCanvas', () => {
     global.IntersectionObserver =
       MockIntersectionObserver as unknown as typeof IntersectionObserver
 
-    // Mock ResizeObserver
     class MockResizeObserver {
       observe = vi.fn()
       unobserve = vi.fn()
@@ -43,7 +40,6 @@ describe('HeroMotionCanvas', () => {
     }
     global.ResizeObserver = MockResizeObserver
 
-    // Mock matchMedia
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({
       matches: false,
       media: query,

@@ -91,9 +91,6 @@ describe('submitContact', () => {
     })
   })
 
-  // The client does not filter a filled honeypot itself: per spec, the server
-  // discards a honeypot submission silently (`{ ok: true }` without sending
-  // it on), so the client's job is only to forward the field, not to decide.
   it('forwards a filled honeypot to the server rather than filtering it client-side', async () => {
     const filled = { ...valid, honeypot: 'a bot wrote this' }
     const fetchSpy = vi

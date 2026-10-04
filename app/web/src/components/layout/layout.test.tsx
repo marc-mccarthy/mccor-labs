@@ -8,10 +8,6 @@ import { footerNav, nav } from '@/content/nav'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 
-// BookingCta reads env.bookingUrl at render time. The real module derives it
-// from process.env, which under NODE_ENV=test is always unset — so without a
-// mock only the mailto branch would ever run and the branch that actually
-// ships, the one carrying rel="noopener noreferrer", would have no coverage.
 const mocked = vi.hoisted(() => ({
   env: {
     siteUrl: 'https://mccorlabs.com',
@@ -52,8 +48,6 @@ describe('Header', () => {
     const cta = screen.getByRole('link', { name: ui.bookCall })
     expect(cta).toHaveAttribute('href', BOOKING_URL)
     expect(cta).toHaveAttribute('target', '_blank')
-    // target="_blank" without both of these lets the opened page reach back
-    // through window.opener — reverse tabnabbing.
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })

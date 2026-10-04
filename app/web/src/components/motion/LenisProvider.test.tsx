@@ -17,8 +17,6 @@ vi.mock('lenis', () => ({
 
 import { LenisProvider } from './LenisProvider'
 
-// matchMedia is absent in jsdom, so each test installs one whose `matches`
-// answers only for the reduced-motion query and records its listeners.
 function mockMatchMedia(reduced: boolean) {
   const listeners = new Set<() => void>()
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({

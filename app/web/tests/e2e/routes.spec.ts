@@ -27,8 +27,6 @@ test.describe('routes', () => {
   test('a working primary cta is reachable from every route @smoke', async ({ page }) => {
     for (const route of ROUTES) {
       await page.goto(route.path)
-      // Either a real booking link or the email fallback — never neither, and
-      // never a relative or empty href.
       const cta = page
         .locator('header a[href^="https://"], header a[href^="mailto:"]')
         .first()

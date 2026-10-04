@@ -2,26 +2,15 @@ import { join } from 'node:path'
 import tseslint from 'typescript-eslint'
 import jsxA11y from 'eslint-plugin-jsx-a11y'
 import prettierConfig from 'eslint-config-prettier/flat'
-// eslint-config-next@16.3.6 ships a native flat config array under this subpath, so it is
-// imported directly rather than bridged through @eslint/eslintrc's FlatCompat. FlatCompat.extends
-// expects a legacy eslintrc-style shareable config and crashes (circular JSON while formatting a
-// validation error) when handed this package's already-flat Linter.Config[] export.
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 
-// no-restricted-syntax does not merge across flat-config blocks: the last block that
-// matches a file replaces the whole option array. The colour selectors therefore have to be
-// repeated in the .tsx block that also carries the text-base selector, so they are declared
-// once here.
 const rawColourSelectors = [
   {
-    // A plain string literal: style={{ color: '#ff0000' }} or className="bg-[#ff0000]".
     selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
     message:
       'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
   },
   {
-    // A template literal's own text. Its parts are TemplateElement nodes whose `value` is an
-    // object, not a string, so the Literal selector above cannot see them.
     selector:
       'TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
     message:
@@ -49,9 +38,6 @@ export default tseslint.config(
       '**/node_modules/**',
       'app/web/.next/**',
       'app/web/out/**',
-      // eslint-config-next's own flat config globally ignores this generated file; the
-      // /core-web-vitals subpath import used below does not carry that ignore, so it is
-      // replicated here.
       'app/web/next-env.d.ts',
       'infra/**',
       'docs/ui-references/**',
@@ -71,17 +57,12 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: true,
-        // A relative tsconfigRootDir does not resolve here; typescript-eslint requires an
-        // absolute path, so it is derived from this config file's own directory.
         tsconfigRootDir: join(import.meta.dirname, 'app/web'),
       },
     },
   },
 
   {
-    // next/core-web-vitals already registers the 'jsx-a11y' plugin for all matching files, so
-    // this block only adds rules on top of it — redeclaring the plugin here throws
-    // "Cannot redefine plugin 'jsx-a11y'" because it would be a different module instance.
     files: ['app/web/**/*.tsx'],
     rules: { ...jsxA11y.flatConfigs.recommended.rules },
   },
@@ -93,10 +74,7 @@ export default tseslint.config(
     },
   },
 
-  // Project rules that enforce the spec's architecture.
   {
-    // .ts as well as .tsx: src/content/ and src/lib/ are .ts, and src/content/ is where the
-    // typed data — gradient stops, chart colours, media slots — will carry colour values.
     files: ['app/web/src/**/*.{ts,tsx}'],
     ignores: ['app/web/src/styles/**'],
     rules: {
@@ -105,8 +83,6 @@ export default tseslint.config(
   },
 
   {
-    // The text-base trap is a className concern, so it is scoped to components, and the
-    // colour selectors are restated because this block replaces the option array above.
     files: ['app/web/src/**/*.tsx'],
     ignores: ['app/web/src/styles/**'],
     rules: {
@@ -155,9 +131,6 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              // Both the alias form and the relative sibling form, which is already a house
-              // convention (Header.tsx imports ./BookingCta and ./Container that way). The
-              // ** variants catch an effect nested a directory deeper.
               group: [
                 '**/components/effects/*',
                 '**/components/effects/**',
@@ -195,7 +168,6 @@ export default tseslint.config(
     },
   },
 
-  // Tests need latitude the application code does not.
   {
     files: ['app/web/**/*.{test,spec}.{ts,tsx}', 'app/web/tests/**/*.ts'],
     rules: {
@@ -205,6 +177,5 @@ export default tseslint.config(
     },
   },
 
-  // Must be last so formatting rules do not fight Prettier.
   prettierConfig,
 )

@@ -30,7 +30,6 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-// Every pair the spec commits to, with its required ratio.
 const PAIRS: readonly [string, string, number, string][] = [
   ['text', 'base', 4.5, 'body text on page'],
   ['text', 'surface', 4.5, 'text on card'],
@@ -46,11 +45,6 @@ const PAIRS: readonly [string, string, number, string][] = [
   ['border-strong', 'base', 3.0, 'control border on page'],
   ['border-strong', 'surface', 3.0, 'control border on card'],
   ['accent', 'base', 3.0, 'focus ring on page'],
-  // The glows are light sources behind content, not backgrounds for it: a glow never sits
-  // under text and never carries meaning, so the pair asserted here is a non-text graphic
-  // against the page — WCAG 1.4.11's 3:1 — and not a text pair. Section 3.7 of
-  // docs/website-design/PHASE-1-CARRY-FORWARD.md carries the measured text-on-glow figures
-  // and why no upper bound is asserted here.
   ['glow-red', 'base', 3.0, 'crimson red glow as a non-text graphic on the page'],
   ['glow-orange', 'base', 3.0, 'solar orange glow as a non-text graphic on the page'],
 ]
@@ -93,9 +87,6 @@ describe('design tokens', () => {
 
   it('keeps the decorative border decorative, not a control border', () => {
     const t = tokens()
-    // --color-border is intentionally low contrast (a hairline). If someone
-    // raises it to control-border levels, --color-border-strong has become
-    // redundant and the distinction has been lost.
     expect(contrast(t.border!, t.base!)).toBeLessThan(3)
   })
 

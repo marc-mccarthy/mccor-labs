@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Button } from './button'
 
-// Every colour and size assertion below reads the rendered element's
-// className, never buttonVariants(). cn() runs tailwind-merge over the cva
-// string, and a dropped class is only observable after that merge.
 function classesOf(name: string): string[] {
   return screen.getByRole('button', { name }).className.split(/\s+/)
 }

@@ -1,11 +1,3 @@
-# Fast on commit, strict on push. A 90-second commit trains people into
-# --no-verify, after which hooks protect nothing.
-#
-# Hooks prepend Homebrew's bin so pnpm resolves to the 12.6.0 that
-# packageManager pins. The self-managing pnpm shim that git's own PATH finds
-# first tries to install pnpm@12.6.0 from npm, where no macos-arm64 build of
-# it is published, so every hook command fails. Prepending a directory that
-# does not exist is a no-op, so this stays harmless on CI and on Linux.
 pre-commit:
   parallel: true
   commands:

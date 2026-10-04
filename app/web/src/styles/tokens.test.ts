@@ -189,6 +189,17 @@ describe('film grain', () => {
     expect(css).toMatch(/body:has\(\[data-legal\]\)::after \{\s*display: none;/)
   })
 
+  it('scopes the header scroll effects to supporting browsers, motion and non-legal pages', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    const block = css.slice(css.indexOf('@supports (animation-timeline: scroll())'))
+    expect(block).toMatch(/@media \(prefers-reduced-motion: no-preference\)/)
+    expect(block).toMatch(/animation-timeline: scroll\(root\)/)
+    expect(block).toMatch(/animation-range: 0 80px/)
+    expect(block).toMatch(/:not\(:has\(\[data-legal\], \[data-careers\]\)\)/)
+    expect(block).toMatch(/\[data-site-header\]::before/)
+    expect(block).toMatch(/\[data-site-header\]::after/)
+  })
+
   it.each([
     ['base', 4.5],
     ['surface', 4.5],

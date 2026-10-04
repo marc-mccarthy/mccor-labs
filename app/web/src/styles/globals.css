@@ -140,3 +140,63 @@
     }
   }
 }
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes header-blur {
+      to {
+        backdrop-filter: blur(--theme(--blur-xl));
+      }
+    }
+
+    @keyframes header-edge {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes header-progress {
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header] {
+      animation: header-blur linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::before,
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: -1px;
+      height: 1px;
+      pointer-events: none;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::before {
+      background-image: linear-gradient(
+        to right,
+        transparent,
+        var(--color-brand),
+        var(--color-glow-red),
+        transparent
+      );
+      opacity: 0;
+      animation: header-edge linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
+      background-color: var(--color-brand);
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: header-progress linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}

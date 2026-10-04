@@ -39,7 +39,10 @@ export function Header() {
   }, [open])
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-base/80 backdrop-blur">
+    <header
+      data-site-header=""
+      className="sticky top-0 z-40 border-b border-border bg-base/80 backdrop-blur"
+    >
       <Container className="flex h-16 items-center justify-between gap-6">
         <Link
           href="/"

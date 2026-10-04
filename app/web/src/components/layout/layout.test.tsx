@@ -62,6 +62,13 @@ describe('Header', () => {
     )
   })
 
+  it('carries the hook the scroll-driven edge and progress line target', () => {
+    const { container } = render(<Header />)
+    const header = container.querySelector('header')
+    expect(header).toHaveAttribute('data-site-header')
+    expect(header).toHaveClass('sticky', 'top-0', 'backdrop-blur')
+  })
+
   it('renders every primary nav destination', () => {
     render(<Header />)
     for (const item of nav) {

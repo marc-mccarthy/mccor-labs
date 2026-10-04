@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function CareersPage() {
   return (
-    <>
+    <div data-careers="">
       <PageHeader title="Careers" description="How we hire, and what we look for." />
       {roles.map((role) => (
         <RoleBlock key={role.slug} role={role} />
       ))}
-    </>
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Reveal } from './Reveal'
 
@@ -94,9 +94,11 @@ describe('Reveal once the animation chunk loads', () => {
         <p>content</p>
       </Reveal>,
     )
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    const wrapper = container.querySelector<HTMLElement>('[data-reveal="shown"]')
-    expect(wrapper).not.toBeNull()
+    const wrapper = await waitFor(() => {
+      const shown = container.querySelector<HTMLElement>('[data-reveal="shown"]')
+      expect(shown).not.toBeNull()
+      return shown
+    })
     expect(wrapper?.style.opacity).toBe('')
     expect(wrapper?.style.transform).toBe('')
     vi.restoreAllMocks()
@@ -105,15 +107,26 @@ describe('Reveal once the animation chunk loads', () => {
   it('still hides content below the fold so it can rise into view', async () => {
     mockMatchMedia(false)
     mockRect(window.innerHeight + 100)
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe = vi.fn()
+        unobserve = vi.fn()
+        disconnect = vi.fn()
+      },
+    )
     const { container } = render(
       <Reveal>
         <p>content</p>
       </Reveal>,
     )
-    await new Promise((resolve) => setTimeout(resolve, 0))
-    const wrapper = container.querySelector<HTMLElement>('[data-reveal=""]')
-    expect(wrapper).not.toBeNull()
+    const wrapper = await waitFor(() => {
+      const animated = container.querySelector<HTMLElement>('[data-reveal=""]')
+      expect(animated).not.toBeNull()
+      return animated
+    })
     expect(wrapper?.style.opacity).toBe('0')
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 })

@@ -25,8 +25,9 @@ describe('NotFound', () => {
   })
 
   it('draws a fixed-size three-node graphic whose crimson edge is motion-safe and stops short', () => {
-    render(<NotFound />)
-    const svg = screen.getByRole('img')
+    const { container } = render(<NotFound />)
+    const svg = container.querySelector('svg')!
+    expect(svg).toHaveAttribute('aria-hidden', 'true')
     expect(svg).toHaveAttribute('viewBox', '0 0 240 48')
     expect(svg).toHaveAttribute('width', '240')
     expect(svg).toHaveAttribute('height', '48')

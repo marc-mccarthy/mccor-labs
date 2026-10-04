@@ -16,8 +16,7 @@ export default function NotFound() {
           viewBox="0 0 240 48"
           width="240"
           height="48"
-          role="img"
-          aria-label="Three nodes: the signal reaches the second and stops short of the third"
+          aria-hidden="true"
           className="mt-6 h-12 w-60 max-w-full"
         >
           <line

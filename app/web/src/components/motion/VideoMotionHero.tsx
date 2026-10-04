@@ -19,6 +19,10 @@ interface VideoAttachOptions {
   onScreenRef?: RefObject<Element | null>
 }
 
+function rethrowUnlessAborted(error: unknown) {
+  if (!(error instanceof DOMException && error.name === 'AbortError')) throw error
+}
+
 export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptions) {
   const [shouldAttachVideo, setShouldAttachVideo] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
@@ -48,9 +52,12 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
       }
       observer?.disconnect()
       observer = new IntersectionObserver((entries) => {
+        const video = videoRef.current
         if (entries.some((entry) => entry.isIntersecting)) {
-          observer?.disconnect()
           setShouldAttachVideo(true)
+          video?.play().catch(rethrowUnlessAborted)
+        } else {
+          video?.pause()
         }
       })
       observer.observe(target)

@@ -115,6 +115,30 @@ describe('SystemsScene', () => {
       expect(screen.getByTestId('systems-poster')).toBeInTheDocument()
     })
 
+    it('pauses the loop off screen and resumes it on return', () => {
+      mockMatchMedia(false, true)
+      const play = vi
+        .spyOn(HTMLMediaElement.prototype, 'play')
+        .mockResolvedValue(undefined)
+      const pause = vi
+        .spyOn(HTMLMediaElement.prototype, 'pause')
+        .mockImplementation(() => undefined)
+      render(<SystemsScene />)
+      settle(true)
+      expect(screen.getByTestId('systems-video')).toBeInTheDocument()
+      act(() => {
+        intersect(false)
+      })
+      expect(pause).toHaveBeenCalledTimes(1)
+      expect(play).not.toHaveBeenCalled()
+      act(() => {
+        intersect(true)
+      })
+      expect(play).toHaveBeenCalledTimes(1)
+      play.mockRestore()
+      pause.mockRestore()
+    })
+
     it('keeps the poster only below 768 px', () => {
       mockMatchMedia(false, false)
       const { container } = render(<SystemsScene />)

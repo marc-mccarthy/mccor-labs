@@ -1,0 +1,139 @@
+import { render, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const spies = vi.hoisted(() => ({
+  rendererCtor: vi.fn(),
+  rendererDispose: vi.fn(),
+  forceContextLoss: vi.fn(),
+  geometryDispose: vi.fn(),
+  materialDispose: vi.fn(),
+  instancedDispose: vi.fn(),
+  setMatrixAt: vi.fn(),
+  render: vi.fn(),
+}))
+
+vi.mock('three', () => ({
+  LinearSRGBColorSpace: 'srgb-linear',
+  AdditiveBlending: 2,
+  WebGLRenderer: class {
+    dispose = spies.rendererDispose
+    forceContextLoss = spies.forceContextLoss
+    setPixelRatio = vi.fn()
+    setSize = vi.fn()
+    render = spies.render
+    constructor() {
+      spies.rendererCtor()
+    }
+  },
+  Scene: class {
+    add = vi.fn()
+  },
+  Group: class {
+    rotation = { y: 0 }
+    add = vi.fn()
+  },
+  PerspectiveCamera: class {
+    aspect = 1
+    position = { z: 0 }
+    updateProjectionMatrix = vi.fn()
+  },
+  Color: class {
+    setStyle() {
+      return this
+    }
+  },
+  Matrix4: class {
+    setPosition = vi.fn()
+  },
+  IcosahedronGeometry: class {
+    dispose = spies.geometryDispose
+  },
+  BufferGeometry: class {
+    dispose = spies.geometryDispose
+    setAttribute = vi.fn()
+    setIndex = vi.fn()
+  },
+  BufferAttribute: vi.fn(),
+  ShaderMaterial: class {
+    dispose = spies.materialDispose
+  },
+  InstancedMesh: class {
+    setMatrixAt = spies.setMatrixAt
+    dispose = spies.instancedDispose
+    frustumCulled = true
+  },
+  LineSegments: class {
+    frustumCulled = true
+  },
+}))
+
+import { NodeLatticeScene } from './NodeLatticeScene'
+import { NODE_COUNT } from './nodeLattice'
+
+class StubResizeObserver {
+  observe = vi.fn()
+  disconnect = vi.fn()
+}
+
+function mockMatchMedia(reduced: boolean) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: reduced && query === '(prefers-reduced-motion: reduce)',
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }))
+}
+
+function mockWebGL2(available: boolean) {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(((id: string) =>
+    id === 'webgl2' && available ? { getExtension: vi.fn(() => null) } : null) as never)
+}
+
+const status = (container: HTMLElement) =>
+  container.querySelector('[data-scene-status]')?.getAttribute('data-scene-status')
+
+describe('NodeLatticeScene', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('ResizeObserver', StubResizeObserver)
+  })
+
+  it('falls back and builds nothing under reduced motion', () => {
+    mockMatchMedia(true)
+    mockWebGL2(true)
+    const { container } = render(<NodeLatticeScene progress={0} />)
+    expect(status(container)).toBe('fallback')
+    expect(spies.rendererCtor).not.toHaveBeenCalled()
+  })
+
+  it('falls back when WebGL2 is unavailable', () => {
+    mockMatchMedia(false)
+    mockWebGL2(false)
+    const { container } = render(<NodeLatticeScene progress={0} />)
+    expect(status(container)).toBe('fallback')
+    expect(spies.rendererCtor).not.toHaveBeenCalled()
+  })
+
+  it('places every instance and disposes everything on unmount', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container, unmount } = render(<NodeLatticeScene progress={0.5} />)
+
+    await waitFor(() => {
+      expect(status(container)).toBe('active')
+    })
+    expect(spies.setMatrixAt).toHaveBeenCalledTimes(NODE_COUNT)
+
+    unmount()
+
+    expect(spies.geometryDispose).toHaveBeenCalledTimes(2)
+    expect(spies.materialDispose).toHaveBeenCalledTimes(1)
+    expect(spies.instancedDispose).toHaveBeenCalledTimes(1)
+    expect(spies.rendererDispose).toHaveBeenCalledTimes(1)
+    expect(spies.forceContextLoss).toHaveBeenCalledTimes(1)
+  })
+})

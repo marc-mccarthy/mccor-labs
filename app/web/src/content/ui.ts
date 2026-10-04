@@ -7,6 +7,9 @@ export const ui = {
   ctaHeading: 'Have something to build?',
   ctaBody:
     'Thirty minutes, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
+  systemsHeading: 'Built to be evaluated, not just demoed.',
+  systemsBody:
+    'The evaluation, the approval gates and the cost ceilings ship with the feature, so you can tell whether it is right.',
   formSubmit: 'Send message',
   formSending: 'Sending…',
   formSuccess: 'Thanks — we will reply within one working day.',

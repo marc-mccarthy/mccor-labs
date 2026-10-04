@@ -38,6 +38,24 @@ describe('Reveal', () => {
   })
 })
 
+describe('Reveal before the animation chunk loads', () => {
+  it('marks the wrapper as pending', async () => {
+    vi.resetModules()
+    vi.doMock('./features', () => ({
+      loadDomAnimationFeatures: () => new Promise(() => undefined),
+    }))
+    mockMatchMedia(false)
+    const { Reveal: PendingReveal } = await import('./Reveal')
+    const { container } = render(
+      <PendingReveal>
+        <p>content</p>
+      </PendingReveal>,
+    )
+    expect(container.querySelector('[data-reveal="pending"]')).not.toBeNull()
+    vi.doUnmock('./features')
+  })
+})
+
 describe('Reveal when the animation chunk fails', () => {
   it('leaves content visible', async () => {
     vi.resetModules()

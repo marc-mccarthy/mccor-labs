@@ -40,7 +40,7 @@ export function Reveal({ children, delay }: RevealProps) {
   }
 
   if (phase !== 'ready') {
-    return <div data-reveal="">{children}</div>
+    return <div data-reveal="pending">{children}</div>
   }
 
   return (

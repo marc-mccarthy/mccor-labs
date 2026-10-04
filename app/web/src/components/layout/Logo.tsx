@@ -24,7 +24,7 @@ export function Logo({ size = 'md', showWordmark = true, className }: LogoProps)
         width={Math.round((icon * 80) / 96)}
         height={icon}
         decoding="async"
-        className="shrink-0 transition-transform duration-(--duration-standard) hover:scale-105"
+        className="shrink-0 transition-transform duration-(--duration-pointer) ease-(--ease-pointer) hover:scale-105"
       />
 
       {showWordmark && (

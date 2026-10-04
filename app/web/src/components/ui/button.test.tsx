@@ -61,4 +61,11 @@ describe('Button', () => {
     expect(classes).toContain('h-11')
     expect(classes).toContain('px-6')
   })
+
+  it('gives hover feedback within the pointer duration', () => {
+    render(<Button>Timed</Button>)
+    const classes = classesOf('Timed')
+    expect(classes).toContain('duration-(--duration-pointer)')
+    expect(classes).toContain('ease-(--ease-pointer)')
+  })
 })

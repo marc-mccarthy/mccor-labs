@@ -33,4 +33,11 @@ describe('Logo', () => {
     expect(img).toHaveAttribute('height', '40')
     expect(container.querySelector('svg')).toBeNull()
   })
+
+  it('scales on hover within the pointer duration', () => {
+    const { container } = render(<Logo />)
+    const classes = container.querySelector('img')?.className.split(/\s+/)
+    expect(classes).toContain('duration-(--duration-pointer)')
+    expect(classes).toContain('ease-(--ease-pointer)')
+  })
 })

@@ -73,7 +73,7 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
         ref={ref}
         role="img"
         viewBox={`0 0 ${String(stages.length * STAGE_GAP)} ${String(DIAGRAM_HEIGHT)}`}
-        className="w-full overflow-visible max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:opacity-0"
+        className="w-full overflow-visible max-sm:pointer-events-none max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:opacity-0"
       >
         <title>{description}</title>
         <desc>{description}</desc>

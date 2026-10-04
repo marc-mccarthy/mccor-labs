@@ -31,7 +31,12 @@ describe('WorkflowDiagram', () => {
       <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
     )
     const [row, column] = container.querySelectorAll('svg')
-    expect(row).toHaveClass('w-full', 'max-sm:absolute', 'max-sm:opacity-0')
+    expect(row).toHaveClass(
+      'w-full',
+      'max-sm:absolute',
+      'max-sm:opacity-0',
+      'max-sm:pointer-events-none',
+    )
     expect(column).toHaveClass('sm:hidden')
     expect(column).toHaveAttribute('aria-hidden', 'true')
     expect(column?.querySelectorAll('circle, rect')).toHaveLength(STEPS.length)

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/sections/PageHeader'
 import { ProcessScroller } from '@/components/sections/ProcessScroller'
+import { ui } from '@/content/ui'
 
 export const metadata: Metadata = {
   title: 'Process',
@@ -14,7 +15,7 @@ export default function ProcessPage() {
         title="Process"
         description="How an engagement runs, from first call to launch."
       />
-      <ProcessScroller />
+      <ProcessScroller heading={ui.processStagesHeading} />
     </>
   )
 }

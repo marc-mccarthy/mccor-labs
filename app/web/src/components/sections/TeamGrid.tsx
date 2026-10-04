@@ -67,7 +67,7 @@ export function TeamGrid() {
           {team.map((member, index) => (
             <article key={member.slug} className="flex flex-col gap-4">
               <Media member={member} position={index + 1} />
-              <h3 className="text-xl font-semibold text-text">{member.name}</h3>
+              <h2 className="text-xl font-semibold text-text">{member.name}</h2>
               <p className="font-mono text-sm text-muted">{member.role}</p>
               <p className="text-sm text-muted">{member.bio}</p>
               <a

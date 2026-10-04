@@ -35,6 +35,13 @@ describe('TeamGrid', () => {
     }
   })
 
+  it('renders member names as h2 so the about page heading order holds', () => {
+    mockMatchMedia(false)
+    render(<TeamGrid />)
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(team.length)
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)
+  })
+
   it('renders only Nate as a photograph with explicit width and height', () => {
     mockMatchMedia(false)
     render(<TeamGrid />)

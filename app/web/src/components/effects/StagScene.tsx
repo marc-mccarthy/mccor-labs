@@ -38,6 +38,7 @@ const MAX_POINT_SIZE = 4
 const ASSEMBLE_DURATION_SCALE = 2
 const FALLBACK_ASSEMBLE_SECONDS = 1.6
 const POINTER_EASE = 0.08
+const VELOCITY_STRETCH = 0.08
 
 let assembled = false
 
@@ -85,7 +86,7 @@ function assembleSeconds(): number {
 }
 
 function buildStag(context: SceneContext): SceneHandle {
-  const { THREE, canvas, renderer, pixelRatio, color, fail } = context
+  const { THREE, canvas, renderer, pixelRatio, color, fail, velocityRef } = context
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
   const uniforms = {
@@ -187,6 +188,9 @@ function buildStag(context: SceneContext): SceneHandle {
       }
       uniforms.uPointerForce.value +=
         ((pointerInside ? 1 : 0) - uniforms.uPointerForce.value) * POINTER_EASE
+      const stretch = 1 + Math.abs(velocityRef.current) * VELOCITY_STRETCH
+      points.scale.y = stretch
+      points.position.y = extents.midY * (1 - stretch)
       renderer.render(scene, camera)
     },
     dispose: () => {

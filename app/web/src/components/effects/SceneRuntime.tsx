@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
+import { useLenis } from '../motion/LenisProvider'
 import { readToken } from '../motion/tokens'
 import { useReducedMotion } from '../motion/useReducedMotion'
 
@@ -15,6 +16,7 @@ export interface SceneContext {
   color: (name: string) => import('three').Color
   fail: () => void
   fitToCanvas: (onResize: (width: number, height: number) => void) => () => void
+  velocityRef: { readonly current: number }
 }
 
 export interface SceneHandle {
@@ -29,6 +31,15 @@ export interface SceneRuntimeProps {
 }
 
 const MAX_PIXEL_RATIO = 1.5
+const VELOCITY_RANGE = 60
+const VELOCITY_EASE = 0.1
+const VELOCITY_REST = 0.001
+
+export function easeVelocity(current: number, raw: number): number {
+  const target = Math.max(-1, Math.min(1, raw / VELOCITY_RANGE))
+  const next = current + (target - current) * VELOCITY_EASE
+  return Math.abs(next) < VELOCITY_REST ? 0 : next
+}
 
 let threeModulePromise: Promise<typeof import('three')> | null = null
 
@@ -82,6 +93,8 @@ function whenIdleAfterLoad(callback: () => void): () => void {
 
 export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) {
   const reducedMotion = useReducedMotion()
+  const lenis = useLenis()
+  const lenisRef = useRef(lenis)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const buildRef = useRef(build)
@@ -91,6 +104,10 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
   useEffect(() => {
     buildRef.current = build
   }, [build])
+
+  useEffect(() => {
+    lenisRef.current = lenis
+  }, [lenis])
 
   useEffect(() => {
     const bailToFallback = () => {
@@ -118,10 +135,15 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let visible = false
     let started = false
     let cancelIdle: (() => void) | null = null
+    const velocityRef = { current: 0 }
 
     const loop = (time: number) => {
       if (lastTime !== null) sceneTime += time - lastTime
       lastTime = time
+      velocityRef.current = easeVelocity(
+        velocityRef.current,
+        lenisRef.current?.velocity ?? 0,
+      )
       handle?.render(sceneTime)
       frameId = requestAnimationFrame(loop)
     }
@@ -198,6 +220,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
               setStatus('fallback')
             },
             fitToCanvas,
+            velocityRef,
           })
           setStatus('active')
 

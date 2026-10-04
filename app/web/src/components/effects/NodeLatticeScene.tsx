@@ -24,6 +24,7 @@ const YAW_SWING = 0.5
 const PULSE_START = -0.2
 const PULSE_TRAVEL = 1.4
 const LG_QUERY = '(min-width: 1024px)'
+const VELOCITY_STRETCH = 0.12
 
 const VERTEX_SHADER = `
 uniform float uProgress;
@@ -59,7 +60,7 @@ function buildLattice(
   context: SceneContext,
   progressRef: { current: number },
 ): SceneHandle {
-  const { THREE, renderer, color, fitToCanvas } = context
+  const { THREE, renderer, color, fitToCanvas, velocityRef } = context
   const layout = buildNodeLayout(
     LATTICE_SEED,
     NODE_COUNT,
@@ -109,6 +110,7 @@ function buildLattice(
   const camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, 1, 0.1, 50)
 
   let drawn = -1
+  let drawnVelocity = 0
 
   const stopFitting = fitToCanvas((width, height) => {
     camera.aspect = width / height
@@ -119,12 +121,15 @@ function buildLattice(
   return {
     render: () => {
       const progress = progressRef.current
-      if (progress === drawn) return
+      const velocity = velocityRef.current
+      if (progress === drawn && velocity === drawnVelocity) return
       drawn = progress
+      drawnVelocity = velocity
       uniforms.uProgress.value = progress
       uniforms.uOpacity.value = Math.sin(Math.PI * progress)
       camera.position.z = CAMERA_Z_FAR + (CAMERA_Z_NEAR - CAMERA_Z_FAR) * progress
       group.rotation.y = (progress - 0.5) * YAW_SWING
+      group.scale.y = 1 + Math.abs(velocity) * VELOCITY_STRETCH
       renderer.render(scene, camera)
     },
     dispose: () => {

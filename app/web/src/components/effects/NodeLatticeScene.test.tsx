@@ -11,6 +11,12 @@ const spies = vi.hoisted(() => ({
   setMatrixAt: vi.fn(),
   setPosition: vi.fn(),
   render: vi.fn(),
+  lenis: null as { velocity: number } | null,
+  group: null as { scale: { y: number } } | null,
+}))
+
+vi.mock('../motion/LenisProvider', () => ({
+  useLenis: () => spies.lenis,
 }))
 
 vi.mock('three', () => ({
@@ -31,7 +37,11 @@ vi.mock('three', () => ({
   },
   Group: class {
     rotation = { y: 0 }
+    scale = { y: 1 }
     add = vi.fn()
+    constructor() {
+      spies.group = this
+    }
   },
   PerspectiveCamera: class {
     aspect = 1
@@ -121,6 +131,31 @@ describe('NodeLatticeScene', () => {
     const { container } = render(<NodeLatticeScene progress={0} />)
     expect(status(container)).toBe('fallback')
     expect(spies.rendererCtor).not.toHaveBeenCalled()
+  })
+
+  it('redraws and stretches the lattice while the page scrolls fast', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    let frame: FrameRequestCallback = () => undefined
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        frame = callback
+        return 1
+      }),
+    )
+    spies.lenis = { velocity: 600 }
+    const { container } = render(<NodeLatticeScene progress={0.5} />)
+    await waitFor(() => {
+      expect(status(container)).toBe('active')
+    })
+    frame(0)
+    const drawsAfterFirstFrame = spies.render.mock.calls.length
+    frame(16)
+    spies.lenis = null
+    expect(spies.render.mock.calls.length).toBe(drawsAfterFirstFrame + 1)
+    expect(spies.group!.scale.y).toBeGreaterThan(1)
+    expect(spies.group!.scale.y).toBeLessThan(1.12)
   })
 
   it('places every instance and disposes everything on unmount', async () => {

@@ -31,12 +31,11 @@ describe('SystemsScene', () => {
     expect(await screen.findByTestId('lattice')).not.toContainElement(heading)
   })
 
-  it('renders the static webp poster, never the jpg', () => {
+  it('references no systems poster image', () => {
     mockMatchMedia(false)
-    render(<SystemsScene />)
-    const src = screen.getByTestId('systems-poster').getAttribute('src') ?? ''
-    expect(decodeURIComponent(src)).toContain('/media/brand/mccor-stag-systems.webp')
-    expect(src).not.toContain('.jpg')
+    const { container } = render(<SystemsScene />)
+    expect(container.innerHTML).not.toContain('mccor-stag-systems')
+    expect(container.querySelector('img')).toBeNull()
   })
 
   it('does not hide the heading from assistive tech and renders exactly one section', () => {
@@ -52,7 +51,6 @@ describe('SystemsScene', () => {
     const { container } = render(<SystemsScene />)
     expect(screen.getByRole('heading', { name: ui.systemsHeading })).toBeInTheDocument()
     expect(screen.getByText(ui.systemsBody)).toBeInTheDocument()
-    expect(screen.getByTestId('systems-poster')).toBeInTheDocument()
     expect(container.querySelector('[style*="sticky"]')).toBeNull()
   })
 })

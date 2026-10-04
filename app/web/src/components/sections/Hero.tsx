@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { Container } from '@/components/layout/Container'
 import { BookingCta } from '@/components/layout/BookingCta'
 import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
 import { Parallax } from '@/components/motion/Parallax'
@@ -29,13 +30,7 @@ export function Hero() {
             className="pointer-events-none absolute inset-0 z-5"
             fallback={<HeroMotionCanvas className="opacity-30" />}
           />
-          <div
-            className="relative z-10 w-full pt-16 pb-8 sm:pt-24"
-            style={{
-              paddingLeft: 'max(24px, calc(100vw / 15))',
-              paddingRight: 'max(24px, calc(100vw / 15))',
-            }}
-          >
+          <Container className="relative z-10 pt-16 pb-8 sm:pt-24">
             <div className="max-w-xl lg:max-w-2xl">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-semibold tracking-wider text-muted uppercase backdrop-blur">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
@@ -54,7 +49,7 @@ export function Hero() {
                 <BookingCta size="lg" />
               </div>
             </div>
-          </div>
+          </Container>
         </div>
       </Parallax>
     </section>

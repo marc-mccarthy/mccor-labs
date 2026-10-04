@@ -21,6 +21,15 @@ test.describe('services page', () => {
     }
   })
 
+  test('tools we build with sit alone in the last section, as text', async ({ page }) => {
+    await page.goto('/services/')
+    const last = page.locator('main section').last()
+    await expect(
+      last.getByRole('heading', { level: 2, name: 'Tools we build with' }),
+    ).toBeVisible()
+    await expect(last.locator('img, svg')).toHaveCount(0)
+  })
+
   test('navigating to an anchor scrolls past zero', async ({ page }) => {
     await page.goto('/services/#ai-engineering')
     await page.waitForTimeout(600)

@@ -98,3 +98,8 @@ export const terminalSamples: Readonly<Record<string, readonly TerminalSampleLin
     { kind: 'output', text: '○  (Static)  prerendered as static content' },
   ],
 }
+
+export const toolsWeBuildWith = {
+  heading: 'Tools we build with',
+  tools: ['AWS', 'Postgres', 'Next.js', 'Anthropic', 'OpenAI', 'Terraform'],
+} as const

@@ -1,22 +1,15 @@
-interface Mark {
-  name: string
-  src: string
-}
-
 interface IntegrationMarksProps {
   heading: string
-  marks: readonly Mark[]
+  tools: readonly string[]
 }
 
-export function IntegrationMarks({ heading, marks }: IntegrationMarksProps) {
+export function IntegrationMarks({ heading, tools }: IntegrationMarksProps) {
   return (
     <div>
       <h2 className="font-mono text-sm text-muted">{heading}</h2>
-      <ul className="mt-4 flex flex-wrap gap-6">
-        {marks.map((mark) => (
-          <li key={mark.name}>
-            <img src={mark.src} alt={mark.name} className="h-8 w-auto" />
-          </li>
+      <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 font-mono text-text">
+        {tools.map((tool) => (
+          <li key={tool}>{tool}</li>
         ))}
       </ul>
     </div>

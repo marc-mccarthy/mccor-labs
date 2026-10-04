@@ -132,7 +132,7 @@ describe('WorkflowDiagram', () => {
     })
   })
 
-  it('staggers edges and lights plain nodes under reduced motion', () => {
+  it('lights plain nodes and draws edges without transitions under reduced motion', () => {
     mockMatchMedia(true)
     const { container } = render(
       <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
@@ -140,10 +140,9 @@ describe('WorkflowDiagram', () => {
     container
       .querySelector('svg')!
       .querySelectorAll('path')
-      .forEach((path, index) => {
-        expect(path.style.transitionDelay).toBe(
-          `calc(${String(index)} * var(--stagger-interval))`,
-        )
+      .forEach((path) => {
+        expect(path.style.transition).toBe('none')
+        expect(path.style.transitionDelay).toBe('')
         expect(path.getAttribute('stroke')).toBe('var(--color-brand)')
       })
     container

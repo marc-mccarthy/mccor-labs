@@ -30,8 +30,12 @@ export function useScrollDrawn(reducedMotion: boolean) {
 
   const edgeStyle = (index: number): CSSProperties => ({
     strokeDashoffset: isDrawn ? 0 : 1,
-    transition: 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
-    transitionDelay: `calc(${String(index)} * var(--stagger-interval))`,
+    transition: reducedMotion
+      ? 'none'
+      : 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
+    transitionDelay: reducedMotion
+      ? undefined
+      : `calc(${String(index)} * var(--stagger-interval))`,
   })
 
   const nodeStroke = (index: number): CSSProperties => ({

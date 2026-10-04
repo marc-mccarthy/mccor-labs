@@ -104,6 +104,8 @@ describe('PipelineDiagram', () => {
     expect(paths.length).toBeGreaterThan(0)
     paths.forEach((path) => {
       expect(path.style.strokeDashoffset).toBe('0')
+      expect(path.style.transition).toBe('none')
+      expect(path.style.transitionDelay).toBe('')
     })
   })
 

@@ -7,7 +7,7 @@ export interface Capability {
   slug: string
   title: string
   summary: string
-  substance: { kind: 'code' | 'diagram'; ref: string }
+  substance: { kind: 'code' | 'diagram' | 'terminal'; ref: string }
 }
 
 export interface Service {

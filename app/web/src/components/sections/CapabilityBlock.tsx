@@ -2,12 +2,14 @@ import type { ReactNode } from 'react'
 import { CodeBlock } from '@/components/substance/CodeBlock'
 import { IntegrationDiagram } from '@/components/substance/IntegrationDiagram'
 import { PipelineDiagram } from '@/components/substance/PipelineDiagram'
+import { Terminal } from '@/components/substance/Terminal'
 import { WorkflowDiagram } from '@/components/substance/WorkflowDiagram'
 import type { Capability } from '@/content/types'
 import {
   codeSamples,
   integrationSurfaces,
   retrievalPipeline,
+  terminalSamples,
   workflowApprovalGate,
 } from '@/content/substance'
 
@@ -25,6 +27,11 @@ async function renderSubstance({
     const sample = codeSamples[ref]
     if (!sample) throw new Error(`Unknown code ref: ${ref}`)
     return <CodeBlock {...sample} />
+  }
+  if (kind === 'terminal') {
+    const lines = terminalSamples[ref]
+    if (!lines) throw new Error(`Unknown terminal ref: ${ref}`)
+    return <Terminal lines={lines} />
   }
   const diagram = diagrams[ref]
   if (!diagram) throw new Error(`Unknown diagram ref: ${ref}`)

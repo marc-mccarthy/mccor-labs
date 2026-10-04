@@ -17,6 +17,15 @@ export const services: readonly Service[] = [
       'Deployment pipeline and documentation',
       'Handover, with the repository and hosting in your name',
     ],
+    capabilities: [
+      {
+        slug: 'static-build',
+        title: 'This site’s own build',
+        summary:
+          'An excerpt of the production build for this site: settings resolved from 1Password at build time rather than committed, and every route prerendered as static HTML.',
+        substance: { kind: 'terminal', ref: 'static-export-build' },
+      },
+    ],
   },
   {
     slug: 'applications',

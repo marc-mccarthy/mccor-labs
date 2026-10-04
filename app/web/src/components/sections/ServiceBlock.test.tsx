@@ -30,6 +30,7 @@ function mockMatchMedia() {
 
 const websites = services.find((s) => s.slug === 'websites')!
 const ai = services.find((s) => s.slug === 'ai-engineering')!
+const consulting = services.find((s) => s.slug === 'consulting')!
 
 describe('ServiceBlock', () => {
   beforeEach(mockMatchMedia)
@@ -62,7 +63,7 @@ describe('ServiceBlock', () => {
   })
 
   it('renders no capability blocks when absent', () => {
-    render(<ServiceBlock service={websites} />)
+    render(<ServiceBlock service={consulting} />)
     expect(screen.queryAllByTestId('capability')).toHaveLength(0)
   })
 })
@@ -97,6 +98,20 @@ describe('CapabilityBlock', () => {
       expect(screen.getByText(surface)).toBeInTheDocument()
     }
     expect(container.querySelectorAll('svg rect')).toHaveLength(1)
+  })
+
+  it('renders the websites build excerpt as terminal output', async () => {
+    const { CapabilityBlock: Real } = await actual()
+    const capability = websites.capabilities!.find(
+      (c) => c.substance.kind === 'terminal',
+    )!
+    render(await Real({ capability }))
+    expect(
+      screen.getByText('op run --env-file=app/web/.env.template -- pnpm -F web build'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('○ (Static) prerendered as static content'),
+    ).toBeInTheDocument()
   })
 
   it('throws on an unknown ref instead of rendering nothing', async () => {

@@ -78,3 +78,23 @@ export const integrationSurfaces: IntegrationSample = {
     'An LLM feature reaching four named systems, CRM, ticketing, data warehouse and records database, only through one explicit permission boundary.',
   surfaces: ['CRM', 'Ticketing', 'Data warehouse', 'Records DB'],
 }
+
+export interface TerminalSampleLine {
+  kind: 'command' | 'output'
+  text: string
+}
+
+export const terminalSamples: Readonly<Record<string, readonly TerminalSampleLine[]>> = {
+  'static-export-build': [
+    {
+      kind: 'command',
+      text: 'op run --env-file=app/web/.env.template -- pnpm -F web build',
+    },
+    { kind: 'output', text: '▲ Next.js 16.3.6 (Turbopack)' },
+    { kind: 'output', text: 'Route (app)' },
+    { kind: 'output', text: '┌ ○ /' },
+    { kind: 'output', text: '├ ○ /services' },
+    { kind: 'output', text: '└ ○ /work' },
+    { kind: 'output', text: '○  (Static)  prerendered as static content' },
+  ],
+}

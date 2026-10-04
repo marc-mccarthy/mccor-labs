@@ -65,6 +65,14 @@ describe('ServiceBlock', () => {
     expect(cue).toHaveClass('bg-brand', 'opacity-0')
   })
 
+  it('places the rail inside the relative content column without leaving the viewport', () => {
+    const { container } = render(<ServiceBlock service={websites} />)
+    const rail = container.querySelector('[data-service-rail]')!
+    expect(rail.parentElement).toHaveClass('relative', 'max-w-6xl')
+    expect(rail).toHaveClass('absolute', 'left-1', 'sm:left-3')
+    expect(rail.className).not.toMatch(/(^|\s)-left-/)
+  })
+
   it('renders its deliverables as direct list items of the list', () => {
     const { container } = render(<ServiceBlock service={websites} />)
     for (const child of container.querySelector('ul')!.children) {

@@ -8,13 +8,13 @@ import { CapabilityBlock } from './CapabilityBlock'
 export function ServiceBlock({ service }: { service: Service }) {
   return (
     <Section className="relative">
-      <span
-        aria-hidden="true"
-        data-service-rail=""
-        className="pointer-events-none absolute inset-y-0 left-0 hidden w-px origin-top bg-brand"
-      />
       <Anchor id={service.slug} />
-      <Container className="flex flex-col gap-8">
+      <Container className="relative flex flex-col gap-8">
+        <span
+          aria-hidden="true"
+          data-service-rail=""
+          className="pointer-events-none absolute inset-y-0 left-1 hidden w-px origin-top bg-brand sm:left-3"
+        />
         <SectionHeading>{service.title}</SectionHeading>
         <span
           aria-hidden="true"

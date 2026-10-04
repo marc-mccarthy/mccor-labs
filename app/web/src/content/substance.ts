@@ -69,6 +69,14 @@ export interface PipelineSample {
 
 export const retrievalPipeline: PipelineSample = {
   description:
-    'A retrieval pipeline: ingest, chunk, embed, hybrid retrieval, rerank, answer.',
-  stages: ['Ingest', 'Chunk', 'Embed', 'Retrieve', 'Rerank', 'Answer'],
+    'A retrieval pipeline: ingestion, chunking, embedding, vector store, hybrid retrieval, reranking, evaluation.',
+  stages: [
+    'Ingestion',
+    'Chunking',
+    'Embedding',
+    'Vector store',
+    'Hybrid retrieval',
+    'Reranking',
+    'Evaluation',
+  ],
 }

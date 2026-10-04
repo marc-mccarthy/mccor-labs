@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import { Logo } from './Logo'
@@ -9,7 +10,16 @@ import { Container } from './Container'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 
+const UNDERLINE =
+  'relative after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-accent hover:after:scale-x-100 motion-safe:after:transition-transform motion-safe:after:duration-(--duration-pointer) motion-safe:after:ease-(--ease-pointer) aria-[current=page]:text-text aria-[current=page]:after:scale-x-100 aria-[current=page]:after:bg-linear-to-r aria-[current=page]:after:from-brand aria-[current=page]:after:to-glow-red'
+
+function stripTrailingSlash(path: string) {
+  return path.length > 1 ? path.replace(/\/+$/, '') : path
+}
+
 export function Header() {
+  const pathname = usePathname()
+  const current = stripTrailingSlash(pathname)
   const [open, setOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
 
@@ -43,7 +53,10 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm text-muted transition-colors hover:text-text"
+              aria-current={
+                stripTrailingSlash(item.href) === current ? 'page' : undefined
+              }
+              className={`text-sm text-muted transition-colors hover:text-text ${UNDERLINE}`}
             >
               {item.label}
             </Link>
@@ -95,7 +108,10 @@ export function Header() {
               onClick={() => {
                 setOpen(false)
               }}
-              className="text-sm text-muted transition-colors hover:text-text"
+              aria-current={
+                stripTrailingSlash(item.href) === current ? 'page' : undefined
+              }
+              className="text-sm text-muted transition-colors hover:text-text aria-[current=page]:text-text"
             >
               {item.label}
             </Link>

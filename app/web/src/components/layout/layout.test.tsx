@@ -18,11 +18,48 @@ const mocked = vi.hoisted(() => ({
 
 vi.mock('@/lib/env', () => mocked)
 
+const navigation = vi.hoisted(() => ({ pathname: '/' }))
+
+vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
+
 const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
 
 describe('Header', () => {
   beforeEach(() => {
     mocked.env.bookingUrl = null
+    navigation.pathname = '/'
+  })
+
+  it.each(nav.flatMap((item) => [item.href, item.href.replace(/\/$/, '')]))(
+    'marks only the matching nav link current at %s',
+    (pathname) => {
+      navigation.pathname = pathname
+      render(<Header />)
+      const current = nav.find(
+        (item) => item.href.replace(/\/$/, '') === pathname.replace(/\/$/, ''),
+      )
+      const marked = screen
+        .getAllByRole('link')
+        .filter((link) => link.getAttribute('aria-current') === 'page')
+      expect(marked.length).toBeGreaterThan(0)
+      for (const link of marked) expect(link).toHaveAttribute('href', current?.href)
+    },
+  )
+
+  it('marks no nav link current on the home route', () => {
+    render(<Header />)
+    expect(
+      screen.getAllByRole('link').filter((link) => link.hasAttribute('aria-current')),
+    ).toHaveLength(0)
+  })
+
+  it('draws the hover underline only when motion is allowed', () => {
+    render(<Header />)
+    expect(screen.getAllByRole('link', { name: 'Services' })[0]).toHaveClass(
+      'motion-safe:after:transition-transform',
+      'motion-safe:after:duration-(--duration-pointer)',
+      'hover:after:scale-x-100',
+    )
   })
 
   it('renders every primary nav destination', () => {

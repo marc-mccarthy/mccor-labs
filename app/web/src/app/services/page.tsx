@@ -20,6 +20,10 @@ export default function ServicesPage() {
         title="Services"
         description="What we build, and how we price it."
         image="/media/brand/header-services.webp"
+        video={{
+          webm: '/media/brand/header-services-loop.webm',
+          mp4: '/media/brand/header-services-loop.mp4',
+        }}
       />
       {services.map((service) => (
         <ServiceBlock key={service.slug} service={service} />

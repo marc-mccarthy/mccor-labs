@@ -15,6 +15,10 @@ export default function ProcessPage() {
         title="Process"
         description="How an engagement runs, from first call to launch."
         image="/media/brand/header-process.webp"
+        video={{
+          webm: '/media/brand/header-process-loop.webm',
+          mp4: '/media/brand/header-process-loop.mp4',
+        }}
       />
       <ProcessScroller heading={ui.processStagesHeading} />
     </>

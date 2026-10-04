@@ -2,14 +2,18 @@ import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { cn } from '@/lib/cn'
 import { Parallax } from '@/components/motion/Parallax'
+import { HeaderVideo, type HeaderVideoSources } from '@/components/sections/HeaderVideo'
 
 interface PageHeaderProps {
   title: string
   description: string
   image?: string
+  video?: HeaderVideoSources
 }
 
-export function PageHeader({ title, description, image }: PageHeaderProps) {
+const BAND_MASK = 'absolute inset-0 mask-t-from-80% mask-b-from-45% *:h-full'
+
+export function PageHeader({ title, description, image, video }: PageHeaderProps) {
   const text = (
     <Container className="relative">
       <h1 className="text-display-md leading-tight font-semibold text-text">{title}</h1>
@@ -29,7 +33,7 @@ export function PageHeader({ title, description, image }: PageHeaderProps) {
 
   return (
     <Section className="relative flex min-h-[60vh] items-end overflow-hidden pb-0 sm:pb-0">
-      <div className="absolute inset-0 mask-t-from-80% mask-b-from-45% *:h-full">
+      <div className={BAND_MASK}>
         <Parallax speed={0.15}>
           <img
             src={image}
@@ -41,6 +45,7 @@ export function PageHeader({ title, description, image }: PageHeaderProps) {
           />
         </Parallax>
       </div>
+      {video && <HeaderVideo video={video} maskClassName={BAND_MASK} />}
       <div className="absolute inset-0 bg-linear-to-t from-base via-base/80 to-transparent sm:bg-linear-to-r sm:via-base/70" />
       {text}
       <span

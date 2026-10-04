@@ -113,6 +113,25 @@ describe('VideoMotionHero', () => {
     expect(container.querySelector('video')).toBeNull()
   })
 
+  it('keeps a paused video paused after a back/forward cache restore', () => {
+    mockMatchMedia(false)
+    renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'))
+    })
+    act(() => {
+      window.dispatchEvent(pageshow(true))
+    })
+    expect(screen.getByRole('button', { name: ui.pauseVideo })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
   it('skips the video under reduced motion', () => {
     mockMatchMedia(true)
     const { container } = renderHero()

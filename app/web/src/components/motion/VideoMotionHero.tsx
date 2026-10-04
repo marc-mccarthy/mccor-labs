@@ -77,8 +77,6 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
         })
         video.load()
       }
-      pausedRef.current = false
-      setPaused(false)
       setShouldAttachVideo(false)
       setVideoLoaded(false)
     }

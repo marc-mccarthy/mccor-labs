@@ -43,7 +43,10 @@ export function LegalPage({ document }: { document: LegalDocument }) {
   return (
     <Section>
       <Container>
-        <article className="flex max-w-prose flex-col gap-4 leading-relaxed">
+        <article
+          data-legal=""
+          className="flex max-w-prose flex-col gap-4 leading-relaxed"
+        >
           <h1 className="text-display-md leading-tight font-semibold text-text">
             {document.title}
           </h1>

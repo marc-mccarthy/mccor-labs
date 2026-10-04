@@ -85,6 +85,12 @@
   --shiki-token-changed: var(--color-accent-hover);
 }
 
+@keyframes grain-drift {
+  to {
+    background-position: 256px 256px;
+  }
+}
+
 @layer base {
   * {
     min-width: 0;
@@ -105,6 +111,21 @@
     outline-offset: 2px;
   }
 
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background-image: url('/media/brand/grain-tile.webp');
+    opacity: 0.04;
+    animation: grain-drift 8s steps(16) infinite;
+  }
+
+  body:has([data-legal])::after {
+    display: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -113,6 +134,10 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+
+    body::after {
+      animation: none;
     }
   }
 }

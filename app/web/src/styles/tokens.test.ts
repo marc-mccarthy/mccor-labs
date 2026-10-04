@@ -154,3 +154,52 @@ describe('design tokens', () => {
     }
   })
 })
+
+const GRAIN_DARKEST = 68
+const GRAIN_LIGHTEST = 190
+
+function grainRule(): string {
+  const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+  return /\n {2}body::after \{([^}]+)\}/.exec(css)?.[1] ?? ''
+}
+
+function blend(hex: string, grey: number, opacity: number): string {
+  const n = Number.parseInt(hex.slice(1), 16)
+  const mixed = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((value) =>
+    Math.round(value * (1 - opacity) + grey * opacity),
+  )
+  return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`
+}
+
+describe('film grain', () => {
+  it('is a fixed, non-interactive overlay at no more than 5% opacity', () => {
+    const rule = grainRule()
+    expect(rule).toMatch(/position:\s*fixed/)
+    expect(rule).toMatch(/pointer-events:\s*none/)
+    expect(rule).toMatch(/grain-tile\.webp/)
+    expect(rule).not.toMatch(/mix-blend-mode/)
+    expect(Number(/opacity:\s*([\d.]+)/.exec(rule)?.[1])).toBeLessThanOrEqual(0.05)
+  })
+
+  it('drifts in steps, holds still under reduced motion and stays off legal pages', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    expect(grainRule()).toMatch(/animation:\s*grain-drift [^;]*steps\(/)
+    expect(css).toMatch(
+      /prefers-reduced-motion: reduce\)[\s\S]*body::after \{\s*animation: none;/,
+    )
+    expect(css).toMatch(/body:has\(\[data-legal\]\)::after \{\s*display: none;/)
+  })
+
+  it.each([
+    ['base', 4.5],
+    ['surface', 4.5],
+  ])('keeps muted text on %s above AA in the worst grain pixel', (bg, required) => {
+    const t = tokens()
+    const opacity = Number(/opacity:\s*([\d.]+)/.exec(grainRule())?.[1])
+    const ratio = contrast(
+      blend(t.muted!, GRAIN_DARKEST, opacity),
+      blend(t[bg]!, GRAIN_LIGHTEST, opacity),
+    )
+    expect(ratio).toBeGreaterThanOrEqual(required)
+  })
+})

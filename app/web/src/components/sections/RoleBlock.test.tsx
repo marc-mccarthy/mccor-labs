@@ -15,5 +15,6 @@ describe('RoleBlock', () => {
     render(<RoleBlock role={role} />)
     const heading = screen.getByRole('heading', { level: 2, name: role.title })
     expect(heading.parentElement).toHaveAttribute('data-reveal')
+    expect(heading.parentElement?.parentElement?.closest('[data-reveal]')).toBeNull()
   })
 })

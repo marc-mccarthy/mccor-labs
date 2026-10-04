@@ -1,4 +1,4 @@
-const SCATTER_RADIUS = 3
+const SCATTER_RADIUS = 2
 
 function unit(index: number, salt: number): number {
   let h = Math.imul(index + 1, 0x9e3779b1) ^ Math.imul(salt + 1, 0x85ebca6b)

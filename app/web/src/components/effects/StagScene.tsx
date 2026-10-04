@@ -10,16 +10,31 @@ export interface StagSceneProps {
   fallback: ReactNode
 }
 
+interface CloudExtents {
+  midX: number
+  midY: number
+  height: number
+}
+
 interface StagAssets {
   positions: Float32Array
+  extents: CloudExtents
   vertexShader: string
   fragmentShader: string
 }
 
 const ASSET_ROOT = '/media/brand'
-const VIEW_HALF_HEIGHT = 1.2
-const STAG_HALF_WIDTH = 1.1
-const SPLIT_LAYOUT_ASPECT = 1.3
+const POSTER_WIDTH = 1376
+const POSTER_HEIGHT = 768
+const POSTER_STAG_CENTER_X = 1149
+const POSTER_STAG_CENTER_Y = 310
+const POSTER_STAG_HEIGHT = 500
+const POSTER_OBJECT_X = 1
+const POSTER_OBJECT_X_LG = 0.92
+const LG_BREAKPOINT = 1024
+const POINT_SIZE_DIVISOR = 170
+const MIN_POINT_SIZE = 1.5
+const MAX_POINT_SIZE = 4
 const ASSEMBLE_DURATION_SCALE = 2
 const FALLBACK_ASSEMBLE_SECONDS = 1.6
 const POINTER_EASE = 0.08
@@ -41,7 +56,25 @@ async function loadAssets(): Promise<StagAssets> {
     fetchAsset('shaders/stag-points.vert.glsl').then((r) => r.text()),
     fetchAsset('shaders/stag-points.frag.glsl').then((r) => r.text()),
   ])
-  return { positions: new Float32Array(points.positions), vertexShader, fragmentShader }
+  const positions = new Float32Array(points.positions)
+  return { positions, extents: measure(positions), vertexShader, fragmentShader }
+}
+
+function measure(positions: Float32Array): CloudExtents {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  positions.forEach((value, index) => {
+    if (index % 3 === 0) {
+      minX = Math.min(minX, value)
+      maxX = Math.max(maxX, value)
+    } else if (index % 3 === 1) {
+      minY = Math.min(minY, value)
+      maxY = Math.max(maxY, value)
+    }
+  })
+  return { midX: (minX + maxX) / 2, midY: (minY + maxY) / 2, height: maxY - minY }
 }
 
 function assembleSeconds(): number {
@@ -54,14 +87,7 @@ function assembleSeconds(): number {
 function buildStag(context: SceneContext, onError: () => void): SceneHandle {
   const { THREE, canvas, renderer, pixelRatio } = context
   const scene = new THREE.Scene()
-  const camera = new THREE.OrthographicCamera(
-    -VIEW_HALF_HEIGHT,
-    VIEW_HALF_HEIGHT,
-    VIEW_HALF_HEIGHT,
-    -VIEW_HALF_HEIGHT,
-    -10,
-    10,
-  )
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
   const color = (name: string) =>
     new THREE.Color().setStyle(readColorToken(name), THREE.LinearSRGBColorSpace)
   const uniforms = {
@@ -82,20 +108,29 @@ function buildStag(context: SceneContext, onError: () => void): SceneHandle {
   let disposed = false
   let startSeconds: number | null = null
   let pointerInside = false
+  let extents: CloudExtents = { midX: 0, midY: 0, height: 2 }
 
   const resize = () => {
     const { clientWidth: width, clientHeight: height } = canvas
     if (width === 0 || height === 0) return
     renderer.setSize(width, height, false)
-    const halfWidth = VIEW_HALF_HEIGHT * (width / height)
-    camera.left = -halfWidth
-    camera.right = halfWidth
+    const scale = Math.max(width / POSTER_WIDTH, height / POSTER_HEIGHT)
+    const objectX =
+      window.innerWidth >= LG_BREAKPOINT ? POSTER_OBJECT_X_LG : POSTER_OBJECT_X
+    const stagX = (width - POSTER_WIDTH * scale) * objectX + POSTER_STAG_CENTER_X * scale
+    const stagY = (height - POSTER_HEIGHT * scale) / 2 + POSTER_STAG_CENTER_Y * scale
+    const stagPixels = POSTER_STAG_HEIGHT * scale
+    const unitsPerPixel = extents.height / stagPixels
+    camera.left = extents.midX - stagX * unitsPerPixel
+    camera.right = extents.midX + (width - stagX) * unitsPerPixel
+    camera.top = extents.midY + stagY * unitsPerPixel
+    camera.bottom = extents.midY - (height - stagY) * unitsPerPixel
     camera.updateProjectionMatrix()
-    uniforms.uPointSize.value = Math.min(5, Math.max(1.5, height / 260)) * pixelRatio
-    if (points) {
-      points.position.x =
-        width / height > SPLIT_LAYOUT_ASPECT ? halfWidth - STAG_HALF_WIDTH : 0
-    }
+    uniforms.uPointSize.value =
+      Math.min(
+        MAX_POINT_SIZE,
+        Math.max(MIN_POINT_SIZE, stagPixels / POINT_SIZE_DIVISOR),
+      ) * pixelRatio
   }
 
   const onPointerMove = (event: PointerEvent) => {
@@ -103,8 +138,8 @@ function buildStag(context: SceneContext, onError: () => void): SceneHandle {
     const x = (event.clientX - rect.left) / rect.width
     const y = (event.clientY - rect.top) / rect.height
     pointerInside = x >= 0 && x <= 1 && y >= 0 && y <= 1
-    const worldX = (x * 2 - 1) * camera.right - (points?.position.x ?? 0)
-    const worldY = (1 - y * 2) * VIEW_HALF_HEIGHT
+    const worldX = camera.left + x * (camera.right - camera.left)
+    const worldY = camera.top + y * (camera.bottom - camera.top)
     uniforms.uPointer.value.set(worldX, worldY)
   }
 
@@ -113,8 +148,9 @@ function buildStag(context: SceneContext, onError: () => void): SceneHandle {
   window.addEventListener('pointermove', onPointerMove, { passive: true })
 
   loadAssets()
-    .then(({ positions, vertexShader, fragmentShader }) => {
+    .then(({ positions, extents: measured, vertexShader, fragmentShader }) => {
       if (disposed) return
+      extents = measured
       const count = positions.length / 3
       geometry = new THREE.BufferGeometry()
       geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))

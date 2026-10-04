@@ -6,6 +6,7 @@ import { BookingCta } from '@/components/layout/BookingCta'
 import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
 import { Parallax } from '@/components/motion/Parallax'
 import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
+import { Badge } from '@/components/ui/badge'
 import { site } from '@/content/site'
 
 const StagScene = dynamic(
@@ -32,10 +33,10 @@ export function Hero() {
           />
           <Container className="relative z-10 pt-16 pb-8 sm:pt-24">
             <div className="max-w-xl lg:max-w-3xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3 py-1 text-xs font-semibold tracking-wider text-muted uppercase backdrop-blur">
+              <Badge className="mb-5 gap-2 bg-surface/80 font-sans font-semibold backdrop-blur">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
                 Senior Engineering & AI Studio
-              </div>
+              </Badge>
 
               <p className="font-mono text-sm tracking-wider text-muted uppercase">
                 {site.slogan}

@@ -42,6 +42,11 @@ describe('Hero', () => {
     expect(headings[0]).toHaveTextContent(site.tagline)
   })
 
+  it('renders the studio pill above the slogan', () => {
+    render(<Hero />)
+    expect(screen.getByText('Senior Engineering & AI Studio')).toHaveClass('rounded-full')
+  })
+
   it('renders the booking call to action', () => {
     render(<Hero />)
     expect(screen.getByRole('link', { name: ui.bookCall })).toHaveAttribute(

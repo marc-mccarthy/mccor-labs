@@ -32,8 +32,11 @@ const MAX_PIXEL_RATIO = 1.5
 
 let threeModulePromise: Promise<typeof import('three')> | null = null
 
-function loadThree(): Promise<typeof import('three')> {
-  threeModulePromise ??= import('three')
+export function loadThree(): Promise<typeof import('three')> {
+  threeModulePromise ??= import('three').catch((error: unknown) => {
+    threeModulePromise = null
+    throw error
+  })
   return threeModulePromise
 }
 
@@ -74,7 +77,13 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
   const reducedMotion = useReducedMotion()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const buildRef = useRef(build)
   const [status, setStatus] = useState<SceneStatus>('idle')
+  const [canvasKey, setCanvasKey] = useState(0)
+
+  useEffect(() => {
+    buildRef.current = build
+  }, [build])
 
   useEffect(() => {
     const bailToFallback = () => {
@@ -154,7 +163,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
               resizeObserver.disconnect()
             }
           }
-          handle = build({
+          handle = buildRef.current({
             THREE,
             canvas,
             renderer: nextRenderer,
@@ -205,12 +214,14 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       cancelled = true
       cancelIdle()
       teardown()
+      setCanvasKey((key) => key + 1)
     }
-  }, [reducedMotion, build])
+  }, [reducedMotion])
 
   return (
     <div ref={rootRef} className={className} data-scene-status={status}>
       <canvas
+        key={canvasKey}
         ref={canvasRef}
         aria-hidden="true"
         className={cn(

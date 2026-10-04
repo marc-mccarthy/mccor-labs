@@ -6,6 +6,7 @@ const NEIGHBOURS = 2
 const EXTENT_X = 7
 const EXTENT_Y = 3.2
 const EXTENT_Z = 2.4
+export const HEADLINE_CLEAR_MIN_X = EXTENT_X * 0.1
 
 export interface NodeLayout {
   positions: Float32Array
@@ -14,11 +15,11 @@ export interface NodeLayout {
   rangeX: number
 }
 
-function scatter(seed: number, count: number): Float32Array {
+function scatter(seed: number, count: number, minX: number): Float32Array {
   const random = mulberry32(seed)
   const positions = new Float32Array(count * 3)
   for (let i = 0; i < count; i++) {
-    positions[i * 3] = (random() * 2 - 1) * EXTENT_X
+    positions[i * 3] = minX + random() * (EXTENT_X - minX)
     positions[i * 3 + 1] = (random() * 2 - 1) * EXTENT_Y
     positions[i * 3 + 2] = (random() * 2 - 1) * EXTENT_Z
   }
@@ -59,8 +60,12 @@ function buildEdges(positions: Float32Array, count: number): Uint16Array {
   return Uint16Array.from(pairs)
 }
 
-export function buildNodeLayout(seed: number, count: number): NodeLayout {
-  const positions = scatter(seed, count)
+export function buildNodeLayout(
+  seed: number,
+  count: number,
+  scatterMinX = -EXTENT_X,
+): NodeLayout {
+  const positions = scatter(seed, count, scatterMinX)
   let minX = Infinity
   let maxX = -Infinity
   for (let i = 0; i < count; i++) {

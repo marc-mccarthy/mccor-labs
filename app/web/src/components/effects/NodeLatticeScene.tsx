@@ -1,7 +1,12 @@
 'use client'
 
 import { useCallback, type ReactNode } from 'react'
-import { buildNodeLayout, LATTICE_SEED, NODE_COUNT } from './nodeLattice'
+import {
+  buildNodeLayout,
+  HEADLINE_CLEAR_MIN_X,
+  LATTICE_SEED,
+  NODE_COUNT,
+} from './nodeLattice'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
 import { useProgressRef } from './useProgressRef'
 
@@ -18,6 +23,7 @@ const CAMERA_Z_NEAR = 7
 const YAW_SWING = 0.5
 const PULSE_START = -0.2
 const PULSE_TRAVEL = 1.4
+const LG_QUERY = '(min-width: 1024px)'
 
 const VERTEX_SHADER = `
 uniform float uProgress;
@@ -54,7 +60,11 @@ function buildLattice(
   progressRef: { current: number },
 ): SceneHandle {
   const { THREE, renderer, color, fitToCanvas } = context
-  const layout = buildNodeLayout(LATTICE_SEED, NODE_COUNT)
+  const layout = buildNodeLayout(
+    LATTICE_SEED,
+    NODE_COUNT,
+    window.matchMedia(LG_QUERY).matches ? HEADLINE_CLEAR_MIN_X : undefined,
+  )
 
   const uniforms = {
     uProgress: { value: 0 },

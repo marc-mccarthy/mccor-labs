@@ -9,6 +9,7 @@ const spies = vi.hoisted(() => ({
   materialDispose: vi.fn(),
   instancedDispose: vi.fn(),
   setMatrixAt: vi.fn(),
+  setPosition: vi.fn(),
   render: vi.fn(),
 }))
 
@@ -43,7 +44,7 @@ vi.mock('three', () => ({
     }
   },
   Matrix4: class {
-    setPosition = vi.fn()
+    setPosition = spies.setPosition
   },
   IcosahedronGeometry: class {
     dispose = spies.geometryDispose
@@ -69,16 +70,18 @@ vi.mock('three', () => ({
 
 import { NodeLatticeScene } from './NodeLatticeScene'
 import { resetWebGL2Probe } from './SceneRuntime'
-import { NODE_COUNT } from './nodeLattice'
+import { HEADLINE_CLEAR_MIN_X, NODE_COUNT } from './nodeLattice'
 
 class StubResizeObserver {
   observe = vi.fn()
   disconnect = vi.fn()
 }
 
-function mockMatchMedia(reduced: boolean) {
+function mockMatchMedia(reduced: boolean, wide = false) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: reduced && query === '(prefers-reduced-motion: reduce)',
+    matches:
+      (reduced && query === '(prefers-reduced-motion: reduce)') ||
+      (wide && query === '(min-width: 1024px)'),
     media: query,
     onchange: null,
     addListener: vi.fn(),
@@ -137,5 +140,20 @@ describe('NodeLatticeScene', () => {
     expect(spies.instancedDispose).toHaveBeenCalledTimes(1)
     expect(spies.rendererDispose).toHaveBeenCalledTimes(1)
     expect(spies.forceContextLoss).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    [true, true],
+    [false, false],
+  ])('at lg=%s keeps every node clear of the headline: %s', async (wide, clamped) => {
+    mockMatchMedia(false, wide)
+    mockWebGL2(true)
+    const { container } = render(<NodeLatticeScene progress={0.5} />)
+    await waitFor(() => {
+      expect(status(container)).toBe('active')
+    })
+    const xs = spies.setPosition.mock.calls.map((call) => Number(call[0]))
+    expect(xs).toHaveLength(NODE_COUNT)
+    expect(Math.min(...xs) >= HEADLINE_CLEAR_MIN_X).toBe(clamped)
   })
 })

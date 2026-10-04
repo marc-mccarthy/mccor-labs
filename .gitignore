@@ -35,6 +35,7 @@ app/web/tsconfig.tsbuildinfo
 # Test artefacts
 test-results/
 playwright-report/
+lighthouse-report/
 .playwright/
 
 # Environment values come from 1Password via op run; .env.template is committed.

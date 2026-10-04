@@ -92,3 +92,38 @@ test.describe('careers page', () => {
     }
   })
 })
+
+for (const path of ['/privacy/', '/terms/']) {
+  test.describe(`legal page ${path}`, () => {
+    test('one h1, no motion or effects, readable measure, visible TODOs @smoke', async ({
+      page,
+    }) => {
+      await page.goto(path)
+      await expect(page.locator('h1')).toHaveCount(1)
+      await expect(page.locator('[data-reveal], canvas, video')).toHaveCount(0)
+      await expect(page.getByText(/TODO\(owner\)/).first()).toBeVisible()
+      const measures = await page.locator('article p').evaluateAll((paragraphs) =>
+        paragraphs.map((p) => {
+          const probe = document.createElement('span')
+          probe.style.cssText = 'display:inline-block;width:1ch'
+          p.appendChild(probe)
+          const ch = probe.getBoundingClientRect().width
+          probe.remove()
+          return p.getBoundingClientRect().width / ch
+        }),
+      )
+      for (const measure of measures) {
+        expect(measure).toBeGreaterThanOrEqual(45)
+        expect(measure).toBeLessThanOrEqual(80)
+      }
+    })
+  })
+}
+
+test('the 404 page links home', async ({ page }) => {
+  await page.goto('/404.html')
+  await expect(page.getByRole('link', { name: /home/i }).last()).toHaveAttribute(
+    'href',
+    '/',
+  )
+})

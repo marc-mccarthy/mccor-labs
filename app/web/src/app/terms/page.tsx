@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { PageHeader } from '@/components/sections/PageHeader'
+import { LegalPage } from '@/components/sections/LegalPage'
+import { terms } from '@/content/legal'
 
 export const metadata: Metadata = {
-  title: 'Terms',
-  description: 'The terms that apply to this site.',
+  title: terms.title,
+  description: terms.description,
 }
 
 export default function TermsPage() {
-  return <PageHeader title="Terms" description="The terms that apply to this site." />
+  return <LegalPage document={terms} />
 }

@@ -1,16 +1,12 @@
 import type { Metadata } from 'next'
-import { PageHeader } from '@/components/sections/PageHeader'
+import { LegalPage } from '@/components/sections/LegalPage'
+import { privacy } from '@/content/legal'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: 'How we handle information you send us.',
+  title: privacy.title,
+  description: privacy.description,
 }
 
 export default function PrivacyPage() {
-  return (
-    <PageHeader
-      title="Privacy Policy"
-      description="How we handle information you send us."
-    />
-  )
+  return <LegalPage document={privacy} />
 }

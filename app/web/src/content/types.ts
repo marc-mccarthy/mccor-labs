@@ -50,3 +50,20 @@ export interface ProcessStage {
   summary: string
   duration: string
 }
+
+export type LegalBlock =
+  | { kind: 'p'; text: string }
+  | { kind: 'h3'; text: string }
+  | { kind: 'ul'; items: readonly string[] }
+
+export interface LegalSection {
+  heading: string
+  blocks: readonly LegalBlock[]
+}
+
+export interface LegalDocument {
+  title: string
+  description: string
+  updated: string
+  sections: readonly LegalSection[]
+}

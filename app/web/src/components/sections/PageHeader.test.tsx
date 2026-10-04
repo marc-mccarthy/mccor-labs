@@ -49,9 +49,7 @@ describe('PageHeader', () => {
       'motion-safe:animate-[band-signal_var(--duration-scene)_var(--ease-standard)_both]',
     )
     expect(signal).toHaveAttribute('aria-hidden', 'true')
-    expect(screen.getByText('What we build.').className).toContain(
-      'motion-safe:animate-[band-lede',
-    )
+    expect(screen.getByText('What we build.')).toHaveClass('motion-safe:animate-lede')
     expect(screen.getByRole('heading', { level: 1 }).className).not.toContain('animate')
     expect(screen.getByTestId('header-image').className).not.toContain('animate')
     unmount()

@@ -63,6 +63,15 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-pointer: cubic-bezier(0, 0, 0.2, 1);
   --ease-route: cubic-bezier(0.6, 0, 0.25, 1);
+
+  --animate-lede: lede-in var(--duration-scene) var(--ease-standard) 0.4s both;
+
+  @keyframes lede-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
 }
 
 :root {
@@ -204,13 +213,6 @@
 @keyframes band-signal {
   from {
     transform: scaleX(0);
-  }
-}
-
-@keyframes band-lede {
-  from {
-    opacity: 0;
-    transform: translateY(0.5rem);
   }
 }
 

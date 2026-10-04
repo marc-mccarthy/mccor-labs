@@ -20,8 +20,7 @@ export function PageHeader({ title, description, image, video }: PageHeaderProps
       <p
         className={cn(
           'mt-4 max-w-2xl text-lg text-muted',
-          image &&
-            'motion-safe:animate-[band-lede_var(--duration-scene)_var(--ease-standard)_0.4s_both]',
+          image && 'motion-safe:animate-lede',
         )}
       >
         {description}

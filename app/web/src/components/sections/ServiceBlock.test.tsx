@@ -55,6 +55,23 @@ describe('ServiceBlock', () => {
     expect(container.querySelector(`#${websites.slug}`)).not.toBeNull()
   })
 
+  it('carries the scroll rail and the hash-landing cue as decorative hooks', () => {
+    const { container } = render(<ServiceBlock service={websites} />)
+    const rail = container.querySelector('[data-service-rail]')!
+    expect(rail).toHaveAttribute('aria-hidden', 'true')
+    expect(rail).toHaveClass('bg-brand', 'hidden')
+    const cue = container.querySelector('[data-target-cue]')!
+    expect(cue).toHaveAttribute('aria-hidden', 'true')
+    expect(cue).toHaveClass('bg-brand', 'opacity-0')
+  })
+
+  it('renders its deliverables as direct list items of the list', () => {
+    const { container } = render(<ServiceBlock service={websites} />)
+    for (const child of container.querySelector('ul')!.children) {
+      expect(child.tagName).toBe('LI')
+    }
+  })
+
   it('renders one capability block per capability when present', () => {
     render(<ServiceBlock service={ai} />)
     expect(screen.getAllByTestId('capability')).toHaveLength(
@@ -112,6 +129,21 @@ describe('CapabilityBlock', () => {
     expect(
       screen.getByText('○ (Static) prerendered as static content'),
     ).toBeInTheDocument()
+  })
+
+  it('wraps the substance panel in a revealed spotlight card', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(hover: hover) and (pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    const { CapabilityBlock: Real } = await actual()
+    const capability = ai.capabilities!.find((c) => c.substance.kind === 'code')!
+    const { container } = render(await Real({ capability }))
+    const spot = container.querySelector('[data-spotlight]')!
+    expect(spot.parentElement).toContainElement(container.querySelector('pre'))
+    expect(spot.parentElement?.parentElement).toHaveAttribute('data-reveal')
   })
 
   it('throws on an unknown ref instead of rendering nothing', async () => {

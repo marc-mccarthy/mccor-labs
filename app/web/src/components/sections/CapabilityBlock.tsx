@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { Reveal } from '@/components/motion/Reveal'
+import { Spotlight } from '@/components/motion/Spotlight'
 import { CodeBlock } from '@/components/substance/CodeBlock'
 import { IntegrationDiagram } from '@/components/substance/IntegrationDiagram'
 import { PipelineDiagram } from '@/components/substance/PipelineDiagram'
@@ -45,7 +47,12 @@ export async function CapabilityBlock({ capability }: { capability: Capability }
     <div className="flex flex-col gap-4">
       <h3 className="text-xl font-semibold text-text">{capability.title}</h3>
       <p className="max-w-2xl text-muted">{capability.summary}</p>
-      {substance}
+      <Reveal>
+        <div className="group relative isolate -m-2 rounded-xl p-2">
+          <Spotlight />
+          {substance}
+        </div>
+      </Reveal>
     </div>
   )
 }

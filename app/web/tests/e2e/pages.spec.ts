@@ -65,7 +65,7 @@ test.describe('about page', () => {
     await expect(page.getByText(/we are four people/i)).toBeVisible()
     for (const member of team) {
       await expect(
-        page.getByRole('heading', { level: 3, name: member.name }),
+        page.getByRole('heading', { level: 2, name: member.name }),
       ).toBeVisible()
     }
     await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(4)

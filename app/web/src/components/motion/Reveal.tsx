@@ -24,8 +24,6 @@ const SHOWN = {
   mask: { clipPath: 'inset(0% 0% 0% 0%)' },
 }
 
-const DURATION = { rise: '--duration-standard', mask: '--duration-scene' }
-
 type FeaturePhase = 'pending' | 'ready' | 'shown' | 'failed'
 
 function isInViewport(element: HTMLElement | null): boolean {
@@ -75,7 +73,7 @@ export function Reveal({ children, delay, variant = 'rise' }: RevealProps) {
         whileInView={SHOWN[variant]}
         viewport={{ once: true }}
         transition={{
-          duration: readDurationSeconds(DURATION[variant]),
+          duration: readDurationSeconds('--duration-standard'),
           delay: delay ?? readDurationSeconds('--delay-considered'),
           ease: readEasing('--ease-standard'),
         }}

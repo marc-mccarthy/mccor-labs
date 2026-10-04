@@ -66,4 +66,16 @@ describe('CtaBlock', () => {
     expect(container.querySelectorAll('section')).toHaveLength(1)
     expect(screen.getByRole('heading', { name: ui.ctaHeading })).toBeInTheDocument()
   })
+
+  it('renders its heading through SectionHeading', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    render(<CtaBlock />)
+    const heading = screen.getByRole('heading', { level: 2, name: ui.ctaHeading })
+    expect(heading.parentElement).toHaveAttribute('data-reveal')
+  })
 })

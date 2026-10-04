@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CapabilityBlock } from './CapabilityBlock'
 import { ServiceBlock } from './ServiceBlock'
 import { services } from '@/content/services'
@@ -32,6 +32,8 @@ const websites = services.find((s) => s.slug === 'websites')!
 const ai = services.find((s) => s.slug === 'ai-engineering')!
 
 describe('ServiceBlock', () => {
+  beforeEach(mockMatchMedia)
+
   it('renders title, detail and every deliverable', () => {
     render(<ServiceBlock service={websites} />)
     expect(screen.getByRole('heading', { name: websites.title })).toBeInTheDocument()
@@ -39,6 +41,12 @@ describe('ServiceBlock', () => {
     for (const deliverable of websites.deliverables) {
       expect(screen.getByText(deliverable)).toBeInTheDocument()
     }
+  })
+
+  it('renders its title through SectionHeading', () => {
+    render(<ServiceBlock service={websites} />)
+    const heading = screen.getByRole('heading', { level: 2, name: websites.title })
+    expect(heading.parentElement).toHaveAttribute('data-reveal')
   })
 
   it('renders an anchor carrying the service slug', () => {

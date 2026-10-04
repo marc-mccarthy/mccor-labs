@@ -2,6 +2,7 @@ import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Reveal } from '@/components/motion/Reveal'
 import { Button } from '@/components/ui/button'
+import { SectionHeading } from '@/components/ui/section-heading'
 import { site } from '@/content/site'
 import type { Role } from '@/content/types'
 
@@ -14,9 +15,7 @@ export function RoleBlock({ role }: { role: Role }) {
         <Reveal>
           <article className="flex flex-col gap-6">
             <p className="font-mono text-sm text-muted">{role.level}</p>
-            <h2 className="text-display-sm leading-tight font-semibold tracking-tight text-text">
-              {role.title}
-            </h2>
+            <SectionHeading>{role.title}</SectionHeading>
             <p className="max-w-2xl text-lg text-muted">{role.summary}</p>
             <div className="grid gap-8 sm:grid-cols-2">
               <div>

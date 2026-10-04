@@ -144,6 +144,9 @@ export function Header() {
           ))}
           <div
             style={{ '--i': nav.length } as CSSProperties}
+            onClickCapture={() => {
+              setOpen(false)
+            }}
             className={`${MOBILE_ITEM} pt-3 [&_a]:w-full [&>span]:block`}
           >
             <BookingCta />

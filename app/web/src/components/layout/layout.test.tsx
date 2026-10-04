@@ -166,6 +166,14 @@ describe('Header mobile menu', () => {
     )
   })
 
+  it('closes the menu when the booking call is activated', async () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    render(<Header />)
+    await userEvent.click(screen.getByRole('button', { name: ui.openMenu }))
+    await userEvent.click(within(menu()).getByRole('link', { name: ui.bookCall }))
+    expect(menu()).toHaveAttribute('hidden')
+  })
+
   it('staggers items and gates the animation behind motion-safe', () => {
     render(<Header />)
     const items = Array.from(menu().querySelectorAll<HTMLElement>('[style*="--i"]'))

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
 export interface VideoMotionHeroProps {
@@ -24,6 +24,7 @@ export function VideoMotionHero({
 }: VideoMotionHeroProps) {
   const [shouldAttachVideo, setShouldAttachVideo] = useState(false)
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     if (!videoSrc && !webmSrc) return
@@ -38,20 +39,35 @@ export function VideoMotionHero({
       .connection
     if (conn?.saveData) return
 
+    let timeoutId = 0
     const attachVideo = () => {
       setShouldAttachVideo(true)
     }
-
-    if (document.readyState === 'complete') {
-      const timeoutId = window.setTimeout(attachVideo, 0)
-      return () => {
-        window.clearTimeout(timeoutId)
+    const releaseVideo = () => {
+      window.clearTimeout(timeoutId)
+      window.removeEventListener('load', attachVideo)
+      const video = videoRef.current
+      if (video) {
+        video.pause()
+        video.querySelectorAll('source').forEach((source) => {
+          source.removeAttribute('src')
+        })
+        video.load()
       }
+      setShouldAttachVideo(false)
+      setVideoLoaded(false)
     }
 
-    window.addEventListener('load', attachVideo, { once: true })
+    if (document.readyState === 'complete') {
+      timeoutId = window.setTimeout(attachVideo, 0)
+    } else {
+      window.addEventListener('load', attachVideo, { once: true })
+    }
+    window.addEventListener('pagehide', releaseVideo, { once: true })
     return () => {
+      window.clearTimeout(timeoutId)
       window.removeEventListener('load', attachVideo)
+      window.removeEventListener('pagehide', releaseVideo)
     }
   }, [videoSrc, webmSrc])
 
@@ -69,6 +85,7 @@ export function VideoMotionHero({
 
       {shouldAttachVideo && (videoSrc ?? webmSrc) && (
         <video
+          ref={videoRef}
           autoPlay
           muted
           loop

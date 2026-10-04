@@ -90,6 +90,30 @@ describe('useScrollProgress', () => {
     addEventListener.mockRestore()
   })
 
+  it('recomputes once per frame when the viewport resizes', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) =>
+      frames.push(callback),
+    )
+    const ref = elementRef(mockRect(400, 400))
+    const { result } = renderHook(() => useScrollProgress(ref))
+    expect(result.current).toBeCloseTo(1 / 3, 5)
+
+    Object.defineProperty(window, 'innerHeight', { value: 1600, configurable: true })
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+      window.dispatchEvent(new Event('resize'))
+    })
+    expect(frames).toHaveLength(1)
+    act(() => {
+      frames[0]?.(0)
+    })
+    expect(result.current).toBeCloseTo(0.6, 5)
+    vi.unstubAllGlobals()
+  })
+
   it('returns a stable value under reduced motion', () => {
     mockMatchMedia(true)
     Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })

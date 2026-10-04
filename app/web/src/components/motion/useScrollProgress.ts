@@ -23,15 +23,31 @@ export function useScrollProgress(ref: RefObject<HTMLElement | null>): number {
       setProgress(Math.min(1, Math.max(0, raw)))
     }
 
-    update()
-
-    if (lenis) {
-      return lenis.on('scroll', update)
+    let frame: number | null = null
+    const onResize = () => {
+      frame ??= requestAnimationFrame(() => {
+        frame = null
+        update()
+      })
     }
 
-    window.addEventListener('scroll', update, { passive: true })
+    update()
+    window.addEventListener('resize', onResize, { passive: true })
+
+    let stopScroll: () => void
+    if (lenis) {
+      stopScroll = lenis.on('scroll', update)
+    } else {
+      window.addEventListener('scroll', update, { passive: true })
+      stopScroll = () => {
+        window.removeEventListener('scroll', update)
+      }
+    }
+
     return () => {
-      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', onResize)
+      if (frame !== null) cancelAnimationFrame(frame)
+      stopScroll()
     }
   }, [lenis, reducedMotion, ref])
 

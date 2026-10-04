@@ -25,6 +25,12 @@ describe('DeliveredStrip', () => {
     }
   })
 
+  it('renders an h2 label above the proof points', () => {
+    mockMatchMedia(false)
+    render(<DeliveredStrip />)
+    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
+  })
+
   it('sets the proof points in the mono face', () => {
     mockMatchMedia(false)
     render(<DeliveredStrip />)

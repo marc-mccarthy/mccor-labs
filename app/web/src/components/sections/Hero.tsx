@@ -42,14 +42,11 @@ export function Hero() {
                 Senior Engineering & AI Studio
               </div>
 
-              <p className="text-4xl font-extrabold tracking-tight text-text drop-shadow-md sm:text-5xl lg:text-6xl">
-                Swift by Instinct.{' '}
-                <span className="bg-gradient-to-r from-brand to-accent bg-clip-text text-transparent">
-                  Engineered to the Core.
-                </span>
+              <p className="font-mono text-sm tracking-wider text-muted uppercase">
+                {site.slogan}
               </p>
 
-              <h1 className="mt-6 text-lg font-normal text-muted drop-shadow sm:text-xl">
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text drop-shadow-md sm:text-4xl">
                 {site.tagline}
               </h1>
 

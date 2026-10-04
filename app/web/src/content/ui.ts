@@ -7,6 +7,10 @@ export const ui = {
   ctaHeading: 'Have something to build?',
   ctaBody:
     'Thirty minutes, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
+  deliveredHeading: 'Delivered',
+  servicesHeading: 'What we build',
+  pipelineHeading: 'How retrieval is built',
+  processHeading: 'How an engagement runs',
   systemsHeading: 'Built to be evaluated, not just demoed.',
   systemsBody:
     'The evaluation, the approval gates and the cost ceilings ship with the feature, so you can tell whether it is right.',

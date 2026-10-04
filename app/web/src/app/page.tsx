@@ -4,6 +4,7 @@ import { Hero } from '@/components/sections/Hero'
 import { LazyProcessScroller, LazySystemsScene } from '@/components/sections/LazySections'
 import { PipelineSection } from '@/components/sections/PipelineSection'
 import { ServicesPreview } from '@/components/sections/ServicesPreview'
+import { ui } from '@/content/ui'
 
 export default function HomePage() {
   return (
@@ -12,7 +13,7 @@ export default function HomePage() {
       <DeliveredStrip />
       <ServicesPreview />
       <PipelineSection />
-      <LazyProcessScroller />
+      <LazyProcessScroller heading={ui.processHeading} />
       <LazySystemsScene />
       <CtaBlock />
     </>

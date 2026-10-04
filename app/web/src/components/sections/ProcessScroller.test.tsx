@@ -33,6 +33,14 @@ describe('ProcessScroller', () => {
     }
   })
 
+  it.each([false, true])('renders the optional h2 (reduced: %s)', (reduced) => {
+    mockMatchMedia(reduced)
+    render(<ProcessScroller heading="How it runs" />)
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'How it runs' }),
+    ).toBeInTheDocument()
+  })
+
   it('pins the track with sticky positioning when motion is allowed', () => {
     mockMatchMedia(false)
     render(<ProcessScroller />)

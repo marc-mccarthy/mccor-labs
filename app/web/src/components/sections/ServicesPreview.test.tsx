@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ServicesPreview } from './ServicesPreview'
 import { services } from '@/content/services'
+import { ui } from '@/content/ui'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -25,6 +26,15 @@ describe('ServicesPreview', () => {
       expect(screen.getByText(service.title)).toBeInTheDocument()
       expect(screen.getByText(service.outcome)).toBeInTheDocument()
     }
+  })
+
+  it('puts an h2 above the h3 service titles', () => {
+    mockMatchMedia(false)
+    render(<ServicesPreview />)
+    expect(
+      screen.getByRole('heading', { level: 2, name: ui.servicesHeading }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(services.length)
   })
 
   it('links each service to its anchor on /services/', () => {

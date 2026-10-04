@@ -6,6 +6,7 @@ import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
 import { useScrollProgress } from '@/components/motion/useScrollProgress'
+import { SectionHeading } from '@/components/ui/section-heading'
 import { process } from '@/content/process'
 
 const VIEWPORT_UNITS = 100
@@ -29,7 +30,19 @@ function StageCard({ stage }: { stage: (typeof process)[number] }) {
   )
 }
 
-export function ProcessScroller() {
+interface ProcessScrollerProps {
+  heading?: string
+}
+
+function ProcessHeading({ heading }: ProcessScrollerProps) {
+  return heading ? (
+    <Container className="mb-8">
+      <SectionHeading>{heading}</SectionHeading>
+    </Container>
+  ) : null
+}
+
+export function ProcessScroller({ heading }: ProcessScrollerProps) {
   const reducedMotion = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
   const progress = useScrollProgress(ref)
@@ -37,6 +50,7 @@ export function ProcessScroller() {
   if (reducedMotion) {
     return (
       <Section>
+        <ProcessHeading heading={heading} />
         <Container>
           <ol className="flex flex-col gap-6">
             {process.map((stage) => (
@@ -56,7 +70,8 @@ export function ProcessScroller() {
     <Section className="py-0 sm:py-0">
       <div ref={ref}>
         <Pinned height={`${String(PIN_UNITS)}vh`}>
-          <div className="flex h-screen items-center overflow-hidden">
+          <div className="flex h-screen flex-col justify-center overflow-hidden">
+            <ProcessHeading heading={heading} />
             <ol
               className="flex"
               style={{

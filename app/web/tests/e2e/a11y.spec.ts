@@ -55,3 +55,32 @@ test('an interactive element shows a visible focus indicator', async ({ page }) 
     })
   expect(outline).not.toBe('none')
 })
+
+test('every diagram has an accessible description', async ({ page }) => {
+  let diagrams = 0
+  for (const path of ['/', '/services/', '/work/', '/process/']) {
+    await page.goto(path)
+    const broken = await page.evaluate(() =>
+      [...document.querySelectorAll('svg[role="img"]')]
+        .filter(
+          (svg) =>
+            !svg.querySelector(':scope > title')?.textContent.trim() ||
+            !svg.querySelector(':scope > desc')?.textContent.trim(),
+        )
+        .map((svg) => svg.outerHTML.slice(0, 80)),
+    )
+    expect(broken, path).toEqual([])
+    diagrams += await page.locator('svg[role="img"]').count()
+  }
+  expect(diagrams).toBeGreaterThanOrEqual(3)
+})
+
+test('the 3D pipeline canvas is hidden from assistive tech and the SVG is described', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const scene = page.locator('[aria-hidden="true"]:has([data-scene-status])')
+  await expect(scene).not.toHaveCount(0)
+  expect(await scene.locator('[role="img"], title, desc').count()).toBe(0)
+  await expect(page.locator('svg[role="img"] > desc').first()).not.toBeEmpty()
+})

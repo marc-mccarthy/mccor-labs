@@ -155,6 +155,10 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       frameId = null
       lastTime = null
     }
+    const onVisibilityChange = () => {
+      lastTime = null
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     const teardown = () => {
       observer?.disconnect()
@@ -258,6 +262,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       cancelIdle?.()
       teardown()
       setCanvasKey((key) => key + 1)

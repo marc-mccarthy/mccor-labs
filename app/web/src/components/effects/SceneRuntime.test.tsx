@@ -290,5 +290,39 @@ describe('SceneRuntime', () => {
       unmount()
       expect(disconnect).toHaveBeenCalledTimes(1)
     })
+
+    it('keeps scene time continuous across a hidden tab', async () => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      let frameCallback: FrameRequestCallback = () => undefined
+      vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+        frameCallback = callback
+        return 1
+      })
+      vi.stubGlobal('cancelAnimationFrame', vi.fn())
+      const sceneRender = vi.fn()
+      const build = vi.fn((): SceneHandle => ({ render: sceneRender, dispose: vi.fn() }))
+
+      const { container } = render(<SceneRuntime fallback={<div />} build={build} />)
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
+      await waitFor(() => {
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+
+      frameCallback(1000)
+      frameCallback(1016)
+      expect(sceneRender).toHaveBeenLastCalledWith(16)
+
+      document.dispatchEvent(new Event('visibilitychange'))
+      frameCallback(60_000)
+      expect(sceneRender).toHaveBeenLastCalledWith(16)
+      frameCallback(60_016)
+      expect(sceneRender).toHaveBeenLastCalledWith(32)
+    })
   })
 })

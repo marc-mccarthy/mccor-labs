@@ -141,8 +141,9 @@ describe('WorkflowDiagram', () => {
       .querySelector('svg')!
       .querySelectorAll('path')
       .forEach((path) => {
-        expect(path.style.transition).toBe('none')
+        expect(path.style.transitionProperty).toBe('none')
         expect(path.style.transitionDelay).toBe('')
+        expect(path.style.transitionDuration).toBe('')
         expect(path.getAttribute('stroke')).toBe('var(--color-brand)')
       })
     container

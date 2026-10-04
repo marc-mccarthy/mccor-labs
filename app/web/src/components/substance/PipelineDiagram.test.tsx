@@ -104,8 +104,9 @@ describe('PipelineDiagram', () => {
     expect(paths.length).toBeGreaterThan(0)
     paths.forEach((path) => {
       expect(path.style.strokeDashoffset).toBe('0')
-      expect(path.style.transition).toBe('none')
+      expect(path.style.transitionProperty).toBe('none')
       expect(path.style.transitionDelay).toBe('')
+      expect(path.style.transitionDuration).toBe('')
     })
   })
 
@@ -194,7 +195,7 @@ describe('PipelineDiagram', () => {
       .querySelectorAll('circle')
       .forEach((node) => {
         expect(node.style.stroke).toBe('var(--color-brand)')
-        expect(node.style.transition).toBe('none')
+        expect(node.style.transitionProperty).toBe('none')
       })
   })
 })

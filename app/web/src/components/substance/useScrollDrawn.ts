@@ -30,23 +30,29 @@ export function useScrollDrawn(reducedMotion: boolean) {
 
   const edgeStyle = (index: number): CSSProperties => ({
     strokeDashoffset: isDrawn ? 0 : 1,
-    transition: reducedMotion
-      ? 'none'
-      : 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
-    transitionDelay: reducedMotion
-      ? undefined
-      : `calc(${String(index)} * var(--stagger-interval))`,
+    ...(reducedMotion
+      ? { transitionProperty: 'none' }
+      : {
+          transitionProperty: 'stroke-dashoffset',
+          transitionDuration: 'var(--duration-scene)',
+          transitionTimingFunction: 'var(--ease-standard)',
+          transitionDelay: `calc(${String(index)} * var(--stagger-interval))`,
+        }),
   })
 
   const nodeStroke = (index: number): CSSProperties => ({
     stroke: isDrawn ? 'var(--color-brand)' : 'var(--color-border-strong)',
-    transition: reducedMotion
-      ? 'none'
-      : 'stroke var(--duration-pointer) var(--ease-standard)',
-    transitionDelay:
-      index === 0
-        ? '0s'
-        : `calc(${String(index - 1)} * var(--stagger-interval) + var(--duration-scene))`,
+    ...(reducedMotion
+      ? { transitionProperty: 'none' }
+      : {
+          transitionProperty: 'stroke',
+          transitionDuration: 'var(--duration-pointer)',
+          transitionTimingFunction: 'var(--ease-standard)',
+          transitionDelay:
+            index === 0
+              ? '0s'
+              : `calc(${String(index - 1)} * var(--stagger-interval) + var(--duration-scene))`,
+        }),
   })
 
   return { ref, drawn: isDrawn, edgeStyle, nodeStroke }

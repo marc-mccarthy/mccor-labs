@@ -96,11 +96,10 @@ describe('IntegrationDiagram', () => {
     container
       .querySelector('svg')!
       .querySelectorAll('circle')
-      .forEach((node, index) => {
+      .forEach((node) => {
         expect(node.style.stroke).toBe('var(--color-brand)')
-        expect(node.style.transitionDelay).toBe(
-          `calc(${String(index)} * var(--stagger-interval) + var(--duration-scene))`,
-        )
+        expect(node.style.transitionProperty).toBe('none')
+        expect(node.style.transitionDelay).toBe('')
       })
   })
 

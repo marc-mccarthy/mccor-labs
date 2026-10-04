@@ -16,7 +16,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden">
       <Parallax>
-        <div className="relative flex min-h-[85vh] items-center">
+        <div className="relative flex min-h-[85vh] items-end">
           <VideoMotionHero
             posterSrc="/media/brand/mccor-stag-hero.webp"
             videoSrc="/media/brand/hero-loop.mp4"
@@ -30,7 +30,7 @@ export function Hero() {
             fallback={<HeroMotionCanvas className="opacity-30" />}
           />
           <div
-            className="relative z-10 w-full py-16 sm:py-24"
+            className="relative z-10 w-full pt-16 pb-8 sm:pt-24"
             style={{
               paddingLeft: 'max(24px, calc(100vw / 15))',
               paddingRight: 'max(24px, calc(100vw / 15))',

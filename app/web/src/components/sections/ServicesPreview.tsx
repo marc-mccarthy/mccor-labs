@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
+import { Spotlight } from '@/components/motion/Spotlight'
 import { Stagger } from '@/components/motion/Stagger'
 import { Card } from '@/components/ui/card'
 import { SectionHeading } from '@/components/ui/section-heading'
@@ -24,8 +25,12 @@ export function ServicesPreview() {
                   key={service.slug}
                   data-service=""
                   data-featured={featured ? 'true' : undefined}
-                  className={cn('h-full', featured && 'border-brand')}
+                  className={cn(
+                    'group relative isolate h-full',
+                    featured && 'border-brand',
+                  )}
                 >
+                  <Spotlight />
                   <h3 className="text-xl font-semibold text-text">
                     <Link
                       href={`/services/#${service.slug}`}

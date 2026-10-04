@@ -135,6 +135,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let visible = false
     let started = false
     let cancelIdle: (() => void) | null = null
+    let stopFitting: (() => void) | null = null
     const velocityRef = { current: 0 }
 
     const loop = (time: number) => {
@@ -162,6 +163,8 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     const teardown = () => {
       observer?.disconnect()
+      stopFitting?.()
+      stopFitting = null
       pause()
       handle?.dispose()
       handle = null
@@ -208,9 +211,11 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
             const resizeObserver = new ResizeObserver(resize)
             resizeObserver.observe(canvas)
             resize()
-            return () => {
+            const stop = () => {
               resizeObserver.disconnect()
             }
+            stopFitting = stop
+            return stop
           }
           handle = buildRef.current({
             THREE,

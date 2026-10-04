@@ -17,7 +17,12 @@ vi.mock('three', () => ({
   },
 }))
 
-import { SceneRuntime, resetWebGL2Probe, type SceneHandle } from './SceneRuntime'
+import {
+  SceneRuntime,
+  resetWebGL2Probe,
+  type SceneContext,
+  type SceneHandle,
+} from './SceneRuntime'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -167,7 +172,16 @@ describe('SceneRuntime', () => {
   it('falls back and releases the renderer when the scene build throws', async () => {
     mockMatchMedia(false)
     mockWebGL2(true)
-    const build = vi.fn((): SceneHandle => {
+    const resizeDisconnect = vi.fn()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe = vi.fn()
+        disconnect = resizeDisconnect
+      },
+    )
+    const build = vi.fn((context: SceneContext): SceneHandle => {
+      context.fitToCanvas(vi.fn())
       throw new Error('build failed')
     })
 
@@ -184,9 +198,12 @@ describe('SceneRuntime', () => {
     expect(rendererCtor).toHaveBeenCalledTimes(1)
     expect(rendererForceContextLoss).toHaveBeenCalledTimes(1)
     expect(rendererDispose).toHaveBeenCalledTimes(1)
+    expect(resizeDisconnect).toHaveBeenCalledTimes(1)
 
     unmount()
     expect(rendererDispose).toHaveBeenCalledTimes(1)
+    expect(resizeDisconnect).toHaveBeenCalledTimes(1)
+    vi.unstubAllGlobals()
   })
 
   describe('offscreen pause', () => {

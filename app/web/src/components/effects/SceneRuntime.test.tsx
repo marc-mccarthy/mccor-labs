@@ -164,6 +164,31 @@ describe('SceneRuntime', () => {
     })
   })
 
+  it('falls back and releases the renderer when the scene build throws', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const build = vi.fn((): SceneHandle => {
+      throw new Error('build failed')
+    })
+
+    const { container, unmount } = render(
+      <SceneRuntime fallback={<div data-testid="fallback" />} build={build} />,
+    )
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+        'data-scene-status',
+        'fallback',
+      )
+    })
+    expect(rendererCtor).toHaveBeenCalledTimes(1)
+    expect(rendererForceContextLoss).toHaveBeenCalledTimes(1)
+    expect(rendererDispose).toHaveBeenCalledTimes(1)
+
+    unmount()
+    expect(rendererDispose).toHaveBeenCalledTimes(1)
+  })
+
   describe('offscreen pause', () => {
     type ObserverCallback = (entries: { isIntersecting: boolean }[]) => void
     let notify: ObserverCallback

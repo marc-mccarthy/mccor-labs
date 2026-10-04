@@ -227,7 +227,9 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
           resume()
         })
         .catch(() => {
-          if (!cancelled) setStatus('fallback')
+          if (cancelled) return
+          teardown()
+          setStatus('fallback')
         })
     }
 

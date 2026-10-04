@@ -31,11 +31,12 @@ describe('SystemsScene', () => {
     expect(await screen.findByTestId('lattice')).not.toContainElement(heading)
   })
 
-  it('references no systems poster image', () => {
+  it('renders the text-free lattice poster and never the condemned stag poster', () => {
     mockMatchMedia(false)
     const { container } = render(<SystemsScene />)
+    const src = screen.getByTestId('systems-poster').getAttribute('src') ?? ''
+    expect(src).toContain('systems-lattice.webp')
     expect(container.innerHTML).not.toContain('mccor-stag-systems')
-    expect(container.querySelector('img')).toBeNull()
   })
 
   it('does not hide the heading from assistive tech and renders exactly one section', () => {

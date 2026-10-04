@@ -27,6 +27,13 @@ export function SystemsScene() {
       <div ref={ref}>
         <Pinned height={PIN_HEIGHT}>
           <div className="relative flex h-screen items-center overflow-hidden bg-base">
+            <img
+              src="/media/brand/systems-lattice.webp"
+              alt=""
+              loading="lazy"
+              data-testid="systems-poster"
+              className="absolute inset-0 h-full w-full object-cover opacity-60"
+            />
             <NodeLatticeScene
               progress={progress}
               className="pointer-events-none absolute inset-0 z-5"

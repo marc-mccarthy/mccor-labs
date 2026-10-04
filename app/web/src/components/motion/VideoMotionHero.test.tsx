@@ -75,6 +75,43 @@ describe('VideoMotionHero', () => {
     expect(container.querySelector('video')).toBeNull()
   })
 
+  function pageshow(persisted: boolean) {
+    const event = new Event('pageshow')
+    Object.defineProperty(event, 'persisted', { value: persisted })
+    return event
+  }
+
+  it('re-attaches the video after a back/forward cache restore', () => {
+    mockMatchMedia(false)
+    const { container } = renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'))
+    })
+    expect(container.querySelector('video')).toBeNull()
+    act(() => {
+      window.dispatchEvent(pageshow(true))
+    })
+    expect(container.querySelector('video source')).not.toBeNull()
+  })
+
+  it('does not re-attach on a pageshow that is not a cache restore', () => {
+    mockMatchMedia(false)
+    const { container } = renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'))
+    })
+    act(() => {
+      window.dispatchEvent(pageshow(false))
+    })
+    expect(container.querySelector('video')).toBeNull()
+  })
+
   it('skips the video under reduced motion', () => {
     mockMatchMedia(true)
     const { container } = renderHero()

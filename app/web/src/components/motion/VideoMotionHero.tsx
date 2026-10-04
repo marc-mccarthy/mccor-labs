@@ -63,11 +63,16 @@ export function VideoMotionHero({
     } else {
       window.addEventListener('load', attachVideo, { once: true })
     }
-    window.addEventListener('pagehide', releaseVideo, { once: true })
+    const restoreVideo = (event: PageTransitionEvent) => {
+      if (event.persisted) attachVideo()
+    }
+    window.addEventListener('pagehide', releaseVideo)
+    window.addEventListener('pageshow', restoreVideo)
     return () => {
       window.clearTimeout(timeoutId)
       window.removeEventListener('load', attachVideo)
       window.removeEventListener('pagehide', releaseVideo)
+      window.removeEventListener('pageshow', restoreVideo)
     }
   }, [videoSrc, webmSrc])
 

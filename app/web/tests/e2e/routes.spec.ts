@@ -45,6 +45,34 @@ test.describe('routes', () => {
     }
   })
 
+  test('the share card is an absolute, sized, served image', async ({
+    page,
+    request,
+  }) => {
+    await page.goto('/')
+    for (const [attr, key] of [
+      ['property', 'og:image'],
+      ['name', 'twitter:image'],
+    ] as const) {
+      const url = await page.locator(`meta[${attr}="${key}"]`).getAttribute('content')
+      expect(url, key).toMatch(/^https:\/\/.+\.jpg/)
+      await expect(page.locator(`meta[${attr}="${key}:width"]`)).toHaveAttribute(
+        'content',
+        '1200',
+      )
+      await expect(page.locator(`meta[${attr}="${key}:height"]`)).toHaveAttribute(
+        'content',
+        '630',
+      )
+      await expect(page.locator(`meta[${attr}="${key}:alt"]`)).toHaveAttribute(
+        'content',
+        /Red Stag/,
+      )
+      const response = await request.get(new URL(url ?? '').pathname)
+      expect(response.status(), `${key} should resolve`).toBe(200)
+    }
+  })
+
   test('the 404 page is exported and distinct', async ({ page }) => {
     await page.goto('/404.html')
     await expect(page.locator('h1')).toContainText(/does not exist/i)

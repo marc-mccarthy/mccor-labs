@@ -37,3 +37,23 @@ describe('Reveal', () => {
     expect(style.transform).toBe('')
   })
 })
+
+describe('Reveal when the animation chunk fails', () => {
+  it('leaves content visible', async () => {
+    vi.resetModules()
+    vi.doMock('./features', () => ({
+      loadDomAnimationFeatures: () => Promise.reject(new Error('chunk failed')),
+    }))
+    mockMatchMedia(false)
+    const { Reveal: FailingReveal } = await import('./Reveal')
+    const { container } = render(
+      <FailingReveal>
+        <p>content</p>
+      </FailingReveal>,
+    )
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(getComputedStyle(screen.getByText('content')).opacity).not.toBe('0')
+    expect((container.firstElementChild as HTMLElement).style.opacity).toBe('')
+    vi.doUnmock('./features')
+  })
+})

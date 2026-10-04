@@ -32,6 +32,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="font/woff2"
           crossOrigin="anonymous"
         />
+        <noscript>
+          <style>{'[data-reveal]{opacity:1!important;transform:none!important}'}</style>
+        </noscript>
       </head>
       <body className="flex min-h-dvh flex-col">
         <SkipLink />

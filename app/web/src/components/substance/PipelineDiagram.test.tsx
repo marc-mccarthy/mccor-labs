@@ -126,4 +126,73 @@ describe('PipelineDiagram', () => {
       expect(x / width).toBeCloseTo((index + 0.5) / count)
     })
   })
+
+  it('staggers edges and keeps nodes unlit until drawn', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    const paths = container.querySelector('svg')!.querySelectorAll('path')
+    paths.forEach((path, index) => {
+      expect(path.style.transitionDelay).toBe(
+        `calc(${String(index)} * var(--stagger-interval))`,
+      )
+      expect(path.getAttribute('stroke')).toBe('var(--color-brand)')
+      expect(path.style.strokeDashoffset).toBe('1')
+    })
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node) => {
+        expect(node.style.stroke).toBe('var(--color-border-strong)')
+      })
+  })
+
+  it('lights nodes in sequence once drawn', () => {
+    mockMatchMedia(false)
+    class ImmediateObserver {
+      constructor(private readonly callback: IntersectionObserverCallback) {}
+      observe() {
+        this.callback(
+          [{ isIntersecting: true } as IntersectionObserverEntry],
+          this as never,
+        )
+      }
+      disconnect = vi.fn()
+    }
+    vi.stubGlobal('IntersectionObserver', ImmediateObserver)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    vi.unstubAllGlobals()
+    const nodes = container.querySelector('svg')!.querySelectorAll('circle')
+    nodes.forEach((node, index) => {
+      expect(node.style.stroke).toBe('var(--color-brand)')
+      expect(node.style.transitionDelay).toBe(
+        index === 0
+          ? '0s'
+          : `calc(${String(index - 1)} * var(--stagger-interval) + var(--duration-scene))`,
+      )
+    })
+    container
+      .querySelector('svg')!
+      .querySelectorAll('path')
+      .forEach((path) => {
+        expect(path.style.strokeDashoffset).toBe('0')
+      })
+  })
+
+  it('shows lit nodes with no transition under reduced motion', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,
+    )
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node) => {
+        expect(node.style.stroke).toBe('var(--color-brand)')
+        expect(node.style.transition).toBe('none')
+      })
+  })
 })

@@ -26,7 +26,7 @@ const vertical: Place = (index) => [
 
 export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
   const reducedMotion = useReducedMotion()
-  const { ref, dashOffset } = useScrollDrawn(reducedMotion)
+  const { ref, edgeStyle, nodeStroke } = useScrollDrawn(reducedMotion)
 
   const shapes = (place: Place) => (
     <>
@@ -39,14 +39,11 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
             key={stage}
             d={`M${String(x1)} ${String(y1)} L${String(x2)} ${String(y2)}`}
             fill="none"
-            stroke="var(--color-border-strong)"
+            stroke="var(--color-brand)"
             strokeWidth={2}
             pathLength={1}
             strokeDasharray={1}
-            style={{
-              strokeDashoffset: dashOffset,
-              transition: 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
-            }}
+            style={edgeStyle(index - 1)}
           />
         )
       })}
@@ -59,8 +56,8 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
             cy={cy}
             r={NODE_RADIUS}
             fill="var(--color-surface)"
-            stroke="var(--color-brand)"
             strokeWidth={2}
+            style={nodeStroke(index)}
           />
         )
       })}

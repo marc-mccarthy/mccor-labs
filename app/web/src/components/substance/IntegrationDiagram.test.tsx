@@ -84,4 +84,36 @@ describe('IntegrationDiagram', () => {
       expect(x / width).toBeCloseTo((index + 0.5) / count)
     })
   })
+
+  it('draws a crimson boundary then lights the surfaces', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <IntegrationDiagram surfaces={SURFACES} description={DESCRIPTION} />,
+    )
+    expect(container.querySelector('rect')?.getAttribute('stroke')).toBe(
+      'var(--color-brand)',
+    )
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node, index) => {
+        expect(node.style.stroke).toBe('var(--color-brand)')
+        expect(node.style.transitionDelay).toBe(
+          `calc(${String(index)} * var(--stagger-interval) + var(--duration-scene))`,
+        )
+      })
+  })
+
+  it('leaves surfaces unlit before drawing', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <IntegrationDiagram surfaces={SURFACES} description={DESCRIPTION} />,
+    )
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node) => {
+        expect(node.style.stroke).toBe('var(--color-border-strong)')
+      })
+  })
 })

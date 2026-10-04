@@ -131,4 +131,39 @@ describe('WorkflowDiagram', () => {
       expect(x / width).toBeCloseTo((index + 0.5) / count)
     })
   })
+
+  it('staggers edges and lights plain nodes under reduced motion', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
+    )
+    container
+      .querySelector('svg')!
+      .querySelectorAll('path')
+      .forEach((path, index) => {
+        expect(path.style.transitionDelay).toBe(
+          `calc(${String(index)} * var(--stagger-interval))`,
+        )
+        expect(path.getAttribute('stroke')).toBe('var(--color-brand)')
+      })
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node) => {
+        expect(node.style.stroke).toBe('var(--color-brand)')
+      })
+  })
+
+  it('leaves plain nodes unlit before drawing', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
+    )
+    container
+      .querySelector('svg')!
+      .querySelectorAll('circle')
+      .forEach((node) => {
+        expect(node.style.stroke).toBe('var(--color-border-strong)')
+      })
+  })
 })

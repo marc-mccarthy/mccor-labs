@@ -15,7 +15,7 @@ const DIAGRAM_HEIGHT = 120
 
 export function IntegrationDiagram({ surfaces, description }: IntegrationDiagramProps) {
   const reducedMotion = useReducedMotion()
-  const { ref, dashOffset } = useScrollDrawn(reducedMotion)
+  const { ref, edgeStyle, nodeStroke } = useScrollDrawn(reducedMotion)
   const width = surfaces.length * SURFACE_GAP + BOUNDARY_PADDING * 2
   const midY = DIAGRAM_HEIGHT / 2
 
@@ -36,14 +36,11 @@ export function IntegrationDiagram({ surfaces, description }: IntegrationDiagram
           height={DIAGRAM_HEIGHT - BOUNDARY_PADDING}
           rx={12}
           fill="none"
-          stroke="var(--color-border-strong)"
+          stroke="var(--color-brand)"
           strokeWidth={2}
           pathLength={1}
           strokeDasharray={1}
-          style={{
-            strokeDashoffset: dashOffset,
-            transition: 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
-          }}
+          style={edgeStyle(0)}
         />
         {surfaces.map((surface, index) => (
           <circle
@@ -52,8 +49,8 @@ export function IntegrationDiagram({ surfaces, description }: IntegrationDiagram
             cy={midY}
             r={SURFACE_RADIUS}
             fill="var(--color-surface)"
-            stroke="var(--color-border-strong)"
             strokeWidth={2}
+            style={nodeStroke(index + 1)}
           />
         ))}
       </svg>

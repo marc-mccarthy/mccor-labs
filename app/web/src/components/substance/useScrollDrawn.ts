@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 export function useScrollDrawn(reducedMotion: boolean) {
   const ref = useRef<SVGSVGElement | null>(null)
@@ -26,5 +26,24 @@ export function useScrollDrawn(reducedMotion: boolean) {
     }
   }, [reducedMotion])
 
-  return { ref, dashOffset: reducedMotion || drawn ? 0 : 1 }
+  const isDrawn = reducedMotion || drawn
+
+  const edgeStyle = (index: number): CSSProperties => ({
+    strokeDashoffset: isDrawn ? 0 : 1,
+    transition: 'stroke-dashoffset var(--duration-scene) var(--ease-standard)',
+    transitionDelay: `calc(${String(index)} * var(--stagger-interval))`,
+  })
+
+  const nodeStroke = (index: number): CSSProperties => ({
+    stroke: isDrawn ? 'var(--color-brand)' : 'var(--color-border-strong)',
+    transition: reducedMotion
+      ? 'none'
+      : 'stroke var(--duration-pointer) var(--ease-standard)',
+    transitionDelay:
+      index === 0
+        ? '0s'
+        : `calc(${String(index - 1)} * var(--stagger-interval) + var(--duration-scene))`,
+  })
+
+  return { ref, drawn: isDrawn, edgeStyle, nodeStroke }
 }

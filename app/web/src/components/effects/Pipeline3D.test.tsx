@@ -11,33 +11,8 @@ const spies = vi.hoisted(() => ({
 }))
 
 vi.mock('three', () => {
-  class Vector3 {
-    x = 0
-    y = 0
-    z = 0
-    constructor(x = 0, y = 0, z = 0) {
-      this.x = x
-      this.y = y
-      this.z = z
-    }
-    copy() {
-      return this
-    }
-    setY() {
-      return this
-    }
-    project() {
-      return this
-    }
-  }
   return {
     LinearSRGBColorSpace: 'srgb-linear',
-    Vector3,
-    CatmullRomCurve3: class {
-      getPointAt() {
-        return new Vector3()
-      }
-    },
     WebGLRenderer: class {
       dispose = spies.rendererDispose
       forceContextLoss = spies.forceContextLoss
@@ -51,12 +26,9 @@ vi.mock('three', () => {
     Scene: class {
       add = vi.fn()
     },
-    PerspectiveCamera: class {
-      aspect = 1
-      position = new Vector3()
+    OrthographicCamera: class {
+      bottom = -1
       updateProjectionMatrix = vi.fn()
-      updateMatrixWorld = vi.fn()
-      lookAt = vi.fn()
     },
     Color: class {
       setStyle() {
@@ -68,10 +40,12 @@ vi.mock('three', () => {
       setAttribute = vi.fn()
     },
     BufferAttribute: vi.fn(),
-    PointsMaterial: class {
+    ShaderMaterial: class {
       dispose = spies.materialDispose
     },
-    Points: vi.fn(),
+    Points: class {
+      frustumCulled = true
+    },
   }
 })
 
@@ -116,9 +90,7 @@ describe('Pipeline3D', () => {
   it('falls back and builds nothing under reduced motion', () => {
     mockMatchMedia(true)
     mockWebGL2(true)
-    const { container } = render(
-      <Pipeline3D stages={retrievalPipeline.stages} progress={0} />,
-    )
+    const { container } = render(<Pipeline3D stages={retrievalPipeline.stages} />)
     expect(status(container)).toBe('fallback')
     expect(spies.rendererCtor).not.toHaveBeenCalled()
   })
@@ -126,23 +98,16 @@ describe('Pipeline3D', () => {
   it('falls back when WebGL2 is unavailable', () => {
     mockMatchMedia(false)
     mockWebGL2(false)
-    const { container } = render(
-      <Pipeline3D stages={retrievalPipeline.stages} progress={0} />,
-    )
+    const { container } = render(<Pipeline3D stages={retrievalPipeline.stages} />)
     expect(status(container)).toBe('fallback')
     expect(spies.rendererCtor).not.toHaveBeenCalled()
   })
 
-  it('renders every stage as aria-hidden DOM text', () => {
+  it('renders no text of its own and is hidden from assistive tech', () => {
     mockMatchMedia(true)
     mockWebGL2(false)
-    const { container } = render(
-      <Pipeline3D stages={retrievalPipeline.stages} progress={0} />,
-    )
-    const spans = container.querySelectorAll('span')
-    expect(Array.from(spans).map((span) => span.textContent)).toEqual([
-      ...retrievalPipeline.stages,
-    ])
+    const { container } = render(<Pipeline3D stages={retrievalPipeline.stages} />)
+    expect(container.textContent).toBe('')
     expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true')
   })
 
@@ -150,7 +115,7 @@ describe('Pipeline3D', () => {
     mockMatchMedia(false)
     mockWebGL2(true)
     const { container, unmount } = render(
-      <Pipeline3D stages={retrievalPipeline.stages} progress={0.5} />,
+      <Pipeline3D stages={retrievalPipeline.stages} />,
     )
     await waitFor(() => {
       expect(status(container)).toBe('active')

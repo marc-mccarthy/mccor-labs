@@ -4,6 +4,7 @@ import { roles } from '@/content/careers'
 import { process } from '@/content/process'
 import { services } from '@/content/services'
 import { team } from '@/content/team'
+import { ui } from '@/content/ui'
 
 test.describe('services page', () => {
   test('anchors, headings and capabilities are present @smoke', async ({ page }) => {
@@ -21,13 +22,24 @@ test.describe('services page', () => {
     }
   })
 
-  test('tools we build with sit alone in the last section, as text', async ({ page }) => {
+  test('tools we build with sit alone in the second-last section, as text', async ({
+    page,
+  }) => {
+    await page.goto('/services/')
+    const tools = page.locator('main section').nth(-2)
+    await expect(
+      tools.getByRole('heading', { level: 2, name: 'Tools we build with' }),
+    ).toBeVisible()
+    await expect(tools.locator('img, svg')).toHaveCount(0)
+  })
+
+  test('ends with the call to action', async ({ page }) => {
     await page.goto('/services/')
     const last = page.locator('main section').last()
     await expect(
-      last.getByRole('heading', { level: 2, name: 'Tools we build with' }),
+      last.getByRole('heading', { level: 2, name: ui.ctaHeading }),
     ).toBeVisible()
-    await expect(last.locator('img, svg')).toHaveCount(0)
+    await expect(last.getByRole('link')).toHaveCount(1)
   })
 
   test('navigating to an anchor scrolls past zero', async ({ page }) => {

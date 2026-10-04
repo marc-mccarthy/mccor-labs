@@ -71,7 +71,7 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
   } as CSSProperties
 
   return (
-    <Section className="motion-safe:md:py-0">
+    <Section className="motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0">
       <div ref={ref}>
         <Pinned height={`${String(PIN_UNITS)}vh`} from="md">
           <div className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden">

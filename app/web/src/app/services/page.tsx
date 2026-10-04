@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
+import { CtaBlock } from '@/components/sections/CtaBlock'
 import { PageHeader } from '@/components/sections/PageHeader'
 import { ServiceBlock } from '@/components/sections/ServiceBlock'
 import { IntegrationMarks } from '@/components/substance/IntegrationMarks'
@@ -28,6 +29,7 @@ export default function ServicesPage() {
           <IntegrationMarks {...toolsWeBuildWith} />
         </Container>
       </Section>
+      <CtaBlock />
     </>
   )
 }

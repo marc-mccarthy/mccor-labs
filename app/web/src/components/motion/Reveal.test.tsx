@@ -72,6 +72,8 @@ describe('Reveal when the animation chunk fails', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(getComputedStyle(screen.getByText('content')).opacity).not.toBe('0')
     expect((container.firstElementChild as HTMLElement).style.opacity).toBe('')
+    expect(container.querySelector('[data-reveal="failed"]')).not.toBeNull()
+    expect(container.querySelector('[data-reveal="pending"]')).toBeNull()
     vi.doUnmock('./features')
   })
 })

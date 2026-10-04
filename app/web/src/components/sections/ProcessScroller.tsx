@@ -71,20 +71,20 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
   } as CSSProperties
 
   return (
-    <Section className="md:py-0">
+    <Section className="motion-safe:md:py-0">
       <div ref={ref}>
         <Pinned height={`${String(PIN_UNITS)}vh`} from="md">
-          <div className="md:flex md:h-screen md:flex-col md:justify-center md:overflow-hidden">
+          <div className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden">
             <ProcessHeading heading={heading} />
             <Container>
               <ol
-                className="flex flex-col gap-6 md:-translate-x-(--shift-md) md:flex-row md:gap-0 lg:-translate-x-(--shift-lg)"
+                className="flex flex-col gap-6 motion-safe:md:-translate-x-(--shift-md) motion-safe:md:flex-row motion-safe:md:gap-0 motion-safe:lg:-translate-x-(--shift-lg)"
                 style={track}
               >
                 {process.map((stage) => (
                   <li
                     key={stage.index}
-                    className="md:w-full md:shrink-0 md:pr-6 lg:w-1/2"
+                    className="motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2"
                   >
                     <StageCard stage={stage} />
                   </li>

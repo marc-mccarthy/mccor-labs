@@ -62,6 +62,25 @@ async function scrollThrough(page: Page) {
   await page.waitForTimeout(500)
 }
 
+async function measureCls(page: Page, path: string): Promise<number> {
+  await page.addInitScript(() => {
+    const holder = window as unknown as { cls: number }
+    holder.cls = 0
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const shift = entry as PerformanceEntry & {
+          value: number
+          hadRecentInput: boolean
+        }
+        if (!shift.hadRecentInput) holder.cls += shift.value
+      }
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+  await page.goto(path)
+  await scrollThrough(page)
+  return page.evaluate(() => (window as unknown as { cls: number }).cls)
+}
+
 test.describe('hard gates', () => {
   test.describe.configure({ retries: 2 })
 
@@ -116,26 +135,48 @@ test.describe('hard gates', () => {
 
   for (const path of ROUTES) {
     test(`${path} CLS is under ${String(CLS_MAX)}`, async ({ page }) => {
-      await page.addInitScript(() => {
-        const holder = window as unknown as { cls: number }
-        holder.cls = 0
-        new PerformanceObserver((list) => {
-          for (const entry of list.getEntries()) {
-            const shift = entry as PerformanceEntry & {
-              value: number
-              hadRecentInput: boolean
-            }
-            if (!shift.hadRecentInput) holder.cls += shift.value
-          }
-        }).observe({ type: 'layout-shift', buffered: true })
-      })
-      await page.goto(path)
-      await scrollThrough(page)
-      const cls = await page.evaluate(() => (window as unknown as { cls: number }).cls)
+      const cls = await measureCls(page, path)
       console.log(`BUDGET cls ${path} ${cls.toFixed(4)} / ${String(CLS_MAX)}`)
       expect(cls).toBeLessThan(CLS_MAX)
     })
   }
+
+  test.describe('reduced motion at 1440', () => {
+    const viewport = { width: 1440, height: 900 }
+    test.use({ viewport, contextOptions: { reducedMotion: 'reduce' } })
+
+    for (const path of ['/', '/process/']) {
+      test(`${path} has no layout shift under reduced motion`, async ({ page }) => {
+        const cls = await measureCls(page, path)
+        console.log(`BUDGET cls-reduced-motion ${path} ${cls.toFixed(4)}`)
+        expect(cls).toBe(0)
+      })
+
+      test(`${path} server layout matches the hydrated layout under reduced motion`, async ({
+        browser,
+        page,
+        baseURL,
+      }) => {
+        const server = await browser.newContext({
+          viewport,
+          reducedMotion: 'reduce',
+          javaScriptEnabled: false,
+        })
+        const serverPage = await server.newPage()
+        await serverPage.goto(`${String(baseURL)}${path}`, { waitUntil: 'networkidle' })
+        const before = await serverPage.evaluate(
+          () => document.documentElement.scrollHeight,
+        )
+        await server.close()
+        await page.goto(path, { waitUntil: 'networkidle' })
+        const after = await page.evaluate(() => document.documentElement.scrollHeight)
+        console.log(
+          `BUDGET reduced-motion-height ${path} server=${String(before)} hydrated=${String(after)}`,
+        )
+        expect(after).toBe(before)
+      })
+    }
+  })
 
   test('INP on / with a scene rendering is under 200 ms', async ({ page }) => {
     await page.addInitScript(() => {

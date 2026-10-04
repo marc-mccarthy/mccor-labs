@@ -16,20 +16,22 @@ export function Pinned({ height, from, children }: PinnedProps) {
     return <div>{children}</div>
   }
 
-  if (from) {
-    return (
-      <div
-        className="md:h-(--pin-height)"
-        style={{ '--pin-height': height } as CSSProperties}
-      >
-        <div className="md:sticky md:top-0">{children}</div>
-      </div>
-    )
-  }
-
   return (
-    <div style={{ height }}>
-      <div style={{ position: 'sticky', top: 0 }}>{children}</div>
+    <div
+      className={
+        from ? 'motion-safe:md:h-(--pin-height)' : 'motion-safe:h-(--pin-height)'
+      }
+      style={{ '--pin-height': height } as CSSProperties}
+    >
+      <div
+        className={
+          from
+            ? 'motion-safe:md:sticky motion-safe:md:top-0'
+            : 'motion-safe:sticky motion-safe:top-0'
+        }
+      >
+        {children}
+      </div>
     </div>
   )
 }

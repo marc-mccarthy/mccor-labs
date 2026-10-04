@@ -56,8 +56,21 @@ describe('Pinned', () => {
     )
     const inner = screen.getByText('content').parentElement!
     expect(getComputedStyle(inner).position).not.toBe('sticky')
-    expect(inner).toHaveClass('md:sticky', 'md:top-0')
-    expect(inner.parentElement).toHaveClass('md:h-(--pin-height)')
+    expect(inner).toHaveClass('motion-safe:md:sticky', 'motion-safe:md:top-0')
+    expect(inner.parentElement).toHaveClass('motion-safe:md:h-(--pin-height)')
     expect(inner.parentElement!.style.getPropertyValue('--pin-height')).toBe('200vh')
+  })
+
+  it('pins only when the visitor allows motion, so server markup never collapses on hydration', () => {
+    mockMatchMedia(false)
+    render(
+      <Pinned height="150vh">
+        <p>content</p>
+      </Pinned>,
+    )
+    const inner = screen.getByText('content').parentElement!
+    expect(inner).toHaveClass('motion-safe:sticky', 'motion-safe:top-0')
+    expect(inner.parentElement).toHaveClass('motion-safe:h-(--pin-height)')
+    expect(inner.parentElement!.style.height).toBe('')
   })
 })

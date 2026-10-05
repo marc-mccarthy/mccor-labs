@@ -103,18 +103,18 @@ test.describe('process stages by width', () => {
 })
 
 test.describe('about page', () => {
-  test('states the team size and lists four people with mailto links @smoke', async ({
+  test('states the team size and lists five people with mailto links @smoke', async ({
     page,
   }) => {
     await page.goto('/about/')
     await expect(page.locator('h1')).toHaveCount(1)
-    await expect(page.getByText(/we are four people/i)).toBeVisible()
+    await expect(page.getByText(/we are five people/i)).toBeVisible()
     for (const member of team) {
       await expect(
         page.getByRole('heading', { level: 2, name: member.name }),
       ).toBeVisible()
     }
-    await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(4)
+    await expect(page.locator('main a[href^="mailto:"]')).toHaveCount(5)
   })
 })
 

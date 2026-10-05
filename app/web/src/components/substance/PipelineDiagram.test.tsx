@@ -87,7 +87,7 @@ describe('PipelineDiagram', () => {
     expect(svg?.querySelector('desc')?.textContent).toContain(DESCRIPTION)
   })
 
-  it('contains no raw colour literals', () => {
+  it('contains no raw color literals', () => {
     mockMatchMedia(false)
     const { container } = render(
       <PipelineDiagram stages={STAGES} description={DESCRIPTION} />,

@@ -41,13 +41,13 @@ export function Hero() {
                 Senior Engineering & AI Studio
               </Badge>
 
-              <p className="font-mono text-sm tracking-wider text-muted uppercase">
+              <h1 className="text-display-sm leading-tight font-bold tracking-tight text-text drop-shadow-md">
                 {site.slogan}
-              </p>
-
-              <h1 className="mt-4 text-display-sm leading-tight font-semibold tracking-tight text-text drop-shadow-md">
-                {site.tagline}
               </h1>
+
+              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted drop-shadow-md motion-safe:animate-lede sm:text-xl">
+                {site.lede}
+              </p>
 
               <div className="mt-8 flex items-center gap-4">
                 <BookingCta size="lg" />

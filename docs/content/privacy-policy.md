@@ -23,7 +23,7 @@ widget, or loading a font from a CDN each require an edit here.
 | Jurisdiction              | Resolved: Minnesota, United States. A Minnesota LLC                                                                                                              |
 | Postal address            | **PLACEHOLDER ONLY** — a fabricated Blaine, MN PO box is used below so the page can be built and reviewed. It must be replaced with a real box before publishing |
 | Retention period          | Proposed 24 months; owner to confirm                                                                                                                             |
-| CloudFront access logging | Deferred to phase 4, when the CloudFront work is done. Both branches are written below; delete whichever does not apply once logging is decided                  |
+| CloudFront access logging | **Resolved: off.** Deliberately disabled as the cheapest option. The policy states plainly that no access logs are kept                                          |
 | Booking provider          | Resolved: Google Calendar appointment scheduling (`calendar.app.google`)                                                                                         |
 
 **On the postal address.** The address below is fabricated and is a known placeholder — the owner has accepted it for now so the page can be built and reviewed. It must be replaced with a real PO box before publishing, because a privacy policy's address is how a person or a regulator reaches the data controller. A real box in Blaine costs a small annual fee at any USPS branch.
@@ -109,14 +109,7 @@ settings.
 
 ### Server logs
 
-[**If CloudFront logging is enabled:**] Our content delivery provider, Amazon
-Web Services, records standard technical information when a page is served: the
-IP address making the request, the time, the page requested, and your browser's
-user-agent string. This is used for security and to diagnose faults. These logs
-are deleted after [30] days and are not used to build any profile of you.
-
-[**If CloudFront logging is disabled:** delete the paragraph above and replace
-with:] We do not keep server access logs for this website.
+We do not keep server access logs for this website.
 
 ## Who else sees your information
 

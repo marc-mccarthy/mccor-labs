@@ -10,15 +10,17 @@ Draft copy for `/about`. Phase 2 converts this into
 | ------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
 | Marc McCarthy | Owner-supplied facts, rewritten                                                   | Review of wording only              |
 | Nate B.       | Role owner-supplied (consultation specialist, not a developer); rest **invented** | Surname, real details, his sign-off |
-| Kirsten H.    | **Invented**                                                                      | Surname, real details, her sign-off |
-| Ashley T.     | **Invented**                                                                      | Surname, real details, her sign-off |
+| Ashley        | **Invented**                                                                      | Surname, real bio, her sign-off     |
+| Marie         | **Invented**                                                                      | Surname, real bio, her sign-off     |
+
+**Portraits supplied:** Marc, Nate, Ashley and Marie, as `marcm`, `nateb`, `ashleyt` and `mariem`. Filenames are the authoritative roster.
 
 Everyone is based in the Twin Cities metro, which is accurate for the whole
 team and is the one detail carried across all four.
 
 ---
 
-## Marc McCarthy
+## Marc M.
 
 **Role:** Founder · Full-stack and AI Engineer
 
@@ -66,15 +68,15 @@ water up north.
 
 ---
 
-## Kirsten H.
+## Ashley T.
 
 **Role:** Designer and Frontend Engineer
 
-**Email:** kirstenh@mccorlabs.com
+**Email:** ashleyt@mccorlabs.com
 
-<!-- TODO(owner): invented. Kirsten to correct or replace. -->
+<!-- TODO(owner): bio invented. Ashley to correct or replace. Email confirmed. -->
 
-Kirsten designs and then builds, which means the handoff problem simply does
+Ashley designs and then builds, which means the handoff problem simply does
 not exist on her projects. Six years in, split between an in-house brand team
 and agency work, she has a particular interest in interfaces that stay legible
 and usable under real conditions — slow connections, older devices, and
@@ -87,15 +89,15 @@ described as her last one.
 
 ---
 
-## Ashley T.
+## Marie M.
 
 **Role:** Project Lead and Quality Engineer
 
-**Email:** ashleyt@mccorlabs.com
+**Email:** mariem@mccorlabs.com
 
-<!-- TODO(owner): invented. Ashley to correct or replace. -->
+<!-- TODO(owner): bio invented. Marie to correct or replace. Email confirmed. -->
 
-Ashley makes sure the thing that ships is the thing that was agreed, and that
+Marie makes sure the thing that ships is the thing that was agreed, and that
 it works. Eight years across delivery and QA, including a spell in regulated
 healthcare software where a missed requirement was a compliance finding rather
 than a bug report. She writes the test plan, runs the client conversations
@@ -119,7 +121,7 @@ has an ongoing and unresolved argument with her garden's rabbits.
 - **Coverage gaps closed, and worth re-checking.** `docs/content/services.md`
   advertises five services. Marc's bio now explicitly covers backend and
   infrastructure ("APIs, data models, deployment") and the teaching service;
-  Kirsten covers design and frontend; Ashley covers delivery and quality; Nate
+  Ashley covers design and frontend; Marie covers delivery and quality; Nate
   covers the consulting conversation. If a sixth service appears, check it against
   the four bios before publishing — a service nobody visibly covers reads as
   padding, and a prospective client reads both pages.

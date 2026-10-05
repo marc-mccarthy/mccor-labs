@@ -1,4 +1,4 @@
-# Website + logins + database on AWS
+# Website on AWS
 
 Serverless, all Terraform, near-$0 to run. One configuration deploys:
 
@@ -6,12 +6,7 @@ Serverless, all Terraform, near-$0 to run. One configuration deploys:
 - **personal copies** like `mm.example.com` for testing (when `ENV_ID=mm`).
 
 ```
-Browser ──> Route 53 ──> CloudFront ──> S3                  (website files)
-   │
-   ├──────> Cognito hosted sign-in page                     (logins)
-   │
-   └──────> API Gateway HTTP API ──> Lambda ──> DynamoDB    (your data)
-             (checks the login token first)
+Browser ──> Route 53 ──> CloudFront ──> S3   (website files)
 ```
 
 ## Where this goes
@@ -36,31 +31,22 @@ infra/
   main.tf, variables.tf, outputs.tf, versions.tf
   setup/                         <- one-time: state bucket, DNS zone, budget alert
   modules/                       <- certificate, static_site, auth, database, api, email, mailserver
-  MAIL.md                        <- running your own mail server (optional, ~$20/month) -- see below
 app/
-  api/index.mjs          <- example API (per-user items)
-  web/                   <- placeholder page with sign-in; replace with your real site
+  web/                   <- the real site (Next.js static export)
 ```
 
 ## Cost
 
-| Piece                | Cost                                                                  |
-| -------------------- | --------------------------------------------------------------------- |
-| Domain               | whatever Namecheap charges you yearly                                 |
-| Route 53 DNS zone    | $0.50/month                                                           |
-| HTTPS certificates   | $0                                                                    |
-| Cognito Lite         | $0 up to 10,000 monthly active users (shared by all copies)           |
-| Lambda               | $0 within 1M requests/month (always free)                             |
-| DynamoDB             | $0 within 25 GB + 25 read/write units (main uses 5 each, each copy 1) |
-| API Gateway HTTP API | $1.00 per million requests                                            |
-| S3 + CloudFront      | pennies at low traffic                                                |
-| Budget alerts        | $0                                                                    |
+| Piece              | Cost                                  |
+| ------------------ | ------------------------------------- |
+| Domain             | whatever Namecheap charges you yearly |
+| Route 53 DNS zone  | $0.50/month                           |
+| HTTPS certificates | $0                                    |
+| S3 + CloudFront    | pennies at low traffic                |
+| Budget alerts      | $0                                    |
 
 Personal copies add essentially nothing. The Route 53 zone alone is the only
-_fixed_ cost above -- but if you also turn on the optional mail server
-(`enable_mailserver` in `settings.auto.tfvars`), that adds a flat ~$20.38/month
-regardless of headcount. See [`infra/MAIL.md`](infra/MAIL.md) for what that
-buys, its full cost breakdown, and how to run and scale it.
+_fixed_ cost above.
 
 ## One-time setup
 
@@ -141,8 +127,7 @@ ENV_ID=mm ./infra/deploy.sh      # your copy at https://mm.example.com
 Terraform shows the plan and asks for `yes` before changing anything. The first
 deploy of each copy takes a while (certificate + CloudFront).
 
-Each copy has its own users, database and API, so sign up separately in each.
-Teammates use their own initials: `ENV_ID=jd ./infra/deploy.sh`.
+Teammates use their own initials for a personal copy: `ENV_ID=jd ./infra/deploy.sh`.
 
 `ENV_ID` rules: 1-8 lowercase letters or numbers, starting with a letter. It
 can't be `www` or `default`, or contain `aws`, `amazon` or `cognito`. The script
@@ -158,9 +143,9 @@ ENV_ID=mm ./infra/deploy.sh destroy   # removes your copy completely
 ./infra/deploy.sh destroy             # removes the main site (asks twice)
 ```
 
-The main site has deletion protection on its users, data and files, so its
-destroy first turns protection off, then deletes. **This permanently deletes every
-user account and all data.**
+The main site has deletion protection on its S3 bucket, so its destroy first
+turns protection off, then deletes. **This permanently deletes the live site
+and every file in it.**
 
 To remove the shared setup too (only after every copy and the main site are gone):
 
@@ -170,39 +155,14 @@ terraform apply   -var-file=../settings.auto.tfvars -var="force_destroy=true"
 terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
 ```
 
-## Things to know
-
-- **Email cap.** Cognito's built-in email sender is free but only for a small
-  number of messages per day. Before real users arrive, set up Amazon SES and
-  point the user pool's `email_configuration` at it.
-- **Sessions.** The placeholder page doesn't refresh tokens, so users sign in
-  again after 60 minutes.
-- **Rate limits.** The API allows 10 requests/second (bursts of 20). Adjust
-  `throttle_rate` and `throttle_burst` in the api module.
-- **Adding routes.** Add a route key to `routes` in the api module (for example
-  `"PUT /items/{id}"`) and handle it in `app/api/index.mjs`.
-- **Team email.** Don't add MX/SPF/DKIM records to `infra/setup/main.tf`
-  yourself -- `setup/main.tf` explicitly leaves mail DNS to whichever mail
-  option you turn on, so hand-adding records there creates a duplicate MX.
-  Turn on `enable_email` (forwarding into an inbox you already own) or
-  `enable_mailserver` (your own mail server) in `settings.auto.tfvars`
-  instead and run `./infra/deploy.sh setup`; see
-  [`infra/MAIL.md`](infra/MAIL.md) for the mail server option. Not at
-  Namecheap: once the name servers point to Route 53, Namecheap's DNS
-  records are ignored.
-
 ## Your real frontend
 
-Once you have a build step (React, Vue, etc.), delete the `aws_s3_object.web`
-resource in `infra/main.tf` and upload your build instead. Keep `config.js`,
-which Terraform still writes. Run these from `infra/` right after a deploy
-(Terraform remembers which environment you deployed last). Replace
-`../dist` with wherever your build output lands:
-
-```bash
-aws s3 sync ../dist "s3://$(terraform output -raw site_bucket)" --delete --exclude config.js --profile terraform
-aws cloudfront create-invalidation --distribution-id "$(terraform output -raw cloudfront_distribution_id)" --paths "/*" --profile terraform
-```
+The site in `app/web` is already the real frontend: a Next.js static export,
+built and uploaded by `./infra/deploy.sh publish` (see "Building and
+deploying" below). Logins, the database and the API are parked (commented
+out) in `infra/main.tf` and `infra/outputs.tf` -- that code has no backend to
+run against yet. The comment above the parked block in `infra/main.tf` gives
+the re-enable steps.
 
 ## The website
 
@@ -238,7 +198,7 @@ test -f .git/hooks/pre-commit && echo "hooks installed"
 ```
 
 - The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
-- Values live in 1Password, in the `Development` vault under the `mccorlabs` item (no hyphen). The references are in `app/web/.env.template`, which is committed because it holds `op://` paths, not values.
+- Values live in 1Password, in the `Development` vault under the `mccor-labs` item (with a hyphen). The references are in `app/web/.env.template`, which is committed because it holds `op://` paths, not values.
 - A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.
 - `pnpm build:raw` skips `op run` entirely. It is the escape hatch for building against an unconfigured or locked vault; the environment-dependent values come out empty.
 
@@ -305,24 +265,38 @@ LEFTHOOK=0 git commit -m "wip"
 pnpm build
 ```
 
-That writes `app/web/out/`. To deploy it:
+That writes `app/web/out/` for local checks. To go live:
 
 ```bash
-aws s3 sync app/web/out/ "s3://$(cd infra && terraform output -raw site_bucket)/" --delete
-aws cloudfront create-invalidation \
-  --distribution-id "$(cd infra && terraform output -raw cloudfront_distribution_id)" \
-  --paths '/*'
+./infra/deploy.sh publish            # the main site
+ENV_ID=mm ./infra/deploy.sh publish  # your copy, mm.example.com
 ```
 
-CloudFront invalidation is not instant; allow a few minutes.
+This needs that environment's infrastructure already deployed (plain
+`./infra/deploy.sh`, or with `ENV_ID` set, first). `publish` then:
 
-**Routes other than `/` do not work in production yet.** The CloudFront
-distribution needs a URI-rewrite function and real 404 error responses before
-`/services/` resolves to anything other than the home page. See the _CloudFront
-handoff_ section of
-`docs/superpowers/specs/2026-09-27-mccorlabs-website-design.md`. Everything
-builds and passes locally regardless, because a local static server resolves
-directory indexes and CloudFront does not.
+- Refuses to build if anything under `app/`, `package.json`,
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `.node-version` is uncommitted
+  or untracked, or if a gitignored Next.js env file (`.env`, `.env.local`,
+  etc.) exists under `app/web` -- publish only ever builds committed code.
+- Builds with `op run`, setting `NEXT_PUBLIC_SITE_URL` to that environment's
+  own `site_url` from Terraform, so the sitemap, `robots.txt` and
+  `metadataBase` always name the right host.
+- Snapshots the build output before uploading anything, so a concurrent
+  `pnpm build` elsewhere (lefthook's pre-push hook, `pnpm verify`) can't mirror
+  a half-written tree onto the live site.
+- Uploads `_next/static/` with a one-year cache, then everything else with a
+  cache that browsers always revalidate and CloudFront keeps for a day.
+- Invalidates `/*` (one of CloudFront's 1,000 free paths a month) and waits
+  for it to finish.
+- Only once that invalidation completes, deletes files the new build no
+  longer has -- so nothing drops a file a cached old page might still need.
+
+The CloudFront function (`infra/modules/static_site/viewer_request.js.tftpl`)
+serves `/services/` and `/services` from `services/index.html`, since a plain
+S3 origin doesn't resolve directory indexes; returns a real 404 with the
+site's own 404 page for anything missing; and 301-redirects `www` to the
+apex.
 
 ## What Terraform doesn't do
 

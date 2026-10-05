@@ -26,7 +26,6 @@ output "client_settings" {
   }
 }
 
-# terraform output -json mailbox_passwords
 output "passwords" {
   description = "First-login password per mailbox"
   value       = { for k, p in random_password.mailbox : k => p.result }

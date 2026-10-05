@@ -88,7 +88,7 @@ export const terminalSamples: Readonly<Record<string, readonly TerminalSampleLin
   'static-export-build': [
     {
       kind: 'command',
-      text: 'op run --env-file=app/web/.env.template -- pnpm -F web build',
+      text: 'op run --env-file=app/web/.env -- pnpm -F web build',
     },
     { kind: 'output', text: '▲ Next.js 16.3.6 (Turbopack)' },
     { kind: 'output', text: 'Route (app)' },

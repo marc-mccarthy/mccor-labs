@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="stag-antlers" x1="20" y1="12" x2="108" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff9500" />
+      <stop offset="50%" stop-color="#ff7a00" />
+      <stop offset="100%" stop-color="#ff3b30" />
+    </linearGradient>
+    <linearGradient id="stag-head" x1="40" y1="50" x2="88" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff3b30" />
+      <stop offset="60%" stop-color="#e02424" />
+      <stop offset="100%" stop-color="#991b1b" />
+    </linearGradient>
+    <linearGradient id="stag-facet-light" x1="64" y1="54" x2="40" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+    <linearGradient id="stag-shield" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#141418" />
+      <stop offset="100%" stop-color="#08080a" />
+    </linearGradient>
+    <filter id="antler-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Obsidian Badge Background -->
+  <rect width="128" height="128" rx="26" fill="url(#stag-shield)" stroke="#22222a" stroke-width="2.5" />
+
+  <!-- Glowing Orange Antlers (Left & Right Branching) -->
+  <g filter="url(#antler-glow)" stroke="url(#stag-antlers)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left Main Beam & Tines -->
+    <path d="M56 50 L42 32 L30 18" />
+    <path d="M42 32 L26 34" />
+    <path d="M34 23 L22 20" />
+    <path d="M48 42 L34 46" />
+    
+    <!-- Right Main Beam & Tines -->
+    <path d="M72 50 L86 32 L98 18" />
+    <path d="M86 32 L102 34" />
+    <path d="M94 23 L106 20" />
+    <path d="M80 42 L94 46" />
+  </g>
+
+  <!-- Geometric Crimson Stag Head Facets -->
+  <!-- Left Cheek & Jaw -->
+  <polygon points="64,54 44,60 48,82 64,112" fill="url(#stag-head)" />
+  <!-- Right Cheek & Jaw (Highlighted) -->
+  <polygon points="64,54 84,60 80,82 64,112" fill="url(#stag-facet-light)" />
+  <!-- Forehead Center Diamond -->
+  <polygon points="64,54 54,68 64,84 74,68" fill="#ff4d4d" />
+  <!-- Left Ear -->
+  <polygon points="46,58 32,54 44,64" fill="#c81e1e" />
+  <!-- Right Ear -->
+  <polygon points="82,58 96,54 84,64" fill="#ff5252" />
+  <!-- Muzzle & Nose Tip -->
+  <polygon points="64,84 56,104 64,112 72,104" fill="#7f1d1d" />
+  <circle cx="64" cy="106" r="2.5" fill="#ff9500" />
+</svg>

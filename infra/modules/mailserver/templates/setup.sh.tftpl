@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Builds the mail server on first boot. Terraform fills in the placeholders.
-# Re-runs safely: every step checks whether it already happened.
 set -euxo pipefail
 exec > >(tee /var/log/mail-setup.log) 2>&1
 
@@ -18,25 +16,16 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl gnupg unzip
 
-# Security updates only, applied automatically. This box is internet-facing
-# on four ports (25, 80, 587, 993) and is meant to run for years without
-# anyone logging in. Automatic REBOOTS are deliberately not enabled: a mail
-# server rebooting unattended mid-delivery is worse than a delayed kernel
-# patch, so the operator reboots deliberately, on their own schedule.
 apt-get install -y unattended-upgrades
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 AUTO
 
-# ---------- tools ----------
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscli.zip
 unzip -q /tmp/awscli.zip -d /tmp
 /tmp/aws/install
 
-# Debian cloud images ship no snapd, so the agent is installed from AWS's own
-# .deb. This is the only way onto the box -- there is no SSH port and no key --
-# so a failure here must stop the boot rather than be swallowed.
 curl -fsSL https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb \
   -o /tmp/amazon-ssm-agent.deb
 dpkg -i /tmp/amazon-ssm-agent.deb
@@ -51,11 +40,6 @@ apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 systemctl enable --now docker
 
-# ---------- mail disk ----------
-# Nitro exposes a stable symlink per volume, so the disk is identified
-# exactly rather than guessed at by size. The old guess could select
-# nothing, letting mkdir succeed on the root volume and mail accumulate
-# somewhere that is never backed up.
 DEV="${mail_device}"
 for i in $(seq 1 12); do
   [ -e "$DEV" ] && break
@@ -67,13 +51,9 @@ if [ ! -e "$DEV" ]; then
   exit 1
 fi
 
-# Only format a genuinely empty disk. A restored snapshot already has a
-# filesystem and must not be touched.
 blkid "$DEV" >/dev/null 2>&1 || mkfs.ext4 -L maildata "$DEV"
 
 mkdir -p /var/mail-data
-# Mount by LABEL, not by ID: a volume restored from a snapshot gets a new
-# volume ID but keeps its label.
 grep -q maildata /etc/fstab || echo "LABEL=maildata /var/mail-data ext4 defaults,nofail 0 2" >> /etc/fstab
 mount -a
 
@@ -84,47 +64,20 @@ fi
 
 mkdir -p /var/mail-data/{mail-data,mail-state,mail-logs,config,letsencrypt}
 
-# ---------- swap ----------
-# On the ROOT volume, deliberately: swap on the mail volume would be
-# captured by every snapshot and put swap I/O in the backup path. DMS
-# lists swap in its recommended setup; it turns a memory spike from an
-# OOM kill into a slow moment.
 if [ ! -f /swapfile ]; then
   fallocate -l 2G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile
   echo "/swapfile none swap sw 0 0" >> /etc/fstab
 fi
-# Not silenced: t4g.small is at docker-mailserver's recommended memory floor
-# and swap is what turns a spike into a slow moment instead of an OOM kill.
-# Losing it quietly would remove that protection with no signal.
 if ! swapon -a; then
   echo "WARNING: swapon failed -- the box is running without swap" >&2
 fi
 
-# ---------- TLS certificate ----------
-# Standalone mode binds port 80, which is why the security group opens it.
-#
-# The ACME store lives on the persistent MAIL volume, not the root volume.
-# Let's Encrypt allows 5 certificates per name set per week; with the store
-# on the disposable root disk, a handful of instance replacements locks
-# issuance for over a day. On the mail volume a rebuilt instance finds its
-# existing certificate and issues nothing.
-#
-# certbot's defaults are not symlinked to this path: "apt-get install
-# certbot" creates /etc/letsencrypt as a real directory first, so a later
-# "ln -sfn ... /etc/letsencrypt" would land *inside* it rather than replace
-# it, and certbot would keep writing to the root volume. Explicit
-# --config-dir/--work-dir/--logs-dir flags are used everywhere instead, and
-# reused by the renewal timer override below.
 CERTBOT_DIR="/var/mail-data/letsencrypt"
 apt-get install -y certbot
 
 if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
-  # Wait for DNS to resolve BEFORE asking Let's Encrypt for anything. Their
-  # rate limit counts FAILED validations (5 per hour), so retrying certbot
-  # into unpropagated DNS spends the quota rather than waiting for it -- and
-  # once spent, the wait is an hour regardless of whether DNS is ready.
   for i in $(seq 1 60); do
     getent hosts "$FQDN" >/dev/null 2>&1 && break
     echo "waiting for $FQDN to resolve before requesting a certificate"
@@ -136,8 +89,6 @@ if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
     exit 1
   fi
 
-  # Three attempts, not twenty: if DNS resolves and certbot still fails, the
-  # cause is not propagation and more tries will not fix it.
   for i in 1 2 3; do
     certbot certonly --standalone --non-interactive --agree-tos \
       --config-dir "$CERTBOT_DIR" --work-dir "$CERTBOT_DIR/work" \
@@ -153,8 +104,6 @@ if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
   exit 1
 fi
 
-# Renewal has to pause the mail server's port 80 listener; there isn't one,
-# but stopping the stack keeps certbot from colliding with anything later.
 mkdir -p "$CERTBOT_DIR/renewal-hooks/deploy"
 cat > "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh" <<'HOOK'
 #!/bin/sh
@@ -162,12 +111,6 @@ docker restart mailserver 2>/dev/null || true
 HOOK
 chmod +x "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh"
 
-# Debian's certbot package ships a systemd timer that runs "certbot renew"
-# against the default directories, so it would never find a certificate
-# stored here and renewal would silently do nothing until the certificate
-# expired -- Let's Encrypt stopped sending expiry-warning emails in June
-# 2025, so there would be no signal until mail delivery broke. Override the
-# packaged unit to pass the same non-default directories.
 mkdir -p /etc/systemd/system/certbot.service.d
 cat > /etc/systemd/system/certbot.service.d/override.conf <<OVERRIDE
 [Service]
@@ -176,7 +119,6 @@ ExecStart=/usr/bin/certbot renew --config-dir $CERTBOT_DIR --work-dir $CERTBOT_D
 OVERRIDE
 systemctl daemon-reload
 
-# ---------- secrets ----------
 get_param() {
   aws ssm get-parameter --region "$REGION" --name "$1" --with-decryption \
     --query Parameter.Value --output text
@@ -184,17 +126,12 @@ get_param() {
 
 RELAY_PASSWORD="$(get_param "$PARAM_PREFIX/_relay_password")"
 
-# ---------- the mail server ----------
 mkdir -p /opt/mail
 cd /opt/mail
 
 cat > compose.yaml <<COMPOSE
 services:
   mailserver:
-    # Pinned deliberately. v16.0.0 moved Debian 12->13 and Dovecot
-    # 2.3->2.4 with documented breaking changes; an unattended
-    # docker compose pull would take mail down on an ordinary Tuesday.
-    # Upgrades are a deliberate edit, after reading the release notes.
     image: ghcr.io/docker-mailserver/docker-mailserver:16.0.1
     container_name: mailserver
     hostname: $FQDN
@@ -218,12 +155,7 @@ services:
       - ENABLE_OPENDMARC=0
       - ENABLE_CLAMAV=0
       - ENABLE_FAIL2BAN=1
-      # Greylisting rejects a first delivery attempt with a temporary
-      # error. Real mail servers retry; most opportunistic spam bots do
-      # not. Free, and the most effective single spam control here.
       - ENABLE_RSPAMD_GREYLISTING=1
-      # Sieve rules live in Dovecot, in each user's home on the mail
-      # volume, so they survive a restore without a separate backup.
       - ENABLE_MANAGESIEVE=1
       - POSTMASTER_ADDRESS=${postmaster}
       - RELAY_HOST=email-smtp.$REGION.amazonaws.com
@@ -238,36 +170,6 @@ services:
       retries: 0
 COMPOSE
 
-# ---------- the people ----------
-# Mailboxes are written DIRECTLY to docker-mailserver's accounts file, before
-# the container starts, and never through `docker exec`.
-#
-# That ordering is not a preference. DMS refuses to start Dovecot until at
-# least one account exists and shuts down after 120 seconds if none appears.
-# Creating accounts through `docker exec` therefore needs a running container
-# that is itself waiting for the accounts -- a deadlock, and even once broken
-# a race, because the container is restarting every two minutes while the
-# loop runs. Writing the file first removes the container from the problem
-# entirely: it boots with its accounts already present.
-#
-# The file format is DMS's own: one "address|{SCHEME}hash" line per mailbox.
-# openssl produces SHA512-CRYPT, which is what DMS expects, so no container
-# and no dovecot tooling is needed to hash a password.
-#
-# Passwords come from Parameter Store rather than user-data, so adding a
-# person never replaces the instance.
-# ---------- lockout policy ----------
-# Written BEFORE the container is created, like the accounts file and for the
-# same reason: docker-mailserver copies this into fail2ban's jail.d during its
-# one-time setup, which `docker restart` does NOT re-run. A file added later
-# is simply ignored until the container is recreated.
-#
-# The shipped defaults are bantime 1w / findtime 1w / maxretry 6, and the
-# counter is per-IP rather than per-user. Five people configuring mail clients
-# from one office address share those six attempts, and a week-long lockout
-# for six typos is a support call, not security. An hour stops brute force
-# just as dead -- a bot making thousands of attempts is banned within seconds
-# either way -- while a mistyped password costs an hour at worst.
 cat > /var/mail-data/config/fail2ban-jail.cf <<'JAIL'
 [DEFAULT]
 bantime  = 1h
@@ -279,13 +181,6 @@ ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
 
 cat > /opt/mail/sync-accounts.sh <<'SYNC'
 #!/usr/bin/env bash
-# Writes any mailbox that exists in Parameter Store but not yet in the
-# accounts file. Safe to re-run: existing lines are left exactly as they are,
-# so re-running never changes anyone's password. Never deletes -- removing
-# someone is a deliberate, separate act.
-#
-# Works whether or not the mail server is running. If it is, the container is
-# told to reload at the end; if it is not, it will read the file when it starts.
 set -euo pipefail
 
 ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
@@ -296,7 +191,7 @@ ADDED=0
 while read -r NAME PASS; do
   [ -n "$NAME" ] || continue
   LOCAL="$${NAME##*/}"
-  # Names beginning with _ are not mailboxes (_relay_password).
+
   case "$LOCAL" in _*) continue ;; esac
   ADDR="$LOCAL@${domain}"
 
@@ -304,8 +199,6 @@ while read -r NAME PASS; do
     continue
   fi
 
-  # -6 selects SHA512-CRYPT. The hash is generated here, on the host, so this
-  # never depends on the container being up.
   HASH="$(openssl passwd -6 "$PASS")"
   echo "$ADDR|{SHA512-CRYPT}$HASH" >> "$ACCOUNTS"
   echo "added $ADDR"
@@ -328,12 +221,8 @@ if [ ! -s "$ACCOUNTS" ]; then
   exit 1
 fi
 
-# ---------- start the mail server ----------
-# Accounts exist by this point, so Dovecot starts on the first attempt.
 docker compose up -d
 
-# Fail closed: a box that never opens 25 is not a mail server, and it is
-# better to know at boot than from a bounced message days later.
 for i in $(seq 1 60); do
   docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp && break
   sleep 5
@@ -345,16 +234,10 @@ if ! docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp; the
   exit 1
 fi
 
-# postmaster@ and abuse@ are required by convention and receive the DMARC
-# reports. They go to a mailbox named on purpose in settings.auto.tfvars --
-# picking the first one alphabetically would silently move them when someone
-# is hired.
 for ALIAS in postmaster abuse; do
   docker exec mailserver setup alias add "$ALIAS@$DOMAIN" "${admin_address}" || true
 done
 
-# ---------- monitoring ----------
-# Two custom metrics, both inside the CloudWatch free tier.
 curl -fsSL https://amazoncloudwatch-agent.s3.amazonaws.com/debian/arm64/latest/amazon-cloudwatch-agent.deb \
   -o /tmp/cwagent.deb
 dpkg -i /tmp/cwagent.deb
@@ -374,15 +257,9 @@ CWCFG
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
   -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
 
-# Two things CloudWatch cannot see. Let's Encrypt stopped sending expiry
-# warnings in June 2025, so an unnoticed renewal failure becomes a client
-# TLS error; and a queue backing up is usually a broken SES credential,
-# which nothing else detects.
 cat > /etc/cron.daily/mail-health <<HEALTH
 #!/bin/bash
-# cron runs with a minimal PATH (/usr/bin:/bin), which does NOT include
-# /usr/local/bin where the AWS CLI installs itself. Without this every alert
-# below would fail to find "aws" and this whole script would be decorative.
+
 PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
 export PATH
 
@@ -395,10 +272,6 @@ if [ -f "\$CERT" ] && ! openssl x509 -checkend \$((21*86400)) -noout -in "\$CERT
   alert "certificate expiring" "The TLS certificate for ${fqdn} expires within 21 days and has not renewed."
 fi
 
-# The container being down yields no output at all, not a zero -- so default
-# it. An unset value here made the comparison below fail with "integer
-# expression expected" every single day, which is how a health check becomes
-# noise people learn to ignore.
 QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)
 QUEUED=\$(printf '%s' "\$QUEUED" | tr -dc '0-9')
 if [ -z "\$QUEUED" ]; then QUEUED=0; fi
@@ -407,8 +280,6 @@ if [ "\$QUEUED" -gt 50 ]; then
   alert "mail queue backing up" "\$QUEUED messages are queued. The SES relay credential is the usual cause."
 fi
 
-# The mail server being down entirely is worth knowing about, and CloudWatch
-# cannot see inside the box to tell.
 if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
   alert "mail server not running" "The mailserver container is not running on \$(hostname)."
 fi

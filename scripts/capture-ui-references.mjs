@@ -1,39 +1,3 @@
-/**
- * Capture UI reference material from a list of sites: full-page screenshots, a scroll-through
- * video, and extracted design tokens (colour, type, spacing, motion).
- *
- * REQUIREMENTS
- *   Node >= 24, `pnpm install` at repo root. Chromium already present in
- *   ~/Library/Caches/ms-playwright (do NOT run `playwright install`).
- *
- * INVOCATIONS
- *   node scripts/capture-ui-references.mjs                 # all sites
- *   node scripts/capture-ui-references.mjs --site y-n10    # one site
- *   node scripts/capture-ui-references.mjs --no-video      # skip webm (much faster)
- *   node scripts/capture-ui-references.mjs --clean         # wipe each site dir first
- *
- * WHY `@playwright/test` AND NOT `playwright`
- *   `playwright`/`playwright-core` are unhoisted transitive packages; importing them returns
- *   MODULE_NOT_FOUND. `@playwright/test` is the real devDependency and re-exports the library API.
- *
- * FIVE NON-OBVIOUS THINGS THIS HANDLES, each measured on these specific sites:
- *   1. ENTRY GATES. pacomepertant and y-n10 render nothing until clicked. y-n10's gate has
- *      pointer-events:none so locator.click() fails its actionability check — we measure the rect
- *      from the selector and dispatch a RAW mouse click at its centre.
- *   2. SMOOTH SCROLL. Lenis/Locomotive set html{overflow:hidden}, under which fullPage:true returns
- *      a VIEWPORT-HEIGHT image that looks correct and is wrong. We tear it down before shooting.
- *   3. CHROMIUM TEXTURE LIMIT. Past 16384 device px, fullPage truncates SILENTLY. guglieri /feed is
- *      ~26000px and y-n10 ~22600px. We capture overlapping bands instead.
- *   4. CONSENT BANNERS. raggededge measured 17821px with its banner up vs 11770px after dismissal.
- *      Any height read through a banner is wrong, so we dismiss first, then measure.
- *   5. CANVAS SITES. pacomepertant, y-n10 and belenjones paint content into a canvas and have no DOM
- *      sections. We capture viewport states there rather than pretending sections exist.
- *
- * KNOWN LIMITS
- *   - Video is recorded only for the desktop home route (it multiplies runtime and adds little).
- *   - Sites that never scroll (topology-vc, belenjones, pacomepertant home) get a single viewport
- *     shot; there is nothing to scroll through.
- */
 import { chromium } from '@playwright/test'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -55,7 +19,6 @@ const VP = {
   },
 }
 
-/** Measured 2026-09-27. See docs/ui-references/_findings/ for how each value was established. */
 const SITES = [
   {
     slug: '01-david-hckh',
@@ -111,7 +74,6 @@ const arg = (f) => process.argv.includes(f)
 const argv = (f) =>
   process.argv.includes(f) ? process.argv[process.argv.indexOf(f) + 1] : null
 
-/** Click a gate by measuring its rect, then dispatching a raw mouse click (bypasses actionability). */
 async function enterGate(page, gate) {
   if (!gate) return { gated: false }
   const before = page.url()
@@ -161,7 +123,6 @@ async function dismissConsent(page, text) {
   return { heightWithBanner: h, heightAfter: after }
 }
 
-/** Tear down smooth scroll so fullPage returns the real page, not one viewport. */
 async function killSmoothScroll(page) {
   return page.evaluate(() => {
     try {
@@ -206,7 +167,6 @@ async function sweepLazy(page) {
   })
 }
 
-/** fullPage, or overlapping bands past Chromium's 16384 device-pixel texture limit. */
 async function fullPageSafe(page, base, dpr) {
   const h = await page.evaluate(() => document.documentElement.scrollHeight)
   if (h * dpr <= 16384) {
@@ -383,7 +343,7 @@ async function captureRoute(browser, site, url, vpName, dir, isHome, wantVideo) 
     rec.consent = await dismissConsent(page, site.consent)
     if (isHome && site.gate) {
       const tag = `${dir}/shots/entry-gate.${vpName}.png`
-      await page.screenshot({ path: tag }) // the gate is part of the design
+      await page.screenshot({ path: tag })
       rec.gate = await enterGate(page, site.gate)
       await settle(page)
     }
@@ -407,7 +367,6 @@ async function captureRoute(browser, site, url, vpName, dir, isHome, wantVideo) 
     rec.extract = await page.evaluate(EXTRACT)
 
     if (wantVideo && site.scrolls) {
-      // slow scroll-through for motion
       const travel = Math.max(0, rec.extract.docHeight - vp.height)
       const steps = 14
       for (let i = 0; i <= steps; i++) {
@@ -419,7 +378,7 @@ async function captureRoute(browser, site, url, vpName, dir, isHome, wantVideo) 
       }
       await page.waitForTimeout(800)
     } else if (wantVideo) {
-      await page.waitForTimeout(3000) // non-scrolling site: let its motion play
+      await page.waitForTimeout(3000)
     }
   } catch (e) {
     rec.warnings.push({
@@ -427,7 +386,7 @@ async function captureRoute(browser, site, url, vpName, dir, isHome, wantVideo) 
       message: String(e).split('\n')[0].slice(0, 160),
     })
   }
-  await ctx.close() // finalises the video file
+  await ctx.close()
   return rec
 }
 

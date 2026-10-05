@@ -12,14 +12,13 @@ export type Role = {
   summary: string
   youWillDo: readonly string[]
   weAreLookingFor: readonly string[]
-  /** Prefilled mail subject so applications arrive sorted. */
   applySubject: string
 }
 ```
 
-**Source:** owner-supplied. The firm is actively hiring five things: Software
-Engineer I, Software Engineer II, an AI-forward engineer, a marketing
-specialist, and speculative applications.
+**Source:** owner-supplied. The firm is actively hiring four things: Software
+Engineer I, an AI-forward engineer, a marketing specialist, and speculative
+applications.
 
 ---
 
@@ -90,32 +89,7 @@ experience for this role.
 
 ---
 
-## 2. Software Engineer II — `software-engineer-ii`
-
-**Level:** Mid-level
-
-**Summary:** You have shipped things, broken things, and fixed them. Now own
-projects rather than tickets.
-
-**You will:**
-
-- Own the delivery of a client project end to end, with support
-- Make architectural calls and explain them to people who are paying
-- Review the Software Engineer I's work, and mean it
-- Take the on-call-shaped problems: the intermittent bug, the slow query, the
-  thing that only fails in production
-- Help decide what we say yes and no to
-
-**We are looking for:**
-
-- Three or more years building and maintaining production software
-- Comfort across the stack, and honesty about where your depth actually is
-- Experience inheriting someone else's codebase without rewriting it on reflex
-- The judgement to know when good enough is good enough
-
----
-
-## 3. AI-forward engineer — `ai-engineer`
+## 2. AI-forward engineer — `ai-engineer`
 
 **Level:** Mid to senior
 
@@ -142,7 +116,7 @@ to be right rather than impressive.
 
 ---
 
-## 4. Marketing specialist — `marketing-specialist`
+## 3. Marketing specialist — `marketing-specialist`
 
 **Level:** Open
 
@@ -170,7 +144,7 @@ This role can be part-time or contract for the right person.
 
 ---
 
-## 5. Speculative — `general`
+## 4. Speculative — `general`
 
 **Level:** Open
 
@@ -186,13 +160,27 @@ Use the contact form or email directly.
 
 ---
 
+## Compensation
+
+Stated identically on every role:
+
+> This role opens when a project funds it. We will tell you the budget on the
+> first call rather than after three interviews.
+
+Software Engineer I and the marketing specialist are contract to start. This is
+honest for a firm that is bootstrapping, and it respects a candidate's time more
+than a range nobody can pay.
+
+---
+
 ## Notes for phase 2
 
-- **No salary ranges are stated.** Minnesota's pay-transparency law applies to
-  employers with 30 or more employees, so a four-person firm is not required to
-  post them. Worth knowing that omitting them does cost candidate quality and
-  wastes time on both sides — many strong candidates filter out postings without
-  a range. Adding them is the owner's call and needs real numbers, not a guess.
+- **Compensation is stated, not omitted.** Every role says it opens when a
+  project funds it and that the budget comes on the first call. Minnesota's
+  pay-transparency law starts at 30 employees so no range is required, but the
+  reason for not posting one is that there is not yet a number to post. Do not
+  replace this with "competitive" or "DOE" — both read as evasive where this
+  reads as candid.
 - **No equal-opportunity or benefits statements are included**, because they
   would be invented. If the firm has an EEO position, a benefits package or a
   remote-work policy, those belong here and should come from the owner.
@@ -203,4 +191,4 @@ Use the contact form or email directly.
   treatment only, no heavy effect. Real content does not change that; a job
   seeker wants to read, not be impressed.
 - Update the spec's open question 7 ("Careers — actively hiring, or placeholder
-  posture?") to resolved: actively hiring, five roles.
+  posture?") to resolved: actively hiring, four roles.

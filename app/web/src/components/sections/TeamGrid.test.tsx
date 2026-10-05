@@ -1,9 +1,9 @@
-import { readFileSync } from 'node:fs'
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
-import { TeamGrid } from './TeamGrid'
 import { team } from '@/content/team'
 import { portraits } from '@/lib/portraits'
+import { render, screen } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { describe, expect, it, vi } from 'vitest'
+import { TeamGrid } from './TeamGrid'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -75,7 +75,7 @@ describe('TeamGrid', () => {
     }
   })
 
-  it('emits no raw colour value', () => {
+  it('emits no raw color value', () => {
     const source = readFileSync('src/components/sections/TeamGrid.tsx', 'utf8')
     expect(source).not.toMatch(/#[0-9a-fA-F]{3,8}\b|rgb\(|hsl\(|\[#/)
   })

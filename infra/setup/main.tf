@@ -1,13 +1,3 @@
-# One-time setup, run with `./deploy.sh setup`. Creates the things every
-# environment shares:
-#   - the S3 bucket that stores Terraform state
-#   - the Route 53 zone for your domain (the only fixed cost: $0.50/month)
-#   - a monthly AWS spending alert (free)
-#   - ../backend.hcl, which tells the main configuration where its state lives
-#
-# Reads the same ../settings.auto.tfvars as everything else. Its own state is
-# kept on your machine in terraform.tfstate (git-ignored); keep a backup.
-
 terraform {
   required_version = "~> 1.16"
 
@@ -30,9 +20,6 @@ terraform {
     }
   }
 }
-
-# The backend block lives in its own file, backend.tf -- see the comment
-# there for why it can't stay in this one.
 
 provider "aws" {
   region = "us-east-1"
@@ -64,8 +51,6 @@ variable "domain_name" {
 }
 
 variable "alert_email" {
-  # Use an address on a different provider: an alert about this mail server
-  # delivered to this mail server is an alert nobody sees.
   type = string
 
   validation {
@@ -148,19 +133,10 @@ variable "force_destroy" {
   default     = false
 }
 
-# ---------- Terraform state bucket ----------
-
-# Named from domain_name, which you already own, so the name is globally
-# unique without leaking the account id: mccorlabs.com -> mccorlabs-com-tfstate.
 locals {
   state_bucket = "${replace(var.domain_name, ".", "-")}-tfstate"
 }
 
-# backend.tf hardcodes this same bucket name as a literal string -- backend
-# blocks cannot reference variables or locals, so it can't be derived the
-# way local.state_bucket is above. A comment there claims the two match;
-# this check fails loudly at plan/apply time if they ever diverge, instead
-# of leaving a silent mismatch for the comment to lie about.
 check "state_bucket_matches_backend" {
   assert {
     condition     = local.state_bucket == "mccorlabs-com-tfstate"
@@ -173,7 +149,6 @@ resource "aws_s3_bucket" "state" {
   force_destroy = var.force_destroy
 }
 
-# Versioning lets you recover a previous state file if something goes wrong.
 resource "aws_s3_bucket_versioning" "state" {
   bucket = aws_s3_bucket.state.id
 
@@ -190,7 +165,6 @@ resource "aws_s3_bucket_public_access_block" "state" {
   restrict_public_buckets = true
 }
 
-# Delete old state versions after 90 days so storage stays near $0.
 resource "aws_s3_bucket_lifecycle_configuration" "state" {
   bucket = aws_s3_bucket.state.id
 
@@ -206,38 +180,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "state" {
   }
 }
 
-# ---------- DNS zone for your domain ----------
-
-# After this is created, put its four name servers into your registrar
-# (Namecheap: Domain List > Manage > Nameservers > Custom DNS).
 resource "aws_route53_zone" "main" {
   name          = var.domain_name
   comment       = "Managed by Terraform (infra/setup)"
   force_destroy = var.force_destroy
 
   lifecycle {
-    # Recreating this zone gets a brand-new set of four name servers, which
-    # means going back into the registrar by hand and waiting for propagation
-    # with mail and the website down throughout. The records inside are cheap
-    # to rebuild by apply; the delegation is not, and it is the one step here
-    # that cannot be automated.
-    #
-    # Note this aborts the WHOLE destroy, not just itself -- see the teardown
-    # section of MAIL.md, which depends on this block existing.
     prevent_destroy = true
   }
 }
 
-# ---------- Mail DNS ----------
-# Mail records are not written here. Whichever mail option is enabled below
-# owns them: modules/mailserver for your own server, modules/email for
-# forwarding. Keeping them in one module stops the two from fighting over
-# the domain's MX record.
-
-# ---------- Spending alert ----------
-
-# Budget monitoring and email alerts are free. Emails you if this month's
-# bill is forecast to pass 80% of the limit, and again if it passes 100%.
 resource "aws_budgets_budget" "monthly" {
   name         = "${var.project}-monthly"
   budget_type  = "COST"
@@ -262,8 +214,6 @@ resource "aws_budgets_budget" "monthly" {
   }
 }
 
-# ---------- Mail forwarding (optional) ----------
-
 module "email" {
   count  = var.enable_email ? 1 : 0
   source = "../modules/email"
@@ -274,8 +224,6 @@ module "email" {
   recipients    = var.mail_recipients
   force_destroy = var.force_destroy
 }
-
-# ---------- Your own mail server (optional) ----------
 
 module "mailserver" {
   count  = var.enable_mailserver ? 1 : 0
@@ -290,13 +238,10 @@ module "mailserver" {
   mail_volume_gb = var.mail_volume_gb
 }
 
-# ---------- Backend settings for the main configuration ----------
-
 resource "local_file" "backend" {
   filename        = "${path.module}/../backend.hcl"
   file_permission = "0644"
   content         = <<-EOT
-    # Written by infra/setup. Commit this file.
     bucket       = "${aws_s3_bucket.state.bucket}"
     key          = "app/terraform.tfstate"
     region       = "us-east-1"
@@ -304,8 +249,6 @@ resource "local_file" "backend" {
     encrypt      = true
   EOT
 }
-
-# ---------- Outputs ----------
 
 output "name_servers" {
   description = "Enter these four in Namecheap as Custom DNS"
@@ -354,7 +297,6 @@ output "alerts_topic_arn" {
   value       = var.enable_mailserver ? module.mailserver[0].alerts_topic_arn : null
 }
 
-# terraform output -json mailbox_passwords
 output "mailbox_passwords" {
   description = "First-login password per mailbox"
   value       = var.enable_mailserver ? module.mailserver[0].passwords : null

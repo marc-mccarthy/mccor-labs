@@ -14,6 +14,11 @@ describe('site content', () => {
     expect(site.tagline).toContain('websites, applications and AI features')
   })
 
+  it('has a lede distinct from the tagline', () => {
+    expect(site.lede.length).toBeGreaterThan(0)
+    expect(site.lede).not.toBe(site.tagline)
+  })
+
   it('has a contact mailbox on the firm domain', () => {
     expect(site.contactEmail).toMatch(/@mccorlabs\.com$/)
   })

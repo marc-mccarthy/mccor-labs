@@ -11,9 +11,6 @@ terraform {
   }
 }
 
-# ---------- Lambda function ----------
-
-# Zips your API code folder. Terraform redeploys only when the code changes.
 data "archive_file" "code" {
   type        = "zip"
   source_dir  = var.source_dir
@@ -36,13 +33,11 @@ resource "aws_iam_role" "fn" {
   assume_role_policy = data.aws_iam_policy_document.assume.json
 }
 
-# Permission to write logs.
 resource "aws_iam_role_policy_attachment" "logs" {
   role       = aws_iam_role.fn.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Permission to use this one table, and nothing else.
 data "aws_iam_policy_document" "table" {
   statement {
     actions = [
@@ -62,7 +57,6 @@ resource "aws_iam_role_policy" "table" {
   policy = data.aws_iam_policy_document.table.json
 }
 
-# Created up front so logs expire instead of piling up (and costing money) forever.
 resource "aws_cloudwatch_log_group" "fn" {
   name              = "/aws/lambda/${var.name}-api"
   retention_in_days = var.log_retention_days
@@ -72,7 +66,7 @@ resource "aws_lambda_function" "fn" {
   function_name    = "${var.name}-api"
   role             = aws_iam_role.fn.arn
   runtime          = "nodejs24.x"
-  architectures    = ["arm64"] # cheaper per GB-second than x86
+  architectures    = ["arm64"]
   handler          = "index.handler"
   filename         = data.archive_file.code.output_path
   source_code_hash = data.archive_file.code.output_base64sha256
@@ -91,13 +85,10 @@ resource "aws_lambda_function" "fn" {
   ]
 }
 
-# ---------- HTTP API (API Gateway v2) ----------
-
 resource "aws_apigatewayv2_api" "http" {
   name          = "${var.name}-api"
   protocol_type = "HTTP"
 
-  # Lets your website (a different origin) call the API from the browser.
   cors_configuration {
     allow_origins = var.allowed_origins
     allow_methods = ["GET", "POST", "PUT", "DELETE"]
@@ -106,8 +97,6 @@ resource "aws_apigatewayv2_api" "http" {
   }
 }
 
-# Checks the Cognito login token on every request before Lambda runs, so
-# unauthenticated traffic never reaches (or bills) your function.
 resource "aws_apigatewayv2_authorizer" "jwt" {
   api_id           = aws_apigatewayv2_api.http.id
   name             = "cognito"
@@ -142,7 +131,6 @@ resource "aws_apigatewayv2_stage" "default" {
   name        = "$default"
   auto_deploy = true
 
-  # Hard cap on request rate: protects your bill if someone hammers the API.
   default_route_settings {
     throttling_burst_limit = var.throttle_burst
     throttling_rate_limit  = var.throttle_rate

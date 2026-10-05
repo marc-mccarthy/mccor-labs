@@ -1,38 +1,3 @@
-/**
- * Structural recon of UI reference sites. Emits JSON only — no images, no binaries.
- *
- * REQUIREMENTS
- *   - Node >= 24, `pnpm install` run at repo root.
- *   - Chromium present in ~/Library/Caches/ms-playwright (already installed; do not run
- *     `playwright install`).
- *   - MUST run with the Bash sandbox disabled. The sandbox denies Chromium's Mach port
- *     lookup and its listen() call; the errors never name the sandbox and surface as
- *     `bootstrap_check_in ... Permission denied (1100)` or a bare launch timeout.
- *
- * INVOCATIONS
- *   node scripts/recon-reference-sites.mjs                 # all ten origins
- *   node scripts/recon-reference-sites.mjs --site shopify  # one slug
- *   node scripts/recon-reference-sites.mjs --clean         # wipe _recon/ first
- *
- * WHY `@playwright/test` AND NOT `playwright`
- *   `playwright` and `playwright-core` are unhoisted transitive packages and importing them
- *   returns MODULE_NOT_FOUND. `@playwright/test` is the real top-level devDependency and
- *   re-exports the full library API. Using the library API also means playwright.config.ts is
- *   never read, so no webServer block runs. Do not "fix" this import back.
- *
- * WHY THE PAYLOAD IS A FUNCTION, NOT A STRING
- *   page.evaluate(string) evaluates its argument as a single expression. A helper declaration
- *   followed by an IIFE is two statements and throws SyntaxError. Passing a function makes
- *   Playwright serialise the body, so page-scope helpers must be declared inside it.
- *
- * KNOWN FAILURE MODES
- *   - Bot protection (Shopify, Cloudflare-fronted origins) may return 403 or a challenge page.
- *     Recorded as a warning per site; the run continues to the next site.
- *   - Cross-origin stylesheets throw SecurityError on .cssRules. Recorded per sheet as
- *     `stylesheets[].readable = false`; this predicts which sites need the refetch path in capture.
- *   - Sites built from div soup expose zero <section> elements; `candidateSections` then comes
- *     from the heuristic fallback and `meta.outlineSource` says `heuristic-fallback`.
- */
 import { chromium } from '@playwright/test'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -92,12 +57,6 @@ const RECON_PAYLOAD = () => {
   let outlineSource = 'selector'
   const payloadWarnings = []
 
-  // Review Focus #2: div-soup sites expose no <section>. Fall back to direct children of the
-  // most plausible content root that occupy a meaningful share of the viewport. Fix round 1
-  // (Controller feedback on the first recon run): the previous version stopped at direct
-  // children of the root, so a single full-page wrapper (#app, #__next, a preloader) satisfied
-  // the viewport-share test and was returned as if it were the whole outline. Descend instead
-  // when a level collapses to a single wrapper.
   if (els.length < 2) {
     outlineSource = 'heuristic-fallback'
     let node =
@@ -112,10 +71,7 @@ const RECON_PAYLOAD = () => {
       if (/loader|preloader|cursor|scrollbar/i.test(el.className || '')) return false
       return r.height > innerHeight * 0.25 && r.width > innerWidth * 0.5
     }
-    // Fix round 2 Bug 1 (Controller's own bug in the round-1 fallback): this relaxed branch
-    // had no tag/class exclusions, so a bare <canvas> or <svg> — already rejected one branch
-    // earlier by isCandidate — sailed through here instead. Reuse the same exclusions, only
-    // relaxing the size threshold.
+
     const relaxed = (el) => {
       const cs = getComputedStyle(el)
       if (cs.display === 'none' || cs.visibility === 'hidden') return false
@@ -123,8 +79,7 @@ const RECON_PAYLOAD = () => {
       if (/loader|preloader|cursor|scrollbar/i.test(el.className || '')) return false
       return el.getBoundingClientRect().height > 40
     }
-    // Descend while the level collapses to a single wrapper: a 1-element level is not an
-    // outline, it is a container. Cap the depth so a deeply nested wrapper chain terminates.
+
     for (let depth = 0; depth < 6; depth++) {
       const kids = [...node.children].filter(isCandidate)
       if (kids.length >= 2) {
@@ -154,12 +109,6 @@ const RECON_PAYLOAD = () => {
     }
   }
 
-  // Fix round 2 (revised): a height-percentage reject cannot tell a wrapper from a tall hero
-  // section — it killed a legitimate 3350px "home" hero on a page whose scrollHeight was only
-  // a little taller. Containment is the exact test: a wrapper's defining property is that it
-  // CONTAINS the other candidates, not that it is tall. Applies to both the selector path and
-  // the fallback path above, since both assign into `els`. Guarded so a two-level nest cannot
-  // prune the list down to nothing.
   const pruned = els.filter(
     (el) => !els.some((other) => other !== el && el.contains(other)),
   )
@@ -324,11 +273,6 @@ const RECON_PAYLOAD = () => {
     }
   })
 
-  // Fix round 2 addition 2: raw heading offsets, the material scroll-band naming needs when
-  // DOM sectioning is not trustworthy for a site. scrollY drives the offset only when nothing
-  // smoother is running: a Lenis/Locomotive-scrolled page moves content with a transform while
-  // window.scrollY can lag or stay near 0, so prefer whichever library's own reported scroll
-  // exists and label which source produced the numbers rather than guess silently.
   let absYSource = 'window.scrollY'
   let smoothScrollY = null
   try {
@@ -376,12 +320,6 @@ const RECON_PAYLOAD = () => {
       docScrollHeight: document.documentElement.scrollHeight,
       htmlClasses: [...document.documentElement.classList],
       outlineSource,
-      // Fix round 2 addition 1: some of these sites genuinely have no trustworthy DOM
-      // sectioning (WebGL canvas content, Framer's generated class names, Gatsby transition
-      // wrappers). Rather than keep tightening the heuristic, say which mode capture should
-      // use: "dom" sections are real, "scroll-bands" means capture must define sections as
-      // measured scroll-offset bands instead. The wrapper case is now handled upstream by the
-      // containment prune on `els`, so this no longer needs its own height check.
       recommendedSectionMode: candidateSections.length >= 3 ? 'dom' : 'scroll-bands',
       absYSource,
     },
@@ -391,15 +329,10 @@ const RECON_PAYLOAD = () => {
     candidateSelectors,
     stylesheets,
     headings,
-    // Page-scope warnings (e.g. the fallback exhausting its descent) surfaced back to Node;
-    // reconSite merges these into the site-level `warnings` array and strips this key.
     __warnings: payloadWarnings,
   }
 }
 
-// Preloaders on JS-driven sites cover the viewport well after `load` fires. Outlining then
-// returns the loader as if it were a content section. Wait for it to leave, then for the
-// document to actually be taller than a viewport.
 async function waitForContent(page, warnings) {
   const LOADER_SEL =
     '.loader, .preloader, [class*="loader"], [class*="preloader"], [id*="loader"]'
@@ -429,7 +362,7 @@ async function waitForContent(page, warnings) {
           'loader still covering or document never exceeded 1.2x viewport after 20s',
       })
     })
-  await page.waitForTimeout(1200) // intro animations settle; these sites run 1-3s reveals
+  await page.waitForTimeout(1200)
 }
 
 async function reconSite(browser, site) {
@@ -452,12 +385,11 @@ async function reconSite(browser, site) {
     const status = res?.status() ?? 0
     if (status >= 400)
       warnings.push({ code: 'HTTP_ERROR', status, affects: [site.origin] })
-    // networkidle is a HINT, never a gate — Vimeo and GTM poll forever and it never fires.
+
     await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {})
     await page.evaluate(() => document.fonts.ready)
     await waitForContent(page, warnings)
-    // Fix round 1, sweep #2: several sites mount sections on scroll. Walk to the bottom in
-    // steps before outlining so lazy content has already mounted, then return to top.
+
     await page.evaluate(async () => {
       const step = innerHeight * 0.8
       for (let y = 0; y < document.documentElement.scrollHeight; y += step) {

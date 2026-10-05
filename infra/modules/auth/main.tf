@@ -9,8 +9,6 @@ terraform {
 
 data "aws_region" "current" {}
 
-# The user directory. Lite is the cheapest Cognito tier, and the first 10,000
-# monthly active users are free on it.
 resource "aws_cognito_user_pool" "this" {
   name                     = "${var.name}-users"
   user_pool_tier           = "LITE"
@@ -38,15 +36,11 @@ resource "aws_cognito_user_pool" "this" {
     }
   }
 
-  # Cognito's built-in sender is free but has a low daily cap. Switch to SES
-  # before you launch to real customers.
   email_configuration {
     email_sending_account = "COGNITO_DEFAULT"
   }
 }
 
-# The browser app. No client secret because code running in a browser can't
-# keep one; PKCE protects the login instead.
 resource "aws_cognito_user_pool_client" "web" {
   name                                 = "${var.name}-web"
   user_pool_id                         = aws_cognito_user_pool.this.id
@@ -72,8 +66,6 @@ resource "aws_cognito_user_pool_client" "web" {
   }
 }
 
-# Hosted sign-in / sign-up pages at https://<prefix>.auth.<region>.amazoncognito.com
-# Version 1 is the classic hosted UI, the only option on the Lite tier.
 resource "aws_cognito_user_pool_domain" "this" {
   domain                = var.domain_prefix
   user_pool_id          = aws_cognito_user_pool.this.id

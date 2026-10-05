@@ -12,10 +12,6 @@ terraform {
     }
   }
 
-  # Backend blocks cannot use variables, so this is written out literally.
-  # It must match local.state_bucket in setup/main.tf, which derives the name
-  # from domain_name in settings.auto.tfvars: mccorlabs.com -> mccorlabs-com.
-  # Each environment (main, mm, jd, ...) gets its own state file here.
   backend "s3" {
     bucket       = "mccorlabs-com-tfstate"
     key          = "app/terraform.tfstate"
@@ -25,7 +21,6 @@ terraform {
   }
 }
 
-# Everything lives in us-east-1 because CloudFront certificates must be there.
 provider "aws" {
   region = "us-east-1"
 

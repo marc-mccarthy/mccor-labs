@@ -35,11 +35,21 @@ describe('Hero', () => {
     mockMatchMedia(true)
   })
 
-  it('renders exactly one h1 containing the tagline', () => {
+  it('renders exactly one h1 containing the slogan and no tagline', () => {
     render(<Hero />)
     const headings = screen.getAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toHaveTextContent(site.tagline)
+    expect(headings[0]).toHaveTextContent(site.slogan)
+    expect(screen.queryByText(site.tagline)).toBeNull()
+  })
+
+  it('renders the lede as a paragraph under the single h1', () => {
+    render(<Hero />)
+    const lede = screen.getByText(site.lede)
+    expect(lede.tagName).toBe('P')
+    expect(lede).toHaveClass('motion-safe:animate-lede')
+    expect(screen.queryByRole('heading', { name: site.lede })).toBeNull()
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   })
 
   it('renders the studio pill above the slogan', () => {

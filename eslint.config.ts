@@ -4,22 +4,22 @@ import jsxA11y from 'eslint-plugin-jsx-a11y'
 import prettierConfig from 'eslint-config-prettier/flat'
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 
-const rawColourSelectors = [
+const rawColorSelectors = [
   {
     selector: 'Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
     message:
-      'No raw colour values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
+      'No raw color values in components. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
   },
   {
     selector:
       'TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(/]',
     message:
-      'No raw colour values in components, including inside a template literal. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
+      'No raw color values in components, including inside a template literal. Use a token: var(--color-*) or its Tailwind utility. Tokens live in src/styles/globals.css.',
   },
 ]
 
 const textBaseMessage =
-  'Do not use text-base. The --color-base token makes Tailwind emit text-base as a colour utility, not a font size, and tailwind-merge groups it with the font sizes so one of the two is dropped. Use text-on-accent for a dark label on an accent fill, or text-[1rem] for a 1rem font size.'
+  'Do not use text-base. The --color-base token makes Tailwind emit text-base as a color utility, not a font size, and tailwind-merge groups it with the font sizes so one of the two is dropped. Use text-on-accent for a dark label on an accent fill, or text-[1rem] for a 1rem font size.'
 
 const textBaseSelectors = [
   {
@@ -78,7 +78,7 @@ export default tseslint.config(
     files: ['app/web/src/**/*.{ts,tsx}'],
     ignores: ['app/web/src/styles/**'],
     rules: {
-      'no-restricted-syntax': ['error', ...rawColourSelectors],
+      'no-restricted-syntax': ['error', ...rawColorSelectors],
     },
   },
 
@@ -86,7 +86,7 @@ export default tseslint.config(
     files: ['app/web/src/**/*.tsx'],
     ignores: ['app/web/src/styles/**'],
     rules: {
-      'no-restricted-syntax': ['error', ...rawColourSelectors, ...textBaseSelectors],
+      'no-restricted-syntax': ['error', ...rawColorSelectors, ...textBaseSelectors],
     },
   },
 

@@ -1,11 +1,3 @@
-// Forwards mail that SES received on your domain to a real inbox.
-//
-// SES has already stored the raw message in S3 by the time this runs. We can't
-// re-send it untouched: SES only sends as a domain it has verified, so a
-// message still claiming "From: stranger@gmail.com" would be rejected. Instead
-// we swap From for our own address and put the original sender in Reply-To, so
-// replying from your inbox reaches the person who wrote to you.
-
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { SESClient, SendRawEmailCommand } from "@aws-sdk/client-ses";
 
@@ -14,8 +6,6 @@ const ses = new SESClient({});
 
 const { MAIL_BUCKET, MAIL_FROM, FORWARD_TO } = process.env;
 
-// Headers that describe the original delivery. Left in place they contradict
-// the message we are about to send, and receivers treat that as forgery.
 const STRIP = new Set([
   "return-path",
   "sender",
@@ -28,8 +18,6 @@ const STRIP = new Set([
   "arc-seal",
 ]);
 
-// A header can be wrapped over several lines, with continuations indented.
-// Join them back up so each entry is one complete header.
 function splitMessage(raw) {
   const blank = raw.search(/\r?\n\r?\n/);
   if (blank === -1) return { headers: [], body: raw };
@@ -73,8 +61,6 @@ export const handler = async (event) => {
   const record = event.Records?.[0]?.ses;
   if (!record) throw new Error("not an SES event");
 
-  // SES names the object after the message id, and refuses the message itself
-  // if its own spam or virus scan failed.
   const key = record.mail.messageId;
   const verdicts = record.receipt ?? {};
   const failed = ["spamVerdict", "virusVerdict"].filter(

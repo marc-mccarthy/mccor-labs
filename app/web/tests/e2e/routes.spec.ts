@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 import { site } from '@/content/site'
 
 const ROUTES = [
-  { path: '/', heading: site.tagline },
+  { path: '/', heading: site.slogan },
   { path: '/services/', heading: 'Services' },
   { path: '/work/', heading: 'Work' },
   { path: '/about/', heading: 'About' },

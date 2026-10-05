@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { Button } from './button'
 
 function classesOf(name: string): string[] {
@@ -27,7 +27,7 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Sending' })).toBeDisabled()
   })
 
-  it('keeps both the accent-fill label colour and the base font size on primary', () => {
+  it('keeps both the accent-fill label color and the base font size on primary', () => {
     render(<Button>Primary</Button>)
     const classes = classesOf('Primary')
     expect(classes).toContain('bg-accent')
@@ -35,7 +35,7 @@ describe('Button', () => {
     expect(classes).toContain('text-sm')
   })
 
-  it('keeps the accent-fill label colour when lg bumps the font size', () => {
+  it('keeps the accent-fill label color when lg bumps the font size', () => {
     render(<Button size="lg">Large</Button>)
     const classes = classesOf('Large')
     expect(classes).toContain('text-on-accent')
@@ -43,7 +43,7 @@ describe('Button', () => {
     expect(classes).not.toContain('text-sm')
   })
 
-  it('keeps the link variant its own colour at the lg size', () => {
+  it('keeps the link variant its own color at the lg size', () => {
     render(
       <Button variant="link" size="lg">
         Read more

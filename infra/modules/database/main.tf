@@ -7,11 +7,6 @@ terraform {
   }
 }
 
-# One table, "single-table design": every record has a partition key (pk) and a
-# sort key (sk). Example: pk = USER#<id>, sk = ITEM#<id>.
-#
-# PROVISIONED mode on purpose: AWS's always-free tier covers 25 GB of storage
-# plus 25 read and 25 write capacity units per account, but only in this mode.
 resource "aws_dynamodb_table" "this" {
   name                        = var.name
   billing_mode                = "PROVISIONED"

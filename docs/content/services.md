@@ -167,7 +167,7 @@ alternatives.
 - Five services is at the upper limit for one page before it starts reading as
   an undifferentiated list. If a sixth appears, consider grouping.
 - Every service here is visibly covered by a named team member in
-  `docs/content/team.md`: websites and applications by Marc, Kirsten and Ashley
+  `docs/content/team.md`: websites and applications by Marc, Ashley and Marie
   between them; AI integration and teaching by Marc; consulting by Nate. Keep it
   that way — a service nobody on the team page appears to deliver reads as
   padding.

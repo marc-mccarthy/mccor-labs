@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 import { Anchor } from './anchor'
 import { Badge } from './badge'
 import { Card } from './card'
 
-const RAW_COLOUR = /#[0-9a-fA-F]{3,8}\b/
+const RAW_COLOR = /#[0-9a-fA-F]{3,8}\b/
 
 describe('Card, Badge and Anchor', () => {
   it('Card renders children inside a bordered surface', () => {
@@ -25,21 +25,21 @@ describe('Card, Badge and Anchor', () => {
     expect(target).toBeEmptyDOMElement()
   })
 
-  it('none of the three emit a raw colour value', () => {
+  it('none of the three emit a raw color value', () => {
     render(
       <>
         <Card>Inside</Card>
         <Badge>New</Badge>
-        <Anchor id="raw-colour-check" />
+        <Anchor id="raw-color-check" />
       </>,
     )
     const nodes = [
       screen.getByText('Inside'),
       screen.getByText('New'),
-      document.getElementById('raw-colour-check'),
+      document.getElementById('raw-color-check'),
     ]
     for (const node of nodes) {
-      expect(node?.className ?? '').not.toMatch(RAW_COLOUR)
+      expect(node?.className ?? '').not.toMatch(RAW_COLOR)
     }
   })
 })

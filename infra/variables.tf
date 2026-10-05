@@ -1,5 +1,3 @@
-# Values come from settings.auto.tfvars.
-
 variable "project" {
   description = "Short name used in every resource name"
   type        = string
@@ -31,12 +29,6 @@ variable "protect_data" {
   type        = bool
   default     = true
 }
-
-# ---------- Declared here only to keep Terraform quiet ----------
-
-# These live in settings.auto.tfvars, which this root loads automatically, but
-# they are consumed by infra/setup rather than here. Without these blocks every
-# command in this directory prints "Value for undeclared variable".
 
 variable "enable_mailserver" {
   description = "Used by infra/setup. Ignored here."

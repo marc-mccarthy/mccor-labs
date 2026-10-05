@@ -1,17 +1,13 @@
-# Terraform working files and local state
 .terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 
-# Real variable values stay out of git (the .example file is committed)
 terraform.tfvars
 settings.auto.tfvars
 
-# Lambda zip built by Terraform
 .build/
 
-# Node tooling for scripts/
 node_modules/
 
 **/console*
@@ -20,27 +16,19 @@ node_modules/
 **/.playwright-mcp/
 **/.playwright-cli/
 
-# Specs, plans and SDD execution records (ledger, task briefs/reports, review
-# diffs) are authored project history and belong in git, not out here. This
-# applies to the top-level docs/superpowers/ and .superpowers/ trees; infra/
-# keeps its own copies ignored below since that work is still in flight.
 infra/**/superpowers/
 infra/**/.superpowers/
 
-# Next.js build output and static export
 app/web/.next/
 app/web/out/
 app/web/tsconfig.tsbuildinfo
 
-# Test artefacts
 test-results/
 playwright-report/
 lighthouse-report/
 .playwright/
 
-# Environment values come from 1Password via op run; .env.template is committed.
-# A .env.local should never exist in this project, but ignore it if one appears.
 .env.local
 
-# Media working directory
 .media-work/
+.claude/settings.local.json

@@ -14,7 +14,7 @@ describe('Logo', () => {
     expect(screen.queryByText(/McCor/i)).not.toBeInTheDocument()
   })
 
-  it('uses only design tokens for colour', () => {
+  it('uses only design tokens for color', () => {
     const { container } = render(<Logo />)
     expect(container.innerHTML).not.toMatch(/#[0-9a-fA-F]{3,8}/)
     expect(container.innerHTML).not.toMatch(/\[#/)

@@ -6,13 +6,13 @@ for a role detail page, LinkedIn, or a job board.
 
 **Before publishing any of these, the owner must supply or explicitly decline:**
 
-| Missing                            | Consequence of leaving it out                                                                                                                                        |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Salary range                       | Not legally required (Minnesota's pay-transparency law starts at 30 employees), but many strong candidates filter out postings without one. Costs candidate quality. |
-| Benefits — health, retirement, PTO | Every posting below says "discussed at offer stage". If real benefits exist, say so; it is a competitive advantage for a small firm.                                 |
-| Remote / hybrid / in-office policy | Currently stated as "Twin Cities metro, hybrid". Correct this if wrong — it is the single most-filtered field on a job board.                                        |
-| EEO statement                      | Omitted rather than invented. Add the firm's real position.                                                                                                          |
-| Employment type for each role      | Assumed full-time except marketing, which is flagged flexible.                                                                                                       |
+| Missing                            | Consequence of leaving it out                                                                                                                                                                                   |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Salary range                       | **Resolved.** Not posted. Every role opens when a project funds it, and the budget is stated on the first call. This is deliberate and honest for a bootstrapping firm; do not add a range that cannot be paid. |
+| Benefits — health, retirement, PTO | Every posting below says "discussed at offer stage". If real benefits exist, say so; it is a competitive advantage for a small firm.                                                                            |
+| Remote / hybrid / in-office policy | Currently stated as "Twin Cities metro, hybrid". Correct this if wrong — it is the single most-filtered field on a job board.                                                                                   |
+| EEO statement                      | Omitted rather than invented. Add the firm's real position.                                                                                                                                                     |
+| Employment type for each role      | Assumed full-time except marketing, which is flagged flexible.                                                                                                                                                  |
 
 Nothing below invents a benefit, a salary, a client name or a metric.
 
@@ -20,7 +20,7 @@ Nothing below invents a benefit, a salary, a client name or a metric.
 
 ## Shared boilerplate
 
-Used at the top or bottom of each posting. Keep it identical across all five so
+Used at the top or bottom of each posting. Keep it identical across all four so
 it can be maintained in one place.
 
 ### About McCor Labs
@@ -50,7 +50,7 @@ than leaving you wondering.
 ## 1. Software Engineer I
 
 **Location:** Twin Cities metro — hybrid
-**Type:** Full-time
+**Type:** Contract to start, project-based, with a path to permanent as the pipeline firms up
 **Level:** Early career
 **Apply with subject:** `Application: Software Engineer I`
 
@@ -97,67 +97,14 @@ thing actually works for the person using it.
 
 A computer science degree. A minimum number of years. A LeetCode performance.
 
-### Compensation and benefits
+### Compensation
 
-Salary and benefits discussed at offer stage. Ask us early if that matters to
-your decision — we would rather tell you than waste your time.
-
----
-
-## 2. Software Engineer II
-
-**Location:** Twin Cities metro — hybrid
-**Type:** Full-time
-**Level:** Mid-level
-**Apply with subject:** `Application: Software Engineer II`
-
-### The role
-
-You have shipped software, broken it, and been the person who fixed it. This
-role is about owning projects rather than tickets: making the architectural
-calls, explaining them to someone who is paying for the outcome, and living with
-the consequences.
-
-In a firm this size that ownership is real. You will not be shielded from the
-client, and you will not be handed a fully specified task list.
-
-### What you will do
-
-- Own delivery of a client project end to end, with support but not supervision
-- Make design and architecture decisions, and explain the trade-offs to
-  non-technical stakeholders in plain language
-- Review the Software Engineer I's work substantively, and mentor deliberately
-- Take on the awkward problems: the intermittent failure, the slow query, the
-  integration whose documentation is wrong
-- Inherit existing codebases and improve them without rewriting them on reflex
-- Help decide which work we take and which we turn down
-
-### What we need from you
-
-- Three or more years building and maintaining production software
-- Genuine comfort across the stack, plus honesty about where your depth actually
-  is and where it is not
-- Experience owning something in production — deploys, incidents, the parts that
-  are not writing features
-- Ability to disagree with a client's proposed approach and keep the
-  relationship
-- Judgement about when good enough is good enough. We ship
-- Based in or moving to the Twin Cities metro
-
-### What would help but is not required
-
-- TypeScript, React or Next.js in production at scale
-- AWS, Terraform, or infrastructure-as-code experience
-- Consulting or agency background — the context-switching is a skill
-- Having worked somewhere with real accessibility or compliance requirements
-
-### Compensation and benefits
-
-Salary and benefits discussed at offer stage.
+This role opens when a project funds it. We will tell you the budget on the
+first call rather than after three interviews.
 
 ---
 
-## 3. AI-Forward Engineer
+## 2. AI-Forward Engineer
 
 **Location:** Twin Cities metro — hybrid
 **Type:** Full-time
@@ -209,16 +156,17 @@ client when a language model is the wrong tool and a SQL query would do.
 - Data engineering depth: large databases, query performance, warehousing
 - Fine-tuning experience, and a clear view of when it is not worth it
 
-### Compensation and benefits
+### Compensation
 
-Salary and benefits discussed at offer stage.
+This role opens when a project funds it. We will tell you the budget on the
+first call rather than after three interviews.
 
 ---
 
-## 4. Marketing Specialist
+## 3. Marketing Specialist
 
 **Location:** Twin Cities metro — hybrid
-**Type:** Full-time, part-time or contract for the right person
+**Type:** Contract to start — part-time or project-based, genuinely open
 **Level:** Open
 **Apply with subject:** `Application: Marketing Specialist`
 
@@ -264,14 +212,15 @@ material most B2B technical marketing lacks.
 - Familiarity with how developers evaluate a vendor, because they do not respond
   to conventional B2B marketing
 
-### Compensation and benefits
+### Compensation
 
-Salary and benefits discussed at offer stage. Part-time and contract
+This role opens when a project funds it. We will tell you the budget on the
+first call rather than after three interviews. Part-time and contract
 arrangements are genuinely open, not a fallback.
 
 ---
 
-## 5. Speculative application
+## 4. Speculative application
 
 **Location:** Twin Cities metro — hybrid
 **Type:** Open
@@ -279,7 +228,7 @@ arrangements are genuinely open, not a fallback.
 
 ### The role
 
-None of the four above, but you think you should work here.
+None of the three above, but you think you should work here.
 
 This is a real route, not a politeness. A four-person firm does not always know
 what it is missing until someone describes it.
@@ -305,12 +254,13 @@ Depends entirely on what you propose.
 ## Consistency checks before publishing
 
 - Every posting says "Twin Cities metro — hybrid". Confirm that is accurate for
-  all five, and correct it everywhere at once if not.
-- Every posting defers salary to offer stage. If ranges get added, add them to
-  all five, not some.
+  all four, and correct it everywhere at once if not.
+- Every posting now says the role opens when a project funds it. If a real range
+  ever exists for one role, state it on that role only and leave the others
+  honest rather than making them all vague again.
 - The claims about delivered work — MCP servers for a Medicare company, LLM
   analytics for a Twin Cities sports franchise — appear in postings 1's
-  boilerplate and posting 3's role description. Both are owner-supplied and
+  boilerplate and posting 2's role description. Both are owner-supplied and
   true. Do not extend them, and do not name either client.
 - Apply subjects must stay exactly `Application: <Role Title>`, matching
   `docs/content/careers.md`, or the mail filing rule breaks.

@@ -1,6 +1,3 @@
-# Alarms reach a human through SNS. AWS Budgets emails directly and is
-# configured separately in setup/ -- two independent paths, so a broken
-# SNS subscription does not leave the owner blind.
 resource "aws_sns_topic" "alerts" {
   name = "${replace(var.domain_name, ".", "-")}-mail-alerts"
 }
@@ -15,10 +12,6 @@ locals {
   alarm_actions = [aws_sns_topic.alerts.arn]
 }
 
-# The only check that tests the outcome from outside the box: can the
-# internet actually deliver mail here? Catches a dead Postfix, a broken
-# security group and a crash-looping container alike. Free for up to 50
-# checks against AWS endpoints in this account.
 resource "aws_route53_health_check" "smtp" {
   ip_address        = aws_eip.mail.public_ip
   port              = 25
@@ -89,9 +82,6 @@ resource "aws_cloudwatch_metric_alarm" "memory" {
   alarm_actions       = local.alarm_actions
 }
 
-# treat_missing_data is the whole point here: a DLM policy in an errored
-# state publishes NO metrics at all, so alarming on failures would stay
-# green in exactly the case that matters. Alarm on the absence of success.
 resource "aws_cloudwatch_metric_alarm" "snapshots" {
   alarm_name          = "${var.domain_name}-mail-snapshots-stopped"
   alarm_description   = "No snapshot completed in 24h. Backups have silently stopped."

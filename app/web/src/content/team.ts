@@ -2,8 +2,8 @@ import type { TeamMember } from './types'
 
 export const team: readonly TeamMember[] = [
   {
-    slug: 'marc-mccarthy',
-    name: 'Marc McCarthy',
+    slug: 'marc-m',
+    name: 'Marc M.',
     role: 'Founder · Full-stack and AI Engineer',
     email: 'marcm@mccorlabs.com',
     mediaSlot: null,
@@ -19,7 +19,7 @@ export const team: readonly TeamMember[] = [
   },
   {
     slug: 'ashley-t',
-    name: 'Ashley',
+    name: 'Ashley T.',
     role: 'Designer and Frontend Engineer',
     email: 'ashleyt@mccorlabs.com',
     mediaSlot: null,
@@ -27,10 +27,18 @@ export const team: readonly TeamMember[] = [
   },
   {
     slug: 'marie-m',
-    name: 'Marie',
+    name: 'Marie M.',
     role: 'Project Lead and Quality Engineer',
     email: 'mariem@mccorlabs.com',
     mediaSlot: null,
     bio: "Marie makes sure the thing that ships is the thing that was agreed, and that it works. Eight years across delivery and QA, including a spell in regulated healthcare software where a missed requirement was a compliance finding rather than a bug report. She writes the test plan, runs the client conversations where scope actually gets decided, and is the reason projects here tend to finish on the date given at the start. She coaches a youth soccer team, cooks far more than four people can eat, and has an ongoing and unresolved argument with her garden's rabbits.",
+  },
+  {
+    slug: 'kirsten-h',
+    name: 'Kirsten H.',
+    role: 'Backend and Applications Engineer',
+    email: 'kirstenh@mccorlabs.com',
+    mediaSlot: null,
+    bio: 'Kirsten builds the applications behind the interface: the services, data models and integrations that have to keep working long after launch day. Seven years in, most of them on internal tools and customer portals for mid-sized companies, she has a habit of asking what happens when the data is wrong before anyone asks what happens when it is right. She pairs with Marc on the applications work, owns the database design on most projects, and writes the migration plan before the first table exists. Outside work she climbs indoors through the winter and outdoors whenever Minnesota allows it, and she is slowly working through every taproom in the Twin Cities.',
   },
 ] as const

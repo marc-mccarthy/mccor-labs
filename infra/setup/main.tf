@@ -46,7 +46,7 @@ variable "domain_name" {
 
   validation {
     condition     = length(var.domain_name) > 0
-    error_message = "domain_name is blank. Copy settings.auto.tfvars.example and fill it in."
+    error_message = "domain_name is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
   }
 }
 
@@ -55,7 +55,7 @@ variable "alert_email" {
 
   validation {
     condition     = length(var.alert_email) > 0
-    error_message = "alert_email is blank. Copy settings.auto.tfvars.example and fill it in."
+    error_message = "alert_email is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
   }
 }
 

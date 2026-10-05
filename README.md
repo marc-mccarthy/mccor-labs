@@ -11,28 +11,28 @@ Browser ──> Route 53 ──> CloudFront ──> S3   (website files)
 
 ## Where this goes
 
-Put all of it in your website's git repo, even before the site exists. The
-`app/web` placeholder page stands in until your real frontend is ready. Commit
-`infra/backend.hcl` and the `.terraform.lock.hcl` files; neither is secret.
-`infra/settings.auto.tfvars` is the opposite -- it holds your real domain,
-your alert email and your team's names, so it's gitignored and never
-committed. Commit `infra/settings.auto.tfvars.example` instead, as the
-template, and keep it in sync when you add a variable. The `.gitignore`
-already keeps state files and build zips out too.
+Put all of it in your website's git repo. Commit `infra/backend.hcl` and the
+`.terraform.lock.hcl` files; neither is secret. The `.gitignore` already keeps
+state files and build zips out too.
 
 ## Layout
 
 ```
 infra/
-  settings.auto.tfvars           <- your project name, domain, alert email. Gitignored -- not committed.
-  settings.auto.tfvars.example   <- the committed template; copy it to settings.auto.tfvars
+  terraform.env                  <- settings as op:// references into 1Password
   deploy.sh                      <- the one command you run
+  publish-guard.sh               <- vets the build output before publish uploads it
   backend.hcl                    <- written by setup; commit it
   main.tf, variables.tf, outputs.tf, versions.tf
   setup/                         <- one-time: state bucket, DNS zone, budget alert
-  modules/                       <- certificate, static_site, auth, database, api, email, mailserver
+  modules/                       <- certificate, static_site, publish_role, auth, database, api, email, mailserver
+                                    (static_site and publish_role carry their own tests/)
+  tests/                         <- publish-guard.sh tests
 app/
   web/                   <- the real site (Next.js static export)
+scripts/                 <- reference-capture and media-render helpers
+docs/                    <- site copy drafts, future notes
+lefthook.yml             <- git hooks (pre-commit, pre-push)
 ```
 
 ## Cost
@@ -50,9 +50,9 @@ _fixed_ cost above.
 
 ## One-time setup
 
-**You need:** Terraform 1.16+, AWS CLI 2.32+ (for `aws login`), bash (macOS/Linux,
-or WSL / Git Bash on Windows), and an AWS account on the **Paid** plan (the Free
-plan closes the account after six months).
+**You need:** Terraform 1.16+, AWS CLI 2.32+ (for `aws login`), the 1Password CLI
+(`op`), signed in, bash (macOS/Linux, or WSL / Git Bash on Windows), and an AWS
+account on the **Paid** plan (the Free plan closes the account after six months).
 
 ### 1. Log in
 
@@ -70,7 +70,7 @@ credential_process = aws configure export-credentials --profile default --format
 region = us-east-1
 ```
 
-`deploy.sh` uses the `terraform` profile automatically. Check it works:
+`deploy.sh` uses the `terraform` profile automatically (for `publish` on the main site it prefers a `publish` profile if you have one). Check it works:
 
 ```bash
 aws sts get-caller-identity --profile terraform
@@ -80,7 +80,7 @@ When your login expires, just run `aws login` again.
 
 ### 2. Fill in your settings
 
-Edit `infra/settings.auto.tfvars`: project name, domain, alert email.
+Settings live in 1Password, in the Development vault item that `infra/terraform.env` points at. Fill in its fields there: `project`, `domain_name`, `alert_email`, `monthly_budget_usd`, `enable_mailserver` (`true`/`false`), `mailboxes` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `admin_mailbox`, `instance_type`, `mail_volume_gb`. Don't edit `infra/terraform.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
 ### 3. Run setup
 
@@ -113,8 +113,7 @@ git add -A
 git commit -m "Infrastructure setup"
 ```
 
-Also back up `infra/setup/terraform.tfstate` somewhere safe. It's git-ignored and
-it's how Terraform knows it owns the bucket and zone.
+Setup's state lives in the versioned S3 bucket it created (see `infra/setup/backend.tf`), not on your machine. The first run leaves a local copy at `infra/setup/terraform.tfstate.migrated-<date>`. It's git-ignored but holds your settings in plain text, so move it somewhere safe or delete it once `terraform state list` works in `infra/setup`.
 
 ## Deploying
 
@@ -151,8 +150,8 @@ To remove the shared setup too (only after every copy and the main site are gone
 
 ```bash
 cd infra/setup
-terraform apply   -var-file=../settings.auto.tfvars -var="force_destroy=true"
-terraform destroy -var-file=../settings.auto.tfvars -var="force_destroy=true"
+op run --env-file=../terraform.env -- terraform apply   -var="force_destroy=true"
+op run --env-file=../terraform.env -- terraform destroy -var="force_destroy=true"
 ```
 
 ## Your real frontend
@@ -161,8 +160,7 @@ The site in `app/web` is already the real frontend: a Next.js static export,
 built and uploaded by `./infra/deploy.sh publish` (see "Building and
 deploying" below). Logins, the database and the API are parked (commented
 out) in `infra/main.tf` and `infra/outputs.tf` -- that code has no backend to
-run against yet. The comment above the parked block in `infra/main.tf` gives
-the re-enable steps.
+run against yet (`module "api"` points at `app/api`, which doesn't exist).
 
 ## The website
 
@@ -170,13 +168,13 @@ The marketing site lives in `app/web`. It is a Next.js app that builds to plain
 static files, deployed to the same S3 bucket and CloudFront distribution as
 everything else here.
 
-Requirements: Node 24 (see `.node-version`), pnpm 12, and the 1Password CLI (`op`), signed in.
+Requirements: Node 24 (see `.node-version`), pnpm 12 (pinned by `packageManager`
+in `package.json`), and the 1Password CLI (`op`), signed in.
 
-Install pnpm from Homebrew (`brew install pnpm`), which is where 12.6.0 comes from
-on this machine, and make sure `/opt/homebrew/bin` is on your `PATH` before any
-other pnpm: a plain `pnpm` here resolves to a self-installing shim that tries to
-fetch `pnpm@12.6.0` from npm, where that version does not exist, so every command
-and every git hook dies silently rather than reporting an error.
+Node and pnpm come from mise, so no `PATH` changes are needed. The repo has no
+`mise.toml`; mise picks Node up from `.node-version` and pnpm from the global
+`~/.config/mise/config.toml`. The git hooks put `~/.local/share/mise/shims` on
+`PATH` themselves.
 
 ### Running it locally
 
@@ -185,20 +183,18 @@ pnpm install
 pnpm dev                      # via `op run`; needs the 1Password CLI, signed in
 ```
 
-`pnpm install` installs lefthook and asks to run its build script -- lefthook is
-what writes the git hooks, and pnpm blocks dependency build scripts by default.
-Approving it is necessary but on its own it was not sufficient: the hook files
-only appeared once a `lefthook.yml` with active jobs existed in the repo root.
-That file is committed, so a fresh clone gets the hooks. If they are missing,
-run `pnpm approve-builds lefthook` and then `pnpm exec lefthook install`. Always
-confirm, because a missing hook means every check silently passes:
+`pnpm install` installs lefthook, which writes the git hooks from the committed
+`lefthook.yml`; `pnpm-workspace.yaml` already lists lefthook under `allowBuilds`,
+so pnpm doesn't block its build script. If the hooks are missing, run
+`pnpm exec lefthook install`. Always confirm, because a missing hook means every
+check silently passes:
 
 ```bash
 test -f .git/hooks/pre-commit && echo "hooks installed"
 ```
 
 - The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
-- Values live in 1Password, in the `Development` vault under the `mccor-labs` item (with a hyphen). The references are in `app/web/.env.template`, which is committed because it holds `op://` paths, not values.
+- Values live in 1Password, in the `Development` vault under the `mccor-labs` item (with a hyphen). The references are in `app/web/.env`, which is committed because it holds `op://` paths, not values.
 - A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.
 - `pnpm build:raw` skips `op run` entirely. It is the escape hatch for building against an unconfigured or locked vault; the environment-dependent values come out empty.
 
@@ -277,26 +273,35 @@ This needs that environment's infrastructure already deployed (plain
 
 - Refuses to build if anything under `app/`, `package.json`,
   `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `.node-version` is uncommitted
-  or untracked, or if a gitignored Next.js env file (`.env`, `.env.local`,
-  etc.) exists under `app/web` -- publish only ever builds committed code.
+  or untracked, or if a gitignored env file (such as `app/web/.env.local`)
+  exists under `app/web` -- publish only ever builds committed code, with its
+  env coming only from the committed `app/web/.env`.
 - Builds with `op run`, setting `NEXT_PUBLIC_SITE_URL` to that environment's
   own `site_url` from Terraform, so the sitemap, `robots.txt` and
   `metadataBase` always name the right host.
+- Vets the snapshot with `infra/publish-guard.sh` before uploading, and refuses
+  on a symlink, a dotfile, a file type outside the allowed list (html, txt, js,
+  css, json, xml, woff2, webp, avif, jpg, svg, mp4, webm, glsl), a file named
+  like one in `rejected-media/`, or any git-ignored file under `app/web/public`.
+  It also refuses if `index.html` or `404.html` is missing, or if `robots.txt`
+  doesn't name this environment's sitemap.
 - Snapshots the build output before uploading anything, so a concurrent
   `pnpm build` elsewhere (lefthook's pre-push hook, `pnpm verify`) can't mirror
   a half-written tree onto the live site.
-- Uploads `_next/static/` with a one-year cache, then everything else with a
-  cache that browsers always revalidate and CloudFront keeps for a day.
+- Uploads `_next/static/` with a one-year immutable cache, `media/` and `fonts/`
+  with a one-day cache (plus a week of stale-while-revalidate), then everything
+  else with a cache that browsers always revalidate and CloudFront keeps for a day.
 - Invalidates `/*` (one of CloudFront's 1,000 free paths a month) and waits
   for it to finish.
 - Only once that invalidation completes, deletes files the new build no
   longer has -- so nothing drops a file a cached old page might still need.
 
 The CloudFront function (`infra/modules/static_site/viewer_request.js.tftpl`)
-serves `/services/` and `/services` from `services/index.html`, since a plain
-S3 origin doesn't resolve directory indexes; returns a real 404 with the
-site's own 404 page for anything missing; and 301-redirects `www` to the
-apex.
+serves `/services/` from `services/index.html`, since a plain S3 origin doesn't
+resolve directory indexes, 301-redirects `/services` to `/services/`, and
+301-redirects `www` to the primary host. A real 404 with the site's own 404
+page for anything missing comes from the distribution's custom error responses
+(403 and 404 both return `/404.html` with status 404).
 
 ## What Terraform doesn't do
 

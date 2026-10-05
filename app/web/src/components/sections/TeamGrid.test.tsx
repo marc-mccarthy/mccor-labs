@@ -22,7 +22,7 @@ describe('TeamGrid', () => {
   it('renders every name, role, bio and mailto link', () => {
     mockMatchMedia(false)
     render(<TeamGrid />)
-    expect(team).toHaveLength(4)
+    expect(team).toHaveLength(5)
     for (const member of team) {
       expect(screen.getByRole('heading', { name: member.name })).toBeInTheDocument()
       expect(screen.getByText(member.role)).toBeInTheDocument()
@@ -62,8 +62,8 @@ describe('TeamGrid', () => {
     mockMatchMedia(false)
     render(<TeamGrid />)
     const nulls = team.filter((member) => member.mediaSlot === null)
-    expect(nulls).toHaveLength(3)
-    expect(screen.getAllByTestId('team-panel')).toHaveLength(3)
+    expect(nulls).toHaveLength(4)
+    expect(screen.getAllByTestId('team-panel')).toHaveLength(4)
   })
 
   it('renders a single section and all members under reduced motion', () => {

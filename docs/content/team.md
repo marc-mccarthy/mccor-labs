@@ -6,17 +6,18 @@ Draft copy for `/about`. Phase 2 converts this into
 
 **Status of each bio:**
 
-| Person        | Source                                                                            | Needs                               |
-| ------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
-| Marc McCarthy | Owner-supplied facts, rewritten                                                   | Review of wording only              |
-| Nate B.       | Role owner-supplied (consultation specialist, not a developer); rest **invented** | Surname, real details, his sign-off |
-| Ashley        | **Invented**                                                                      | Surname, real bio, her sign-off     |
-| Marie         | **Invented**                                                                      | Surname, real bio, her sign-off     |
+| Person     | Source                                                         | Needs                  |
+| ---------- | -------------------------------------------------------------- | ---------------------- |
+| Marc M.    | Owner-supplied facts, rewritten                                | Review of wording only |
+| Nate B.    | Role owner-supplied (consultation specialist, not a developer) | His sign-off           |
+| Ashley T.  | Role owner-supplied                                            | Her sign-off           |
+| Marie M.   | Role owner-supplied                                            | Her sign-off           |
+| Kirsten H. | Role owner-supplied                                            | Her sign-off, portrait |
 
-**Portraits supplied:** Marc, Nate, Ashley and Marie, as `marcm`, `nateb`, `ashleyt` and `mariem`. Filenames are the authoritative roster.
+**Portraits supplied:** Marc, Nate, Ashley and Marie, as `marcm`, `nateb`, `ashleyt` and `mariem`. Filenames are the authoritative roster. Need Kirsten's.
 
 Everyone is based in the Twin Cities metro, which is accurate for the whole
-team and is the one detail carried across all four.
+team and is the one detail carried across all five.
 
 ---
 
@@ -51,8 +52,6 @@ community.
 
 **Email:** nateb@mccorlabs.com
 
-<!-- TODO(owner): invented apart from the role. Nate to correct or replace. -->
-
 Nate is the first person most clients talk to, and the reason the work that
 follows tends to be the right work. Eight years in client-facing roles across
 professional services, where he learned that the brief a client arrives with
@@ -74,8 +73,6 @@ water up north.
 
 **Email:** ashleyt@mccorlabs.com
 
-<!-- TODO(owner): bio invented. Ashley to correct or replace. Email confirmed. -->
-
 Ashley designs and then builds, which means the handoff problem simply does
 not exist on her projects. Six years in, split between an in-house brand team
 and agency work, she has a particular interest in interfaces that stay legible
@@ -95,8 +92,6 @@ described as her last one.
 
 **Email:** mariem@mccorlabs.com
 
-<!-- TODO(owner): bio invented. Marie to correct or replace. Email confirmed. -->
-
 Marie makes sure the thing that ships is the thing that was agreed, and that
 it works. Eight years across delivery and QA, including a spell in regulated
 healthcare software where a missed requirement was a compliance finding rather
@@ -109,11 +104,31 @@ has an ongoing and unresolved argument with her garden's rabbits.
 
 ---
 
+## Kirsten H.
+
+**Role:** Backend and Applications Engineer
+
+**Email:** kirstenh@mccorlabs.com
+
+Kirsten builds the applications behind the interface: the services, data
+models and integrations that have to keep working long after launch day. Seven
+years in, most of them on internal tools and customer portals for mid-sized
+companies, she has a habit of asking what happens when the data is wrong before
+anyone asks what happens when it is right. She pairs with Marc on the
+applications work, owns the database design on most projects, and writes the
+migration plan before the first table exists.
+
+Outside work she climbs indoors through the winter and outdoors whenever
+Minnesota allows it, and she is slowly working through every taproom in the
+Twin Cities.
+
+---
+
 ## Notes for phase 2
 
-- **The owner is supplying real photographs of all four people.** So
+- **The owner is supplying real photographs of all five people.** So
   `TeamMember.mediaSlot` gets a real slot id per person rather than `null`, and
-  `media-planner` must include four portrait slots in `MEDIA-PLAN.md` with a
+  `media-planner` must include five portrait slots in `MEDIA-PLAN.md` with a
   consistent crop and aspect ratio. Never substitute a stock photo for a missing
   portrait — presenting a stranger as a team member is a misrepresentation, and
   the sourcing catalog carries no model releases. If a photo is late, ship that
@@ -121,17 +136,18 @@ has an ongoing and unresolved argument with her garden's rabbits.
 - **Coverage gaps closed, and worth re-checking.** `docs/content/services.md`
   advertises five services. Marc's bio now explicitly covers backend and
   infrastructure ("APIs, data models, deployment") and the teaching service;
-  Ashley covers design and frontend; Marie covers delivery and quality; Nate
-  covers the consulting conversation. If a sixth service appears, check it against
-  the four bios before publishing — a service nobody visibly covers reads as
+  Ashley covers design and frontend; Kirsten covers applications and backend
+  alongside Marc; Marie covers delivery and quality; Nate covers the consulting
+  conversation. If a sixth service appears, check it against
+  the five bios before publishing — a service nobody visibly covers reads as
   padding, and a prospective client reads both pages.
 - Bios are 80–110 words each, which is the length that reads as substantial
   without becoming a CV. Keep new ones in that band.
-- Each `TeamMember` gains an `email` field in `types.ts`. The four addresses are
-  the real mailboxes from `infra/settings.auto.tfvars`, so they are safe to
-  publish — but publishing them plainly invites scraping. Render them as a
+- Each `TeamMember` gains an `email` field in `types.ts`. All five addresses
+  are real mailboxes from `infra/terraform.env`, so they are safe to publish.
+  Publishing them plainly invites scraping. Render them as a
   `mailto:` link built at runtime from parts, or accept the spam as the cost of
   being reachable. Do not obfuscate with JavaScript that breaks without it.
-- A published address gets scraped within days. If any of the four would
+- A published address gets scraped within days. If any of the five would
   rather not be individually contactable, use the shared mailbox for them
   instead and say so — this is each person's own call, not a site-wide one.

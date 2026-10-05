@@ -95,8 +95,8 @@ describe('services content', () => {
 })
 
 describe('team content', () => {
-  it('lists four people with firm mailboxes', () => {
-    expect(team).toHaveLength(4)
+  it('lists five people with firm mailboxes', () => {
+    expect(team).toHaveLength(5)
     for (const member of team) {
       expect(member.email).toMatch(/@mccorlabs\.com$/)
     }

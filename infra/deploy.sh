@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -16,19 +17,9 @@ fi
 export AWS_PROFILE
 unset TF_WORKSPACE
 
-if [[ -f settings.auto.tfvars.tpl ]]; then
-  if ! command -v op >/dev/null; then
-    echo "1Password CLI (op) not found, but settings.auto.tfvars.tpl exists." >&2
-    echo "Install it, or write settings.auto.tfvars by hand from the template." >&2
-    exit 1
-  fi
-  if ! op inject -i settings.auto.tfvars.tpl -o settings.auto.tfvars --force; then
-    echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
-    echo "Refusing to continue: deploying with stale settings risks applying an" >&2
-    echo "empty mailboxes map, which would destroy the mailbox passwords." >&2
-    exit 1
-  fi
-fi
+SETTINGS="$PWD/terraform.env"
+with_settings() { op run --no-masking --env-file="$SETTINGS" -- "$@"; }
+setting() { op run --env-file="$SETTINGS" --no-masking -- printenv "TF_VAR_$1"; }
 
 if [[ -n "$ENV_ID" ]]; then
   if [[ ! "$ENV_ID" =~ ^[a-z][a-z0-9]{0,7}$ ]]; then
@@ -37,6 +28,28 @@ if [[ -n "$ENV_ID" ]]; then
   fi
   if [[ "$ENV_ID" == "www" || "$ENV_ID" == "default" || "$ENV_ID" =~ aws|amazon|cognito ]]; then
     echo "ENV_ID can't be www or default, or contain aws, amazon or cognito." >&2
+    exit 1
+  fi
+fi
+
+for f in *.auto.tfvars terraform.tfvars setup/*.auto.tfvars setup/terraform.tfvars; do
+  if [[ -e "$f" ]]; then
+    echo "infra/$f exists. Settings come only from 1Password via terraform.env;" >&2
+    echo "a tfvars file would silently override them. Delete or move infra/$f." >&2
+    exit 1
+  fi
+done
+
+if [[ "$ACTION" != "publish" ]]; then
+  if ! command -v op >/dev/null; then
+    echo "1Password CLI (op) not found. Settings live in 1Password; infra/terraform.env" >&2
+    echo "only holds op:// references to them. Install op and run 'op signin'." >&2
+    exit 1
+  fi
+  if ! with_settings true; then
+    echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
+    echo "Refusing to continue: deploying without settings risks applying an" >&2
+    echo "empty mailboxes map, which would destroy the mailbox passwords." >&2
     exit 1
   fi
 fi
@@ -70,7 +83,7 @@ if [[ "$ACTION" == "setup" ]]; then
       trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
       mv backend.tf backend.tf.disabled
       terraform init -input=false
-      terraform apply -var-file=../settings.auto.tfvars
+      with_settings terraform apply
       mv -f backend.tf.disabled backend.tf
       trap - EXIT
       terraform init -input=false -migrate-state -force-copy
@@ -83,13 +96,14 @@ if [[ "$ACTION" == "setup" ]]; then
       exit 1
     fi
 
-    terraform apply -var-file=../settings.auto.tfvars
+    with_settings terraform apply
 
-    if grep -qE '^\s*enable_mailserver\s*=\s*true' ../settings.auto.tfvars; then
-      DOMAIN_NAME="$(grep -oE 'domain_name *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
-      ALERT_EMAIL="$(grep -oE 'alert_email *= *"[^"]+"' ../settings.auto.tfvars | cut -d'"' -f2)"
+    ENABLE_MAILSERVER="$(setting enable_mailserver)"
+    if [[ "$ENABLE_MAILSERVER" == true ]]; then
+      DOMAIN_NAME="$(setting domain_name)"
+      ALERT_EMAIL="$(setting alert_email)"
       if [[ -z "$DOMAIN_NAME" || -z "$ALERT_EMAIL" ]]; then
-        echo "WARNING: could not read domain_name/alert_email from settings.auto.tfvars -- skipped the SES production-access request." >&2
+        echo "WARNING: domain_name/alert_email is empty in 1Password -- skipped the SES production-access request." >&2
       elif SES_ERR="$(aws sesv2 put-account-details \
         --production-access-enabled \
         --mail-type TRANSACTIONAL \
@@ -128,10 +142,10 @@ echo ">>> Environment: ${ENV_ID:-main site}"
 
 case "$ACTION" in
   plan)
-    terraform plan
+    with_settings terraform plan
     ;;
   apply)
-    terraform apply
+    with_settings terraform apply
     ;;
   publish)
 
@@ -240,11 +254,11 @@ case "$ACTION" in
     if [[ -z "$ENV_ID" ]]; then
       echo "!!! This deletes the MAIN site and every file in it, permanently. !!!"
       echo "Step 1 of 2: turn off deletion protection."
-      terraform apply -var="protect_data=false"
+      with_settings terraform apply -var="protect_data=false"
       echo "Step 2 of 2: delete everything."
-      terraform destroy -var="protect_data=false"
+      with_settings terraform destroy -var="protect_data=false"
     else
-      terraform destroy
+      with_settings terraform destroy
       terraform workspace select default
       terraform workspace delete "$WORKSPACE"
     fi

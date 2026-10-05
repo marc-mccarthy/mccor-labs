@@ -1,0 +1,290 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+exec > >(tee /var/log/mail-setup.log) 2>&1
+
+DOMAIN="${domain}"
+FQDN="${fqdn}"
+REGION="${region}"
+RELAY_USER="${relay_user}"
+ALERT_EMAIL="${alert_email}"
+PARAM_PREFIX="${param_prefix}"
+
+hostnamectl set-hostname "$FQDN"
+echo "127.0.1.1 $FQDN ${fqdn}" >> /etc/hosts
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y ca-certificates curl gnupg unzip
+
+apt-get install -y unattended-upgrades
+cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+AUTO
+
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o /tmp/awscli.zip
+unzip -q /tmp/awscli.zip -d /tmp
+/tmp/aws/install
+
+curl -fsSL https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb \
+  -o /tmp/amazon-ssm-agent.deb
+dpkg -i /tmp/amazon-ssm-agent.deb
+systemctl enable --now amazon-ssm-agent
+
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=arm64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian bookworm stable" \
+  > /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+systemctl enable --now docker
+
+DEV="${mail_device}"
+for i in $(seq 1 12); do
+  [ -e "$DEV" ] && break
+  sleep 5
+done
+
+if [ ! -e "$DEV" ]; then
+  echo "FATAL: mail volume $DEV never appeared" >&2
+  exit 1
+fi
+
+blkid "$DEV" >/dev/null 2>&1 || mkfs.ext4 -L maildata "$DEV"
+
+mkdir -p /var/mail-data
+grep -q maildata /etc/fstab || echo "LABEL=maildata /var/mail-data ext4 defaults,nofail 0 2" >> /etc/fstab
+mount -a
+
+if ! mountpoint -q /var/mail-data; then
+  echo "FATAL: /var/mail-data did not mount" >&2
+  exit 1
+fi
+
+mkdir -p /var/mail-data/{mail-data,mail-state,mail-logs,config,letsencrypt}
+
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  echo "/swapfile none swap sw 0 0" >> /etc/fstab
+fi
+if ! swapon -a; then
+  echo "WARNING: swapon failed -- the box is running without swap" >&2
+fi
+
+CERTBOT_DIR="/var/mail-data/letsencrypt"
+apt-get install -y certbot
+
+if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
+  for i in $(seq 1 60); do
+    getent hosts "$FQDN" >/dev/null 2>&1 && break
+    echo "waiting for $FQDN to resolve before requesting a certificate"
+    sleep 10
+  done
+
+  if ! getent hosts "$FQDN" >/dev/null 2>&1; then
+    echo "FATAL: $FQDN does not resolve; refusing to spend Let's Encrypt validation quota" >&2
+    exit 1
+  fi
+
+  for i in 1 2 3; do
+    certbot certonly --standalone --non-interactive --agree-tos \
+      --config-dir "$CERTBOT_DIR" --work-dir "$CERTBOT_DIR/work" \
+      --logs-dir "$CERTBOT_DIR/logs" \
+      -m "$ALERT_EMAIL" -d "$FQDN" && break
+    echo "certbot attempt $i failed; retrying in 60s"
+    sleep 60
+  done
+fi
+
+if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
+  echo "FATAL: no certificate for $FQDN" >&2
+  exit 1
+fi
+
+mkdir -p "$CERTBOT_DIR/renewal-hooks/deploy"
+cat > "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh" <<'HOOK'
+#!/bin/sh
+docker restart mailserver 2>/dev/null || true
+HOOK
+chmod +x "$CERTBOT_DIR/renewal-hooks/deploy/reload-mail.sh"
+
+mkdir -p /etc/systemd/system/certbot.service.d
+cat > /etc/systemd/system/certbot.service.d/override.conf <<OVERRIDE
+[Service]
+ExecStart=
+ExecStart=/usr/bin/certbot renew --config-dir $CERTBOT_DIR --work-dir $CERTBOT_DIR/work --logs-dir $CERTBOT_DIR/logs --quiet
+OVERRIDE
+systemctl daemon-reload
+
+get_param() {
+  aws ssm get-parameter --region "$REGION" --name "$1" --with-decryption \
+    --query Parameter.Value --output text
+}
+
+RELAY_PASSWORD="$(get_param "$PARAM_PREFIX/_relay_password")"
+
+mkdir -p /opt/mail
+cd /opt/mail
+
+cat > compose.yaml <<COMPOSE
+services:
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:16.0.1
+    container_name: mailserver
+    hostname: $FQDN
+    restart: always
+    stop_grace_period: 1m
+    ports:
+      - "25:25"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - /var/mail-data/mail-data/:/var/mail/
+      - /var/mail-data/mail-state/:/var/mail-state/
+      - /var/mail-data/mail-logs/:/var/log/mail/
+      - /var/mail-data/config/:/tmp/docker-mailserver/
+      - /var/mail-data/letsencrypt:/etc/letsencrypt:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - SSL_TYPE=letsencrypt
+      - ENABLE_RSPAMD=1
+      - ENABLE_OPENDKIM=0
+      - ENABLE_OPENDMARC=0
+      - ENABLE_CLAMAV=0
+      - ENABLE_FAIL2BAN=1
+      - ENABLE_RSPAMD_GREYLISTING=1
+      - ENABLE_MANAGESIEVE=1
+      - POSTMASTER_ADDRESS=${postmaster}
+      - RELAY_HOST=email-smtp.$REGION.amazonaws.com
+      - RELAY_PORT=587
+      - RELAY_USER=$RELAY_USER
+      - RELAY_PASSWORD=$RELAY_PASSWORD
+    cap_add:
+      - NET_ADMIN
+    healthcheck:
+      test: "ss --listening --tcp | grep -P 'LISTEN.+:smtp' || exit 1"
+      timeout: 3s
+      retries: 0
+COMPOSE
+
+cat > /var/mail-data/config/fail2ban-jail.cf <<'JAIL'
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+JAIL
+
+ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
+
+cat > /opt/mail/sync-accounts.sh <<'SYNC'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
+touch "$ACCOUNTS"
+chmod 600 "$ACCOUNTS"
+ADDED=0
+
+while read -r NAME PASS; do
+  [ -n "$NAME" ] || continue
+  LOCAL="$${NAME##*/}"
+
+  case "$LOCAL" in _*) continue ;; esac
+  ADDR="$LOCAL@${domain}"
+
+  if grep -q "^$ADDR|" "$ACCOUNTS" 2>/dev/null; then
+    continue
+  fi
+
+  HASH="$(openssl passwd -6 "$PASS")"
+  echo "$ADDR|{SHA512-CRYPT}$HASH" >> "$ACCOUNTS"
+  echo "added $ADDR"
+  ADDED=$((ADDED + 1))
+done < <(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
+           --with-decryption --query 'Parameters[].[Name,Value]' --output text)
+
+if [ "$ADDED" -gt 0 ] && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  echo "reloading mailserver to pick up $ADDED new mailbox(es)"
+  docker restart mailserver >/dev/null
+fi
+
+echo "accounts file now has $(grep -c '|' "$ACCOUNTS" 2>/dev/null || echo 0) mailbox(es)"
+SYNC
+chmod +x /opt/mail/sync-accounts.sh
+/opt/mail/sync-accounts.sh
+
+if [ ! -s "$ACCOUNTS" ]; then
+  echo "FATAL: no mailboxes were written to $ACCOUNTS -- the mail server would not start" >&2
+  exit 1
+fi
+
+docker compose up -d
+
+for i in $(seq 1 60); do
+  docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp && break
+  sleep 5
+done
+
+if ! docker exec mailserver ss --listening --tcp 2>/dev/null | grep -q smtp; then
+  echo "FATAL: postfix is not listening on 25" >&2
+  docker logs --tail 40 mailserver >&2 || true
+  exit 1
+fi
+
+for ALIAS in postmaster abuse; do
+  docker exec mailserver setup alias add "$ALIAS@$DOMAIN" "${admin_address}" || true
+done
+
+curl -fsSL https://amazoncloudwatch-agent.s3.amazonaws.com/debian/arm64/latest/amazon-cloudwatch-agent.deb \
+  -o /tmp/cwagent.deb
+dpkg -i /tmp/cwagent.deb
+
+cat > /opt/aws/amazon-cloudwatch-agent/etc/config.json <<'CWCFG'
+{
+  "metrics": {
+    "append_dimensions": { "InstanceId": "$${aws:InstanceId}" },
+    "metrics_collected": {
+      "disk": { "resources": ["/var/mail-data"], "measurement": ["disk_used_percent"], "metrics_collection_interval": 300, "aggregation_dimensions": [["InstanceId","path","fstype"]] },
+      "mem":  { "measurement": ["mem_available_percent"], "metrics_collection_interval": 300 }
+    }
+  }
+}
+CWCFG
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/config.json
+
+cat > /etc/cron.daily/mail-health <<HEALTH
+#!/bin/bash
+
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin
+export PATH
+
+TOPIC="${alerts_topic_arn}"
+REGION="${region}"
+alert() { aws sns publish --region "\$REGION" --topic-arn "\$TOPIC" --subject "mail: \$1" --message "\$2" || true; }
+
+CERT=$CERTBOT_DIR/live/${fqdn}/cert.pem
+if [ -f "\$CERT" ] && ! openssl x509 -checkend \$((21*86400)) -noout -in "\$CERT" >/dev/null; then
+  alert "certificate expiring" "The TLS certificate for ${fqdn} expires within 21 days and has not renewed."
+fi
+
+QUEUED=\$(docker exec mailserver mailq 2>/dev/null | grep -c '^[A-F0-9]' || true)
+QUEUED=\$(printf '%s' "\$QUEUED" | tr -dc '0-9')
+if [ -z "\$QUEUED" ]; then QUEUED=0; fi
+
+if [ "\$QUEUED" -gt 50 ]; then
+  alert "mail queue backing up" "\$QUEUED messages are queued. The SES relay credential is the usual cause."
+fi
+
+if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  alert "mail server not running" "The mailserver container is not running on \$(hostname)."
+fi
+HEALTH
+chmod +x /etc/cron.daily/mail-health
+
+touch /var/lib/mail-setup-complete
+echo "mail server ready"

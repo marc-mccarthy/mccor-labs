@@ -1,0 +1,33 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,css,json,md,yml,yaml}'
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm prettier --write {staged_files}
+      stage_fixed: true
+    lint:
+      glob: '*.{ts,tsx}'
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm eslint --fix --no-warn-ignored {staged_files}
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm -F web exec tsc --noEmit
+      fail_text: 'Type errors. Fix before pushing.'
+    lint:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm -F web lint
+      fail_text: 'Lint errors. Fix before pushing.'
+    format-check:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm format:check
+      fail_text: 'Formatting drift. Run: pnpm format'
+    test:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm -F web test:run
+      fail_text: 'Unit/integration tests failing.'
+    build:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm build
+      fail_text: 'Production build failed.'
+    e2e:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm -F web test:e2e:smoke
+      fail_text: 'Smoke tests failing.'

@@ -1,0 +1,37 @@
+var PRIMARY_HOST = ${jsonencode(primary_host)};
+
+function handler(event) {
+  var request = event.request;
+  var host = request.headers.host ? request.headers.host.value.toLowerCase() : '';
+  var uri = request.uri;
+
+  if (host !== PRIMARY_HOST) {
+    return redirect(needsSlash(uri) ? uri + '/' : uri, request);
+  }
+
+  if (uri.endsWith('/')) {
+    request.uri = uri + 'index.html';
+    return request;
+  }
+
+  if (needsSlash(uri)) {
+    return redirect(uri + '/', request);
+  }
+
+  return request;
+}
+
+function needsSlash(uri) {
+  return !uri.endsWith('/') && !uri.split('/').pop().includes('.');
+}
+
+function redirect(path, request) {
+  var qs = request.rawQueryString();
+  return {
+    statusCode: 301,
+    statusDescription: 'Moved Permanently',
+    headers: {
+      location: { value: 'https://' + PRIMARY_HOST + path + (qs ? '?' + qs : '') }
+    }
+  };
+}

@@ -1,0 +1,272 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Geist Sans';
+  src: url('/fonts/geist-sans-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/geist-mono-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-base: #08080a;
+  --color-surface: #101014;
+  --color-elevated: #18181f;
+  --color-border: #202028;
+  --color-border-strong: #6b6b7b;
+  --color-muted: #9a9aa8;
+  --color-text: #f5f5f7;
+  --color-brand: #ff3b30;
+  --color-accent: #ff7a00;
+  --color-accent-hover: #ff8f24;
+  --color-on-accent: #08080a;
+
+  --color-glow-red: #ff2a42;
+
+  --font-display: 'Geist Sans', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  --text-display-sm: clamp(1.75rem, 1.5rem + 1.1vw, 2.25rem);
+  --text-display-md: clamp(2.5rem, 2rem + 2.2vw, 3.5rem);
+  --text-display-md--letter-spacing: -0.03em;
+  --text-display-lg: clamp(3.5rem, 2.75rem + 3.2vw, 5.5rem);
+  --text-display-lg--letter-spacing: -0.03em;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --duration-pointer: 0.12s;
+  --duration-standard: 0.3s;
+  --duration-scene: 0.8s;
+  --duration-route: 0.5s;
+  --delay-considered: 50ms;
+  --stagger-interval: 80ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-pointer: cubic-bezier(0, 0, 0.2, 1);
+  --ease-route: cubic-bezier(0.6, 0, 0.25, 1);
+
+  --animate-lede: lede-in var(--duration-scene) var(--ease-standard) 0.4s both;
+
+  @keyframes lede-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+}
+
+:root {
+  color-scheme: dark;
+
+  --shiki-foreground: var(--color-text);
+  --shiki-background: var(--color-surface);
+  --shiki-token-comment: var(--color-muted);
+  --shiki-token-string: var(--color-glow-red);
+  --shiki-token-string-expression: var(--color-glow-red);
+  --shiki-token-constant: var(--color-brand);
+  --shiki-token-keyword: var(--color-brand);
+  --shiki-token-parameter: var(--color-text);
+  --shiki-token-function: var(--color-glow-red);
+  --shiki-token-punctuation: var(--color-border-strong);
+  --shiki-token-link: var(--color-glow-red);
+  --shiki-token-inserted: var(--color-glow-red);
+  --shiki-token-deleted: var(--color-brand);
+  --shiki-token-changed: var(--color-glow-red);
+}
+
+@keyframes grain-drift {
+  to {
+    background-position: 256px 256px;
+  }
+}
+
+@layer base {
+  * {
+    min-width: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    background-image: url('/media/brand/grain-tile.webp');
+    opacity: 0.04;
+    animation: grain-drift 8s steps(16) infinite;
+  }
+
+  body:has([data-legal])::after {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    body::after {
+      animation: none;
+    }
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes header-blur {
+      to {
+        backdrop-filter: blur(--theme(--blur-xl));
+      }
+    }
+
+    @keyframes header-edge {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes header-progress {
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header] {
+      animation: header-blur linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::before,
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      bottom: -1px;
+      height: 1px;
+      pointer-events: none;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::before {
+      background-image: linear-gradient(
+        to right,
+        transparent,
+        var(--color-brand),
+        var(--color-glow-red),
+        transparent
+      );
+      opacity: 0;
+      animation: header-edge linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
+      background-color: var(--color-brand);
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: header-progress linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@keyframes band-signal {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes cue-in {
+  from {
+    opacity: 0;
+  }
+}
+
+:target ~ * [data-target-cue] {
+  opacity: 1;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes rail-fill {
+      to {
+        transform: scaleY(1);
+      }
+    }
+
+    :target ~ * [data-target-cue] {
+      animation: cue-in var(--duration-scene) var(--ease-standard) both;
+    }
+
+    [data-service-rail] {
+      display: block;
+      transform: scaleY(0);
+      animation: rail-fill linear both;
+      animation-timeline: view();
+    }
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes footer-sweep {
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    body:not(:has([data-legal], [data-careers])) [data-footer-signal] {
+      display: block;
+      transform: scaleX(0);
+      animation: footer-sweep linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+  }
+}
+
+@keyframes signal-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}

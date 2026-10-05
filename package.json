@@ -1,0 +1,39 @@
+{
+  "name": "mccor-labs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Infrastructure and tooling for mccor-labs. Node surface exists only to run scripts/.",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "recon": "node scripts/recon-reference-sites.mjs",
+    "capture": "node scripts/capture-ui-references.mjs",
+    "//dev": "op authorization is per-process and TTY-bound (a prompt per invocation), so only dev/build are wrapped rather than every script; build:raw is the unwrapped escape hatch for a build against an unconfigured/locked vault.",
+    "dev": "op run --env-file=app/web/.env -- pnpm -F web dev",
+    "build": "op run --env-file=app/web/.env -- pnpm -F web build",
+    "build:raw": "pnpm -F web build",
+    "test": "pnpm -F web test",
+    "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "//": "@playwright/test is pinned EXACTLY, not caret-ranged: 1.61.0 is the version whose bundled browser revision matches the revision installed in ~/Library/Caches/ms-playwright. A caret range floats to a version that wants a different revision, and the suite then cannot launch a browser until someone runs `playwright install` and downloads one. Re-pin only alongside a deliberate `playwright install`.",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "1.61.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.3.6",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "jiti": "^2.7.0",
+    "lefthook": "2.1.14",
+    "prettier": "3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "serve": "^14.2.6",
+    "typescript-eslint": "^8.70.1"
+  }
+}

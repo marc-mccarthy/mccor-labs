@@ -1,10 +1,10 @@
 locals {
-  env_id  = terraform.workspace == "default" ? "" : terraform.workspace
-  is_main = local.env_id == ""
-  name    = local.is_main ? var.project : "${var.project}-${local.env_id}"
+  env_id    = terraform.workspace == "default" ? "" : terraform.workspace
+  is_main   = local.env_id == ""
+  name      = local.is_main ? var.project : "${var.project}-${local.env_id}"
   hostnames = local.is_main ? [var.domain_name, "www.${var.domain_name}"] : ["${local.env_id}.${var.domain_name}"]
   site_urls = [for h in local.hostnames : "https://${h}"]
-  protect = local.is_main && var.protect_data
+  protect   = local.is_main && var.protect_data
 }
 
 data "aws_caller_identity" "current" {}
@@ -54,62 +54,3 @@ resource "aws_route53_record" "site" {
     evaluate_target_health = false
   }
 }
-
-/*
-
-module "auth" {
-  source = "./modules/auth"
-  name   = local.name
-
-  domain_prefix = "${local.name}-${substr(sha1(data.aws_caller_identity.current.account_id), 0, 6)}"
-
-  callback_urls       = [for u in local.site_urls : "${u}/"]
-  logout_urls         = [for u in local.site_urls : "${u}/"]
-  deletion_protection = local.protect
-}
-
-module "database" {
-  source              = "./modules/database"
-  name                = "${local.name}-data"
-  deletion_protection = local.protect
-  read_capacity  = local.is_main ? 5 : 1
-  write_capacity = local.is_main ? 5 : 1
-}
-
-module "api" {
-  source          = "./modules/api"
-  name            = local.name
-  source_dir      = "${path.root}/../app/api"
-  table_name      = module.database.table_name
-  table_arn       = module.database.table_arn
-  jwt_issuer      = module.auth.issuer_url
-  jwt_audience    = [module.auth.client_id]
-  allowed_origins = local.site_urls
-}
-
-resource "aws_s3_object" "config" {
-  bucket        = module.site.bucket_name
-  key           = "config.js"
-  content_type  = "application/javascript"
-  cache_control = "no-cache"
-  content = "window.APP_CONFIG = ${jsonencode({
-    authDomain = module.auth.hosted_ui_base_url
-    clientId   = module.auth.client_id
-    apiUrl     = module.api.api_url
-  })};\n"
-}
-
-resource "aws_s3_object" "web" {
-  for_each = {
-    "index.html" = "text/html; charset=utf-8"
-    "app.js"     = "application/javascript"
-  }
-
-  bucket        = module.site.bucket_name
-  key           = each.key
-  source        = "${local.web_dir}/${each.key}"
-  etag          = filemd5("${local.web_dir}/${each.key}")
-  content_type  = each.value
-  cache_control = "no-cache"
-}
-*/

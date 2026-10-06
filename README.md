@@ -50,33 +50,21 @@ _fixed_ cost above.
 
 ## One-time setup
 
-**You need:** Terraform 1.16+, AWS CLI 2.32+ (for `aws login`), the 1Password CLI
+**You need:** Terraform 1.16+, AWS CLI v2, the 1Password CLI
 (`op`), signed in, bash (macOS/Linux, or WSL / Git Bash on Windows), and an AWS
 account on the **Paid** plan (the Free plan closes the account after six months).
 
-### 1. Log in
+### 1. AWS access keys
+
+`deploy.sh` takes AWS credentials only from 1Password, never from AWS profiles.
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` in
+`infra/terraform.env` point at the AWS item in the Development vault (fields
+`username`, `credential`, `region`). Any `AWS_PROFILE` in your shell is ignored.
+Run `op signin`, then check:
 
 ```bash
-aws login
+op run --env-file=infra/terraform.env -- aws sts get-caller-identity
 ```
-
-Terraform can't read `aws login` sessions on its own everywhere yet, so add this
-bridge profile to `~/.aws/config` (AWS's documented workaround). If you ran
-`aws login --profile something`, put that name instead of `default`.
-
-```ini
-[profile terraform]
-credential_process = aws configure export-credentials --profile default --format process
-region = us-east-1
-```
-
-`deploy.sh` uses the `terraform` profile automatically (for `publish` on the main site it prefers a `publish` profile if you have one). Check it works:
-
-```bash
-aws sts get-caller-identity --profile terraform
-```
-
-When your login expires, just run `aws login` again.
 
 ### 2. Fill in your settings
 
@@ -305,5 +293,5 @@ page for anything missing comes from the distribution's custom error responses
 
 ## What Terraform doesn't do
 
-- Create your AWS account, or run `aws login` for you
+- Create your AWS account or its access keys
 - Change the name servers at Namecheap (step 4, once)

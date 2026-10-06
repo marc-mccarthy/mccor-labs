@@ -24,11 +24,21 @@ test('End reaches the bottom of the document @smoke', async ({ page }) => {
 
 test('Home returns to the top', async ({ page }) => {
   await page.goto('/')
+  const scroll = await page.evaluateHandle(() => ({
+    settled: new Promise<number>((resolve) => {
+      window.addEventListener(
+        'scrollend',
+        () => {
+          resolve(window.scrollY)
+        },
+        { capture: true, once: true },
+      )
+    }),
+  }))
   await page.keyboard.press('End')
-  await page.waitForTimeout(600)
+  expect(await scroll.evaluate(({ settled }) => settled)).toBeGreaterThan(50)
   await page.keyboard.press('Home')
-  await page.waitForTimeout(600)
-  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(50)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(50)
 })
 
 test('an in-page anchor moves the scroll position', async ({ page }) => {

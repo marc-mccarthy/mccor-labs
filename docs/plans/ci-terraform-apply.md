@@ -63,6 +63,8 @@ Deviations from legacy (mccor-labs physically differs, or a gap the reviews foun
 - Ruling: the SES production-access request (`deploy.sh:103-117`) goes with `setup`. It is account-level and survives (cost if wrong: run `aws sesv2 put-account-details` by hand).
 - Ruling: trivy ignores are scoped to the module that needs them, not `**/main.tf` (cost if wrong: CI red until the path glob is fixed).
 - Ruling (owner): the parked api/auth/database blocks in `main.tf` and `outputs.tf` and `modules/{auth,database,api}` are deleted (cost if wrong: restore from git). Review: `docs/findings/2026-10-05-parked-backend-modules-review.md`.
+- Ruling: e2e `NEXT_PUBLIC_SITE_URL` is `https://example.com`, not `http://localhost:4321` (cost if wrong: share-card spec `routes.spec.ts:58` fails with an http `og:image`).
+- Ruling: `terraform-fmt-check` is in lefthook pre-push only, not pre-commit as legacy has it, because pre-commit is `parallel: true` and the check would race `terraform-fmt` (cost if wrong: unformatted `.tf` is caught at push, not commit).
 
 ## Costs and capacity
 

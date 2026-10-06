@@ -1,0 +1,231 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Full 40-character commit SHA to redeploy
+        type: string
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_BOOKING_URL: https://booking.example.com/ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+      - name: Require commit on main
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::$(git rev-parse HEAD) is not an ancestor of main; refusing to deploy" >&2
+            exit 1
+          fi
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -F web lint
+      - run: pnpm -F web exec tsc --noEmit
+      - run: pnpm -F web test:run
+
+  build:
+    needs: quality
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    outputs:
+      site_url: ${{ steps.build.outputs.site_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          fetch-depth: 0
+      - name: Require commit on main
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::$(git rev-parse HEAD) is not an ancestor of main; refusing to deploy" >&2
+            exit 1
+          fi
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: 1password/install-cli-action@1a3160d5e9de1ae0803eaa08a88746f5ae3daa50
+      - name: Build
+        id: build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          set -euo pipefail
+          op run --no-masking --env-file=infra/build.env -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
+            set -euo pipefail
+            test -n "$DOMAIN_NAME"
+            export NEXT_PUBLIC_SITE_URL="https://$DOMAIN_NAME"
+            echo "site_url=$NEXT_PUBLIC_SITE_URL" >>"$GITHUB_OUTPUT"
+            exec pnpm build:raw'
+      - name: Publish guard
+        run: |
+          set -euo pipefail
+          source infra/publish-guard.sh
+          check_publish_stage app/web/out .
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: site
+          path: app/web/out
+          if-no-files-found: error
+          retention-days: 1
+
+  terraform:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TF_IN_AUTOMATION: 'true'
+      TF_INPUT: '0'
+    outputs:
+      region: ${{ steps.out.outputs.region }}
+      site_url: ${{ steps.out.outputs.site_url }}
+      site_bucket: ${{ steps.out.outputs.site_bucket }}
+      cloudfront_distribution_id: ${{ steps.out.outputs.cloudfront_distribution_id }}
+      deploy_role_arn: ${{ steps.out.outputs.deploy_role_arn }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: '1.16.1'
+          terraform_wrapper: false
+      - uses: 1password/install-cli-action@1a3160d5e9de1ae0803eaa08a88746f5ae3daa50
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
+        with:
+          role-to-assume: arn:aws:iam::150701180133:role/mccorlabs-github-terraform
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 7200
+      - run: terraform -chdir=infra init
+      - name: Plan
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          set -euo pipefail
+          grep '^TF_VAR_' infra/terraform.env >"$RUNNER_TEMP/tf.env"
+          op run --no-masking --env-file="$RUNNER_TEMP/tf.env" -- env -u OP_SERVICE_ACCOUNT_TOKEN \
+            terraform -chdir=infra plan -lock-timeout=10m -out="$RUNNER_TEMP/tfplan"
+      - name: Plan summary
+        run: |
+          {
+            echo '```'
+            terraform -chdir=infra show -no-color "$RUNNER_TEMP/tfplan"
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+      - name: Guard
+        run: |
+          set -euo pipefail
+          terraform -chdir=infra show -json "$RUNNER_TEMP/tfplan" | scripts/plan-guard.sh infra/destroy-allowlist.txt
+      - name: Apply
+        run: terraform -chdir=infra apply -lock-timeout=10m "$RUNNER_TEMP/tfplan"
+      - name: Outputs
+        id: out
+        run: |
+          set -euo pipefail
+          for k in region site_url site_bucket cloudfront_distribution_id deploy_role_arn; do
+            v=$(terraform -chdir=infra output -raw "$k")
+            test -n "$v"
+            echo "$k=$v" >>"$GITHUB_OUTPUT"
+          done
+
+  deploy:
+    needs: [build, terraform]
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BUCKET: ${{ needs.terraform.outputs.site_bucket }}
+      DIST: ${{ needs.terraform.outputs.cloudfront_distribution_id }}
+      SITE: ${{ needs.terraform.outputs.site_url }}
+    steps:
+      - name: Check site URL
+        env:
+          BUILT: ${{ needs.build.outputs.site_url }}
+          APPLIED: ${{ needs.terraform.outputs.site_url }}
+        run: test "$BUILT" = "$APPLIED"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
+        with:
+          role-to-assume: ${{ needs.terraform.outputs.deploy_role_arn }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: site
+          path: out
+      - name: Prepare site
+        run: |
+          set -euo pipefail
+          test -f out/index.html
+          test -f out/404.html
+          grep -qF "Sitemap: $SITE/sitemap.xml" out/robots.txt
+          rm -rf out/404 out/_not-found
+      - name: Sync static site
+        run: |
+          set -euo pipefail
+          IMMUTABLE="public, max-age=31536000, immutable"
+          MEDIA="public, max-age=86400, stale-while-revalidate=604800"
+          REVALIDATE="public, max-age=0, s-maxage=86400, must-revalidate"
+          aws s3 sync out/_next/static "s3://$BUCKET/_next/static" --no-progress --cache-control "$IMMUTABLE"
+          for dir in media fonts; do
+            if [ -d "out/$dir" ]; then
+              aws s3 sync "out/$dir" "s3://$BUCKET/$dir" --no-progress --cache-control "$MEDIA"
+            fi
+          done
+          aws s3 sync out/ "s3://$BUCKET/" --no-progress \
+            --exclude '_next/static/*' --exclude 'media/*' --exclude 'fonts/*' --cache-control "$REVALIDATE"
+      - name: Invalidate
+        run: |
+          set -euo pipefail
+          id=$(aws cloudfront create-invalidation --distribution-id "$DIST" --paths '/*' --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DIST" --id "$id"
+      - name: Remove stale files
+        run: |
+          aws s3 sync out/ "s3://$BUCKET/" --no-progress --delete \
+            --exclude '_next/static/*' --exclude 'media/*' --exclude 'fonts/*' \
+            --cache-control "public, max-age=0, s-maxage=86400, must-revalidate"
+      - name: Verify serving
+        run: |
+          set -euo pipefail
+          code=000
+          for i in $(seq 1 30); do
+            code=$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' "$SITE/" || echo 000)
+            test "$code" = 200 && break
+            sleep 10
+          done
+          test "$code" = 200 || { echo "::error::$SITE returned $code" >&2; exit 1; }
+          curl -fsS --max-time 20 "$SITE/robots.txt" | grep -qF "Sitemap: $SITE/sitemap.xml"

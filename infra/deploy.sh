@@ -34,20 +34,7 @@ done
 unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_SESSION_TOKEN TF_WORKSPACE
 
 ACTION="${1:-apply}"
-ENV_ID="${ENV_ID:-}"
-
-if [[ -n "$ENV_ID" ]]; then
-  if [[ ! "$ENV_ID" =~ ^[a-z][a-z0-9]{0,7}$ ]]; then
-    echo "ENV_ID must be 1-8 lowercase letters or numbers, starting with a letter (e.g. mm)." >&2
-    exit 1
-  fi
-  if [[ "$ENV_ID" == "www" || "$ENV_ID" == "default" || "$ENV_ID" =~ aws|amazon|cognito ]]; then
-    echo "ENV_ID can't be www or default, or contain aws, amazon or cognito." >&2
-    exit 1
-  fi
-fi
-
-for f in *.auto.tfvars terraform.tfvars setup/*.auto.tfvars setup/terraform.tfvars; do
+for f in *.auto.tfvars terraform.tfvars; do
   if [[ -e "$f" ]]; then
     echo "infra/$f exists. Settings come only from 1Password via terraform.env;" >&2
     echo "a tfvars file would silently override them. Delete or move infra/$f." >&2
@@ -61,81 +48,7 @@ if ! aws sts get-caller-identity --query Arn --output text >/dev/null; then
   exit 1
 fi
 
-if [[ "$ACTION" == "setup" ]]; then
-  (
-    cd setup
-
-    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' backend.tf)"
-    STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    STATE_REGION="$(sed -nE 's/^[[:space:]]*region[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" || -z "$STATE_REGION" ]]; then
-      echo "Could not read bucket/key/region from backend.tf's backend block." >&2
-      exit 1
-    fi
-
-    if PROBE_ERR="$(aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" \
-      --region "$STATE_REGION" 2>&1 >/dev/null)"; then
-      terraform init -input=false
-    elif grep -qE '\(404\)|Not Found' <<<"$PROBE_ERR"; then
-      if [[ -f terraform.tfstate ]]; then
-        cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)"
-      fi
-
-      trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
-      mv backend.tf backend.tf.disabled
-      terraform init -input=false
-      terraform apply
-      mv -f backend.tf.disabled backend.tf
-      trap - EXIT
-      terraform init -input=false -migrate-state -force-copy
-
-      mv -f terraform.tfstate "terraform.tfstate.migrated-$(date +%Y%m%d-%H%M%S)"
-    else
-      echo "Cannot tell whether setup/ state is already in s3://${STATE_BUCKET}/${STATE_KEY}:" >&2
-      echo "  $PROBE_ERR" >&2
-      echo "Refusing to guess -- guessing wrong overwrites real state. Fix access, then re-run." >&2
-      exit 1
-    fi
-
-    terraform apply
-
-    if [[ "${TF_VAR_enable_mailserver:?}" == true ]]; then
-      if SES_ERR="$(aws sesv2 put-account-details \
-        --production-access-enabled \
-        --mail-type TRANSACTIONAL \
-        --website-url "https://${TF_VAR_domain_name:?}" \
-        --additional-contact-email-addresses "${TF_VAR_alert_email:?}" \
-        --contact-language EN 2>&1 >/dev/null)"; then
-        echo ">>> SES production access requested (approval ~24h)"
-      elif grep -qiE 'already|pending' <<<"$SES_ERR"; then
-        echo ">>> SES production access already requested or granted"
-      else
-        echo "WARNING: SES production-access request failed unexpectedly:" >&2
-        echo "  $SES_ERR" >&2
-      fi
-    fi
-
-    echo
-    echo "Next: enter these name servers in Namecheap (Custom DNS):"
-    terraform output -json name_servers
-  )
-  exit 0
-fi
-
-if [[ ! -f backend.hcl ]]; then
-  echo "backend.hcl not found. Run './infra/deploy.sh setup' first." >&2
-  exit 1
-fi
-
-terraform init -input=false -backend-config=backend.hcl
-WORKSPACE="${ENV_ID:-default}"
-if [[ "$ACTION" == "publish" ]]; then
-  terraform workspace select "$WORKSPACE"
-else
-  terraform workspace select -or-create "$WORKSPACE"
-fi
-echo ">>> Environment: ${ENV_ID:-main site}"
+terraform init -input=false -reconfigure
 
 case "$ACTION" in
   plan)
@@ -149,7 +62,7 @@ case "$ACTION" in
     if ! SITE_BUCKET="$(terraform output -raw site_bucket)" ||
       ! DISTRIBUTION_ID="$(terraform output -raw cloudfront_distribution_id)" ||
       ! SITE_URL="$(terraform output -raw site_url)"; then
-      echo "Nothing deployed here yet. Run '${ENV_ID:+ENV_ID=$ENV_ID }./infra/deploy.sh' first." >&2
+      echo "Nothing deployed here yet. Run './infra/deploy.sh apply' first." >&2
       exit 1
     fi
     for tool in op pnpm git; do
@@ -160,7 +73,7 @@ case "$ACTION" in
     done
 
     BUILD_PATHS=()
-    for p in app package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version; do
+    for p in app package.json pnpm-lock.yaml pnpm-workspace.yaml .mise.toml; do
       [[ -e "../$p" ]] && BUILD_PATHS+=("$p")
     done
     DIRTY="$(git -C .. status --porcelain --untracked-files=all -- "${BUILD_PATHS[@]}")"
@@ -248,21 +161,8 @@ case "$ACTION" in
       echo "passes will remove them." >&2
     fi
     ;;
-  destroy)
-    if [[ -z "$ENV_ID" ]]; then
-      echo "!!! This deletes the MAIN site and every file in it, permanently. !!!"
-      echo "Step 1 of 2: turn off deletion protection."
-      terraform apply -var="protect_data=false"
-      echo "Step 2 of 2: delete everything."
-      terraform destroy -var="protect_data=false"
-    else
-      terraform destroy
-      terraform workspace select default
-      terraform workspace delete "$WORKSPACE"
-    fi
-    ;;
   *)
-    echo "Unknown action '$ACTION'. Use: setup, plan, apply, publish or destroy." >&2
+    echo "Unknown action '$ACTION'. Use: plan, apply or publish." >&2
     exit 1
     ;;
 esac

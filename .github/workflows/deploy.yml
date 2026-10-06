@@ -87,16 +87,18 @@ jobs:
           set -euo pipefail
           op run --no-masking --env-file=infra/build.env -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
             set -euo pipefail
-            test -n "$DOMAIN_NAME"
+            if [ -z "$DOMAIN_NAME" ]; then echo "site_url=" >>"$GITHUB_OUTPUT"; exit 0; fi
             export NEXT_PUBLIC_SITE_URL="https://$DOMAIN_NAME"
             echo "site_url=$NEXT_PUBLIC_SITE_URL" >>"$GITHUB_OUTPUT"
             exec pnpm build:raw'
       - name: Publish guard
+        if: steps.build.outputs.site_url != ''
         run: |
           set -euo pipefail
           source infra/publish-guard.sh
           check_publish_stage app/web/out .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: steps.build.outputs.site_url != ''
         with:
           name: site
           path: app/web/out
@@ -165,6 +167,7 @@ jobs:
 
   deploy:
     needs: [build, terraform]
+    if: needs.build.outputs.site_url != ''
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read

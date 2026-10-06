@@ -47,14 +47,3 @@ resource "aws_iam_role_policy" "deploy" {
   role   = aws_iam_role.deploy.id
   policy = data.aws_iam_policy_document.deploy.json
 }
-
-resource "aws_iam_role" "terraform" {
-  name                 = "${var.name}-github-terraform"
-  assume_role_policy   = data.aws_iam_policy_document.github_main_assume.json
-  max_session_duration = 7200
-}
-
-resource "aws_iam_role_policy_attachment" "terraform_admin" {
-  role       = aws_iam_role.terraform.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}

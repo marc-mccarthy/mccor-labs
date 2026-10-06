@@ -19,43 +19,21 @@ provider "aws" {
 }
 
 locals {
-  hostnames = [var.domain_name, "www.${var.domain_name}"]
-  site_urls = [for h in local.hostnames : "https://${h}"]
+  has_domain = var.domain_name != ""
+  hostnames  = [var.domain_name, "www.${var.domain_name}"]
+  site_url   = local.has_domain ? "https://${var.domain_name}" : "https://${module.site.distribution_domain_name}"
 }
 
 data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
-resource "aws_budgets_budget" "monthly" {
-  name         = "${var.name}-monthly"
-  budget_type  = "COST"
-  limit_amount = tostring(var.monthly_budget_usd)
-  limit_unit   = "USD"
-  time_unit    = "MONTHLY"
-
-  notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 80
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "FORECASTED"
-    subscriber_email_addresses = [var.alert_email]
-  }
-
-  notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 100
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
-    subscriber_email_addresses = [var.alert_email]
-  }
-}
-
 module "mailserver" {
+  count  = local.has_domain ? 1 : 0
   source = "./modules/mailserver"
 
   domain_name    = var.domain_name
-  zone_id        = aws_route53_zone.this.zone_id
+  zone_id        = aws_route53_zone.this[0].zone_id
   mailboxes      = var.mailboxes
   admin_mailbox  = var.admin_mailbox
   alert_email    = var.alert_email
@@ -64,16 +42,17 @@ module "mailserver" {
 }
 
 module "certificate" {
+  count             = local.has_domain ? 1 : 0
   source            = "./modules/certificate"
-  domain_name       = local.hostnames[0]
+  domain_name       = var.domain_name
   alternative_names = slice(local.hostnames, 1, length(local.hostnames))
-  zone_id           = aws_route53_zone.this.zone_id
+  zone_id           = aws_route53_zone.this[0].zone_id
 }
 
 module "site" {
   source          = "./modules/static_site"
   name            = var.name
-  aliases         = local.hostnames
-  certificate_arn = module.certificate.certificate_arn
+  aliases         = local.has_domain ? local.hostnames : []
+  certificate_arn = one(module.certificate[*].certificate_arn)
   force_destroy   = !var.protect_data
 }

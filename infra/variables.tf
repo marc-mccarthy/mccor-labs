@@ -9,12 +9,23 @@ variable "name" {
 }
 
 variable "domain_name" {
-  description = "Your domain, e.g. example.com"
+  description = "Your domain, e.g. example.com. An explicit empty string deploys only what works on the CloudFront default domain."
   type        = string
 
   validation {
-    condition     = length(var.domain_name) > 0
-    error_message = "domain_name is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
+    condition     = var.domain_name == "" || can(regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", var.domain_name))
+    error_message = "domain_name must be empty or a lowercase domain such as example.com."
+  }
+}
+
+variable "delegation_set_id" {
+  description = "Reusable delegation set from infra/bootstrap. Required when domain_name is set."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.domain_name == "" || length(var.delegation_set_id) > 0
+    error_message = "delegation_set_id is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
   }
 }
 
@@ -26,12 +37,6 @@ variable "alert_email" {
     condition     = length(var.alert_email) > 0
     error_message = "alert_email is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
   }
-}
-
-variable "monthly_budget_usd" {
-  description = "Monthly cost budget that triggers the alert email"
-  type        = number
-  default     = 5
 }
 
 variable "protect_data" {

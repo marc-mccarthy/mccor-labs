@@ -224,16 +224,14 @@ resource "aws_ebs_volume" "mail" {
     Name   = "${var.domain_name}-mail-data"
     Backup = local.snapshot_tag
   }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_volume_attachment" "mail" {
   device_name = "/dev/xvdf"
   volume_id   = aws_ebs_volume.mail.id
   instance_id = aws_instance.mail.id
+
+  stop_instance_before_detaching = true
 }
 
 resource "aws_instance" "mail" {

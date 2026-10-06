@@ -1,19 +1,18 @@
 resource "aws_route53_zone" "this" {
-  name    = var.domain_name
-  comment = "Managed by Terraform"
+  count = local.has_domain ? 1 : 0
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  name              = var.domain_name
+  comment           = "Managed by Terraform"
+  delegation_set_id = var.delegation_set_id
 }
 
 resource "aws_route53_record" "site" {
-  for_each = {
+  for_each = local.has_domain ? {
     for pair in setproduct(local.hostnames, ["A", "AAAA"]) :
     "${pair[0]}-${pair[1]}" => { name = pair[0], type = pair[1] }
-  }
+  } : {}
 
-  zone_id = aws_route53_zone.this.zone_id
+  zone_id = aws_route53_zone.this[0].zone_id
   name    = each.value.name
   type    = each.value.type
 

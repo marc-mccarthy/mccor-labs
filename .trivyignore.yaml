@@ -14,3 +14,6 @@ misconfigurations:
   - id: AVD-AWS-0095
     paths: ['**/modules/mailserver/**']
     statement: The alert topic carries alarm text only, so it is left unencrypted.
+  - id: AVD-AWS-0132
+    paths: ['**/bootstrap/**']
+    statement: The state bucket uses SSE-S3 by design.

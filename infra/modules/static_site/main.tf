@@ -37,7 +37,7 @@ resource "aws_cloudfront_function" "viewer_request" {
   runtime = "cloudfront-js-2.0"
   publish = true
   code = templatefile("${path.module}/viewer_request.js.tftpl", {
-    primary_host = lower(var.aliases[0])
+    primary_host = try(lower(var.aliases[0]), "")
   })
 }
 
@@ -141,9 +141,10 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+    cloudfront_default_certificate = var.certificate_arn == null
+    acm_certificate_arn            = var.certificate_arn
+    ssl_support_method             = var.certificate_arn == null ? null : "sni-only"
+    minimum_protocol_version       = var.certificate_arn == null ? null : "TLSv1.2_2021"
   }
 }
 

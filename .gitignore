@@ -32,3 +32,5 @@ lighthouse-report/
 
 .media-work/
 .claude/settings.local.json
+*.tfplan
+tfplan

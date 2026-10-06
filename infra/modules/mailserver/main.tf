@@ -144,7 +144,7 @@ resource "aws_security_group" "mail" {
 
 resource "aws_vpc_security_group_ingress_rule" "mail" {
   for_each = {
-    smtp = { port = 25, note = "inbound mail from other servers" }
+    smtp       = { port = 25, note = "inbound mail from other servers" }
     http       = { port = 80, note = "ACME certificate renewal" }
     submission = { port = 587, note = "your people sending (STARTTLS)" }
     imaps      = { port = 993, note = "your people reading" }
@@ -160,9 +160,9 @@ resource "aws_vpc_security_group_ingress_rule" "mail" {
 
 resource "aws_vpc_security_group_egress_rule" "all" {
   security_group_id = aws_security_group.mail.id
-  description = "outbound: SES relay, package updates, ACME"
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "-1"
+  description       = "outbound: SES relay, package updates, ACME"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
 }
 
 resource "aws_iam_role" "instance" {

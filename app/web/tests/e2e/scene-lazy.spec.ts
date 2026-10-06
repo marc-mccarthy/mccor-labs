@@ -37,9 +37,6 @@ test('below-fold scenes stay idle and create no WebGL context until scrolled to'
   })
   await page.waitForTimeout(1000)
   const atLoad = await snapshot()
-  console.log(
-    `LAZY at-load ${atLoad.statuses.join(',')} contexts=${String(atLoad.contexts)}`,
-  )
   expect(atLoad.statuses).toEqual(['active', 'idle', 'idle'])
   expect(atLoad.contexts).toBe(2)
 
@@ -51,8 +48,5 @@ test('below-fold scenes stay idle and create no WebGL context until scrolled to'
     timeout: 15_000,
   })
   const afterScroll = await snapshot()
-  console.log(
-    `LAZY after-scroll ${afterScroll.statuses.join(',')} contexts=${String(afterScroll.contexts)}`,
-  )
   expect(afterScroll.contexts).toBe(4)
 })

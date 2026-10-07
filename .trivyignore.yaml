@@ -1,0 +1,19 @@
+misconfigurations:
+  - id: AVD-AWS-0011
+    paths: ['**/modules/static_site/**']
+    statement: A WAF on CloudFront is accepted as a cost trade-off for a static brochure site.
+  - id: AVD-AWS-0132
+    paths: ['**/modules/static_site/**']
+    statement: The site bucket holds public site files; default SSE-S3 applies and a customer-managed KMS key adds cost without benefit.
+  - id: AVD-AWS-0104
+    paths: ['**/modules/mailserver/**']
+    statement: The mail server needs unrestricted egress for delivery, package updates and certificate issuance.
+  - id: AVD-AWS-0164
+    paths: ['**/modules/mailserver/**']
+    statement: The mail server must be reachable from the internet through its Elastic IP, so its subnet assigns a public address.
+  - id: AVD-AWS-0095
+    paths: ['**/modules/mailserver/**']
+    statement: The alert topic carries alarm text only, so it is left unencrypted.
+  - id: AVD-AWS-0132
+    paths: ['**/bootstrap/**']
+    statement: The state bucket uses SSE-S3 by design.

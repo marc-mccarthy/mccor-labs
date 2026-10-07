@@ -9,6 +9,18 @@ pre-commit:
       glob: '*.{ts,tsx}'
       run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm eslint --fix --no-warn-ignored {staged_files}
       stage_fixed: true
+    terraform-fmt:
+      glob: '*.tf'
+      run: PATH=$HOME/.local/share/mise/shims:$PATH terraform fmt -recursive infra/
+      stage_fixed: true
+    terraform-validate:
+      glob: '*.tf'
+      run: PATH=$HOME/.local/share/mise/shims:$PATH; terraform -chdir=infra validate && terraform -chdir=infra/bootstrap init -backend=false -input=false >/dev/null && terraform -chdir=infra/bootstrap validate
+      fail_text: 'Terraform validate failed.'
+    tflint:
+      glob: '*.tf'
+      run: PATH=$HOME/.local/share/mise/shims:$PATH; tflint --chdir=infra --init >/dev/null && tflint --chdir=infra && tflint --chdir=infra/bootstrap --config="$PWD/infra/.tflint.hcl"
+      fail_text: 'tflint failed.'
 
 pre-push:
   parallel: false
@@ -31,3 +43,12 @@ pre-push:
     e2e:
       run: PATH=$HOME/.local/share/mise/shims:$PATH pnpm -F web test:e2e:smoke
       fail_text: 'Smoke tests failing.'
+    terraform-fmt-check:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH terraform fmt -check -recursive infra/
+      fail_text: 'Terraform formatting drift. Run: terraform fmt -recursive infra/'
+    terraform-validate:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH; terraform -chdir=infra validate && terraform -chdir=infra/bootstrap init -backend=false -input=false >/dev/null && terraform -chdir=infra/bootstrap validate
+      fail_text: 'Terraform validate failed.'
+    tflint:
+      run: PATH=$HOME/.local/share/mise/shims:$PATH; tflint --chdir=infra --init >/dev/null && tflint --chdir=infra && tflint --chdir=infra/bootstrap --config="$PWD/infra/.tflint.hcl"
+      fail_text: 'tflint failed.'

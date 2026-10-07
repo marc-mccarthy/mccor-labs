@@ -89,7 +89,6 @@ test.describe('hard gates', () => {
     const bytes = readdirSync(dir)
       .filter((name) => name.endsWith('.woff2'))
       .reduce((sum, name) => sum + statSync(join(dir, name)).size, 0)
-    console.log(`BUDGET fonts ${String(bytes)} B / ${String(FONTS_MAX_BYTES)}`)
     expect(bytes).toBeLessThanOrEqual(FONTS_MAX_BYTES)
   })
 
@@ -123,11 +122,9 @@ test.describe('hard gates', () => {
     const lcp = await page.evaluate(
       () => (window as unknown as { lcp?: { url: string; tag: string } }).lcp,
     )
-    console.log(`BUDGET lcp ${JSON.stringify(lcp)}`)
     expect(lcp).toBeDefined()
     if (lcp?.url) {
       const bytes = sizes.get(lcp.url) ?? 0
-      console.log(`BUDGET lcp-image ${String(bytes)} B / ${String(LCP_IMAGE_MAX_BYTES)}`)
       expect(bytes).toBeGreaterThan(0)
       expect(bytes).toBeLessThanOrEqual(LCP_IMAGE_MAX_BYTES)
     }
@@ -136,7 +133,6 @@ test.describe('hard gates', () => {
   for (const path of ROUTES) {
     test(`${path} CLS is under ${String(CLS_MAX)}`, async ({ page }) => {
       const cls = await measureCls(page, path)
-      console.log(`BUDGET cls ${path} ${cls.toFixed(4)} / ${String(CLS_MAX)}`)
       expect(cls).toBeLessThan(CLS_MAX)
     })
   }
@@ -148,7 +144,6 @@ test.describe('hard gates', () => {
     for (const path of ['/', '/process/']) {
       test(`${path} has no layout shift under reduced motion`, async ({ page }) => {
         const cls = await measureCls(page, path)
-        console.log(`BUDGET cls-reduced-motion ${path} ${cls.toFixed(4)}`)
         expect(cls).toBe(0)
       })
 
@@ -170,9 +165,6 @@ test.describe('hard gates', () => {
         await server.close()
         await page.goto(path, { waitUntil: 'networkidle' })
         const after = await page.evaluate(() => document.documentElement.scrollHeight)
-        console.log(
-          `BUDGET reduced-motion-height ${path} server=${String(before)} hydrated=${String(after)}`,
-        )
         expect(after).toBe(before)
       })
     }
@@ -209,9 +201,6 @@ test.describe('hard gates', () => {
       worst: (window as unknown as { worst: number }).worst,
       active: document.querySelectorAll('[data-scene-status="active"]').length,
     }))
-    console.log(
-      `BUDGET inp ${String(worst)} ms / ${String(INP_MAX_MS)} scenes-active=${String(active)}`,
-    )
     expect(active).toBeGreaterThan(0)
     expect(worst).toBeLessThan(INP_MAX_MS)
   })

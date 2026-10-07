@@ -131,3 +131,22 @@ run "function" {
     error_message = "The function must not carry REDIRECT_HOSTS."
   }
 }
+
+run "no_domain" {
+  command = plan
+
+  variables {
+    aliases         = []
+    certificate_arn = null
+  }
+
+  assert {
+    condition     = aws_cloudfront_distribution.site.viewer_certificate[0].cloudfront_default_certificate == true && length(aws_cloudfront_distribution.site.aliases) == 0
+    error_message = "Without a domain the distribution must use the default certificate and no aliases."
+  }
+
+  assert {
+    condition     = strcontains(aws_cloudfront_function.viewer_request.code, "var PRIMARY_HOST = \"\";")
+    error_message = "PRIMARY_HOST must render empty without a domain."
+  }
+}

@@ -15,11 +15,7 @@ Next.js 16 static export (app/web), Terraform (infra/), brand media (app/web/pub
 
 ## Media
 
-Most brand media in app/web/public/media/ is untracked by the owner's choice, so a clean checkout lacks it.
-
-## Antigravity (agy)
-
-Commands, Mode A and B, personas and the review contract live in the antigravity-workflow skill. Load it before any agy or mcp__antigravity__* call.
+Brand media under app/web/public/ is tracked, so a clean checkout has it.
 
 ## Subagent watchdog (MANDATORY)
 

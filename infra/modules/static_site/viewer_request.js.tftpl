@@ -5,7 +5,7 @@ function handler(event) {
   var host = request.headers.host ? request.headers.host.value.toLowerCase() : '';
   var uri = request.uri;
 
-  if (host !== PRIMARY_HOST) {
+  if (PRIMARY_HOST && host !== PRIMARY_HOST) {
     return redirect(needsSlash(uri) ? uri + '/' : uri, request);
   }
 
@@ -31,7 +31,7 @@ function redirect(path, request) {
     statusCode: 301,
     statusDescription: 'Moved Permanently',
     headers: {
-      location: { value: 'https://' + PRIMARY_HOST + path + (qs ? '?' + qs : '') }
+      location: { value: 'https://' + (PRIMARY_HOST || request.headers.host.value.toLowerCase()) + path + (qs ? '?' + qs : '') }
     }
   };
 }

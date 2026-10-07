@@ -2,157 +2,75 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+SETTINGS="$PWD/../app.env"
+SETTINGS_MISSING_MSG="Refusing to continue: deploying without settings risks applying an
+empty mailboxes map, which would destroy the mailbox passwords."
+
+if [[ -z "${DEPLOY_UNDER_OP:-}" ]]; then
+  if ! command -v op >/dev/null; then
+    echo "1Password CLI (op) not found. Settings and AWS keys live in 1Password;" >&2
+    echo "app.env only holds op:// references to them. Install op and run 'op signin'." >&2
+    exit 1
+  fi
+  if ! op run --env-file="$SETTINGS" -- true; then
+    echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
+    echo "$SETTINGS_MISSING_MSG" >&2
+    exit 1
+  fi
+  exec op run --no-masking --env-file="$SETTINGS" -- env DEPLOY_UNDER_OP=1 "$BASH" "$PWD/${0##*/}" "$@"
+fi
+
+SETTING_NAMES=()
+while IFS= read -r name; do
+  SETTING_NAMES+=("$name")
+done < <(sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' "$SETTINGS")
+for name in "${SETTING_NAMES[@]}"; do
+  case $name in TF_VAR_delegation_set_id) continue ;; esac
+  if [[ ($name == TF_VAR_domain_name || $name == DOMAIN_NAME) && "${ALLOW_EMPTY_DOMAIN:-}" == 1 ]]; then
+    continue
+  fi
+  if [[ -z "${!name:-}" ]]; then
+    echo "$name is empty or not set; it should come from 1Password via app.env." >&2
+    if [[ $name == TF_VAR_domain_name ]]; then
+      echo "An empty domain_name plans to destroy the zone and the mail server (EBS volume included)." >&2
+      echo "To deploy without a domain on purpose, run with ALLOW_EMPTY_DOMAIN=1." >&2
+    fi
+    echo "$SETTINGS_MISSING_MSG" >&2
+    exit 1
+  fi
+done
+unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_SESSION_TOKEN TF_WORKSPACE
+
 ACTION="${1:-apply}"
-ENV_ID="${ENV_ID:-}"
-
-if [[ -z "${AWS_PROFILE:-}" ]]; then
-  if [[ "$ACTION" == "publish" && -z "$ENV_ID" ]] && aws configure list-profiles 2>/dev/null | grep -qx publish; then
-    AWS_PROFILE=publish
-  elif aws configure list-profiles 2>/dev/null | grep -qx terraform; then
-    AWS_PROFILE=terraform
-  else
-    AWS_PROFILE=default
-  fi
-fi
-export AWS_PROFILE
-unset TF_WORKSPACE
-
-SETTINGS="$PWD/terraform.env"
-with_settings() { op run --no-masking --env-file="$SETTINGS" -- "$@"; }
-setting() { op run --env-file="$SETTINGS" --no-masking -- printenv "TF_VAR_$1"; }
-
-if [[ -n "$ENV_ID" ]]; then
-  if [[ ! "$ENV_ID" =~ ^[a-z][a-z0-9]{0,7}$ ]]; then
-    echo "ENV_ID must be 1-8 lowercase letters or numbers, starting with a letter (e.g. mm)." >&2
-    exit 1
-  fi
-  if [[ "$ENV_ID" == "www" || "$ENV_ID" == "default" || "$ENV_ID" =~ aws|amazon|cognito ]]; then
-    echo "ENV_ID can't be www or default, or contain aws, amazon or cognito." >&2
-    exit 1
-  fi
-fi
-
-for f in *.auto.tfvars terraform.tfvars setup/*.auto.tfvars setup/terraform.tfvars; do
+for f in *.auto.tfvars terraform.tfvars; do
   if [[ -e "$f" ]]; then
-    echo "infra/$f exists. Settings come only from 1Password via terraform.env;" >&2
+    echo "infra/$f exists. Settings come only from 1Password via app.env;" >&2
     echo "a tfvars file would silently override them. Delete or move infra/$f." >&2
     exit 1
   fi
 done
 
-if [[ "$ACTION" != "publish" ]]; then
-  if ! command -v op >/dev/null; then
-    echo "1Password CLI (op) not found. Settings live in 1Password; infra/terraform.env" >&2
-    echo "only holds op:// references to them. Install op and run 'op signin'." >&2
-    exit 1
-  fi
-  if ! with_settings true; then
-    echo "Could not read settings from 1Password. Run 'op signin' and retry." >&2
-    echo "Refusing to continue: deploying without settings risks applying an" >&2
-    echo "empty mailboxes map, which would destroy the mailbox passwords." >&2
-    exit 1
-  fi
-fi
-
 if ! aws sts get-caller-identity --query Arn --output text >/dev/null; then
-  echo "AWS login not working. Run 'aws login', then try again (see README, 'Log in')." >&2
+  echo "AWS rejected the access keys from 1Password. Check the AWS item that" >&2
+  echo "app.env points at, then try again." >&2
   exit 1
 fi
 
-if [[ "$ACTION" == "setup" ]]; then
-  (
-    cd setup
-
-    BACKEND_BLOCK="$(sed -n '/backend "s3" {/,/^  }/p' backend.tf)"
-    STATE_BUCKET="$(sed -nE 's/^[[:space:]]*bucket[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    STATE_KEY="$(sed -nE 's/^[[:space:]]*key[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    STATE_REGION="$(sed -nE 's/^[[:space:]]*region[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' <<<"$BACKEND_BLOCK")"
-    if [[ -z "$STATE_BUCKET" || -z "$STATE_KEY" || -z "$STATE_REGION" ]]; then
-      echo "Could not read bucket/key/region from backend.tf's backend block." >&2
-      exit 1
-    fi
-
-    if PROBE_ERR="$(aws s3api head-object --bucket "$STATE_BUCKET" --key "$STATE_KEY" \
-      --region "$STATE_REGION" 2>&1 >/dev/null)"; then
-      terraform init -input=false
-    elif grep -qE '\(404\)|Not Found' <<<"$PROBE_ERR"; then
-      if [[ -f terraform.tfstate ]]; then
-        cp terraform.tfstate "terraform.tfstate.pre-migrate.$(date +%Y%m%d-%H%M%S)"
-      fi
-
-      trap 'mv -f backend.tf.disabled backend.tf 2>/dev/null || true' EXIT
-      mv backend.tf backend.tf.disabled
-      terraform init -input=false
-      with_settings terraform apply
-      mv -f backend.tf.disabled backend.tf
-      trap - EXIT
-      terraform init -input=false -migrate-state -force-copy
-
-      mv -f terraform.tfstate "terraform.tfstate.migrated-$(date +%Y%m%d-%H%M%S)"
-    else
-      echo "Cannot tell whether setup/ state is already in s3://${STATE_BUCKET}/${STATE_KEY}:" >&2
-      echo "  $PROBE_ERR" >&2
-      echo "Refusing to guess -- guessing wrong overwrites real state. Fix access, then re-run." >&2
-      exit 1
-    fi
-
-    with_settings terraform apply
-
-    ENABLE_MAILSERVER="$(setting enable_mailserver)"
-    if [[ "$ENABLE_MAILSERVER" == true ]]; then
-      DOMAIN_NAME="$(setting domain_name)"
-      ALERT_EMAIL="$(setting alert_email)"
-      if [[ -z "$DOMAIN_NAME" || -z "$ALERT_EMAIL" ]]; then
-        echo "WARNING: domain_name/alert_email is empty in 1Password -- skipped the SES production-access request." >&2
-      elif SES_ERR="$(aws sesv2 put-account-details \
-        --production-access-enabled \
-        --mail-type TRANSACTIONAL \
-        --website-url "https://${DOMAIN_NAME}" \
-        --additional-contact-email-addresses "${ALERT_EMAIL}" \
-        --contact-language EN 2>&1 >/dev/null)"; then
-        echo ">>> SES production access requested (approval ~24h)"
-      elif grep -qiE 'already|pending' <<<"$SES_ERR"; then
-        echo ">>> SES production access already requested or granted"
-      else
-        echo "WARNING: SES production-access request failed unexpectedly:" >&2
-        echo "  $SES_ERR" >&2
-      fi
-    fi
-
-    echo
-    echo "Next: enter these name servers in Namecheap (Custom DNS):"
-    terraform output -json name_servers
-  )
-  exit 0
-fi
-
-if [[ ! -f backend.hcl ]]; then
-  echo "backend.hcl not found. Run './infra/deploy.sh setup' first." >&2
-  exit 1
-fi
-
-terraform init -input=false -backend-config=backend.hcl
-WORKSPACE="${ENV_ID:-default}"
-if [[ "$ACTION" == "publish" ]]; then
-  terraform workspace select "$WORKSPACE"
-else
-  terraform workspace select -or-create "$WORKSPACE"
-fi
-echo ">>> Environment: ${ENV_ID:-main site}"
+terraform init -input=false -reconfigure
 
 case "$ACTION" in
   plan)
-    with_settings terraform plan
+    terraform plan
     ;;
   apply)
-    with_settings terraform apply
+    terraform apply
     ;;
   publish)
 
     if ! SITE_BUCKET="$(terraform output -raw site_bucket)" ||
       ! DISTRIBUTION_ID="$(terraform output -raw cloudfront_distribution_id)" ||
       ! SITE_URL="$(terraform output -raw site_url)"; then
-      echo "Nothing deployed here yet. Run '${ENV_ID:+ENV_ID=$ENV_ID }./infra/deploy.sh' first." >&2
+      echo "Nothing deployed here yet. Run './infra/deploy.sh apply' first." >&2
       exit 1
     fi
     for tool in op pnpm git; do
@@ -163,7 +81,7 @@ case "$ACTION" in
     done
 
     BUILD_PATHS=()
-    for p in app package.json pnpm-lock.yaml pnpm-workspace.yaml .node-version; do
+    for p in app package.json pnpm-lock.yaml pnpm-workspace.yaml .mise.toml; do
       [[ -e "../$p" ]] && BUILD_PATHS+=("$p")
     done
     DIRTY="$(git -C .. status --porcelain --untracked-files=all -- "${BUILD_PATHS[@]}")"
@@ -175,7 +93,7 @@ case "$ACTION" in
 
     IGNORED_ENV="$(git -C .. ls-files --others --ignored --exclude-standard -- 'app/web/.env*')"
     if [[ -n "$IGNORED_ENV" ]]; then
-      echo "Build env must come only from app/web/.env via op run. Remove these first:" >&2
+      echo "Build env comes only from app.env via op run. Remove these app/web/.env* files first:" >&2
       echo "$IGNORED_ENV" >&2
       exit 1
     fi
@@ -188,8 +106,10 @@ case "$ACTION" in
     echo ">>> Building ${COMMIT_SHA} (${COMMIT_SUBJECT}) for ${SITE_URL}"
     (
       cd ..
-      op run --env-file=app/web/.env -- \
-        env NEXT_PUBLIC_SITE_URL="$SITE_URL" pnpm -F web build
+      for name in "${SETTING_NAMES[@]}"; do
+        case $name in DOMAIN_NAME|NEXT_PUBLIC_*) ;; *) unset "$name" ;; esac
+      done
+      NEXT_PUBLIC_SITE_URL="$SITE_URL" pnpm -F web build
     )
 
     STAGE="$(mktemp -d)"
@@ -250,21 +170,8 @@ case "$ACTION" in
       echo "passes will remove them." >&2
     fi
     ;;
-  destroy)
-    if [[ -z "$ENV_ID" ]]; then
-      echo "!!! This deletes the MAIN site and every file in it, permanently. !!!"
-      echo "Step 1 of 2: turn off deletion protection."
-      with_settings terraform apply -var="protect_data=false"
-      echo "Step 2 of 2: delete everything."
-      with_settings terraform destroy -var="protect_data=false"
-    else
-      with_settings terraform destroy
-      terraform workspace select default
-      terraform workspace delete "$WORKSPACE"
-    fi
-    ;;
   *)
-    echo "Unknown action '$ACTION'. Use: setup, plan, apply, publish or destroy." >&2
+    echo "Unknown action '$ACTION'. Use: plan, apply or publish." >&2
     exit 1
     ;;
 esac

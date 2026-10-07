@@ -1,3 +1,8 @@
+variable "name" {
+  description = "Short project name used in resource names (lowercase letters, numbers, dashes)"
+  type        = string
+}
+
 variable "domain_name" {
   description = "Mail domain, e.g. example.com"
   type        = string

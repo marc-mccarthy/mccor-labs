@@ -27,7 +27,7 @@ function requiredInProduction(name: string, raw: string | undefined): string | n
   if (value === null && process.env.NODE_ENV === 'production') {
     throw new Error(
       `${name} is required for a production build. Run the build through ` +
-        '`op run --env-file=.env -- …` so 1Password supplies it.',
+        '`op run --env-file=app.env -- …` so 1Password supplies it.',
     )
   }
   return value

@@ -72,3 +72,11 @@ test('mixed-case alias rendered through lower() does not redirect its own host',
   assert.equal(result.statusCode, undefined);
   assert.equal(result.uri, '/services/index.html');
 });
+
+test('empty primary host keeps the request host and still enforces trailing slashes', () => {
+  const open = loadHandler('');
+  assert.equal(run(open, 'd111.cloudfront.net', '/services/', undefined).uri, '/services/index.html');
+  const redirect = run(open, 'd111.cloudfront.net', '/about', 'a=1');
+  assert.equal(redirect.statusCode, 301);
+  assert.equal(redirect.headers.location.value, 'https://d111.cloudfront.net/about/?a=1');
+});

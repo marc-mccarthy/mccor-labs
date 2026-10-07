@@ -8,13 +8,13 @@
     "node": ">=24",
     "pnpm": ">=10"
   },
-  "packageManager": "pnpm@12.6.0",
+  "packageManager": "pnpm@12.9.1",
   "scripts": {
     "recon": "node scripts/recon-reference-sites.mjs",
     "capture": "node scripts/capture-ui-references.mjs",
     "//dev": "op authorization is per-process and TTY-bound (a prompt per invocation), so only dev/build are wrapped rather than every script; build:raw is the unwrapped escape hatch for a build against an unconfigured/locked vault.",
-    "dev": "op run --env-file=app/web/.env -- pnpm -F web dev",
-    "build": "op run --env-file=app/web/.env -- pnpm -F web build",
+    "dev": "op run --env-file=app.env -- env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY sh -c 'NEXT_PUBLIC_SITE_URL=https://$DOMAIN_NAME exec pnpm -F web dev'",
+    "build": "op run --env-file=app.env -- env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY sh -c 'NEXT_PUBLIC_SITE_URL=https://$DOMAIN_NAME exec pnpm -F web build'",
     "build:raw": "pnpm -F web build",
     "test": "pnpm -F web test",
     "verify": "pnpm -F web exec tsc --noEmit && pnpm -F web lint && pnpm format:check && pnpm -F web test:run && pnpm build",

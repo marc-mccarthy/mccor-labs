@@ -1,6 +1,7 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+*_override.tf
 crash.log
 
 terraform.tfvars
@@ -32,3 +33,5 @@ lighthouse-report/
 
 .media-work/
 .claude/settings.local.json
+*.tfplan
+tfplan

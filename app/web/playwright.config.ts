@@ -13,15 +13,15 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
       testIgnore: /budgets\.spec\.ts/,
     },
     {
       name: 'budgets',
       testMatch: /budgets\.spec\.ts/,
       fullyParallel: false,
-      dependencies: ['firefox'],
+      dependencies: ['chromium'],
     },
   ],
   webServer: {

@@ -59,12 +59,14 @@ resource "aws_cloudwatch_metric_alarm" "disk" {
     InstanceId = aws_instance.mail.id
     path       = "/var/mail-data"
     fstype     = "ext4"
+    device     = "nvme1n1"
   }
   statistic           = "Average"
   period              = 300
   evaluation_periods  = 2
   threshold           = 80
   comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "breaching"
   alarm_actions       = local.alarm_actions
 }
 
@@ -118,8 +120,8 @@ resource "aws_cloudwatch_metric_alarm" "cpu_credits" {
   metric_name         = "CPUCreditBalance"
   dimensions          = { InstanceId = aws_instance.mail.id }
   statistic           = "Minimum"
-  period              = 300
-  evaluation_periods  = 2
+  period              = 900
+  evaluation_periods  = 12
   threshold           = 30
   comparison_operator = "LessThanThreshold"
   alarm_actions       = local.alarm_actions

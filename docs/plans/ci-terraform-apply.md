@@ -29,8 +29,8 @@ Inherited from legacy unchanged (each carries its "cost if wrong" in the legacy 
 
 Owner-decided:
 
-- Ruling (owner): state bucket `mccorlabs-tfstate-150701180133`, key `terraform.tfstate`, made once with the AWS CLI and not Terraform-managed. It has versioning, SSE-S3, a full public access block, a TLS-only policy and 90-day noncurrent expiry (cost if wrong: none).
-- Ruling (owner): AWS names use Terraform name `mccorlabs`. 1Password uses the repo name: vault `mccor-labs-ci`, item `mccor-labs-infra`, service account `mccor-labs-ci`. The "AWS mj" admin key stays in Development, unreachable by the service account (cost if wrong: rename later).
+- Ruling (owner): state bucket `mccorlabs-tfstate-150701180133`, main key `terraform.tfstate`. It has versioning, SSE-S3, a full public access block, a TLS-only policy and 90-day noncurrent expiry. The bucket is Terraform-managed by `infra/bootstrap/state.tf`, per the first Ruling in the addendum; the CLI-made bucket in T2 is superseded (cost if wrong: none).
+- Ruling (owner): AWS names use Terraform name `mccorlabs`. 1Password uses one item, `mccor-labs`, in the `Development` vault. It holds every config field plus `aws_access_key_id` and `aws_secret_access_key`. The CI service account is `mccor-labs-ci` and is created with `Development:read_items`. The owner accepted that any push to main can read the whole Development vault (cost if wrong: a repo compromise reads every Development secret, including the AWS admin key; rotate the AWS key and the service-account token).
 - Ruling (owner): the OIDC provider is owned by no repo and is only read with `data "aws_iam_openid_connect_provider"`. Never create or import it. No `removed` block, because mccor-labs never owned it.
 - Ruling (owner): one shared AWS account. Nothing else is shared with legacy.
 - Ruling (owner): full teardown of `infra/setup`, nothing imported or kept (cost if wrong: mailbox passwords, the SMTP key, the old EIP and its reputation, SES/DKIM reputation and the zone ID are lost. Mail data is recoverable from the 28 DLM snapshots until the owner deletes them in T8).
@@ -38,7 +38,7 @@ Owner-decided:
 Deviations from legacy (mccor-labs physically differs, or a gap the reviews found):
 
 - Ruling: the new zone is created in a laptop targeted apply (T6) with the CI role, not in the first CI apply (cost if wrong: none, same state, just earlier). Reason: the name servers must reach Namecheap before ACM and mail-server TLS can validate. Otherwise the first CI run blocks in ACM validation for the provider's 75-minute default.
-- Ruling: order is new zone (T6), Namecheap cutover and registry gate (T7), then teardown (T8), then first CI apply. Route53 allows two zones with the same name. The teardown must precede the CI apply because the new mail server reuses fixed names (IAM user `mccorlabs-com-mail-relay`, SNS topic `mccorlabs-com-mail-alerts`, SSM `/mccorlabs.com/mail/*`) (cost if wrong: name-collision errors in the CI apply).
+- Ruling: order is new zone (T6), Namecheap cutover and registry gate (T7), then teardown (T8), then first CI apply. Route53 allows two zones with the same name. The teardown must precede the CI apply because the SES identity `mccorlabs.com` is the same in both stacks. The new mail module names its other resources `mccorlabs-mail-*` (SSM `/mccorlabs/mail/*`), so they no longer collide with the old stack's `mccorlabs-com-*` names (cost if wrong: the old stack's destroy deletes the SES identity the new stack depends on).
 - Ruling: T8 starts when the `.com` registry serves the new NS set, not after the 48 h delegation TTL (cost if wrong: resolvers that cached the old NS set get SERVFAIL or REFUSED for up to 48 h; waiting 48 h costs a few dollars of idle EC2).
 - Ruling: the teardown runs from a throwaway worktree at df8e79b with local edits and local state (cost if wrong: a bad edit makes the destroy fail at `prevent_destroy`, nothing is destroyed wrongly). `prevent_destroy` cannot be overridden by flags. The edits never reach the branch.
 - Ruling: single default workspace. `ENV_ID`, `local.is_main`, the `Env` tag and per-environment hostnames are removed (cost if wrong: no per-person preview sites).
@@ -49,17 +49,17 @@ Deviations from legacy (mccor-labs physically differs, or a gap the reviews foun
 - Ruling: `deploy.sh` keeps `plan|apply|publish` only. The `destroy` case is deleted. Laptop `apply` runs with Development admin keys and bypasses plan-guard, which legacy has no equivalent for (cost if wrong: a destroy needs a raw `terraform destroy`; a bypassing apply is the owner's explicit break-glass).
 - Ruling: the deploy role is S3 Put/Delete/ListBucket on the site bucket plus CloudFront CreateInvalidation and GetInvalidation. Legacy lacks GetInvalidation, but `wait invalidation-completed` needs it (cost if wrong: one policy edit).
 - Ruling: Terraform outputs reach `GITHUB_OUTPUT` with `terraform output -raw <key>` per key. Sensitive `mailbox_passwords` is never read in CI (cost if wrong: a password leak into logs).
-- Ruling: the sync uses mccor's three cache tiers (`infra/deploy.sh:215-243`). First pass without `--delete`, then invalidate and wait, then a `--delete` pass for the page tier. CI never deletes under `media/` or `fonts/`, because media is untracked and a clean checkout lacks it (cost if wrong: no imagery until a laptop `deploy.sh publish` or committed media).
+- Ruling: the sync uses mccor's three cache tiers (`infra/deploy.sh:215-243`). First pass without `--delete`, then invalidate and wait, then a `--delete` pass for the page tier. CI never deletes under `media/` or `fonts/`. All 53 files under `app/web/public` are tracked, so a clean checkout builds them, and only the laptop `deploy.sh publish` prunes those two prefixes (cost if wrong: a media file removed from the repo stays served from S3 until a laptop publish).
 - Ruling: the publish guard runs in the CI build job on `app/web/out` (`infra/publish-guard.sh`, as `deploy.sh:207-211` does). `rejected-media/` is not tracked (0 tracked files match), so its name denylist is blind in CI. The extension, dotfile, symlink and git-ignored rules still apply (cost if wrong: a rejected media file with an allowed extension ships; track `rejected-media/` to close it).
-- Ruling: the destroy allowlist starts empty and stays empty. State is fresh, so the first plan has creates only. Guard gaps accepted, since the script stays byte-identical to legacy. In-place edits of `aws_iam_role.terraform`'s trust policy pass the guard. A malformed plan JSON fails open. Editing `alert_email` or `admin_mailbox` in 1Password plans an instance replace (`user_data_replace_on_change`, `modules/mailserver/main.tf:252`) and blocks every deploy until a PR adds `module.mailserver.aws_instance.mail` to the allowlist (cost if wrong: red deploys until the allowlist PR lands). Lockout recovery is laptop `./infra/deploy.sh apply`.
-- Ruling: trust is not enforced by GitHub config. Branch protection and rulesets return 403 (needs GitHub Pro), so anyone with push access to main gets an AdministratorAccess session, and `OP_SERVICE_ACCOUNT_TOKEN` is a repo secret readable by same-repo workflows. Mitigation: ci.yml never uses the secret, and the vault item holds non-secret config only. Never add a secret to `mccor-labs-ci` (cost if wrong: repo compromise reads the vault and assumes Admin).
+- Ruling: the destroy allowlist starts empty and stays empty. State is fresh, so the first plan has creates only. Guard gaps accepted, since the script stays byte-identical to legacy. In-place edits of `aws_iam_role.terraform`'s trust policy pass the guard. Malformed plan JSON fails closed: `jq` errors and the guard exits 5. Empty stdin exits 0, so CI relies on `set -euo pipefail` to fail the Guard step when `terraform show` fails. Editing `alert_email` or `admin_mailbox` in the 1Password item plans an instance replace (`user_data_replace_on_change`, `modules/mailserver/main.tf:250`) and blocks every deploy until a PR adds `module.mailserver.aws_instance.mail` to the allowlist (cost if wrong: red deploys until the allowlist PR lands). Lockout recovery is laptop `./infra/deploy.sh apply`.
+- Ruling: trust is not enforced by GitHub config. Branch protection and rulesets return 403 (needs GitHub Pro), so anyone with push access to main gets an AdministratorAccess session, and `OP_SERVICE_ACCOUNT_TOKEN` is a repo secret readable by same-repo workflows. Mitigation: ci.yml never uses the secret. The service account holds `Development:read_items`, so the same access also reads the AWS admin key fields in `Development/mccor-labs` and the EPP item `Development/mccorlabs-epp`. The owner accepted this (cost if wrong: repo compromise reads the whole Development vault and assumes Admin).
 - Ruling: the shared account means `mccorlabs-github-terraform` (Admin) can read legacy's state and buckets and vice versa, and the new state holds plaintext mailbox and SMTP passwords. Accepted as the owner's one-account choice (cost if wrong: cross-repo blast radius; follow-up is an explicit-Deny policy on foreign prefixes).
 - Ruling: the plan summary (`GITHUB_STEP_SUMMARY`) shows `alert_email` and mailbox names. Secrets are `(sensitive value)` or `(known after apply)` (cost if wrong: contact data in run logs).
 - Ruling: Playwright is Chromium only. The `firefox` project becomes `chromium`. e2e installs `chromium chrome` because `budgets.spec.ts:9` uses `channel: 'chrome'`. Budget thresholds may be flaky on shared runners (cost if wrong: re-run, then drop the `budgets` project from CI).
 - Ruling: no new root `lint` or `typecheck` scripts. CI calls `pnpm -F web ...`, and e2e builds with `pnpm build:raw` because `pnpm build` wraps `op run` (cost if wrong: none).
 - Ruling: `infra/tests/publish-guard.test.sh` runs in ci.yml. `terraform test` for the `.tftest.hcl` files is not in CI (cost if wrong: module tests go unrun).
 - Ruling: lefthook copies legacy's four terraform commands (`terraform-fmt`, `terraform-fmt-check`, `terraform-validate`, `tflint`). It adds no guard-test hooks, because CI runs them (cost if wrong: guard-test failures show up only in CI).
-- Ruling: region stays the literal `us-east-1` in providers and workflows. The item still has a `region` field for `AWS_REGION` in `terraform.env`, as legacy does (cost if wrong: one variable).
+- Ruling: region stays the literal `us-east-1` in providers and workflows. The item still has a `region` field for `AWS_REGION` in `app.env`, as legacy does (cost if wrong: one variable).
 - Ruling: the SES production-access request (`deploy.sh:103-117`) goes with `setup`. It is account-level and survives (cost if wrong: run `aws sesv2 put-account-details` by hand).
 - Ruling: trivy ignores are scoped to the module that needs them, not `**/main.tf` (cost if wrong: CI red until the path glob is fixed).
 - Ruling (owner): the parked api/auth/database blocks in `main.tf` and `outputs.tf` and `modules/{auth,database,api}` are deleted (cost if wrong: restore from git). Review: `docs/findings/2026-10-05-parked-backend-modules-review.md`.
@@ -74,14 +74,14 @@ New resources: one EC2 mail instance (`instance_type` from the item), its EBS vo
 
 ### T1 OWNER: commit the four dirty files
 
-`README.md`, `infra/deploy.sh`, `infra/outputs.tf`, `infra/terraform.env`. Verify: `git status --short` prints nothing. Line numbers for `deploy.sh` below refer to the file after this commit.
+`README.md`, `infra/deploy.sh`, `infra/outputs.tf` and the env file `infra/deploy.sh` read at the time (since deleted; `app.env` replaces it, see T4). Verify: `git status --short` prints nothing. Line numbers for `deploy.sh` below refer to the file after this commit.
 
 ### T2 OWNER: state bucket (AWS CLI, admin key)
 
-Runs before T3 because `infra/terraform.env` still points at the Development item until T4 rewrites it.
+Superseded by the bootstrap stack (addendum), which creates this bucket or adopts it by `terraform import` if this step already ran. The commands stay as the CLI reference. `app.env` carries the admin keys from `Development/mccor-labs`, so T2 has no ordering constraint with T3.
 
 ```
-r() { op run --env-file=infra/terraform.env -- "$@"; }
+r() { op run --env-file=app.env -- "$@"; }
 a() { r env -u AWS_PROFILE aws "$@"; }
 B=mccorlabs-tfstate-150701180133
 a s3api create-bucket --bucket $B --region us-east-1
@@ -96,25 +96,21 @@ Verify: `a s3api get-bucket-versioning --bucket $B` gives `Enabled`. `get-bucket
 
 ### T3 OWNER: 1Password and GitHub secret
 
-`op item move` creates the item under a new id, so edit by the id read back from the new vault. Until T4 rewrites `terraform.env`, `op run` with it fails.
+The single item is `Development/mccor-labs`. The earlier `mccor-labs-ci` vault and `mccor-labs-infra` item no longer exist, so this task edits the one item in place and grants the service account the whole `Development` vault.
 
 ```
-op vault create mccor-labs-ci
-op item move qtxqnkc35hhbcnufogpx6vsd74 --current-vault Development --destination-vault mccor-labs-ci
-id=$(op item list --vault mccor-labs-ci --format json | jq -r '.[0].id')
-op item edit "$id" --vault mccor-labs-ci --title mccor-labs-infra \
-  'name[text]=mccorlabs' 'region[text]=us-east-1' 'project[delete]' 'enable_mailserver[delete]' \
+op item edit mccor-labs --vault Development \
+  'name[text]=mccorlabs' 'region[text]=us-east-1' \
   'github_subject_prefix[text]=repo:marc-mccarthy@40575970/mccor-labs@1389744917' \
-  "booking_url[text]=$(op read "$(sed -n 's/^NEXT_PUBLIC_BOOKING_URL=//p' app/web/.env)")"
-op item get "$id" --vault mccor-labs-ci --format json | jq -r '.fields[].label'
-tok=$(op service-account create mccor-labs-ci --vault mccor-labs-ci:read_items --raw)
+  'booking_url[text]=<public booking URL>'
+op item get mccor-labs --vault Development --format json | jq -r '.fields[].label'
+tok=$(op service-account create mccor-labs-ci --vault Development:read_items --raw)
 printf %s "$tok" | gh secret set OP_SERVICE_ACCOUNT_TOKEN --repo marc-mccarthy/mccor-labs
 OP_SERVICE_ACCOUNT_TOKEN="$tok" op vault list
-OP_SERVICE_ACCOUNT_TOKEN="$tok" op read op://mccor-labs-ci/mccor-labs-infra/domain_name
-OP_SERVICE_ACCOUNT_TOKEN="$tok" op read op://Development/26uakebwqlfwhajd3ba3mpb34y/region; unset tok
+OP_SERVICE_ACCOUNT_TOKEN="$tok" op read op://Development/mccor-labs/domain_name; unset tok
 ```
 
-Expected field labels: `name, region, domain_name, alert_email, monthly_budget_usd, mailboxes, admin_mailbox, instance_type, mail_volume_gb, github_subject_prefix, booking_url`. Delete any extra label, because the vault must hold no secret. `op vault list` shows exactly one vault. The domain read prints the domain. The Development read fails with an access error. `gh secret list --repo marc-mccarthy/mccor-labs` shows `OP_SERVICE_ACCOUNT_TOKEN`. `op item list --vault Development` no longer shows the moved item. If it still does, ask before deleting it.
+Expected field labels: `name, region, domain_name, alert_email, monthly_budget_usd, mailboxes, admin_mailbox, instance_type, mail_volume_gb, github_subject_prefix, booking_url, aws_access_key_id, aws_secret_access_key`. The addendum adds `delegation_set_id`, `domain_registrar_is_route53` and `domain_contact`. Delete any leftover `project` or `enable_mailserver` field from the old item. The two `aws_*` fields are secrets by the owner's decision (Rulings), and the service account can read them. `op vault list` shows `Development`. The domain read prints the domain. `gh secret list --repo marc-mccarthy/mccor-labs` shows `OP_SERVICE_ACCOUNT_TOKEN`.
 If `gh secret set` fails after the token is printed, delete the service account and recreate it, since the token shows once. If the CLI cannot create a service account on this plan, use the web UI (UNVERIFIED).
 
 ## Phase 1: code (laptop, on the branch)
@@ -124,9 +120,10 @@ If `gh secret set` fails after the token is printed, delete the service account 
 Run `mise install` after writing `.mise.toml` (terraform is not on PATH yet).
 Files:
 
-- Create: `.mise.toml`, `infra/backend.tf`, `infra/iam.tf`, `infra/dns.tf`, `infra/.tflint.hcl`, `infra/build.env`, `.trivyignore.yaml`.
-- Edit: `infra/main.tf`, `infra/variables.tf`, `infra/outputs.tf`, `infra/terraform.env`, `package.json` (`packageManager` to `pnpm@12.9.1`), `pnpm-lock.yaml`, `.gitignore` (add `*.tfplan`, `tfplan`), `infra/.terraform.lock.hcl`.
+- Create: `.mise.toml`, `infra/backend.tf`, `infra/iam.tf`, `infra/dns.tf`, `infra/.tflint.hcl`, `app.env`, `.trivyignore.yaml`.
+- Edit: `infra/main.tf`, `infra/variables.tf`, `infra/outputs.tf`, `package.json` (`packageManager` to `pnpm@12.9.1`), `pnpm-lock.yaml`, `.gitignore` (add `*.tfplan`, `tfplan`), `infra/.terraform.lock.hcl`.
 - Delete (`git rm -r`; plan approval is the owner's removal ask): `infra/setup/`, `infra/backend.hcl`, `infra/versions.tf`, `infra/modules/publish_role/`, `infra/modules/email/`, `.node-version`.
+- Historical: the per-stack env files `infra/terraform.env`, `infra/build.env`, `infra/bootstrap/terraform.env` and `app/web/.env` are deleted. The repo-root `app.env` replaces all four.
 
 Before deleting `infra/setup/`, list its resource blocks (`infra/setup/main.tf:147-250`: state bucket, zone, budget, `module.email`, `module.mailserver`, `local_file.backend`) and confirm each is either declared in the new root or deliberately dropped. Everything else lives in `modules/mailserver`.
 
@@ -253,14 +250,9 @@ resource "aws_iam_role_policy_attachment" "terraform_admin" {
 }
 ```
 
-`infra/terraform.env`: every value is `op://mccor-labs-ci/mccor-labs-infra/<field>`, quoted like legacy. Variables: `TF_VAR_name`, `TF_VAR_domain_name`, `TF_VAR_alert_email`, `TF_VAR_monthly_budget_usd`, `TF_VAR_mailboxes`, `TF_VAR_admin_mailbox`, `TF_VAR_instance_type`, `TF_VAR_mail_volume_gb` and `TF_VAR_github_subject_prefix`, each pointing at the field of the same name. Add `AWS_REGION` pointing at the item's `region` field, as legacy does. `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` stay at `op://Development/26uakebwqlfwhajd3ba3mpb34y/username` and `/credential`.
+`app.env` (repo root, one file for both stacks, the build and `infra/deploy.sh`): every value is `op://Development/mccor-labs/<field>`, quoted like legacy. Terraform variables: `TF_VAR_name`, `TF_VAR_domain_name`, `TF_VAR_alert_email`, `TF_VAR_monthly_budget_usd`, `TF_VAR_mailboxes`, `TF_VAR_admin_mailbox`, `TF_VAR_instance_type`, `TF_VAR_mail_volume_gb` and `TF_VAR_github_subject_prefix`, each pointing at the field of the same name. The addendum adds `TF_VAR_delegation_set_id`, `TF_VAR_domain_registrar_is_route53` and `TF_VAR_domain_contact`. Add `AWS_REGION` pointing at the item's `region` field, as legacy does. `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` point at the item's `aws_access_key_id` and `aws_secret_access_key` fields. Build settings: `DOMAIN_NAME` points at `domain_name` and `NEXT_PUBLIC_BOOKING_URL` at `booking_url`.
 
-`infra/build.env`
-
-```
-DOMAIN_NAME="op://mccor-labs-ci/mccor-labs-infra/domain_name"
-NEXT_PUBLIC_BOOKING_URL="op://mccor-labs-ci/mccor-labs-infra/booking_url"
-```
+CI selects lines instead of keeping a second file. The terraform job runs `grep '^TF_VAR_' app.env` and the build job runs `grep -E '^(NEXT_PUBLIC_|DOMAIN_NAME=)' app.env`, each writing a temporary file under `$RUNNER_TEMP` for `op run`. `infra/deploy.sh` reads `$PWD/../app.env`.
 
 `.trivyignore.yaml` (IDs are predictions and the path form is UNVERIFIED. After the first trivy run, delete IDs it does not report and add path-scoped entries for any HIGH or CRITICAL it reports in the parked modules.)
 
@@ -297,8 +289,8 @@ terraform -chdir=infra init -backend=false -input=false && terraform -chdir=infr
 terraform -chdir=infra providers lock -platform=darwin_arm64 -platform=linux_amd64
 tflint --chdir=infra --init && tflint --chdir=infra
 trivy config --ignorefile .trivyignore.yaml --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 infra
-op run --env-file=infra/terraform.env -- sh -c 'test -n "$TF_VAR_name" && test -n "$TF_VAR_github_subject_prefix" && test -n "$AWS_REGION"'
-op run --env-file=infra/build.env -- sh -c 'test -n "$DOMAIN_NAME" && test -n "$NEXT_PUBLIC_BOOKING_URL"'
+op run --env-file=app.env -- sh -c 'test -n "$TF_VAR_name" && test -n "$TF_VAR_github_subject_prefix" && test -n "$AWS_REGION"'
+op run --env-file=app.env -- sh -c 'test -n "$DOMAIN_NAME" && test -n "$NEXT_PUBLIC_BOOKING_URL"'
 pnpm install --frozen-lockfile
 ```
 
@@ -519,7 +511,8 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           set -euo pipefail
-          op run --no-masking --env-file=infra/build.env -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
+          grep -E '^(NEXT_PUBLIC_|DOMAIN_NAME=)' app.env >"$RUNNER_TEMP/build.env"
+          op run --no-masking --env-file="$RUNNER_TEMP/build.env" -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
             set -euo pipefail
             test -n "$DOMAIN_NAME"
             export NEXT_PUBLIC_SITE_URL="https://$DOMAIN_NAME"
@@ -571,7 +564,7 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           set -euo pipefail
-          grep '^TF_VAR_' infra/terraform.env >"$RUNNER_TEMP/tf.env"
+          grep '^TF_VAR_' app.env >"$RUNNER_TEMP/tf.env"
           op run --no-masking --env-file="$RUNNER_TEMP/tf.env" -- env -u OP_SERVICE_ACCOUNT_TOKEN \
             terraform -chdir=infra plan -lock-timeout=10m -out="$RUNNER_TEMP/tfplan"
       - name: Plan summary
@@ -676,7 +669,7 @@ jobs:
 - `:131` becomes `terraform init -input=false -reconfigure`. Delete the workspace lines (`:132-138`).
 - `publish` keeps its gates, build and tiered sync unchanged.
 - Delete the `destroy` case. The usage message lists `plan, apply or publish`.
-- The settings loop and `terraform.env` handling are unchanged.
+- The settings loop is unchanged, with `SETTINGS` set to `$PWD/../app.env`.
 
 Verify:
 
@@ -691,14 +684,14 @@ diff /Users/mj/repos/legacy-benefits-mn/.github/workflows/deploy.yml .github/wor
 pnpm -F web exec tsc --noEmit && pnpm -F web test:run && pnpm build:raw && pnpm -F web test:e2e
 ```
 
-Expected: both guard tests print PASS, YAML loads, `grep -c vars\.` prints 0 per file, the non-SHA `uses` count is 0, and `bash -n` and actionlint are silent. Every line of the legacy diff maps to a Ruling above. tsc, unit tests, build and e2e exit 0. Without the untracked media some specs may fail (UNVERIFIED), and the PR CI run in T11 settles it. Commit: `feat(ci): add CI and deploy workflows, guard and break-glass deploy`.
+Expected: both guard tests print PASS, YAML loads, `grep -c vars\.` prints 0 per file, the non-SHA `uses` count is 0, and `bash -n` and actionlint are silent. Every line of the legacy diff maps to a Ruling above. tsc, unit tests, build and e2e exit 0. Media is tracked, so a clean checkout has it. Whether every spec passes on a clean checkout is UNVERIFIED, and the PR CI run in T10 settles it. Commit: `feat(ci): add CI and deploy workflows, guard and break-glass deploy`.
 
 ## Phase 2: live
 
 ### T6 laptop: initialise the new backend, create the zone and CI role
 
 ```
-r() { op run --no-masking --env-file=infra/terraform.env -- "$@"; }
+r() { op run --no-masking --env-file=app.env -- "$@"; }
 a() { r env -u AWS_PROFILE aws "$@"; }
 r terraform -chdir=infra init -reconfigure
 r terraform -chdir=infra plan -target=aws_route53_zone.this -target=aws_iam_role.terraform -target=aws_iam_role_policy_attachment.terraform_admin -out=/private/tmp/claude-501/-Users-mj-repos-mccor-labs/33445f69-8b01-4469-a6a2-1798d41b0f42/scratchpad/t6.tfplan
@@ -710,7 +703,7 @@ r terraform -chdir=infra output -json name_servers
 
 ### T7 OWNER: Namecheap cutover
 
-Enter the four name servers from T6 in Namecheap as Custom DNS. Gate for T8: `dig +norec NS mccorlabs.com @a.gtld-servers.net +short` returns exactly the four new servers (the registry's answer, not one resolver's cache). From this point the new zone has no MX and no apex A record, so senders get permanent failures and mail to the domain bounces rather than defers. This lasts until the first CI apply finishes (PR green, merge, then 30 to 60 minutes). The owner accepted it. Resolvers that cached the old NS set can see SERVFAIL for up to 48 h after T8.
+Enter the four name servers from T6 in Namecheap as Custom DNS. Gate for T8: `dig +norec NS mccorlabs.com @a.gtld-servers.net | awk '/AUTHORITY SECTION/,/^$/' | grep -c awsdns` must print 4, and the four names must equal the T6 `name_servers` output (the registry's answer, not one resolver's cache). Do not add `+short`: the gTLD servers return the NS set in the AUTHORITY section, so `+short` always prints nothing. From this point the new zone has no MX and no apex A record, so senders get permanent failures and mail to the domain bounces rather than defers. This lasts until the first CI apply finishes (PR green, merge, then 30 to 60 minutes). The owner accepted it. Resolvers that cached the old NS set can see SERVFAIL for up to 48 h after T8.
 
 ### T8 laptop: teardown of the old `infra/setup` stack
 
@@ -718,7 +711,7 @@ Why this is safe in a shared account: Terraform destroys only addresses in its o
 
 ```
 W=/Users/mj/repos/mccor-labs-teardown
-r() { op run --no-masking --env-file=/Users/mj/repos/mccor-labs/infra/terraform.env -- "$@"; }
+r() { op run --no-masking --env-file=/Users/mj/repos/mccor-labs/app.env -- "$@"; }
 a() { r env -u AWS_PROFILE aws "$@"; }
 s() { r terraform -chdir="$W/infra/setup" "$@"; }
 export TF_VAR_project=mccorlabs TF_VAR_enable_mailserver=true TF_VAR_force_destroy=true
@@ -735,7 +728,7 @@ s apply "$W/pre.tfplan"
 s plan -destroy -input=false -out="$W/destroy.tfplan"
 ```
 
-Local state replaces the S3 backend so the destroy can delete the bucket that held the state. The pre-apply stores `force_destroy = true` (bucket, zone) and `force_detach = true` (the mounted mail volume, whose detach would otherwise hang) in state. Read `pre.tfplan` first. It must show only in-place changes for those three resources. Whether `force_detach` is an in-place change is UNVERIFIED. The `TF_VAR_project` and `TF_VAR_enable_mailserver` overrides are needed because T3 renamed and deleted those fields. Whether setup needs any other variable is UNVERIFIED, and `-input=false` makes a missing one fail loudly.
+Local state replaces the S3 backend so the destroy can delete the bucket that held the state. The pre-apply stores `force_destroy = true` (bucket, zone) and `force_detach = true` (the mounted mail volume, whose detach would otherwise hang) in state. Read `pre.tfplan` first. It must show only in-place changes for those three resources. Whether `force_detach` is an in-place change is UNVERIFIED. The `TF_VAR_project` and `TF_VAR_enable_mailserver` overrides are needed because `app.env` carries `TF_VAR_name` and no longer carries those settings. Whether setup needs any other variable is UNVERIFIED, and `-input=false` makes a missing one fail loudly.
 
 Checks before destroy (read-only):
 
@@ -747,13 +740,14 @@ s state pull >"$W/old.tfstate"
 jq -r '.resources[] | select(.type=="aws_route53_zone") | .instances[].attributes.zone_id' "$W/old.tfstate"
 jq '[.. | strings | select(test("legacy";"i"))] | length' "$W/old.tfstate"
 jq -r '[.. | strings | select(startswith("arn:") and (contains("mccorlabs")|not) and (startswith("arn:aws:iam::aws:policy/")|not))] | unique[]' "$W/old.tfstate"
+a ec2 describe-volumes --filters Name=tag:Backup,Values=mccorlabs-com-mail --query 'Volumes[].VolumeId' --output text
 ```
 
-Expected: the diff is empty (module data sources are filtered). The zone ID is `Z07613715V1FIF3QFWDD`. The legacy count is 0. The last command prints nothing, or only the account root or AWS service ARNs. Any legacy-looking ARN means stop. Also expect 5 `random_password`, the instance, the volume, the zone and the state-bucket resources among the deletes. If any check differs, stop.
+Expected: the last command prints `vol-00f2cf80e24f3ca9b`, the old mail volume. Run it before the destroy, because the destroy deletes the volume and the snapshot commands below filter on its id. The new stack's volume carries `Backup=mccorlabs-mail`, a different tag. The diff is empty (module data sources are filtered). The zone ID is `Z07613715V1FIF3QFWDD`. The legacy count is 0. The last command prints nothing, or only the account root or AWS service ARNs. Any legacy-looking ARN means stop. Also expect 5 `random_password`, the instance, the volume, the zone and the state-bucket resources among the deletes. If any check differs, stop.
 
 Destroy: `s apply "$W/destroy.tfplan"`. If it stops partway, re-run `s plan -destroy -input=false -out="$W/destroy.tfplan"` and apply it again.
 
-Verify gone (read-only):
+Verify gone (read-only). The new `modules/mailserver` names its resources `mccorlabs-mail-*` and `/mccorlabs/mail/*`, so leftovers no longer collide with them. The SES identity `mccorlabs.com` is the one name both stacks share, so the old stack must be fully destroyed before the first CI apply:
 
 - `a s3api head-bucket --bucket mccorlabs-com-tfstate` returns 404.
 - `a route53 list-hosted-zones-by-name --dnsname mccorlabs.com` shows only the T6 zone.
@@ -762,7 +756,9 @@ Verify gone (read-only):
 - `a iam get-user --user-name mccorlabs-com-mail-relay` returns NoSuchEntity.
 - `a budgets describe-budgets --account-id 150701180133` has no `mccorlabs-monthly`.
 - `a ec2 describe-instances --filters Name=tag:Project,Values=mccorlabs Name=instance-state-name,Values=running --query 'Reservations[].Instances[].InstanceId'` is empty.
-- `a ssm describe-parameters --parameter-filters Key=Name,Option=BeginsWith,Values=/mccorlabs.com/mail --query 'Parameters[].Name'` is `[]`.
+- `a ssm describe-parameters --parameter-filters Key=Name,Option=BeginsWith,Values=/mccorlabs.com/mail --query 'Parameters[].Name'` is `[]`. The module writes 6 parameters there, one per mailbox plus `_relay_password`.
+- `a sns list-topics --query "Topics[?ends_with(TopicArn,':mccorlabs-com-mail-alerts')].TopicArn"` is `[]`.
+- `a cloudwatch describe-alarms --alarm-name-prefix mccorlabs.com- --query 'MetricAlarms[].AlarmName'` is `[]`. The module defines 7 alarms with that prefix.
 
 Legacy untouched (read-only):
 
@@ -779,7 +775,7 @@ Survives the teardown and is not touched by it:
 - Reverse-DNS (PTR) records for the old EIP. The new EIP needs its own request.
 - CloudWatch log groups the instance created (UNVERIFIED).
 - The Namecheap registration.
-- 28 DLM snapshots (tag `Backup=mccorlabs-com-mail`, source volume `vol-00f2cf80e24f3ca9b`). They hold the only copy of the mail data and keep billing. OWNER decides: keep (restorable) or delete. List with `a ec2 describe-snapshots --owner-ids self --filters Name=tag:Backup,Values=mccorlabs-com-mail --query 'Snapshots[].[SnapshotId,StartTime]' --output text`. Delete only on the owner's explicit yes: `for id in $(a ec2 describe-snapshots --owner-ids self --filters Name=tag:Backup,Values=mccorlabs-com-mail --query 'Snapshots[].SnapshotId' --output text); do a ec2 delete-snapshot --snapshot-id "$id"; done`.
+- 28 DLM snapshots (tag `Backup=mccorlabs-com-mail`, source volume `vol-00f2cf80e24f3ca9b`). They hold the only copy of the mail data and keep billing. The new stack's DLM policy writes `Backup=mccorlabs-mail`, a different tag, so these commands cannot match the new backups. They still filter on the old volume id as an extra guard. OWNER decides: keep (restorable) or delete. List with `a ec2 describe-snapshots --owner-ids self --filters Name=tag:Backup,Values=mccorlabs-com-mail Name=volume-id,Values=vol-00f2cf80e24f3ca9b --query 'Snapshots[].[SnapshotId,StartTime]' --output text`. Delete only on the owner's explicit yes: `for id in $(a ec2 describe-snapshots --owner-ids self --filters Name=tag:Backup,Values=mccorlabs-com-mail Name=volume-id,Values=vol-00f2cf80e24f3ca9b --query 'Snapshots[].SnapshotId' --output text); do a ec2 delete-snapshot --snapshot-id "$id"; done`.
 
 OWNER approves cleanup: `git worktree remove --force "$W"`, which also deletes the local state and plans that hold secrets. Commit: none (no repo change).
 
@@ -787,7 +783,7 @@ OWNER approves cleanup: `git worktree remove --force "$W"`, which also deletes t
 
 ```
 P=/private/tmp/claude-501/-Users-mj-repos-mccor-labs/33445f69-8b01-4469-a6a2-1798d41b0f42/scratchpad/dry.tfplan
-r() { op run --no-masking --env-file=infra/terraform.env -- "$@"; }
+r() { op run --no-masking --env-file=app.env -- "$@"; }
 r terraform -chdir=infra init -reconfigure
 r terraform -chdir=infra plan -out=$P
 terraform -chdir=infra show -json $P | scripts/plan-guard.sh infra/destroy-allowlist.txt; echo $?
@@ -803,7 +799,7 @@ Expected: creates only for ACM, CloudFront, the site bucket and OAC, the functio
 
 1. The owner pushes the branch and opens a PR. `CI` (quality, e2e, terraform) must be green first. Fix real failures in code; never edit tests to pass them.
 2. Merge. `Deploy` runs on main: quality, build, terraform, deploy. The first run creates ACM, CloudFront, the site, records, SES, the mail server and the budget. It can take 30 to 60 min.
-3. Re-run path. Within 24 h, Actions "Re-run failed jobs" works. After 24 h the `site` artifact has expired, so use `workflow_dispatch` on main (full run). A graceful stop saves partial state and the apply is idempotent. If a runner dies hard, or the timeout kills it, recently created resources can be missing from state and collide on their fixed names at the next plan. Recover by importing them from the laptop (`r terraform -chdir=infra import <address> <id>`). Typical collisions are IAM user `mccorlabs-com-mail-relay`, SNS topic `mccorlabs-com-mail-alerts`, SSM `/mccorlabs.com/mail/*` and the OAC or CloudFront function names. A stale lock: `r terraform -chdir=infra force-unlock <id>`. If ACM validation timed out, check `dig NS mccorlabs.com` and re-run. SES and DKIM verification is asynchronous: `a ses get-identity-verification-attributes --identities mccorlabs.com`.
+3. Re-run path. Within 24 h, Actions "Re-run failed jobs" works. After 24 h the `site` artifact has expired, so use `workflow_dispatch` on main (full run). A graceful stop saves partial state and the apply is idempotent. If a runner dies hard, or the timeout kills it, recently created resources can be missing from state and collide on their fixed names at the next plan. Recover by importing them from the laptop (`r terraform -chdir=infra import <address> <id>`). Typical collisions are IAM user `mccorlabs-mail-relay`, SNS topic `mccorlabs-mail-alerts`, SSM `/mccorlabs/mail/*` and the OAC or CloudFront function names. A stale lock: `r terraform -chdir=infra force-unlock <id>`. If ACM validation timed out, check `dig NS mccorlabs.com` and re-run. SES and DKIM verification is asynchronous: `a ses get-identity-verification-attributes --identities mccorlabs.com`.
 
 Verify: laptop `r terraform -chdir=infra plan -detailed-exitcode` exits 0. `curl -sI https://mccorlabs.com/` returns 200, and `curl -s https://mccorlabs.com/robots.txt` contains `Sitemap: https://mccorlabs.com/sitemap.xml`.
 
@@ -813,7 +809,7 @@ Verify: laptop `r terraform -chdir=infra plan -detailed-exitcode` exits 0. `curl
 - Fetch the new mailbox passwords: `r terraform -chdir=infra output -json mailbox_passwords`. Save them in 1Password by hand, never in CI or logs.
 - Confirm the SNS alert subscription email.
 - Request a PTR record and, if needed, port-25 removal for the new EIP. Check SES production access with `a sesv2 get-account`.
-- Media: a clean checkout lacks `app/web/public/media`. If the site shows no imagery, commit the media or run `./infra/deploy.sh publish` once to seed `media/` and `fonts/`.
+- Media: `app/web/public/media` and `fonts/` are tracked, so the CI build ships them. If the site shows no imagery, check that the `site` artifact holds `media/`, or run `./infra/deploy.sh publish` once to seed `media/` and `fonts/`.
 - Docs (README, nearest CLAUDE.md) are edited only after the owner sees the exact text. Mention: single stack, no workspaces, CI deploy, break-glass `deploy.sh`.
 
 ## Rollback and break-glass
@@ -829,7 +825,7 @@ Verify: laptop `r terraform -chdir=infra plan -detailed-exitcode` exits 0. `curl
 - Which providers the modules need beyond aws and random (`archive`, `local`).
 - tflint `recommended` findings and trivy IDs and path form for the mccor modules.
 - Whether `terraform test` needs AWS credentials.
-- Whether specs and the build pass without the untracked media on a clean checkout.
+- Whether specs and the build pass on a clean checkout. Media is tracked, so it is present.
 - `pnpm-lock.yaml` re-resolves cleanly under pnpm 12.9.1.
 - 1Password CLI service-account creation on the owner's plan (fallback: web UI).
 - The ARM install of `1password/install-cli-action` (fallback: `ubuntu-latest` for the build job).
@@ -856,19 +852,21 @@ Provider arguments were checked against the hashicorp/terraform-provider-aws doc
 - Ruling: main stack `infra/` is created by one `terraform apply` and removed by one `terraform destroy`. `prevent_destroy` is removed from the zone and the mail volume. The volume attachment gets `stop_instance_before_detaching = true` so destroy does not hang on a mounted volume. The mail data fallback is the existing DLM snapshots, which are expected to survive policy deletion (UNVERIFIED). The rebuilt volume starts empty. A non-empty site bucket needs `TF_VAR_protect_data=false` applied once before a destroy. (cost if wrong: an accidental destroy deletes mail; the CI guard is the only brake)
 - Ruling: the main zone takes its delegation set from variable `delegation_set_id` (`TF_VAR_delegation_set_id`), not from `terraform_remote_state`. The ID is not secret and never changes, and CI never reads the bootstrap state. A validation fails the plan when the domain is set and the ID is empty. (cost if wrong: one manual copy of the ID into 1Password; a wrong ID gives a zone with random name servers)
 - Ruling: `local.has_domain = var.domain_name != ""` gates the zone, ACM, aliases, records and `module.mailserver` with `count`. Reads of gated resources use `[0]` or `one(x[*])`. An empty 1Password `domain_name` plans destroys of the mail server and zone, and plan-guard blocks them. (cost if wrong: a typo in the field turns the CI deploy red until fixed)
-- Ruling: the mail server is rebuilt from scratch with no import. `mccor-labs-ci/mccor-labs-infra/mailboxes` holds the five users from the `feat/mail-server` branch (`marcm`, `nateb`, `kirstenh`, `ashleyt`, `mariem`) and `admin_mailbox` is `marcm`. No extra mail variables are needed. Passwords are new random ones. (cost if wrong: users re-set their passwords)
+- Ruling: the mail server is rebuilt from scratch with no import. `Development/mccor-labs/mailboxes` holds the five users from the `feat/mail-server` branch (`marcm`, `nateb`, `kirstenh`, `ashleyt`, `mariem`) and `admin_mailbox` is `marcm`. No extra mail variables are needed. Passwords are new random ones. (cost if wrong: users re-set their passwords)
 - Ruling: the registrar transfer starts after the bootstrap apply, with the delegation set name servers in the transfer request. The console would otherwise create a stray zone and set its name servers on completion. (cost if wrong: DNS goes dark when the transfer completes, until step (e))
 - Ruling: Terraform manages `registrant_contact` only. Admin, tech and billing contacts are set at transfer from the same JSON. The registrant must equal what the transfer used, because an ICANN registrant change triggers a 60-day lock. (cost if wrong: admin and tech contacts drift unmanaged)
 - Ruling: the first CI apply (d) comes before waiting for the transfer (e), because ACM and the mail A record need only the Namecheap name-server cutover. (cost if wrong: none; the domain is adopted whenever the transfer finishes)
+- Ruling: Namecheap shows the registration as Sep 26, 2026 to Sep 26, 2027, so the ICANN 60-day rule blocks the transfer until about 2026-11-25. Until then the delegation-set name servers are entered at Namecheap once by hand (step (c)); because the delegation set is fixed, later destroy and apply cycles need no registrar change. The transfer step runs on or after 2026-11-25, and `domain_registrar_is_route53` stays false until it completes. (cost if wrong: a transfer attempted early is rejected; nothing else changes)
 - Ruling: `enable_budget` exists because the old stack owns a budget named `mccorlabs-monthly` until the teardown. The first bootstrap apply runs with `TF_VAR_enable_budget=false`. (cost if wrong: a duplicate-name error on the budget only)
-- Ruling: the EPP code is a secret. It goes in `Development` item `mccorlabs-epp`, field `auth_code`, never in `mccor-labs-ci` (existing no-secrets ruling). The contact JSON is personal data in a vault the CI service account can read. (cost if wrong: contact details readable by anyone with push access to main)
+- Ruling: the EPP code is a secret. It stays in its own item, `Development/mccorlabs-epp`, field `auth_code`, apart from `Development/mccor-labs`. The CI service account holds `Development:read_items`, so it can read that item too, and the owner accepted that any push to main can read the whole vault (first Ruling in this file). The contact JSON is personal data in the same vault. (cost if wrong: the EPP code and contact details are readable by anyone with push access to main)
 - Ruling: `domain_name` has no default in `infra/variables.tf`, and `infra/deploy.sh` refuses an empty `TF_VAR_domain_name` unless `ALLOW_EMPTY_DOMAIN=1` is set. With the gate on `domain_name`, an empty value plans to destroy the zone and the mail server including its EBS volume, and the laptop `apply` has no plan-guard. A removed default only helps when the variable is unset, so the opt-in is the real brake on the laptop; CI relies on plan-guard. (cost if wrong: an intentional no-domain deploy from the laptop needs `ALLOW_EMPTY_DOMAIN=1`)
 - Ruling: the state bucket's live existence is UNKNOWN. T2 was an owner step and nothing in the repo records that it ran; live AWS was not checked. Step (b) therefore starts with `head-bucket`. If the bucket exists, it is adopted by `terraform import` of its six resources (3 creates remain), not recreated. `prevent_destroy` on an adopted resource is fine. (cost if wrong: a skipped check makes the first apply fail on a bucket it did not create, with nothing destroyed)
 - Ruling: the `domain_contact` field in 1Password must never be empty. Terraform parses `TF_VAR_domain_contact` as an HCL expression, so an empty string fails every bootstrap plan, including the step (c) budget apply, even while `domain_registrar_is_route53=false`. Step (a) is mandatory before (b). Until the JSON is filled the field holds the literal `null`, which was checked to parse with `terraform console`. (cost if wrong: a blank field blocks every bootstrap plan until it is filled)
 - Ruling: bootstrap has no wrapper script; `deploy.sh` stays main only (`plan|apply|publish`). The commands are in the steps below. (cost if wrong: typo risk on rare laptop commands)
 - Ruling: no `.tftest.hcl` for the root gate is committed. It was checked once with mock providers in a scratch copy: `no_domain`, `with_domain` and the `delegation_set_id` validation failure passed. (cost if wrong: a gate regression is caught only by a plan)
+- Ruling: every resource name is `<name>-<purpose>`, constant, never random; account id only on S3 buckets (global namespace); the mail module takes name from the root like every other module and derives nothing from domain_name except DNS and SES (cost if wrong: a rename after first apply replaces the mail instance and is blocked by the CI guard)
 
-Supersedes: the CLI-made bucket (line 32 and T2); T3's `monthly_budget_usd` use in main; T4's `aws_iam_role.terraform`, its attachment and the budget in `main.tf` and `iam.tf`; the line 39 and 40 order, T6 and T7; the zone `prevent_destroy` ruling; the T9 line "zone and terraform role show no change".
+Supersedes: the CLI-made bucket (T2; line 32 now points here); T3's `monthly_budget_usd` use in main; T4's `aws_iam_role.terraform`, its attachment and the budget in `main.tf` and `iam.tf`; the line 39 and 40 order, T6 and T7; the zone `prevent_destroy` ruling; the T9 line "zone and terraform role show no change".
 
 ### Gating matrix
 
@@ -889,7 +887,7 @@ Bootstrap is always on, except `aws_budgets_budget` (needs `enable_budget`) and 
 
 ### Code changes
 
-- `infra/bootstrap/`: `backend.tf`, `main.tf` (provider, budget), `state.tf`, `dns.tf`, `iam.tf`, `variables.tf`, `outputs.tf`, `terraform.env`, `.terraform.lock.hcl`.
+- `infra/bootstrap/`: `backend.tf`, `main.tf` (provider, budget), `state.tf`, `dns.tf`, `iam.tf`, `variables.tf`, `outputs.tf`, `.terraform.lock.hcl`. Bootstrap has no env file of its own and reads the repo-root `app.env`.
 - `infra/main.tf`: budget removed; `has_domain`, `hostnames`, `site_url` locals; `count` on `module.mailserver` and `module.certificate`; `aliases` and `certificate_arn` gated.
 - `infra/dns.tf`: zone gated, uses `delegation_set_id`, no `prevent_destroy`; site records gated.
 - `infra/iam.tf`: terraform role and attachment removed.
@@ -897,14 +895,14 @@ Bootstrap is always on, except `aws_budgets_budget` (needs `enable_budget`) and 
 - `infra/outputs.tf`: `site_url = local.site_url`; gated outputs use `one(x[*])`.
 - `modules/static_site`: `aliases` default `[]`, `certificate_arn` default `null`; default CloudFront certificate when no ARN; viewer-request function skips the host redirect when `PRIMARY_HOST` is empty and keeps the request host on slash redirects; `no_domain` test run and an empty-host node test.
 - `modules/mailserver/main.tf`: volume `prevent_destroy` removed; attachment `stop_instance_before_detaching = true`.
-- `infra/terraform.env`: `TF_VAR_monthly_budget_usd` removed, `TF_VAR_delegation_set_id` added.
+- `app.env` (repo root, replaces every per-stack env file): `TF_VAR_delegation_set_id`, `TF_VAR_domain_registrar_is_route53` and `TF_VAR_domain_contact` added. `TF_VAR_monthly_budget_usd` stays because the bootstrap budget reads it. The main stack declares no such variable.
 - `infra/deploy.sh`: the empty-setting check skips `TF_VAR_delegation_set_id`, and skips `TF_VAR_domain_name` only when `ALLOW_EMPTY_DOMAIN=1` is set. Whether `op run` accepts an empty field is UNVERIFIED.
 - `deploy.yml`: the build step writes an empty `site_url` and exits when `DOMAIN_NAME` is empty; publish guard, artifact upload and the `deploy` job are skipped when `site_url` is empty. With no domain, CI applies infrastructure only and the owner publishes with laptop `./infra/deploy.sh publish`.
 - `ci.yml`: bootstrap init, validate and tflint added. `lefthook.yml`: bootstrap validate and tflint added to both hooks, with the `PATH=...;` prefix applied to every command in the line. `.trivyignore.yaml`: `AVD-AWS-0132` for `**/bootstrap/**` (state bucket uses SSE-S3 by design). `.gitignore`: `*_override.tf`.
 
 ### 1Password and TF_VAR names
 
-Add to `mccor-labs-ci/mccor-labs-infra`:
+Add to `Development/mccor-labs`:
 
 - `delegation_set_id` maps to `TF_VAR_delegation_set_id` (main and CI). Added after step (b).
 - `domain_registrar_is_route53` maps to `TF_VAR_domain_registrar_is_route53` (bootstrap). `false` until step (e).
@@ -914,14 +912,14 @@ Item `mccorlabs-epp` in the `Development` vault gets `auth_code` (a secret). Exi
 
 ### Revised live order (replaces T2, T6, T7, T8)
 
-Helpers: `B=infra/bootstrap`, `r() { op run --no-masking --env-file=$B/terraform.env -- "$@"; }`, `a() { r env -u AWS_PROFILE aws "$@"; }`.
+Helpers: `B=infra/bootstrap`, `r() { op run --no-masking --env-file=app.env -- "$@"; }`, `a() { r env -u AWS_PROFILE aws "$@"; }`.
 
 **(a) OWNER: registrar prep (no live change). Mandatory before (b): the `domain_contact` field must exist and be non-empty (the literal `null` is enough for (b)), or every bootstrap plan fails to parse.**
 
 - In Namecheap: turn off Domain Lock, request the Auth/EPP code, approve the outgoing transfer when Namecheap emails.
 - `op item create --category password --vault Development --title mccorlabs-epp 'auth_code[password]=<code>'`
-- `op item edit mccor-labs-infra --vault mccor-labs-ci 'domain_registrar_is_route53[text]=false' 'domain_contact[text]=<json>'`
-- Verify: `op read op://mccor-labs-ci/mccor-labs-infra/domain_contact | jq .first_name` and `op read op://Development/mccorlabs-epp/auth_code | wc -c`.
+- `op item edit mccor-labs --vault Development 'domain_registrar_is_route53[text]=false' 'domain_contact[text]=<json>'`
+- Verify: `op read op://Development/mccor-labs/domain_contact | jq .first_name` and `op read op://Development/mccorlabs-epp/auth_code | wc -c`.
 - Risks: a domain under 60 days old or recently transferred is ICANN-locked from transfer; the transfer costs one year of renewal (about $14 for .com), which extends the registration.
 
 **(b) LAPTOP: bootstrap apply with local state, then migrate. Then OWNER starts the transfer.**
@@ -949,7 +947,7 @@ done
 ```
 
 - Verify: the plan shows exactly 9 creates when the bucket is new (bucket, versioning, SSE, public access block, policy, lifecycle, delegation set, role, attachment), or exactly 3 creates (delegation set, role, attachment) when it was adopted, with the six bucket resources showing no change or an in-place settings update to match the code; after migrate the plan exits 0; `head-object` succeeds before the `rm`; `a iam get-role --role-name mccorlabs-github-terraform` shows 7200 s and subject `...:ref:refs/heads/main`.
-- Then the owner saves `delegation_set_id` with `op item edit mccor-labs-infra --vault mccor-labs-ci 'delegation_set_id[text]=<id>'`.
+- Then the owner saves `delegation_set_id` with `op item edit mccor-labs --vault Development 'delegation_set_id[text]=<id>'`.
 - Then the owner starts the transfer: `a route53domains check-domain-transferability --domain-name mccorlabs.com`, then `a route53domains transfer-domain --cli-input-json file://$SCRATCH/t.json`. Build the file from `domain_contact` as CamelCase `AdminContact`, `RegistrantContact` and `TechContact`, plus `Nameservers` (the four from `name_servers`), `AuthCode`, `DurationInYears` 1, `AutoRenew` true. Delete the file afterwards, because it holds the auth code. Verify with `a route53domains list-operations --status IN_PROGRESS`.
 - Risks: the override-file backend replacement is UNVERIFIED (fallback: `mv` `backend.tf` aside, as the old `deploy.sh` did, `df8e79b:infra/deploy.sh:77-91`); a failed migrate leaves local state, so re-run it and never `rm` first; a taken bucket name or a missing OIDC provider fails the apply with nothing destroyed.
 
@@ -957,28 +955,28 @@ done
 
 - Run the old T8 block unchanged: worktree at `df8e79b`, local state, pre-apply, destroy plan, the read-only before and after checks, and the snapshot decision.
 - After the "verify gone" checks, run `r terraform -chdir=$B apply` with the budget enabled. It must show exactly 1 create (the budget).
-- Owner sets Namecheap Custom DNS to the four bootstrap `name_servers`. Gate: `dig +norec NS mccorlabs.com @a.gtld-servers.net +short` returns exactly those four.
+- Owner sets Namecheap Custom DNS to the four bootstrap `name_servers`. Gate: `dig +norec NS mccorlabs.com @a.gtld-servers.net | awk '/AUTHORITY SECTION/,/^$/' | grep -c awsdns` must print 4, and the four names must equal the bootstrap `name_servers` output. `+short` would print nothing, because the gTLD servers return the NS set in the AUTHORITY section.
 - Risks: mail is dark from teardown until the first apply and DNS finish; resolvers that cached the old name servers (48 h TTL) can return SERVFAIL or REFUSED for up to 48 h; do the cutover right after the teardown, because the delegation set has no zone until step (d); a partial teardown is re-planned and re-applied, as in T8.
 
 **(d) CI: first main apply. Does not wait for the transfer.**
 
 - Pre-merge dry run is T9: `r terraform -chdir=infra plan` must show creates only and plan-guard exit 0. Then T10: PR, green CI, merge, Deploy run.
 - Verify: laptop `terraform -chdir=infra plan -detailed-exitcode` exits 0; `dig NS mccorlabs.com +short` returns the four delegation set servers; `curl -sI https://mccorlabs.com/` returns 200.
-- Risks: an ACM validation timeout (75 min) if the registry has not served the new name servers (check the (c) gate and re-run); collisions with leftover old fixed names (IAM user `mccorlabs-com-mail-relay`, SNS topic `mccorlabs-com-mail-alerts`, SSM `/mccorlabs.com/mail/*`, the SES identity), which the (c) verify list covers; an empty `delegation_set_id` fails validation before any resource is created; the EIP quota is checked in T9; a hard runner kill can leave resources out of state (recovery is T10's import and force-unlock notes).
+- Risks: an ACM validation timeout (75 min) if the registry has not served the new name servers (check the (c) gate and re-run); a leftover old SES identity `mccorlabs.com`, which the (c) verify list covers (the new mail names are `mccorlabs-mail-*` and no longer collide with the old stack's); an empty `delegation_set_id` fails validation before any resource is created; the EIP quota is checked in T9; a hard runner kill can leave resources out of state (recovery is T10's import and force-unlock notes).
 
 **(e) OWNER then LAPTOP: after the transfer completes.**
 
 - Check `a route53domains get-domain-detail --domain-name mccorlabs.com --query '[Nameservers[].Name,StatusList]'`. The name servers must be the delegation set's.
-- Owner flips the flag: `op item edit mccor-labs-infra --vault mccor-labs-ci 'domain_registrar_is_route53[text]=true'`.
+- Owner flips the flag: `op item edit mccor-labs --vault Development 'domain_registrar_is_route53[text]=true'`.
 - `r terraform -chdir=$B plan` must show exactly 1 add (`aws_route53domains_registered_domain.this[0]`), then apply it.
-- Verify: `get-domain-detail` shows `AutoRenew` true, transfer lock on and the same name servers; `dig +norec NS mccorlabs.com @a.gtld-servers.net +short` is unchanged.
+- Verify: `get-domain-detail` shows `AutoRenew` true, transfer lock on and the same name servers; the (c) gate (`dig +norec NS mccorlabs.com @a.gtld-servers.net | awk '/AUTHORITY SECTION/,/^$/' | grep -c awsdns` printing 4 with the same four names) is unchanged.
 - Risks: if the transfer completes with a stray zone's name servers, DNS is dark until this apply, so `dig` the moment it completes; a registrant contact that differs from the transfer starts the 60-day ICANN lock; the registrant email must be verified within 15 days or the domain is suspended; the apply can take up to 30 min.
 
 **(f) Checks.** Run T11 (mail server TLS and port 25, mailbox passwords saved to 1Password by hand, SNS confirmation email, PTR and port-25 request for the new EIP, `a sesv2 get-account` for production access). Confirm `terraform -chdir=infra plan` and `terraform -chdir=$B plan` both exit 0, and `dig NS mccorlabs.com +short` returns the four delegation set servers. The old mail data lives only in the 28 DLM snapshots until the owner decides to keep or delete them.
 
 **Destroying main (laptop, only when the owner decides).** It is one `terraform destroy` plus one preparatory apply, not one command. The site bucket has `force_destroy = !var.protect_data`, so a non-empty bucket makes destroy fail unless `protect_data` is false in state first:
 
-- `r2() { op run --no-masking --env-file=infra/terraform.env -- "$@"; }`, then `r2 env TF_VAR_protect_data=false terraform -chdir=infra apply -target=module.site` (the site bucket's `force_destroy` is set at `infra/main.tf:57`), then `r2 env TF_VAR_protect_data=false terraform -chdir=infra destroy`.
+- `r2() { op run --no-masking --env-file=app.env -- "$@"; }`, then `r2 env TF_VAR_protect_data=false terraform -chdir=infra apply -target=module.site` (the site bucket's `force_destroy` is set at `infra/main.tf:57`), then `r2 env TF_VAR_protect_data=false terraform -chdir=infra destroy`.
 - `deploy.sh` has no destroy action and the CI plan-guard blocks every delete, so destroy runs only from the laptop. The mail volume starts empty on the next create; the DLM snapshots are the only copy of old mail data.
 - Bootstrap is not touched: the state bucket and delegation set keep `prevent_destroy`, and the zone's name servers survive because the delegation set does.
 

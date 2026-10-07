@@ -132,7 +132,7 @@ describe('CapabilityBlock', () => {
     )!
     render(await Real({ capability }))
     expect(
-      screen.getByText('op run --env-file=app/web/.env -- pnpm -F web build'),
+      screen.getByText('op run --env-file=app.env -- pnpm -F web build'),
     ).toBeInTheDocument()
     expect(
       screen.getByText('○ (Static) prerendered as static content'),

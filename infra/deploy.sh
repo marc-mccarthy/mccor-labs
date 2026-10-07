@@ -2,14 +2,14 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SETTINGS="$PWD/terraform.env"
+SETTINGS="$PWD/../app.env"
 SETTINGS_MISSING_MSG="Refusing to continue: deploying without settings risks applying an
 empty mailboxes map, which would destroy the mailbox passwords."
 
 if [[ -z "${DEPLOY_UNDER_OP:-}" ]]; then
   if ! command -v op >/dev/null; then
     echo "1Password CLI (op) not found. Settings and AWS keys live in 1Password;" >&2
-    echo "infra/terraform.env only holds op:// references to them. Install op and run 'op signin'." >&2
+    echo "app.env only holds op:// references to them. Install op and run 'op signin'." >&2
     exit 1
   fi
   if ! op run --env-file="$SETTINGS" -- true; then
@@ -26,11 +26,11 @@ while IFS= read -r name; do
 done < <(sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' "$SETTINGS")
 for name in "${SETTING_NAMES[@]}"; do
   case $name in TF_VAR_delegation_set_id) continue ;; esac
-  if [[ $name == TF_VAR_domain_name && "${ALLOW_EMPTY_DOMAIN:-}" == 1 ]]; then
+  if [[ ($name == TF_VAR_domain_name || $name == DOMAIN_NAME) && "${ALLOW_EMPTY_DOMAIN:-}" == 1 ]]; then
     continue
   fi
   if [[ -z "${!name:-}" ]]; then
-    echo "$name is empty or not set; it should come from 1Password via infra/terraform.env." >&2
+    echo "$name is empty or not set; it should come from 1Password via app.env." >&2
     if [[ $name == TF_VAR_domain_name ]]; then
       echo "An empty domain_name plans to destroy the zone and the mail server (EBS volume included)." >&2
       echo "To deploy without a domain on purpose, run with ALLOW_EMPTY_DOMAIN=1." >&2
@@ -44,7 +44,7 @@ unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_SESSION_TOKEN TF_WORKSPACE
 ACTION="${1:-apply}"
 for f in *.auto.tfvars terraform.tfvars; do
   if [[ -e "$f" ]]; then
-    echo "infra/$f exists. Settings come only from 1Password via terraform.env;" >&2
+    echo "infra/$f exists. Settings come only from 1Password via app.env;" >&2
     echo "a tfvars file would silently override them. Delete or move infra/$f." >&2
     exit 1
   fi
@@ -52,7 +52,7 @@ done
 
 if ! aws sts get-caller-identity --query Arn --output text >/dev/null; then
   echo "AWS rejected the access keys from 1Password. Check the AWS item that" >&2
-  echo "infra/terraform.env points at, then try again." >&2
+  echo "app.env points at, then try again." >&2
   exit 1
 fi
 
@@ -93,7 +93,7 @@ case "$ACTION" in
 
     IGNORED_ENV="$(git -C .. ls-files --others --ignored --exclude-standard -- 'app/web/.env*')"
     if [[ -n "$IGNORED_ENV" ]]; then
-      echo "Build env must come only from app/web/.env via op run. Remove these first:" >&2
+      echo "Build env comes only from app.env via op run. Remove these app/web/.env* files first:" >&2
       echo "$IGNORED_ENV" >&2
       exit 1
     fi
@@ -106,9 +106,10 @@ case "$ACTION" in
     echo ">>> Building ${COMMIT_SHA} (${COMMIT_SUBJECT}) for ${SITE_URL}"
     (
       cd ..
-      unset "${SETTING_NAMES[@]}"
-      op run --env-file=app/web/.env -- \
-        env NEXT_PUBLIC_SITE_URL="$SITE_URL" pnpm -F web build
+      for name in "${SETTING_NAMES[@]}"; do
+        case $name in DOMAIN_NAME|NEXT_PUBLIC_*) ;; *) unset "$name" ;; esac
+      done
+      NEXT_PUBLIC_SITE_URL="$SITE_URL" pnpm -F web build
     )
 
     STAGE="$(mktemp -d)"

@@ -85,20 +85,19 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           set -euo pipefail
-          op run --no-masking --env-file=infra/build.env -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
+          grep -E '^(NEXT_PUBLIC_|DOMAIN_NAME=)' app.env >"$RUNNER_TEMP/build.env"
+          op run --no-masking --env-file="$RUNNER_TEMP/build.env" -- env -u OP_SERVICE_ACCOUNT_TOKEN bash -c '
             set -euo pipefail
-            if [ -z "$DOMAIN_NAME" ]; then echo "site_url=" >>"$GITHUB_OUTPUT"; exit 0; fi
+            test -n "$DOMAIN_NAME" || { echo "::error::DOMAIN_NAME is empty" >&2; exit 1; }
             export NEXT_PUBLIC_SITE_URL="https://$DOMAIN_NAME"
             echo "site_url=$NEXT_PUBLIC_SITE_URL" >>"$GITHUB_OUTPUT"
             exec pnpm build:raw'
       - name: Publish guard
-        if: steps.build.outputs.site_url != ''
         run: |
           set -euo pipefail
           source infra/publish-guard.sh
           check_publish_stage app/web/out .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: steps.build.outputs.site_url != ''
         with:
           name: site
           path: app/web/out
@@ -139,7 +138,7 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           set -euo pipefail
-          grep '^TF_VAR_' infra/terraform.env >"$RUNNER_TEMP/tf.env"
+          grep '^TF_VAR_' app.env >"$RUNNER_TEMP/tf.env"
           op run --no-masking --env-file="$RUNNER_TEMP/tf.env" -- env -u OP_SERVICE_ACCOUNT_TOKEN \
             terraform -chdir=infra plan -lock-timeout=10m -out="$RUNNER_TEMP/tfplan"
       - name: Plan summary
@@ -167,7 +166,6 @@ jobs:
 
   deploy:
     needs: [build, terraform]
-    if: needs.build.outputs.site_url != ''
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read

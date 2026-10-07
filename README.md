@@ -1,9 +1,9 @@
 # Website on AWS
 
-Serverless, all Terraform, near-$0 to run. One configuration deploys:
+All Terraform. The static site costs almost nothing to run. Two stacks:
 
-- **the main site** at `example.com` and `www.example.com` (when `ENV_ID` is empty), and
-- **personal copies** like `mm.example.com` for testing (when `ENV_ID=mm`).
+- **`infra/bootstrap`** holds what must outlive everything else: the state bucket, the Route 53 delegation set, the GitHub Actions Terraform role, the budget alert and, once the domain is in Route 53, the registered domain. You apply it by hand, once.
+- **`infra`** is the main stack: the site at `example.com` and `www.example.com`, and the mail server for that domain. A merge to `main` applies it through GitHub Actions. With an empty `domain_name` it deploys only the site, on its CloudFront domain.
 
 ```
 Browser ──> Route 53 ──> CloudFront ──> S3   (website files)
@@ -11,42 +11,46 @@ Browser ──> Route 53 ──> CloudFront ──> S3   (website files)
 
 ## Where this goes
 
-Put all of it in your website's git repo. Commit `infra/backend.hcl` and the
-`.terraform.lock.hcl` files; neither is secret. The `.gitignore` already keeps
-state files and build zips out too.
+Put all of it in your website's git repo. Commit the `.terraform.lock.hcl` files;
+they are not secret. The `.gitignore` already keeps state files, plan files and
+`*_override.tf` out too.
 
 ## Layout
 
 ```
 infra/
-  terraform.env                  <- settings as op:// references into 1Password
-  deploy.sh                      <- the one command you run
+  deploy.sh                      <- laptop plan | apply | publish for the main stack
   publish-guard.sh               <- vets the build output before publish uploads it
-  backend.hcl                    <- written by setup; commit it
-  main.tf, variables.tf, outputs.tf, versions.tf
-  setup/                         <- one-time: state bucket, DNS zone, budget alert
-  modules/                       <- certificate, static_site, publish_role, auth, database, api, email, mailserver
-                                    (static_site and publish_role carry their own tests/)
+  destroy-allowlist.txt          <- resources CI's plan guard lets a plan delete or replace
+  backend.tf                     <- S3 state backend for the main stack
+  main.tf, dns.tf, iam.tf, variables.tf, outputs.tf
+  bootstrap/                     <- applied by hand once: state bucket, delegation set, CI role, budget, registered domain
+  modules/                       <- static_site, certificate, mailserver
+                                    (static_site carries its own tests/)
   tests/                         <- publish-guard.sh tests
 app/
   web/                   <- the real site (Next.js static export)
-scripts/                 <- reference-capture and media-render helpers
-docs/                    <- site copy drafts, future notes
+scripts/                 <- reference-capture and media-render helpers, and plan-guard.sh (CI's plan guard)
+docs/                    <- site copy drafts, plans, findings, future notes
+.github/workflows/       <- ci.yml (checks) and deploy.yml (deploy on merge to main)
+.mise.toml               <- pinned tool versions
 lefthook.yml             <- git hooks (pre-commit, pre-push)
+app.env                  <- settings as op:// references into 1Password
 ```
 
 ## Cost
 
-| Piece              | Cost                                  |
-| ------------------ | ------------------------------------- |
-| Domain             | whatever Namecheap charges you yearly |
-| Route 53 DNS zone  | $0.50/month                           |
-| HTTPS certificates | $0                                    |
-| S3 + CloudFront    | pennies at low traffic                |
-| Budget alerts      | $0                                    |
+| Piece              | Cost                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| Domain             | whatever your registrar charges you yearly                                            |
+| Route 53 DNS zone  | $0.50/month                                                                           |
+| HTTPS certificates | $0                                                                                    |
+| S3 + CloudFront    | pennies at low traffic                                                                |
+| Mail server        | an EC2 instance (`instance_type`), an EBS volume (`mail_volume_gb`) and an Elastic IP |
+| Budget alerts      | $0                                                                                    |
 
-Personal copies add essentially nothing. The Route 53 zone alone is the only
-_fixed_ cost above.
+The Route 53 zone and the mail server are the _fixed_ costs. With an empty
+`domain_name` neither is created.
 
 ## One-time setup
 
@@ -57,34 +61,32 @@ account on the **Paid** plan (the Free plan closes the account after six months)
 ### 1. AWS access keys
 
 `deploy.sh` takes AWS credentials only from 1Password, never from AWS profiles.
-`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` in
-`infra/terraform.env` point at the AWS item in the Development vault (fields
-`username`, `credential`, `region`). Any `AWS_PROFILE` in your shell is ignored.
-Run `op signin`, then check:
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` in `app.env` point at the
+`mccor-labs` item in the Development vault (fields `aws_access_key_id`,
+`aws_secret_access_key`, `region`). Any `AWS_PROFILE` in your shell is ignored. Run `op signin`, then check:
 
 ```bash
-op run --env-file=infra/terraform.env -- aws sts get-caller-identity
+op run --env-file=app.env -- aws sts get-caller-identity
 ```
 
 ### 2. Fill in your settings
 
-Settings live in 1Password, in the Development vault item that `infra/terraform.env` points at. Fill in its fields there: `project`, `domain_name`, `alert_email`, `monthly_budget_usd`, `enable_mailserver` (`true`/`false`), `mailboxes` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `admin_mailbox`, `instance_type`, `mail_volume_gb`. Don't edit `infra/terraform.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
+Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `name`, `region`, `domain_name`, `alert_email`, `delegation_set_id`, `mailboxes` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `admin_mailbox`, `instance_type`, `mail_volume_gb`, `github_subject_prefix`, `booking_url`, `monthly_budget_usd`, `domain_registrar_is_route53`, `domain_contact`, `aws_access_key_id`, `aws_secret_access_key`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
-### 3. Run setup
+Two fields need care. `delegation_set_id` is the one you fill in after step 3, from the bootstrap output. `domain_registrar_is_route53` stays `false` until the domain has been transferred to Route 53. `domain_contact` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
 
-```bash
-./infra/deploy.sh setup
-```
+### 3. Apply the bootstrap stack
 
-It creates the state bucket, the Route 53 zone and the budget alert, writes
-`infra/backend.hcl`, and prints four name servers.
+You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_enable_budget=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
+
+Afterwards, put the `delegation_set_id` output in the `delegation_set_id` field in 1Password. The `name_servers` output lists the four name servers for step 4.
 
 ### 4. Point Namecheap at Route 53
 
 Namecheap → **Domain List** → **Manage** next to your domain → **Nameservers** →
 choose **Custom DNS** → enter the four name servers from step 3 → click the
 green checkmark. That's the only thing to change at Namecheap; every other DNS
-record now lives in Route 53.
+record lives in Route 53 once the main stack is applied.
 
 Wait until the change is live (often minutes, up to 48 hours):
 
@@ -94,61 +96,53 @@ dig +short NS example.com
 
 When it lists the `awsdns` name servers, continue. (Windows: `nslookup -type=ns example.com`.)
 
-### 5. Commit
-
-```bash
-git add -A
-git commit -m "Infrastructure setup"
-```
-
-Setup's state lives in the versioned S3 bucket it created (see `infra/setup/backend.tf`), not on your machine. The first run leaves a local copy at `infra/setup/terraform.tfstate.migrated-<date>`. It's git-ignored but holds your settings in plain text, so move it somewhere safe or delete it once `terraform state list` works in `infra/setup`.
-
 ## Deploying
 
+A push to `main` runs `.github/workflows/deploy.yml`, which:
+
+1. lints, type-checks and unit-tests the site, then builds it;
+2. plans the main stack, checks the plan with `scripts/plan-guard.sh` against `infra/destroy-allowlist.txt` (a plan that deletes or replaces anything not listed fails), and applies it;
+3. uploads the build to S3, invalidates CloudFront and checks the live site.
+
+CI assumes GitHub OIDC roles instead of storing AWS keys, and reads `app.env` through a 1Password service account (the `OP_SERVICE_ACCOUNT_TOKEN` secret).
+
+From your laptop, `deploy.sh` runs the same main stack with your own admin keys and skips the plan guard, so treat it as break-glass:
+
 ```bash
-ENV_ID=mm ./infra/deploy.sh      # your copy at https://mm.example.com
-./infra/deploy.sh                # the main site at https://example.com
-./infra/deploy.sh plan           # preview only (works with ENV_ID too)
+./infra/deploy.sh plan           # preview only
+./infra/deploy.sh                # apply, the default action
+./infra/deploy.sh apply          # the same, spelled out
 ```
 
 Terraform shows the plan and asks for `yes` before changing anything. The first
-deploy of each copy takes a while (certificate + CloudFront).
+deploy takes a while (certificate + CloudFront).
 
-Teammates use their own initials for a personal copy: `ENV_ID=jd ./infra/deploy.sh`.
-
-`ENV_ID` rules: 1-8 lowercase letters or numbers, starting with a letter. It
-can't be `www` or `default`, or contain `aws`, `amazon` or `cognito`. The script
-checks this before doing anything.
-
-After the first deploy, commit the new `infra/.terraform.lock.hcl` and
-`infra/setup/.terraform.lock.hcl` files.
+If `terraform init` changes `infra/.terraform.lock.hcl` or
+`infra/bootstrap/.terraform.lock.hcl`, commit the change.
 
 ## Deleting
 
-```bash
-ENV_ID=mm ./infra/deploy.sh destroy   # removes your copy completely
-./infra/deploy.sh destroy             # removes the main site (asks twice)
-```
-
-The main site has deletion protection on its S3 bucket, so its destroy first
-turns protection off, then deletes. **This permanently deletes the live site
-and every file in it.**
-
-To remove the shared setup too (only after every copy and the main site are gone):
+The main stack is removed from your laptop only. `deploy.sh` has no destroy action, and CI's plan guard blocks deletes. Its site bucket refuses to be deleted while it holds files, so turn that protection off first, then destroy:
 
 ```bash
-cd infra/setup
-op run --env-file=../terraform.env -- terraform apply   -var="force_destroy=true"
-op run --env-file=../terraform.env -- terraform destroy -var="force_destroy=true"
+op run --no-masking --env-file=app.env -- terraform -chdir=infra init
+op run --no-masking --env-file=app.env -- env TF_VAR_protect_data=false \
+  terraform -chdir=infra apply -target=module.site
+op run --no-masking --env-file=app.env -- env TF_VAR_protect_data=false \
+  terraform -chdir=infra destroy
 ```
+
+**This permanently deletes the live site, every file in it and the mail server with its mail volume.**
+
+The bootstrap stack in `infra/bootstrap` is permanent: its state bucket and delegation set carry `prevent_destroy`, so there is no destroy step for it. The zone's name servers survive a destroy because they belong to the delegation set.
 
 ## Your real frontend
 
 The site in `app/web` is already the real frontend: a Next.js static export,
-built and uploaded by `./infra/deploy.sh publish` (see "Building and
-deploying" below). Logins, the database and the API are parked (commented
-out) in `infra/main.tf` and `infra/outputs.tf` -- that code has no backend to
-run against yet (`module "api"` points at `app/api`, which doesn't exist).
+built and uploaded by the deploy workflow on every merge to `main`, or by
+`./infra/deploy.sh publish` from your laptop (see "Building and deploying"
+below). There is no backend yet: `app/` holds only `web`, and the stack has no
+logins, database or API.
 
 ## The website
 
@@ -156,13 +150,12 @@ The marketing site lives in `app/web`. It is a Next.js app that builds to plain
 static files, deployed to the same S3 bucket and CloudFront distribution as
 everything else here.
 
-Requirements: Node 24 (see `.node-version`), pnpm 12 (pinned by `packageManager`
-in `package.json`), and the 1Password CLI (`op`), signed in.
+Requirements: Node 24 and pnpm 12.9.1 (both pinned in `.mise.toml`; pnpm also by
+`packageManager` in `package.json`), and the 1Password CLI (`op`), signed in.
 
-Node and pnpm come from mise, so no `PATH` changes are needed. The repo has no
-`mise.toml`; mise picks Node up from `.node-version` and pnpm from the global
-`~/.config/mise/config.toml`. The git hooks put `~/.local/share/mise/shims` on
-`PATH` themselves.
+Node and pnpm come from mise, so no `PATH` changes are needed. The committed
+`.mise.toml` pins node 24, pnpm 12.9.1, terraform 1.16.1, tflint 0.64.0 and trivy
+0.74.0. The git hooks put `~/.local/share/mise/shims` on `PATH` themselves.
 
 ### Running it locally
 
@@ -182,7 +175,8 @@ test -f .git/hooks/pre-commit && echo "hooks installed"
 ```
 
 - The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
-- Values live in 1Password, in the `Development` vault under the `mccor-labs` item (with a hyphen). The references are in `app/web/.env`, which is committed because it holds `op://` paths, not values.
+- Values live in 1Password, in the `Development` vault under the `mccor-labs` item. The references are in `app.env`, which is committed because it holds `op://` paths, not values.
+- `pnpm dev` and `pnpm build` strip the AWS keys from the environment and set `NEXT_PUBLIC_SITE_URL` to `https://` plus `DOMAIN_NAME`, which comes from the `domain_name` field.
 - A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.
 - `pnpm build:raw` skips `op run` entirely. It is the escape hatch for building against an unconfigured or locked vault; the environment-dependent values come out empty.
 
@@ -210,8 +204,13 @@ space on the page. No copy lives in components.
 ### Checks
 
 `git commit` formats and lints the files in that commit, taking a couple of
-seconds. `git push` runs the full gate: type-check, lint, format check, unit
-tests, a production build and smoke tests. To run most of it by hand:
+seconds. When a commit touches `.tf` files it also runs `terraform fmt`,
+`terraform validate` and tflint. `git push` runs the full gate: type-check, lint,
+format check, unit tests, a production build, smoke tests and the Terraform
+format check, validate and tflint. CI (`.github/workflows/ci.yml`) runs the same
+site checks on every pull request and push to `main`, plus the full end-to-end
+suite, the plan guard and publish guard tests, and a trivy scan of `infra`. To
+run most of the site checks by hand:
 
 ```bash
 pnpm verify
@@ -225,15 +224,17 @@ pnpm -F web test:e2e           # full suite
 pnpm -F web test:e2e:smoke     # the @smoke subset, which is what pre-push runs
 ```
 
-Those run **Firefox headless**, and only Firefox -- it is the one engine the
-Playwright config declares. On a fresh machine, install it first:
+Those run **Chromium headless** (the Desktop Chrome device), and only Chromium
+-- it is the one engine the Playwright config declares. The `budgets` project
+(`budgets.spec.ts`, in the full suite but not the smoke subset) runs on the
+Google Chrome channel instead. On a fresh machine, install both first:
 
 ```bash
-pnpm exec playwright install firefox
+pnpm exec playwright install chromium chrome
 ```
 
-Browsers go into the shared `~/Library/Caches/ms-playwright/` cache, not into the
-repo, so other projects on the machine share them. Adding a second engine to
+Chromium goes into the shared `~/Library/Caches/ms-playwright/` cache, not into
+the repo, so other projects on the machine share it. Adding another engine to
 `app/web/playwright.config.ts` means installing that engine's browser revision
 too.
 
@@ -249,30 +250,31 @@ LEFTHOOK=0 git commit -m "wip"
 pnpm build
 ```
 
-That writes `app/web/out/` for local checks. To go live:
+That writes `app/web/out/` for local checks. A merge to `main` goes live through
+the deploy workflow. To publish from your laptop instead:
 
 ```bash
-./infra/deploy.sh publish            # the main site
-ENV_ID=mm ./infra/deploy.sh publish  # your copy, mm.example.com
+./infra/deploy.sh publish
 ```
 
-This needs that environment's infrastructure already deployed (plain
-`./infra/deploy.sh`, or with `ENV_ID` set, first). `publish` then:
+This needs the main stack already deployed (`./infra/deploy.sh apply`, or a
+deploy workflow run, first). `publish` then:
 
 - Refuses to build if anything under `app/`, `package.json`,
-  `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `.node-version` is uncommitted
-  or untracked, or if a gitignored env file (such as `app/web/.env.local`)
-  exists under `app/web` -- publish only ever builds committed code, with its
-  env coming only from the committed `app/web/.env`.
-- Builds with `op run`, setting `NEXT_PUBLIC_SITE_URL` to that environment's
-  own `site_url` from Terraform, so the sitemap, `robots.txt` and
-  `metadataBase` always name the right host.
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml` or `.mise.toml` is uncommitted
+  or untracked, or if a gitignored env file matching `app/web/.env*` (such as
+  `.env.local`) exists -- publish only ever builds committed code, with its
+  env coming only from the committed `app.env`.
+- Builds under `op run` with only `DOMAIN_NAME` and the `NEXT_PUBLIC_*` settings
+  left in the environment (no AWS keys or Terraform variables), setting
+  `NEXT_PUBLIC_SITE_URL` to the stack's `site_url` output, so the sitemap,
+  `robots.txt` and `metadataBase` always name the right host.
 - Vets the snapshot with `infra/publish-guard.sh` before uploading, and refuses
   on a symlink, a dotfile, a file type outside the allowed list (html, txt, js,
   css, json, xml, woff2, webp, avif, jpg, svg, mp4, webm, glsl), a file named
   like one in `rejected-media/`, or any git-ignored file under `app/web/public`.
   It also refuses if `index.html` or `404.html` is missing, or if `robots.txt`
-  doesn't name this environment's sitemap.
+  doesn't name this site's sitemap.
 - Snapshots the build output before uploading anything, so a concurrent
   `pnpm build` elsewhere (lefthook's pre-push hook, `pnpm verify`) can't mirror
   a half-written tree onto the live site.
@@ -287,11 +289,15 @@ This needs that environment's infrastructure already deployed (plain
 The CloudFront function (`infra/modules/static_site/viewer_request.js.tftpl`)
 serves `/services/` from `services/index.html`, since a plain S3 origin doesn't
 resolve directory indexes, 301-redirects `/services` to `/services/`, and
-301-redirects `www` to the primary host. A real 404 with the site's own 404
-page for anything missing comes from the distribution's custom error responses
-(403 and 404 both return `/404.html` with status 404).
+301-redirects `www` to the primary host (skipped when `domain_name` is empty). A
+real 404 with the site's own 404 page for anything missing comes from the
+distribution's custom error responses (403 and 404 both return `/404.html` with
+status 404).
 
 ## What Terraform doesn't do
 
 - Create your AWS account or its access keys
+- Create the GitHub OIDC identity provider (`token.actions.githubusercontent.com`) in your AWS account; both stacks only look it up
+- Create the 1Password service account or the `OP_SERVICE_ACCOUNT_TOKEN` GitHub secret that CI uses
 - Change the name servers at Namecheap (step 4, once)
+- Register or transfer the domain; `infra/bootstrap` only manages it once it is in your Route 53 account

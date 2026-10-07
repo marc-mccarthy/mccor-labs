@@ -20,7 +20,7 @@ locals {
   fqdn      = "${var.hostname}.${var.domain_name}"
   addresses = { for k, v in var.mailboxes : k => "${k}@${var.domain_name}" }
 
-  snapshot_tag = "${replace(var.domain_name, ".", "-")}-mail"
+  snapshot_tag = "${var.name}-mail"
 }
 
 resource "aws_ses_domain_identity" "main" {
@@ -42,7 +42,7 @@ resource "aws_route53_record" "dkim" {
 }
 
 resource "aws_iam_user" "smtp" {
-  name = "${replace(var.domain_name, ".", "-")}-mail-relay"
+  name = "${var.name}-mail-relay"
 }
 
 data "aws_iam_policy_document" "smtp" {
@@ -76,13 +76,13 @@ resource "random_password" "mailbox" {
 resource "aws_ssm_parameter" "mailbox" {
   for_each = var.mailboxes
 
-  name  = "/${var.domain_name}/mail/${each.key}"
+  name  = "/${var.name}/mail/${each.key}"
   type  = "SecureString"
   value = random_password.mailbox[each.key].result
 }
 
 resource "aws_ssm_parameter" "smtp_password" {
-  name  = "/${var.domain_name}/mail/_relay_password"
+  name  = "/${var.name}/mail/_relay_password"
   type  = "SecureString"
   value = aws_iam_access_key.smtp.ses_smtp_password_v4
 }
@@ -102,13 +102,13 @@ resource "aws_vpc" "mail" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_internet_gateway" "mail" {
   vpc_id = aws_vpc.mail.id
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_subnet" "mail" {
@@ -117,7 +117,7 @@ resource "aws_subnet" "mail" {
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_route_table" "mail" {
@@ -128,7 +128,7 @@ resource "aws_route_table" "mail" {
     gateway_id = aws_internet_gateway.mail.id
   }
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_route_table_association" "mail" {
@@ -137,7 +137,7 @@ resource "aws_route_table_association" "mail" {
 }
 
 resource "aws_security_group" "mail" {
-  name_prefix = "${replace(var.domain_name, ".", "-")}-mail-"
+  name        = "${var.name}-mail"
   description = "Mail server: SMTP in, IMAP and submission for clients, HTTP for certificate renewal"
   vpc_id      = aws_vpc.mail.id
 }
@@ -166,7 +166,7 @@ resource "aws_vpc_security_group_egress_rule" "all" {
 }
 
 resource "aws_iam_role" "instance" {
-  name_prefix = "${replace(var.domain_name, ".", "-")}-mail-"
+  name = "${var.name}-mail-instance"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -187,8 +187,8 @@ data "aws_iam_policy_document" "instance" {
   statement {
     actions = ["ssm:GetParameter", "ssm:GetParametersByPath"]
     resources = [
-      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail",
-      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.domain_name}/mail/*",
+      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.name}/mail",
+      "arn:aws:ssm:${data.aws_region.current.region}:*:parameter/${var.name}/mail/*",
     ]
   }
 
@@ -210,8 +210,8 @@ resource "aws_iam_role_policy" "instance" {
 }
 
 resource "aws_iam_instance_profile" "instance" {
-  name_prefix = "${replace(var.domain_name, ".", "-")}-mail-"
-  role        = aws_iam_role.instance.name
+  name = "${var.name}-mail-instance"
+  role = aws_iam_role.instance.name
 }
 
 resource "aws_ebs_volume" "mail" {
@@ -221,7 +221,7 @@ resource "aws_ebs_volume" "mail" {
   encrypted         = true
 
   tags = {
-    Name   = "${var.domain_name}-mail-data"
+    Name   = "${var.name}-mail-data"
     Backup = local.snapshot_tag
   }
 }
@@ -254,7 +254,7 @@ resource "aws_instance" "mail" {
     region           = data.aws_region.current.region
     relay_user       = aws_iam_access_key.smtp.id
     alert_email      = var.alert_email
-    param_prefix     = "/${var.domain_name}/mail"
+    param_prefix     = "/${var.name}/mail"
     postmaster       = "postmaster@${var.domain_name}"
     admin_address    = "${var.admin_mailbox}@${var.domain_name}"
     mail_device      = "/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.mail.id, "-", "")}"
@@ -275,14 +275,14 @@ resource "aws_instance" "mail" {
     ignore_changes = [ami]
   }
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_eip" "mail" {
   instance = aws_instance.mail.id
   domain   = "vpc"
 
-  tags = { Name = "${var.domain_name}-mail" }
+  tags = { Name = "${var.name}-mail" }
 }
 
 resource "aws_route53_record" "mail_a" {
@@ -318,7 +318,7 @@ resource "aws_route53_record" "dmarc" {
 }
 
 resource "aws_iam_role" "dlm" {
-  name_prefix = "${replace(var.domain_name, ".", "-")}-dlm-"
+  name = "${var.name}-mail-dlm"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -361,7 +361,7 @@ resource "aws_dlm_lifecycle_policy" "mail" {
       }
 
       tags_to_add = {
-        Name   = "${var.domain_name}-mail-data"
+        Name   = "${var.name}-mail-data"
         Backup = local.snapshot_tag
       }
 

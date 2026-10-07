@@ -7,8 +7,10 @@ terraform {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "site" {
-  bucket_prefix = "${var.name}-site-"
+  bucket        = "${var.name}-site-${data.aws_caller_identity.current.account_id}"
   force_destroy = var.force_destroy
 }
 

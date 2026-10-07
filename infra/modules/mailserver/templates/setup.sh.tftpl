@@ -14,7 +14,7 @@ echo "127.0.1.1 $FQDN ${fqdn}" >> /etc/hosts
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y ca-certificates curl gnupg unzip
+apt-get install -y ca-certificates curl dnsutils gnupg unzip
 
 apt-get install -y unattended-upgrades
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'
@@ -77,15 +77,34 @@ fi
 CERTBOT_DIR="/var/mail-data/letsencrypt"
 apt-get install -y certbot
 
+public_ipv4() {
+  local token
+  token="$(curl -sf -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 300')" || return 1
+  curl -sf -H "X-aws-ec2-metadata-token: $token" http://169.254.169.254/latest/meta-data/public-ipv4
+}
+
+resolves_to_public_ip() {
+  local ip answer resolver
+  ip="$(public_ipv4)" || return 1
+  [ -n "$ip" ] || return 1
+  for resolver in 1.1.1.1 8.8.8.8; do
+    answer="$(dig +short A "$FQDN" "@$resolver" 2>/dev/null)" || continue
+    if printf '%s\n' "$answer" | grep -qxF "$ip"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 if [ ! -d "$CERTBOT_DIR/live/$FQDN" ]; then
   for i in $(seq 1 60); do
-    getent hosts "$FQDN" >/dev/null 2>&1 && break
-    echo "waiting for $FQDN to resolve before requesting a certificate"
+    resolves_to_public_ip && break
+    echo "waiting for $FQDN to resolve to this instance's public IP before requesting a certificate"
     sleep 10
   done
 
-  if ! getent hosts "$FQDN" >/dev/null 2>&1; then
-    echo "FATAL: $FQDN does not resolve; refusing to spend Let's Encrypt validation quota" >&2
+  if ! resolves_to_public_ip; then
+    echo "FATAL: $FQDN does not resolve to this instance's public IP; refusing to spend Let's Encrypt validation quota" >&2
     exit 1
   fi
 

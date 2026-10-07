@@ -32,6 +32,7 @@ module "mailserver" {
   count  = local.has_domain ? 1 : 0
   source = "./modules/mailserver"
 
+  name           = var.name
   domain_name    = var.domain_name
   zone_id        = aws_route53_zone.this[0].zone_id
   mailboxes      = var.mailboxes

@@ -25,7 +25,7 @@ variable "delegation_set_id" {
 
   validation {
     condition     = var.domain_name == "" || length(var.delegation_set_id) > 0
-    error_message = "delegation_set_id is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
+    error_message = "delegation_set_id is blank. Fill in its field in the 1Password item that app.env points at."
   }
 }
 
@@ -35,7 +35,7 @@ variable "alert_email" {
 
   validation {
     condition     = length(var.alert_email) > 0
-    error_message = "alert_email is blank. Fill in its field in the 1Password item that infra/terraform.env points at."
+    error_message = "alert_email is blank. Fill in its field in the 1Password item that app.env points at."
   }
 }
 

@@ -1,5 +1,5 @@
 resource "aws_sns_topic" "alerts" {
-  name = "${replace(var.domain_name, ".", "-")}-mail-alerts"
+  name = "${var.name}-mail-alerts"
 }
 
 resource "aws_sns_topic_subscription" "alerts" {
@@ -19,11 +19,11 @@ resource "aws_route53_health_check" "smtp" {
   request_interval  = 30
   failure_threshold = 3
 
-  tags = { Name = "${var.domain_name}-smtp" }
+  tags = { Name = "${var.name}-mail-smtp" }
 }
 
 resource "aws_cloudwatch_metric_alarm" "smtp_down" {
-  alarm_name          = "${var.domain_name}-smtp-unreachable"
+  alarm_name          = "${var.name}-mail-smtp-unreachable"
   alarm_description   = "Port 25 is not answering. Mail is being deferred by senders."
   namespace           = "AWS/Route53"
   metric_name         = "HealthCheckStatus"
@@ -37,7 +37,7 @@ resource "aws_cloudwatch_metric_alarm" "smtp_down" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "host" {
-  alarm_name          = "${var.domain_name}-mail-host-check"
+  alarm_name          = "${var.name}-mail-host-check"
   alarm_description   = "EC2 status check failing. The host or the OS is wedged."
   namespace           = "AWS/EC2"
   metric_name         = "StatusCheckFailed"
@@ -51,7 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "host" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "disk" {
-  alarm_name        = "${var.domain_name}-mail-disk-full"
+  alarm_name        = "${var.name}-mail-disk-full"
   alarm_description = "Mail volume over 80% used."
   namespace         = "CWAgent"
   metric_name       = "disk_used_percent"
@@ -69,7 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "disk" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "memory" {
-  alarm_name          = "${var.domain_name}-mail-memory"
+  alarm_name          = "${var.name}-mail-memory"
   alarm_description   = "Under 15% memory free. Usually Rspamd growing; if this fires twice in 30 days, move to t4g.medium."
   namespace           = "CWAgent"
   metric_name         = "mem_available_percent"
@@ -83,7 +83,7 @@ resource "aws_cloudwatch_metric_alarm" "memory" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "snapshots" {
-  alarm_name          = "${var.domain_name}-mail-snapshots-stopped"
+  alarm_name          = "${var.name}-mail-snapshots-stopped"
   alarm_description   = "No snapshot completed in 24h. Backups have silently stopped."
   namespace           = "AWS/EBS"
   metric_name         = "SnapshotsCreateCompleted"
@@ -98,7 +98,7 @@ resource "aws_cloudwatch_metric_alarm" "snapshots" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "bounces" {
-  alarm_name          = "${var.domain_name}-ses-bounce-rate"
+  alarm_name          = "${var.name}-mail-ses-bounce-rate"
   alarm_description   = "SES bounce rate above 5%. Sustained, AWS suspends sending."
   namespace           = "AWS/SES"
   metric_name         = "Reputation.BounceRate"
@@ -112,7 +112,7 @@ resource "aws_cloudwatch_metric_alarm" "bounces" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_credits" {
-  alarm_name          = "${var.domain_name}-mail-cpu-credits"
+  alarm_name          = "${var.name}-mail-cpu-credits"
   alarm_description   = "CPU credit balance low. Sustained load will throttle the mail server."
   namespace           = "AWS/EC2"
   metric_name         = "CPUCreditBalance"

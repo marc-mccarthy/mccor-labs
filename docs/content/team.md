@@ -144,7 +144,7 @@ Twin Cities.
 - Bios are 80–110 words each, which is the length that reads as substantial
   without becoming a CV. Keep new ones in that band.
 - Each `TeamMember` gains an `email` field in `types.ts`. All five addresses
-  are real mailboxes from `infra/terraform.env`, so they are safe to publish.
+  are real mailboxes from `app.env`, so they are safe to publish.
   Publishing them plainly invites scraping. Render them as a
   `mailto:` link built at runtime from parts, or accept the spam as the cost of
   being reachable. Do not obfuscate with JavaScript that breaks without it.

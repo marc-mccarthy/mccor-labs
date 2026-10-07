@@ -1,4 +1,7 @@
 packages:
   - 'app/*'
 allowBuilds:
-  lefthook: true
+  esbuild: false
+  lefthook: false
+  sharp: false
+  unrs-resolver: false

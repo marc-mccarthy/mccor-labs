@@ -16,6 +16,7 @@ echo "127.0.1.1 $FQDN ${fqdn}" >> /etc/hosts
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ca-certificates curl dnsutils gnupg unzip
+apt-get install -y --no-install-recommends cron
 
 apt-get install -y unattended-upgrades
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<'AUTO'

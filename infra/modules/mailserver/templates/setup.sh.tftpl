@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
+install -m 600 /dev/null /var/log/mail-setup.log
 exec > >(tee /var/log/mail-setup.log) 2>&1
 
 DOMAIN="${domain}"
@@ -143,7 +144,9 @@ get_param() {
     --query Parameter.Value --output text
 }
 
+{ set +x; } 2>/dev/null
 RELAY_PASSWORD="$(get_param "$PARAM_PREFIX/_relay_password")"
+set -x
 
 mkdir -p /opt/mail
 cd /opt/mail
@@ -188,6 +191,7 @@ services:
       timeout: 3s
       retries: 0
 COMPOSE
+chmod 600 compose.yaml
 
 cat > /var/mail-data/config/fail2ban-jail.cf <<'JAIL'
 [DEFAULT]
@@ -205,7 +209,28 @@ set -euo pipefail
 ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
 touch "$ACCOUNTS"
 chmod 600 "$ACCOUNTS"
-ADDED=0
+SCRATCH="$(mktemp)"
+trap 'rm -f "$SCRATCH"' EXIT
+CHANGED=0
+
+has_account() {
+  awk -F'|' -v addr="$1" '$1 == addr { found = 1 } END { exit !found }' "$ACCOUNTS"
+}
+
+stored_hash() {
+  awk -F'|' -v addr="$1" '$1 == addr { print substr($0, length($1) + 2); exit }' "$ACCOUNTS"
+}
+
+drop_account() {
+  awk -F'|' -v addr="$1" '$1 != addr' "$ACCOUNTS" > "$SCRATCH"
+  cat "$SCRATCH" > "$ACCOUNTS"
+}
+
+add_account() {
+  local hash
+  hash="$(printf '%s' "$2" | openssl passwd -6 -stdin)"
+  printf '%s|{SHA512-CRYPT}%s\n' "$1" "$hash" >> "$ACCOUNTS"
+}
 
 while read -r NAME PASS; do
   [ -n "$NAME" ] || continue
@@ -214,19 +239,27 @@ while read -r NAME PASS; do
   case "$LOCAL" in _*) continue ;; esac
   ADDR="$LOCAL@${domain}"
 
-  if grep -q "^$ADDR|" "$ACCOUNTS" 2>/dev/null; then
+  if ! has_account "$ADDR"; then
+    add_account "$ADDR" "$PASS"
+    echo "added $ADDR"
+    CHANGED=$((CHANGED + 1))
     continue
   fi
 
-  HASH="$(openssl passwd -6 "$PASS")"
-  echo "$ADDR|{SHA512-CRYPT}$HASH" >> "$ACCOUNTS"
-  echo "added $ADDR"
-  ADDED=$((ADDED + 1))
+  STORED="$(stored_hash "$ADDR")"
+  SALT="$(printf '%s' "$STORED" | cut -d'$' -f3)"
+  CURRENT="{SHA512-CRYPT}$(printf '%s' "$PASS" | openssl passwd -6 -salt "$SALT" -stdin)"
+  [ "$STORED" != "$CURRENT" ] || continue
+
+  drop_account "$ADDR"
+  add_account "$ADDR" "$PASS"
+  echo "updated password for $ADDR"
+  CHANGED=$((CHANGED + 1))
 done < <(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
            --with-decryption --query 'Parameters[].[Name,Value]' --output text)
 
-if [ "$ADDED" -gt 0 ] && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
-  echo "reloading mailserver to pick up $ADDED new mailbox(es)"
+if [ "$CHANGED" -gt 0 ] && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  echo "reloading mailserver to pick up $CHANGED mailbox change(s)"
   docker restart mailserver >/dev/null
 fi
 
@@ -304,6 +337,16 @@ if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
 fi
 HEALTH
 chmod +x /etc/cron.daily/mail-health
+
+cat > /etc/cron.hourly/mail-sync-accounts <<SYNCCRON
+#!/bin/bash
+
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export PATH
+
+/opt/mail/sync-accounts.sh
+SYNCCRON
+chmod +x /etc/cron.hourly/mail-sync-accounts
 
 touch /var/lib/mail-setup-complete
 echo "mail server ready"

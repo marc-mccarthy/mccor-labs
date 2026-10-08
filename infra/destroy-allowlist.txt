@@ -1,0 +1,2 @@
+module.mailserver[0].aws_instance.mail
+module.mailserver[0].aws_volume_attachment.mail

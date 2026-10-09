@@ -66,9 +66,17 @@ run "storage_and_role" {
   assert {
     condition = anytrue([
       for s in local.contact_policy.Statement :
-      s.Action == ["dynamodb:UpdateItem"] && s.Condition["ForAllValues:StringLike"]["dynamodb:LeadingKeys"] == ["contact#*"]
+      s.Action == ["dynamodb:UpdateItem"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab"] && s.Condition["ForAllValues:StringLike"]["dynamodb:LeadingKeys"] == ["contact#*"]
     ])
-    error_message = "The counter statement must be UpdateItem on contact# keys only."
+    error_message = "The counter statement must be UpdateItem on the one table and contact# keys only."
+  }
+
+  assert {
+    condition = anytrue([
+      for s in local.contact_policy.Statement :
+      s.Sid == "Logs" && s.Action == ["logs:CreateLogStream", "logs:PutLogEvents"] && s.Resource == ["arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/t-contact:*"]
+    ])
+    error_message = "Logs must be CreateLogStream and PutLogEvents on the contact log group only."
   }
 
   assert {

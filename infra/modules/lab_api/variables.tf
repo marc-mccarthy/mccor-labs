@@ -16,6 +16,11 @@ variable "ses_identity_arn" {
 variable "contact_from" {
   description = "From address of the contact email, inside the SES identity's domain"
   type        = string
+
+  validation {
+    condition     = endswith(var.contact_from, "@${element(split("/", var.ses_identity_arn), 1)}")
+    error_message = "contact_from must end with @ followed by the domain of ses_identity_arn."
+  }
 }
 
 variable "contact_to" {
@@ -27,4 +32,9 @@ variable "contact_daily_cap" {
   description = "Contact messages accepted per UTC day before the form returns daily_cap"
   type        = number
   default     = 50
+
+  validation {
+    condition     = var.contact_daily_cap >= 1 && floor(var.contact_daily_cap) == var.contact_daily_cap
+    error_message = "contact_daily_cap must be a whole number of at least 1."
+  }
 }

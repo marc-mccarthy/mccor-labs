@@ -1,3 +1,5 @@
+import { RULES } from './rules'
+
 export type Answer = 'yes' | 'no' | 'not-sure' | null
 
 export type Frequency = 'daily' | 'weekly' | 'monthly-or-less' | null
@@ -77,4 +79,26 @@ export const EMPTY_ANSWERS: StepAnswers = {
 
 export function visibleQuestions(answers: StepAnswers): readonly QuestionKey[] {
   return QUESTION_KEYS.filter((key) => key !== 'changes' || answers.checklist === 'yes')
+}
+
+export function getRule(id: RuleId): Rule {
+  const rule = RULES.find((candidate) => candidate.id === id)
+  if (rule === undefined) throw new Error(`Unknown rubric rule id: ${id}`)
+  return rule
+}
+
+export function classifyStep(answers: StepAnswers): RubricResult {
+  const rule = RULES.find((candidate) => candidate.when(answers))
+  if (rule === undefined) {
+    throw new Error(
+      `No rubric rule matched ${JSON.stringify(answers)}; the rules must be total`,
+    )
+  }
+  return {
+    verdict: rule.verdict,
+    humanSignOff: rule.humanSignOff(answers),
+    ruleId: rule.id,
+    why: rule.why,
+    rubricVersion: RUBRIC_VERSION,
+  }
 }

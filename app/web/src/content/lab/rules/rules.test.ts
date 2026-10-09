@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_ANSWERS, type Answer, type StepAnswers } from '../rubric'
+import { EMPTY_ANSWERS, RULE_IDS, type Answer, type StepAnswers } from '../rubric'
 import { R1 } from './R1'
 import { R2 } from './R2'
 import { R3 } from './R3'
@@ -13,6 +13,7 @@ import { R10 } from './R10'
 import { R11 } from './R11'
 import { R12 } from './R12'
 import { R13 } from './R13'
+import { RULES, RULE_VERDICT } from './index'
 
 const UNKNOWN: readonly Answer[] = [null, 'not-sure']
 const SAFE: readonly Partial<StepAnswers>[] = [
@@ -254,4 +255,22 @@ describe('R9 to R11: fixed input with no checklist', () => {
       }
     },
   )
+})
+
+describe('RULES', () => {
+  it('lists every rule once, in id order', () => {
+    expect(RULES.map((rule) => rule.id)).toEqual(RULE_IDS)
+  })
+
+  it('RULE_VERDICT matches every rule verdict', () => {
+    for (const rule of RULES) {
+      expect(RULE_VERDICT[rule.id]).toBe(rule.verdict)
+    }
+    expect(Object.keys(RULE_VERDICT)).toEqual([...RULE_IDS])
+  })
+  it('gives every rule a plain reason', () => {
+    for (const rule of RULES) {
+      expect(rule.why.length, rule.id).toBeGreaterThan(20)
+    }
+  })
 })

@@ -14,11 +14,18 @@ locals {
         Resource = ["${aws_cloudwatch_log_group.feedback.arn}:*"]
       },
       {
-        Sid       = "CounterAndMarks"
+        Sid       = "Counter"
         Effect    = "Allow"
-        Action    = ["dynamodb:UpdateItem", "dynamodb:PutItem"]
+        Action    = ["dynamodb:UpdateItem"]
         Resource  = [aws_dynamodb_table.lab.arn]
-        Condition = { "ForAllValues:StringLike" = { "dynamodb:LeadingKeys" = ["feedback#*", "mark#*"] } }
+        Condition = { "ForAllValues:StringLike" = { "dynamodb:LeadingKeys" = ["feedback#*"] } }
+      },
+      {
+        Sid       = "Marks"
+        Effect    = "Allow"
+        Action    = ["dynamodb:PutItem"]
+        Resource  = [aws_dynamodb_table.lab.arn]
+        Condition = { "ForAllValues:StringLike" = { "dynamodb:LeadingKeys" = ["mark#*"] } }
       },
     ]
   }

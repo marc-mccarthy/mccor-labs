@@ -140,16 +140,24 @@ run "feedback_policy" {
   }
 
   assert {
-    condition     = length(local.feedback_policy.Statement) == 2 && alltrue([for s in local.feedback_policy.Statement : s.Effect == "Allow"])
-    error_message = "The feedback policy must be two Allow statements."
+    condition     = length(local.feedback_policy.Statement) == 3 && alltrue([for s in local.feedback_policy.Statement : s.Effect == "Allow"])
+    error_message = "The feedback policy must be three Allow statements."
   }
 
   assert {
     condition = anytrue([
       for s in local.feedback_policy.Statement :
-      s.Action == ["dynamodb:UpdateItem", "dynamodb:PutItem"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab"] && s.Condition["ForAllValues:StringLike"]["dynamodb:LeadingKeys"] == ["feedback#*", "mark#*"]
+      s.Sid == "Counter" && s.Effect == "Allow" && s.Action == ["dynamodb:UpdateItem"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab"] && s.Condition["ForAllValues:StringLike"]["dynamodb:LeadingKeys"] == ["feedback#*"]
     ])
-    error_message = "The feedback table access must be UpdateItem and PutItem on the one table, feedback# and mark# keys only."
+    error_message = "The Counter statement must be UpdateItem on the one table, feedback# keys only."
+  }
+
+  assert {
+    condition = anytrue([
+      for s in local.feedback_policy.Statement :
+      s.Sid == "Marks" && s.Effect == "Allow" && s.Action == ["dynamodb:PutItem"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab"] && s.Condition["ForAllValues:StringLike"]["dynamodb:LeadingKeys"] == ["mark#*"]
+    ])
+    error_message = "The Marks statement must be PutItem on the one table, mark# keys only."
   }
 
   assert {

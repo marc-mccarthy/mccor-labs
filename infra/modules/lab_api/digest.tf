@@ -90,6 +90,11 @@ resource "aws_lambda_function" "digest" {
   depends_on = [aws_cloudwatch_log_group.digest, aws_iam_role_policy.digest]
 }
 
+resource "aws_lambda_function_event_invoke_config" "digest" {
+  function_name          = aws_lambda_function.digest.function_name
+  maximum_retry_attempts = 0
+}
+
 resource "aws_iam_role" "digest_scheduler" {
   name               = "${var.name}-lab-digest-scheduler"
   assume_role_policy = jsonencode(local.digest_scheduler_assume_policy)

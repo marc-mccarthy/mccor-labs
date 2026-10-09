@@ -134,6 +134,11 @@ run "digest_schedule" {
   }
 
   assert {
+    condition     = aws_lambda_function_event_invoke_config.digest.maximum_retry_attempts == 0
+    error_message = "digest must not retry on function errors, so a failed run cannot send the email twice"
+  }
+
+  assert {
     condition     = aws_scheduler_schedule.digest.target[0].arn == "arn:aws:lambda:us-east-1:111111111111:function:t-lab-digest"
     error_message = "digest schedule must target the digest function"
   }

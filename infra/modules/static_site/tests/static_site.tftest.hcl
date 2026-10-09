@@ -150,3 +150,71 @@ run "no_domain" {
     error_message = "PRIMARY_HOST must render empty without a domain."
   }
 }
+
+run "no_api" {
+  command = plan
+
+  assert {
+    condition     = length(aws_cloudfront_distribution.site.ordered_cache_behavior) == 0 && length(aws_cloudfront_origin_access_control.api) == 0
+    error_message = "Without api_origins the distribution must not change."
+  }
+}
+
+run "api_origins" {
+  command = plan
+
+  variables {
+    api_origins       = [{ path_pattern = "/api/contact", function_url_domain = "abc123.lambda-url.us-east-1.on.aws" }]
+    api_function_arns = { contact = "arn:aws:lambda:us-east-1:111111111111:function:t-contact" }
+  }
+
+  assert {
+    condition     = aws_cloudfront_origin_access_control.api[0].origin_access_control_origin_type == "lambda" && aws_cloudfront_origin_access_control.api[0].signing_behavior == "always"
+    error_message = "The API OAC must be a Lambda OAC that always signs."
+  }
+
+  assert {
+    condition     = anytrue([for o in aws_cloudfront_distribution.site.origin : o.domain_name == "abc123.lambda-url.us-east-1.on.aws" && o.origin_id == "api-contact"])
+    error_message = "The Function URL host must be an origin."
+  }
+
+  assert {
+    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[0].path_pattern == "/api/contact" && aws_cloudfront_distribution.site.ordered_cache_behavior[0].target_origin_id == "api-contact"
+    error_message = "The /api/contact behavior must route to its origin."
+  }
+
+  assert {
+    condition     = contains(aws_cloudfront_distribution.site.ordered_cache_behavior[0].allowed_methods, "POST") && aws_cloudfront_distribution.site.ordered_cache_behavior[0].viewer_protocol_policy == "https-only"
+    error_message = "The API behavior must allow POST over HTTPS only."
+  }
+
+  assert {
+    condition     = data.aws_cloudfront_cache_policy.disabled.name == "Managed-CachingDisabled" && data.aws_cloudfront_origin_request_policy.all_viewer_except_host.name == "Managed-AllViewerExceptHostHeader"
+    error_message = "The API policies must be the managed CachingDisabled and AllViewerExceptHostHeader."
+  }
+
+  assert {
+    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[0].cache_policy_id == data.aws_cloudfront_cache_policy.disabled.id && aws_cloudfront_distribution.site.ordered_cache_behavior[0].origin_request_policy_id == data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    error_message = "The API behavior must use CachingDisabled and AllViewerExceptHostHeader."
+  }
+
+  assert {
+    condition     = alltrue([for b in aws_cloudfront_distribution.site.ordered_cache_behavior : length(b.function_association) == 0])
+    error_message = "API behaviors must carry no function_association: the viewer-request function would redirect a POST into a body-less GET."
+  }
+
+  assert {
+    condition     = length(aws_cloudfront_distribution.site.default_cache_behavior[0].function_association) == 1 && aws_cloudfront_distribution.site.default_cache_behavior[0].viewer_protocol_policy == "redirect-to-https"
+    error_message = "The default behavior must keep its viewer-request function and redirect."
+  }
+
+  assert {
+    condition     = aws_lambda_permission.api_url["contact"].action == "lambda:InvokeFunctionUrl" && aws_lambda_permission.api_url["contact"].function_url_auth_type == "AWS_IAM" && aws_lambda_permission.api_url["contact"].principal == "cloudfront.amazonaws.com"
+    error_message = "CloudFront must be allowed lambda:InvokeFunctionUrl with AWS_IAM."
+  }
+
+  assert {
+    condition     = aws_lambda_permission.api_invoke["contact"].action == "lambda:InvokeFunction" && aws_lambda_permission.api_invoke["contact"].invoked_via_function_url == true
+    error_message = "CloudFront must be allowed lambda:InvokeFunction via the Function URL."
+  }
+}

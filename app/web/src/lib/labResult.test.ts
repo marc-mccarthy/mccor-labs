@@ -56,6 +56,23 @@ describe('lab result fragment', () => {
     expect(decodeLabResult(encodeLabResult(result))).toEqual(result)
   })
 
+  it('replaces tabs, bidi and separator characters in names with spaces and still decodes', () => {
+    const result = toLabResult(
+      [
+        {
+          name: 'a\tb‮c d\u0007e',
+          result: classifyStep(notSure),
+          answers: notSure,
+        },
+      ],
+      true,
+    )
+    expect(result.steps[0]?.name).toBe('a b c d e')
+    const decoded = decodeLabResult(encodeLabResult(result))
+    expect(decoded).not.toBeNull()
+    expect(decoded?.steps[0]?.name).toBe('a b c d e')
+  })
+
   it('leaves names out unless the visitor opts in', () => {
     expect(toLabResult(steps, false).steps.every((step) => step.name === null)).toBe(true)
   })
@@ -119,6 +136,10 @@ describe('lab result fragment', () => {
     ].map(([label, name]) => [
       `a name with ${label ?? ''}`,
       encodeRaw({ v: 1, rubricVersion: '1.0.0', steps: [rawStep({ name })] }),
+    ]),
+    ...['1.0', '1.0.0-beta', 'v1.0.0', '1.0.x', '1.0.0\n'].map((version) => [
+      `a rubric version of ${JSON.stringify(version)}`,
+      encodeRaw({ v: 1, rubricVersion: version, steps: [rawStep({})] }),
     ]),
     [
       'missing unanswered',

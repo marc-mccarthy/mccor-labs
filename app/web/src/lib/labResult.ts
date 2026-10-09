@@ -24,6 +24,8 @@ export { MAILTO_BODY_MAX }
 const FORMAT_VERSION = 1
 const VERSION_MAX = 20
 const UNSAFE_NAME = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/
+const UNSAFE_NAME_ALL = new RegExp(UNSAFE_NAME.source, 'g')
+const VERSION_PATTERN = /^\d+\.\d+\.\d+$/
 const STEP_KEYS = ['name', 'verdict', 'humanSignOff', 'ruleId', 'unanswered']
 
 export interface LabResultStep {
@@ -50,7 +52,7 @@ export function toLabResult(
   return {
     rubricVersion: RUBRIC_VERSION,
     steps: steps.map(({ name, result, answers }) => ({
-      name: includeNames ? name : null,
+      name: includeNames ? name.replace(UNSAFE_NAME_ALL, ' ') : null,
       verdict: result.verdict,
       humanSignOff: result.humanSignOff,
       ruleId: result.ruleId,
@@ -132,7 +134,8 @@ function parseLabResult(value: unknown): LabResult | null {
   if (
     typeof rubricVersion !== 'string' ||
     rubricVersion.length < 1 ||
-    rubricVersion.length > VERSION_MAX
+    rubricVersion.length > VERSION_MAX ||
+    !VERSION_PATTERN.test(rubricVersion)
   ) {
     return null
   }

@@ -6,17 +6,47 @@ import {
   answerCopy,
   builderCopy,
   fillTemplate,
+  labLive,
+  presets,
   questionCopy,
   statusCopy,
+  summaryCopy,
   verdictCopy,
 } from '@/content/lab/copy'
 import { MAX_STEPS } from '@/content/lab/limits'
-import { RULE_IDS, type RuleId } from '@/content/lab/rubric'
+import { RULE_IDS, classifyStep, type RuleId } from '@/content/lab/rubric'
+import type { LaneState, RaceResult } from '@/lib/lab'
 import { WorkflowBuilder } from './WorkflowBuilder'
+
+const mocks = vi.hoisted(() => ({ env: { labLive: false }, postLab: vi.fn() }))
+
+vi.mock('@/lib/env', () => ({ env: mocks.env }))
+
+vi.mock('@/lib/lab', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/lab')>()),
+  postLab: mocks.postLab,
+}))
 
 const snippets = Object.fromEntries(
   RULE_IDS.map((id) => [id, <pre key={id}>{id}</pre>]),
 ) as Record<RuleId, ReactNode>
+
+const RACE: RaceResult = {
+  kind: 'race',
+  modelLabel: 'Nova 2 Lite',
+  pricesAsOf: '2026-10-09',
+  model: {
+    answers: ['billing', 'shipping'],
+    correct: 2,
+    total: 2,
+    ms: 1200,
+    costUsd: 0.0026,
+    inputTokens: 1500,
+    outputTokens: 300,
+    guardrailUnits: 8,
+  },
+  program: { answers: ['billing', 'billing'], correct: 1, total: 2, ms: 4, costUsd: 0 },
+}
 
 function status() {
   return document.querySelector('[data-lab-status]')
@@ -43,6 +73,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  mocks.env.labLive = false
+  mocks.postLab.mockReset()
 })
 
 describe('WorkflowBuilder', () => {
@@ -311,5 +343,63 @@ describe('WorkflowBuilder move, remove and undo', () => {
     expect(aside).toHaveClass('lg:sticky', 'lg:top-24')
     expect(aside).not.toHaveClass('lg:motion-safe:sticky')
     expect(aside).toHaveAttribute('data-sticky-layout')
+  })
+})
+
+describe('WorkflowBuilder live lab', () => {
+  it('leaves the live lab out unless the build flag is set', () => {
+    render(<WorkflowBuilder snippets={snippets} />)
+    expect(screen.queryByRole('heading', { name: labLive.panelHeading })).toBeNull()
+  })
+
+  it('mounts the live lab after the summary with exactly one status region', () => {
+    mocks.env.labLive = true
+    const { container } = render(<WorkflowBuilder snippets={snippets} />)
+    expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
+    const summary = screen.getByRole('heading', { name: summaryCopy.heading })
+    const panel = screen.getByRole('heading', { name: labLive.panelHeading })
+    expect(
+      summary.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('feeds a live-lab run into the builder status region', async () => {
+    mocks.env.labLive = true
+    const result: LaneState<RaceResult> = { status: 'live', result: RACE, runsLeft: 2 }
+    mocks.postLab.mockResolvedValue(result)
+    const { container } = render(<WorkflowBuilder snippets={snippets} />)
+    await userEvent.type(screen.getByLabelText(labLive.exampleInputLabel(1)), 'Invoice')
+    await userEvent.type(
+      screen.getByLabelText(labLive.exampleExpectedLabel(1)),
+      'billing',
+    )
+    await userEvent.type(screen.getByLabelText(labLive.exampleInputLabel(2)), 'Parcel')
+    await userEvent.type(
+      screen.getByLabelText(labLive.exampleExpectedLabel(2)),
+      'shipping',
+    )
+    await userEvent.click(screen.getByRole('button', { name: labLive.raceButton }))
+    await waitFor(() => {
+      expect(status()).toHaveTextContent(labLive.announceDone(labLive.raceHeading))
+    })
+    expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
+  })
+
+  it('passes the classified verdict and frequency of a step to the live lab', async () => {
+    mocks.env.labLive = true
+    render(<WorkflowBuilder snippets={snippets} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice intake' }))
+    const first = presets[0]?.steps[0]
+    if (first === undefined) throw new Error('no preset step')
+    const picker = screen.getByLabelText(labLive.stepPicker)
+    expect(within(picker).getAllByRole('option')).toHaveLength(4)
+    expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(first.name)
+    const panel = screen
+      .getByRole('heading', { name: labLive.panelHeading })
+      .closest('section')
+    if (panel === null) throw new Error('no panel')
+    expect(
+      within(panel).getByText(verdictCopy[classifyStep(first.answers).verdict].label),
+    ).toBeInTheDocument()
   })
 })

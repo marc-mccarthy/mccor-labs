@@ -279,4 +279,14 @@ describe('WorkflowBuilder move, remove and undo', () => {
     expect(status()).not.toHaveTextContent(/restored/)
     expect(nameField(MAX_STEPS)).toHaveFocus()
   })
+
+  it('loads a preset, announces it and keeps focus on the preset button', async () => {
+    render(<WorkflowBuilder snippets={snippets} />)
+    const load = screen.getByRole('button', { name: 'Load Invoice intake' })
+    await userEvent.click(load)
+    expect(screen.getAllByTestId(/^step-\d+$/)).toHaveLength(4)
+    expect(nameField(1)).toHaveValue("Read the supplier's invoice PDF")
+    expect(status()).toHaveTextContent('Loaded the Invoice intake example with 4 steps.')
+    expect(load).toHaveFocus()
+  })
 })

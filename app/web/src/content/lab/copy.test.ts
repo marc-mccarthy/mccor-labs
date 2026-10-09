@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { assertNoClaims } from '@/test/noClaims'
 import * as copyModule from './copy'
-import { fillTemplate, questionCopy, stepLabel, verdictCopy, verdictPhrase } from './copy'
+import {
+  fillTemplate,
+  presets,
+  questionCopy,
+  stepLabel,
+  verdictCopy,
+  verdictPhrase,
+} from './copy'
+import { NAME_MAX } from './limits'
+import { classifyStep, visibleQuestions } from './rubric'
 import { RULES } from './rules'
+
+const EXPECTED: Readonly<Record<string, readonly string[]>> = {
+  'invoice-intake': ['R5', 'R7+', 'R8+', 'R2'],
+  'support-inbox': ['R5', 'R7', 'R10', 'R5+'],
+  'quote-requests': ['R5', 'R8+', 'R10+', 'R11'],
+}
 
 function strings(value: unknown): string[] {
   if (typeof value === 'string') return [value]
@@ -84,5 +99,34 @@ describe('lab copy', () => {
     expect(verdictPhrase('rules', true)).toBe(
       'a checklist your team can edit + human sign-off',
     )
+  })
+})
+
+describe('presets', () => {
+  it('offers the three spec examples with four fully answered steps each', () => {
+    expect(presets.map((preset) => preset.id)).toEqual([
+      'invoice-intake',
+      'support-inbox',
+      'quote-requests',
+    ])
+    for (const preset of presets) {
+      expect(preset.steps).toHaveLength(4)
+      for (const step of preset.steps) {
+        expect(step.name.length, step.name).toBeLessThanOrEqual(NAME_MAX)
+        for (const key of visibleQuestions(step.answers))
+          expect(step.answers[key], `${preset.id} ${step.name} ${key}`).not.toBeNull()
+        if (step.answers.checklist !== 'yes') expect(step.answers.changes).toBeNull()
+        expect(step.answers.frequency).not.toBeNull()
+      }
+    }
+  })
+
+  it.each(presets)('$id lands on the rules and sign-offs the plan pins', (preset) => {
+    expect(
+      preset.steps.map((step) => {
+        const result = classifyStep(step.answers)
+        return `${result.ruleId}${result.humanSignOff ? '+' : ''}`
+      }),
+    ).toEqual(EXPECTED[preset.id])
   })
 })

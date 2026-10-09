@@ -15,10 +15,13 @@ import { Button } from '@/components/ui/button'
 import {
   builderCopy,
   fillTemplate,
+  presets,
+  presetsCopy,
   statusCopy,
   stepLabel,
   verdictCopy,
   verdictPhrase,
+  type Preset,
 } from '@/content/lab/copy'
 import { MAX_STEPS } from '@/content/lab/limits'
 import {
@@ -49,7 +52,7 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
   const [state, dispatch] = useReducer(workflowReducer, undefined, initialWorkflow)
   const [openId, setOpenId] = useState<string | null>('step-1')
   const [status, setStatus] = useState<Status>({ text: '', seq: 0 })
-  const [staggerIds] = useState<ReadonlySet<string>>(
+  const [staggerIds, setStaggerIds] = useState<ReadonlySet<string>>(
     () => new Set(initialWorkflow().steps.map((step) => step.id)),
   )
   const controls = useRef(new Map<string, HTMLElement>())
@@ -165,6 +168,18 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
     announce(fillTemplate(statusCopy.restored, { step: stepLabel(index + 1, step.name) }))
   }
 
+  function loadPreset(preset: Preset) {
+    const firstId = state.nextId
+    dispatch({ type: 'load', seeds: preset.steps })
+    const ids = preset.steps
+      .slice(0, MAX_STEPS)
+      .map((_step, offset) => `step-${String(firstId + offset)}`)
+    setOpenId(`step-${String(firstId)}`)
+    setStaggerIds(new Set(ids))
+    setUndoFocused(false)
+    announce(fillTemplate(statusCopy.loaded, { preset: preset.title, count: ids.length }))
+  }
+
   function pauseUndo() {
     setUndoFocused(true)
   }
@@ -177,6 +192,30 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
 
   return (
     <FeedbackMarksProvider>
+      <Section aria-labelledby="lab-presets-heading">
+        <Container>
+          <h2 id="lab-presets-heading" className="font-display text-2xl">
+            {presetsCopy.heading}
+          </h2>
+          <p className="mt-2 text-muted">{presetsCopy.intro}</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {presets.map((preset) => (
+              <Button
+                key={preset.id}
+                variant="secondary"
+                size="md"
+                className="min-w-11"
+                type="button"
+                onClick={() => {
+                  loadPreset(preset)
+                }}
+              >
+                {fillTemplate(presetsCopy.load, { preset: preset.title })}
+              </Button>
+            ))}
+          </div>
+        </Container>
+      </Section>
       <Section aria-labelledby="lab-builder-heading">
         <Container>
           <h2 id="lab-builder-heading" className="font-display text-2xl">

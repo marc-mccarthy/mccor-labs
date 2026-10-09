@@ -1,4 +1,4 @@
-import type { Answer, Frequency, QuestionKey, Verdict } from './rubric'
+import type { Answer, Frequency, QuestionKey, StepAnswers, Verdict } from './rubric'
 
 interface VerdictText {
   readonly label: string
@@ -200,3 +200,109 @@ export function verdictPhrase(verdict: Verdict, humanSignOff: boolean): string {
   const lower = label.charAt(0).toLowerCase() + label.slice(1)
   return humanSignOff ? `${lower} ${signOffCopy}` : lower
 }
+
+export const presetsCopy = {
+  heading: 'Load an example workflow',
+  intro: 'Each example replaces your steps with four answered ones.',
+  load: 'Load {preset}',
+} as const
+
+export interface Preset {
+  readonly id: 'invoice-intake' | 'support-inbox' | 'quote-requests'
+  readonly title: string
+  readonly steps: readonly { readonly name: string; readonly answers: StepAnswers }[]
+}
+
+type Six = readonly [Answer, Answer, Answer, Answer, Answer, Answer]
+
+function seed(
+  name: string,
+  [fixedForm, checklist, changes, costly, checkable, pastCases]: Six,
+  frequency: Frequency,
+) {
+  return {
+    name,
+    answers: { fixedForm, checklist, changes, costly, checkable, pastCases, frequency },
+  }
+}
+
+export const presets: readonly Preset[] = [
+  {
+    id: 'invoice-intake',
+    title: 'Invoice intake',
+    steps: [
+      seed(
+        "Read the supplier's invoice PDF",
+        ['no', 'no', null, 'no', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Match the invoice to its purchase order',
+        ['yes', 'yes', 'no', 'yes', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Send invoices over the spending limit to the right approver',
+        ['yes', 'yes', 'yes', 'yes', 'yes', 'yes'],
+        'weekly',
+      ),
+      seed(
+        'Decide whether to dispute a charge',
+        ['yes', 'no', null, 'yes', 'no', 'no'],
+        'monthly-or-less',
+      ),
+    ],
+  },
+  {
+    id: 'support-inbox',
+    title: 'Support inbox',
+    steps: [
+      seed(
+        'Sort incoming emails by topic',
+        ['no', 'no', null, 'no', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Fill the order-status reply template from the order system',
+        ['yes', 'yes', 'no', 'no', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Flag customers likely to cancel',
+        ['yes', 'no', null, 'no', 'yes', 'yes'],
+        'weekly',
+      ),
+      seed(
+        'Reply to a complaint about a late delivery',
+        ['no', 'no', null, 'yes', 'yes', 'yes'],
+        'daily',
+      ),
+    ],
+  },
+  {
+    id: 'quote-requests',
+    title: 'Quote requests',
+    steps: [
+      seed(
+        'Pull job details from the request email',
+        ['no', 'no', null, 'no', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Price a standard job from the rate card',
+        ['yes', 'yes', 'yes', 'yes', 'yes', 'yes'],
+        'daily',
+      ),
+      seed(
+        'Estimate how long a custom job takes',
+        ['yes', 'no', null, 'yes', 'yes', 'yes'],
+        'weekly',
+      ),
+      seed(
+        'Decide whether to take on an unusual job',
+        ['yes', 'no', null, 'yes', 'yes', 'no'],
+        'monthly-or-less',
+      ),
+    ],
+  },
+]

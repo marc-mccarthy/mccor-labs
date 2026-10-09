@@ -8,6 +8,7 @@ import {
   type FocusEvent,
   type ReactNode,
 } from 'react'
+import { flushSync } from 'react-dom'
 
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
@@ -88,7 +89,9 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
         pendingFocus.current = 'add'
       }
       setUndoFocused(false)
-      dispatch({ type: 'expire-undo' })
+      flushSync(() => {
+        dispatch({ type: 'expire-undo' })
+      })
     }
     const timer = window.setTimeout(expireUndo, 10_000)
     return () => {
@@ -299,7 +302,7 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
                   ref={addRef}
                   variant="secondary"
                   size="md"
-                  className="min-w-11"
+                  className="min-w-11 aria-disabled:opacity-50 aria-disabled:hover:bg-surface"
                   type="button"
                   aria-disabled={atLimit ? 'true' : undefined}
                   aria-describedby={atLimit ? ADD_LIMIT_ID : undefined}

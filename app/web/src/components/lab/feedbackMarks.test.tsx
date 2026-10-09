@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { FeedbackMarksProvider, markKey, useFeedbackMarks } from './feedbackMarks'
 
 const KEY = markKey('step-1', 'language-model', 'R5')
@@ -49,6 +49,11 @@ describe('feedbackMarks', () => {
   })
 
   it('throws outside a provider', () => {
-    expect(() => render(<Probe />)).toThrow(/FeedbackMarksProvider/)
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      expect(() => render(<Probe />)).toThrow(/FeedbackMarksProvider/)
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 })

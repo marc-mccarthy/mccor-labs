@@ -52,6 +52,9 @@ const RADIO =
 const FIELD =
   'border-border-strong bg-surface text-text placeholder:text-muted min-h-11 w-full rounded-lg border px-3 py-2'
 
+const DISABLED_MOVE =
+  'min-w-11 aria-disabled:opacity-50 aria-disabled:hover:bg-transparent'
+
 interface Option<Value extends string> {
   readonly value: Value
   readonly text: string
@@ -136,7 +139,7 @@ function StepControls({
       <Button
         variant="ghost"
         size="md"
-        className="min-w-11"
+        className={DISABLED_MOVE}
         type="button"
         aria-disabled={atTop ? 'true' : undefined}
         ref={(element: HTMLButtonElement | null) => {
@@ -151,7 +154,7 @@ function StepControls({
       <Button
         variant="ghost"
         size="md"
-        className="min-w-11"
+        className={DISABLED_MOVE}
         type="button"
         aria-disabled={atBottom ? 'true' : undefined}
         ref={(element: HTMLButtonElement | null) => {

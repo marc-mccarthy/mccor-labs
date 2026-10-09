@@ -263,6 +263,21 @@ describe('WorkflowBuilder move, remove and undo', () => {
     expect(undoButton()).not.toBeInTheDocument()
   })
 
+  it('never announces a restore when Undo is clicked in the same tick that it expires', async () => {
+    await removeWithFakeTimers()
+    const undo = undoButton()!
+    const before = status()?.textContent
+    vi.setTimerTickMode('manual')
+    act(() => {
+      vi.advanceTimersByTime(10_000)
+      fireEvent.click(undo)
+    })
+    expect(undoButton()).not.toBeInTheDocument()
+    expect(status()?.textContent).toBe(before)
+    expect(status()).not.toHaveTextContent(/restored/)
+    expect(screen.getAllByTestId(/^step-\d+$/)).toHaveLength(1)
+  })
+
   it('hides Undo at eight steps and never announces a restore that did not happen', async () => {
     render(<WorkflowBuilder snippets={snippets} />)
     for (let i = 1; i < MAX_STEPS; i += 1) {

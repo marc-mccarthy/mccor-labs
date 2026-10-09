@@ -10,3 +10,18 @@ output "function_arns" {
   description = "Function ARN per endpoint name, for the CloudFront invoke permissions"
   value       = { contact = aws_lambda_function.contact.arn }
 }
+
+output "lab_guardrail_arn" {
+  description = "ARN of the lab Bedrock guardrail"
+  value       = aws_bedrock_guardrail.lab.guardrail_arn
+}
+
+output "lab_guardrail_id" {
+  description = "ID of the lab Bedrock guardrail"
+  value       = aws_bedrock_guardrail.lab.guardrail_id
+}
+
+output "lab_guardrail_version" {
+  description = "Published version of the lab Bedrock guardrail that the handler calls"
+  value       = aws_bedrock_guardrail_version.lab.version
+}

@@ -3,6 +3,8 @@ import { assertNoClaims } from '@/test/noClaims'
 import * as copyModule from './copy'
 import {
   fillTemplate,
+  labLive,
+  labPageCopy,
   presets,
   questionCopy,
   stepLabel,
@@ -99,6 +101,84 @@ describe('lab copy', () => {
     expect(verdictPhrase('rules', true)).toBe(
       'a checklist your team can edit + human sign-off',
     )
+  })
+})
+
+const FREQUENCIES = ['daily', 'weekly', 'monthly-or-less'] as const
+
+function liveOutputs(): string[] {
+  const text = Object.values(labLive).flatMap((value) =>
+    typeof value === 'function' ? [] : strings(value),
+  )
+  const calls = [
+    labLive.exampleInputLabel(2),
+    labLive.exampleExpectedLabel(2),
+    labLive.removeExample(2),
+    labLive.accuracy(2, 3),
+    ...FREQUENCIES.map((frequency) => labLive.monthly(frequency, '0.36')),
+    labLive.priceNote('2026-10-09'),
+    labLive.runsLeft(7),
+    labLive.recordedCap('Oct 9, 2026, 10:00 AM UTC'),
+    labLive.recordedOff('Oct 9, 2026, 10:00 AM UTC'),
+    labLive.recordedPreview('Oct 9, 2026, 10:00 AM UTC'),
+    labLive.recordedArgueFor('Check each invoice against the order'),
+    labLive.announceRunning('Race this step'),
+    labLive.announceDone('Race this step'),
+  ]
+  return [...text, ...calls]
+}
+
+describe('live lab copy', () => {
+  it('makes no client, team-size, percent or outcome claim', () => {
+    for (const text of liveOutputs()) {
+      assertNoClaims(text)
+    }
+  })
+
+  it('contains no dollar sign', () => {
+    for (const text of liveOutputs()) {
+      expect(text).not.toContain('$')
+    }
+  })
+
+  it('states the input notice the spec fixes', () => {
+    expect(labLive.inputNotice).toBe(
+      "Sent to Amazon Bedrock to run this test, not stored by us. Don't paste customer names or personal details.",
+    )
+  })
+
+  it('words the monthly line in USD for each frequency', () => {
+    expect(labLive.monthly('daily', '0.36')).toBe(
+      'If this runs once a day, one item each time: about 0.36 USD a month for the model, against about 0 USD for a simple program',
+    )
+    expect(labLive.monthly('weekly', '0.05')).toMatch(/^If this runs once a week,/)
+    expect(labLive.monthly('monthly-or-less', '0.01')).toMatch(
+      /^If this runs once a month or less,/,
+    )
+    for (const frequency of FREQUENCIES) {
+      expect(labLive.monthly(frequency, '0.36')).not.toContain('USD USD')
+    }
+  })
+
+  it('names the frequency phrases', () => {
+    expect(labLive.frequencyPhrase).toEqual({
+      daily: 'once a day',
+      weekly: 'once a week',
+      'monthly-or-less': 'once a month or less',
+    })
+  })
+
+  it('attributes the argue text to a model and the verdict to the rubric', () => {
+    expect(labLive.argueAttribution).toBe(
+      'written by a model; the verdict is from the rubric',
+    )
+  })
+
+  it('tells the visitor a live test sends its text to Amazon Bedrock', () => {
+    expect(labPageCopy.methodBody).toMatch(
+      /Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock\.$/,
+    )
+    expect(labPageCopy.methodBody).not.toContain('unless you send it to us.')
   })
 })
 

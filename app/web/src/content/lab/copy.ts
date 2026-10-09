@@ -26,8 +26,69 @@ export const labPageCopy = {
   ],
   methodHeading: 'How the verdicts are made',
   methodBody:
-    'Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us.',
+    "Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.",
   rubricVersion: 'Rubric version {version}',
+} as const
+
+const frequencyPhrase = {
+  daily: 'once a day',
+  weekly: 'once a week',
+  'monthly-or-less': 'once a month or less',
+} as const satisfies Record<Exclude<Frequency, null>, string>
+
+export const labLive = {
+  panelHeading: 'Try a step live',
+  stepPicker: 'Step to test',
+  raceHeading: 'Race this step',
+  raceButton: 'Race this step',
+  racing: 'Racing…',
+  argueHeading: 'Argue the other side',
+  argueButton: 'Argue the other side',
+  arguing: 'Arguing…',
+  argueInputLabel: 'What this step does',
+  argueVerdictLabel: 'The rubric says',
+  argueAttribution: 'written by a model; the verdict is from the rubric',
+  raceNeedsExamples: 'Fill in at least 2 examples',
+  inputNotice:
+    "Sent to Amazon Bedrock to run this test, not stored by us. Don't paste customer names or personal details.",
+  exampleInputLabel: (n: number) => `Example ${String(n)}`,
+  exampleExpectedLabel: (n: number) => `Right answer for example ${String(n)}`,
+  addExample: 'Add an example',
+  removeExample: (n: number) => `Remove example ${String(n)}`,
+  upToExamples: 'Up to 5 examples',
+  measured: 'measured',
+  laneModel: 'Nova 2 Lite',
+  laneProgram: 'A simple program',
+  accuracy: (correct: number, total: number) =>
+    `${String(correct)} of ${String(total)} correct`,
+  columns: {
+    lane: 'Lane',
+    accuracy: 'Accuracy',
+    time: 'Time',
+    tokens: 'Tokens',
+    cost: 'Cost',
+  },
+  costOfRun: 'Cost of this run',
+  recordedCost: 'Recorded cost',
+  frequencyPhrase,
+  monthly: (frequency: Exclude<Frequency, null>, usd: string) =>
+    `If this runs ${frequencyPhrase[frequency]}, one item each time: about ${usd} USD a month for the model, against about 0 USD for a simple program`,
+  priceNote: (date: string) => `AWS list prices on ${date}; excludes hosting`,
+  runsLeft: (n: number) => `${String(n)} live runs left today`,
+  recordedCap: (time: string) =>
+    `Recording from ${time}, live runs are used up for today`,
+  recordedOff: (time: string) => `Recording from ${time}, live runs are off`,
+  recordedPreview: (time: string) => `Recorded run from ${time}`,
+  recordedArgueFor: (summary: string) => `Recorded for the example step: ${summary}`,
+  blocked: 'The safety filter stopped this run. Try different wording.',
+  errorNetwork: 'Could not reach the lab. Check your connection and retry.',
+  errorServer: 'The lab had a problem. Retry in a moment.',
+  errorTimeout: 'The run took longer than 20 seconds. Retry.',
+  errorValidation: 'Check each example has text and a right answer, then retry.',
+  retry: 'Retry',
+  announceRunning: (lane: string) => `${lane}: running`,
+  announceDone: (lane: string) => `${lane}: result ready`,
+  recordedHeading: 'A recorded race',
 } as const
 
 export const verdictCopy: Readonly<Record<Verdict, VerdictText>> = {

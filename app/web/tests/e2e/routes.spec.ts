@@ -12,6 +12,7 @@ const ROUTES = [
   { path: '/careers/', heading: 'Careers' },
   { path: '/privacy/', heading: 'Privacy Policy' },
   { path: '/terms/', heading: 'Terms' },
+  { path: '/lab/should-this-be-ai/', heading: 'Should This Be AI?' },
 ] as const
 
 test.describe('routes', () => {

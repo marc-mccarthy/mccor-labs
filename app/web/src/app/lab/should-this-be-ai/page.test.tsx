@@ -18,6 +18,10 @@ describe('LabPage', () => {
       screen.getByRole('heading', { level: 1, name: labPageCopy.title }),
     ).toBeInTheDocument()
     expect(screen.getByText(`Rubric version ${RUBRIC_VERSION}`)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: labPageCopy.evalsLink })).toHaveAttribute(
+      'href',
+      '/lab/evals/',
+    )
     expect(screen.getByTestId('header-image')).toHaveAttribute(
       'src',
       '/media/brand/systems-lattice.webp',

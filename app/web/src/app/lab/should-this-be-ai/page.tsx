@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
@@ -58,6 +59,11 @@ export default async function LabPage() {
             {labPageCopy.methodHeading}
           </h2>
           <p className="mt-2 max-w-2xl text-muted">{labPageCopy.methodBody}</p>
+          <p className="mt-4">
+            <Link href="/lab/evals/" className="underline underline-offset-4">
+              {labPageCopy.evalsLink}
+            </Link>
+          </p>
           <p className="mt-4 font-mono text-sm text-muted">
             {fillTemplate(labPageCopy.rubricVersion, { version: RUBRIC_VERSION })}
           </p>

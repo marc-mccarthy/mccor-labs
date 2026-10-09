@@ -27,6 +27,7 @@ export const labPageCopy = {
   methodHeading: 'How the verdicts are made',
   methodBody:
     "Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.",
+  evalsLink: 'See every eval run',
   rubricVersion: 'Rubric version {version}',
 } as const
 

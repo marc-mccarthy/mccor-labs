@@ -1,13 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ContactForm } from './ContactForm'
+import { contactLabCopy } from '@/content/lab/copy'
+import { EMPTY_ANSWERS, RUBRIC_VERSION, classifyStep } from '@/content/lab/rubric'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 import { contactMailtoHref } from '@/lib/contact'
+import { encodeLabResult, toLabResult } from '@/lib/labResult'
 import { signedPostJson } from '@/lib/signedPost'
 
 vi.mock('@/lib/signedPost', () => ({ signedPostJson: vi.fn() }))
+
+function bookingLinks() {
+  return [ui.bookCall, ui.contactFallback].flatMap((name) =>
+    screen.queryAllByRole('link', { name }),
+  )
+}
 
 describe('ContactForm with no endpoint configured', () => {
   it('shows a real way to make contact instead of a dead button', () => {
@@ -17,6 +26,8 @@ describe('ContactForm with no endpoint configured', () => {
       'href',
       `mailto:${site.contactEmail}`,
     )
+    expect(screen.queryByText(contactLabCopy.added)).not.toBeInTheDocument()
+    expect(bookingLinks()).toHaveLength(1)
   })
 })
 
@@ -36,6 +47,13 @@ describe('ContactForm with an endpoint', () => {
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/message/i)).toBeInTheDocument()
+  })
+
+  it('shows no lab notice and no booking link without lab results', () => {
+    render(<ContactForm endpoint="https://api.test/contact" />)
+    expect(screen.queryByText(contactLabCopy.added)).not.toBeInTheDocument()
+    expect(bookingLinks()).toHaveLength(0)
+    expect(screen.getByLabelText(/message/i)).toHaveValue('')
   })
 
   it('shows inline errors and does not fetch when the form is invalid', async () => {
@@ -123,5 +141,59 @@ describe('ContactForm with an endpoint', () => {
     const honeypot = document.querySelector('input[name="honeypot"]')
     expect(honeypot).toHaveAttribute('tabindex', '-1')
     expect(honeypot).toHaveAttribute('aria-hidden', 'true')
+  })
+})
+
+describe('ContactForm with lab results in the fragment', () => {
+  const encoded = encodeLabResult(
+    toLabResult(
+      [{ name: 'A', result: classifyStep(EMPTY_ANSWERS), answers: EMPTY_ANSWERS }],
+      false,
+    ),
+  )
+
+  beforeEach(() => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+  })
+
+  afterEach(() => {
+    window.history.replaceState(null, '', '/')
+  })
+
+  it('pre-fills the message and says so', () => {
+    window.history.replaceState(null, '', `/contact/#lab=${encoded}`)
+    render(<ContactForm endpoint="https://api.test/contact" />)
+    expect(screen.getByLabelText(/message/i)).toHaveValue(
+      `Results from Should This Be AI? (the wrong-tool test)\nStep 1: not answered yet (rule R1, rubric ${RUBRIC_VERSION})\nWhat I would like help with: `,
+    )
+    expect(screen.getByText(contactLabCopy.added)).toBeInTheDocument()
+    expect(bookingLinks()).toHaveLength(1)
+    expect(window.location.hash).toBe('')
+  })
+
+  it('puts the results in a mailto body when no endpoint is set', () => {
+    window.history.replaceState(null, '', `/contact/#lab=${encoded}`)
+    render(<ContactForm endpoint={null} />)
+    const link = screen.getByRole('link', { name: contactLabCopy.emailResults })
+    expect(link.getAttribute('href')).toMatch(/^mailto:.+\?subject=.+&body=Results/)
+    expect(screen.getByText(contactLabCopy.added)).toBeInTheDocument()
+    expect(bookingLinks()).toHaveLength(1)
+    expect(screen.getByRole('link', { name: /mccorlabs\.com/i })).toHaveAttribute(
+      'href',
+      `mailto:${site.contactEmail}`,
+    )
+    expect(window.location.hash).toBe('')
+  })
+
+  it('leaves the message empty for a malformed fragment', () => {
+    window.history.replaceState(null, '', '/contact/#lab=garbage')
+    render(<ContactForm endpoint="https://api.test/contact" />)
+    expect(screen.getByLabelText(/message/i)).toHaveValue('')
+    expect(screen.queryByText(contactLabCopy.added)).not.toBeInTheDocument()
   })
 })

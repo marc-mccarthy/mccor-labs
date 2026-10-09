@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type SubmitEvent } from 'react'
 import { BookingCta } from '@/components/layout/BookingCta'
 import { Reveal } from '@/components/motion/Reveal'
 import { Button } from '@/components/ui/button'
+import { contactLabCopy } from '@/content/lab/copy'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 import {
@@ -14,6 +15,9 @@ import {
   type ContactError,
   type ContactErrors,
 } from '@/lib/contact'
+import { labMailtoHref } from '@/lib/labResult'
+
+import { useLabPrefill } from './useLabPrefill'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
 
@@ -52,6 +56,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [message, setMessage] = useState('')
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
   const openedAt = useRef(0)
+  const prefill = useLabPrefill()
 
   useEffect(() => {
     openedAt.current = Date.now()
@@ -60,9 +65,17 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   if (endpoint === null) {
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
+        {prefill !== null && <p className="mb-4 text-text">{contactLabCopy.added}</p>}
         <p className="text-text">{ui.contactNotLive}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <BookingCta />
+          {prefill !== null && (
+            <Button asChild variant="link">
+              <a href={labMailtoHref(site.contactEmail, prefill)}>
+                {contactLabCopy.emailResults}
+              </a>
+            </Button>
+          )}
           <Button asChild variant="link">
             <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
           </Button>
@@ -128,6 +141,13 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       noValidate
       className="max-w-xl space-y-5"
     >
+      {prefill !== null && (
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4">
+          <p className="text-text">{contactLabCopy.added}</p>
+          <BookingCta size="sm" />
+        </div>
+      )}
+
       <Reveal>
         <div>
           <label htmlFor="name" className="mb-1 block text-sm text-text">
@@ -205,6 +225,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             id="message"
             name="message"
             rows={6}
+            key={prefill ?? 'empty'}
+            defaultValue={prefill ?? undefined}
             className={FIELD}
             aria-invalid={errors.message !== undefined}
             aria-describedby={errors.message === undefined ? undefined : 'message-error'}

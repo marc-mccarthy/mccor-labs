@@ -10,8 +10,6 @@ import { sendCopy } from '@/content/lab/copy'
 import type { RubricResult, StepAnswers } from '@/content/lab/rubric'
 import { encodeLabResult, formatLabResult, toLabResult } from '@/lib/labResult'
 
-const PREVIEW_LABEL_ID = 'lab-send-preview-label'
-
 export interface SendResultProps {
   readonly steps: readonly {
     name: string
@@ -42,15 +40,12 @@ export function SendResult({ steps }: SendResultProps) {
           />
           {sendCopy.includeNames}
         </label>
-        <p id={PREVIEW_LABEL_ID} className="mt-4 text-sm text-muted">
-          {sendCopy.previewLabel}
-        </p>
-        <pre
-          aria-labelledby={PREVIEW_LABEL_ID}
-          className="mt-2 rounded-lg border border-border bg-surface p-4 font-mono text-sm whitespace-pre-wrap"
-        >
-          {formatLabResult(result)}
-        </pre>
+        <figure className="mt-4">
+          <figcaption className="text-sm text-muted">{sendCopy.previewLabel}</figcaption>
+          <pre className="mt-2 rounded-lg border border-border bg-surface p-4 font-mono text-sm whitespace-pre-wrap">
+            {formatLabResult(result)}
+          </pre>
+        </figure>
         <div className="mt-6">
           <Button asChild size="md" className="min-w-11">
             <Link href={`/contact/#lab=${encodeLabResult(result)}`}>

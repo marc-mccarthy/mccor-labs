@@ -9,6 +9,16 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: 'border border-border bg-surface text-muted',
+        'plain-code':
+          'gap-2 bg-transparent normal-case tracking-normal text-sm text-text',
+        rules: 'gap-2 bg-transparent normal-case tracking-normal text-sm text-text',
+        'classic-ml':
+          'gap-2 bg-transparent normal-case tracking-normal text-sm text-accent',
+        'language-model':
+          'gap-2 bg-transparent normal-case tracking-normal text-sm text-accent',
+        'do-not-automate':
+          'gap-2 bg-transparent normal-case tracking-normal text-sm text-text',
+        unclear: 'gap-2 bg-transparent normal-case tracking-normal text-sm text-muted',
       },
     },
     defaultVariants: { variant: 'default' },

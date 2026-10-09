@@ -72,3 +72,12 @@ variable "brake_usd" {
     error_message = "brake_usd must be greater than 0."
   }
 }
+
+variable "brake_extra_roles" {
+  description = "Roles outside the module that the spend brake also denies, keyed by a fixed name"
+  type = map(object({
+    name = string
+    arn  = string
+  }))
+  default = {}
+}

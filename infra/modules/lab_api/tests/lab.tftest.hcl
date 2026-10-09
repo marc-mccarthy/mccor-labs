@@ -65,6 +65,18 @@ override_resource {
   values          = { arn = "arn:aws:iam::111111111111:policy/t-lab-brake-deny" }
 }
 
+override_resource {
+  target          = aws_iam_role.feedback
+  override_during = plan
+  values          = { arn = "arn:aws:iam::111111111111:role/t-lab-feedback" }
+}
+
+override_resource {
+  target          = aws_iam_role.digest
+  override_during = plan
+  values          = { arn = "arn:aws:iam::111111111111:role/t-lab-digest" }
+}
+
 variables {
   name             = "t"
   package_dir      = "../../../app/api/dist"
@@ -224,8 +236,8 @@ run "brake" {
   }
 
   assert {
-    condition     = aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles == toset(["t-lab"])
-    error_message = "The brake must attach the deny policy to the lab role and nothing else."
+    condition     = aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles == toset(["t-lab", "t-lab-feedback", "t-lab-digest"])
+    error_message = "The brake must attach the deny policy to the lab, feedback and digest roles and nothing else."
   }
 
   assert {
@@ -239,8 +251,8 @@ run "brake" {
   }
 
   assert {
-    condition     = keys(local.brake_roles) == ["lab"]
-    error_message = "The brake must list only the lab role in this phase."
+    condition     = keys(local.brake_roles) == ["digest", "feedback", "lab"]
+    error_message = "The brake must list only the digest, feedback and lab roles by default."
   }
 
   assert {
@@ -254,13 +266,13 @@ run "brake" {
   }
 
   assert {
-    condition     = length(local.lab_brake_deny_policy.Statement) == 1 && local.lab_brake_deny_policy.Statement[0].Effect == "Deny" && local.lab_brake_deny_policy.Statement[0].Action == ["bedrock:*"]
-    error_message = "The deny policy must be one Deny statement on bedrock:*."
+    condition     = length(local.lab_brake_deny_policy.Statement) == 2 && local.lab_brake_deny_policy.Statement[0].Effect == "Deny" && local.lab_brake_deny_policy.Statement[0].Action == ["bedrock:*"] && local.lab_brake_deny_policy.Statement[1].Effect == "Deny" && local.lab_brake_deny_policy.Statement[1].Action == ["dynamodb:PutItem", "dynamodb:Scan", "ses:SendEmail"] && local.lab_brake_deny_policy.Statement[1].Resource == ["*"]
+    error_message = "The deny policy must be a Deny on bedrock:* and a Deny on dynamodb:PutItem, dynamodb:Scan and ses:SendEmail."
   }
 
   assert {
-    condition     = local.lab_brake_policy.Statement[0].Action == ["iam:AttachRolePolicy", "iam:DetachRolePolicy"] && local.lab_brake_policy.Statement[0].Resource == ["arn:aws:iam::111111111111:role/t-lab"] && local.lab_brake_policy.Statement[0].Condition.ArnEquals["iam:PolicyARN"] == "arn:aws:iam::111111111111:policy/t-lab-brake-deny"
-    error_message = "The Budgets role may attach and detach only the deny policy, on the lab role only."
+    condition     = local.lab_brake_policy.Statement[0].Action == ["iam:AttachRolePolicy", "iam:DetachRolePolicy"] && local.lab_brake_policy.Statement[0].Resource == ["arn:aws:iam::111111111111:role/t-lab-digest", "arn:aws:iam::111111111111:role/t-lab-feedback", "arn:aws:iam::111111111111:role/t-lab"] && local.lab_brake_policy.Statement[0].Condition.ArnEquals["iam:PolicyARN"] == "arn:aws:iam::111111111111:policy/t-lab-brake-deny"
+    error_message = "The Budgets role may attach and detach only the deny policy, on the lab, feedback and digest roles only."
   }
 
   assert {
@@ -271,5 +283,38 @@ run "brake" {
   assert {
     condition     = local.lab_brake_assume_policy.Statement[0].Principal.Service == "budgets.amazonaws.com"
     error_message = "Only AWS Budgets may assume the brake role."
+  }
+}
+
+run "brake_covers_phase_3_roles" {
+  command = plan
+
+  variables {
+    brake_extra_roles = {
+      evals = { name = "t-github-evals", arn = "arn:aws:iam::111111111111:role/t-github-evals" }
+    }
+  }
+
+  assert {
+    condition = alltrue([
+      for role in ["t-lab", "t-lab-feedback", "t-lab-digest", "t-github-evals"] :
+      contains(aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles, role)
+    ])
+    error_message = "the brake must deny the lab, feedback, digest and eval roles"
+  }
+
+  assert {
+    condition     = length(aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles) == 4
+    error_message = "the brake must deny exactly four roles"
+  }
+
+  assert {
+    condition     = !contains(aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles, "t-contact")
+    error_message = "the contact form stays outside the brake"
+  }
+
+  assert {
+    condition     = local.lab_brake_policy.Statement[0].Resource == ["arn:aws:iam::111111111111:role/t-lab-digest", "arn:aws:iam::111111111111:role/t-github-evals", "arn:aws:iam::111111111111:role/t-lab-feedback", "arn:aws:iam::111111111111:role/t-lab"]
+    error_message = "the Budgets role must attach the deny policy to all four roles"
   }
 }

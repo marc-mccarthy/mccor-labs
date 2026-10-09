@@ -54,12 +54,13 @@ module "lab_api" {
   count  = local.has_domain ? 1 : 0
   source = "./modules/lab_api"
 
-  name             = var.name
-  package_dir      = "${path.module}/../app/api/dist"
-  ses_identity_arn = module.mailserver[0].ses_identity_arn
-  contact_from     = "website@${var.domain_name}"
-  contact_to       = "${var.admin_mailbox}@${var.domain_name}"
-  alert_email      = var.alert_email
+  name              = var.name
+  package_dir       = "${path.module}/../app/api/dist"
+  ses_identity_arn  = module.mailserver[0].ses_identity_arn
+  contact_from      = "website@${var.domain_name}"
+  contact_to        = "${var.admin_mailbox}@${var.domain_name}"
+  alert_email       = var.alert_email
+  brake_extra_roles = { for role in aws_iam_role.evals : "evals" => { name = role.name, arn = role.arn } }
 }
 
 module "site" {

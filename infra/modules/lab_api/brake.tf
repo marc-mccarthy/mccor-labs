@@ -1,15 +1,27 @@
 locals {
-  brake_roles = {
-    lab = { name = aws_iam_role.lab.name, arn = aws_iam_role.lab.arn }
-  }
+  brake_roles = merge(
+    {
+      lab      = { name = aws_iam_role.lab.name, arn = aws_iam_role.lab.arn }
+      feedback = { name = aws_iam_role.feedback.name, arn = aws_iam_role.feedback.arn }
+      digest   = { name = aws_iam_role.digest.name, arn = aws_iam_role.digest.arn }
+    },
+    var.brake_extra_roles,
+  )
 
   lab_brake_deny_policy = {
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Deny"
-      Action   = ["bedrock:*"]
-      Resource = ["*"]
-    }]
+    Statement = [
+      {
+        Effect   = "Deny"
+        Action   = ["bedrock:*"]
+        Resource = ["*"]
+      },
+      {
+        Effect   = "Deny"
+        Action   = ["dynamodb:PutItem", "dynamodb:Scan", "ses:SendEmail"]
+        Resource = ["*"]
+      },
+    ]
   }
 
   lab_brake_assume_policy = {

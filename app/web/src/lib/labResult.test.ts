@@ -107,6 +107,19 @@ describe('lab result fragment', () => {
         steps: [rawStep({ name: 'x'.repeat(61) })],
       }),
     ],
+    ...[
+      ['a control character', 'a\u0007b'],
+      ['a newline', 'a\nb'],
+      ['a DEL character', 'a\u007fb'],
+      ['a C1 control character', 'a\u0085b'],
+      ['a line separator', 'a b'],
+      ['a paragraph separator', 'a b'],
+      ['a bidi override', 'a‮b'],
+      ['a bidi isolate', 'a⁦b'],
+    ].map(([label, name]) => [
+      `a name with ${label ?? ''}`,
+      encodeRaw({ v: 1, rubricVersion: '1.0.0', steps: [rawStep({ name })] }),
+    ]),
     [
       'missing unanswered',
       encodeRaw({

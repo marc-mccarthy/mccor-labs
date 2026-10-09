@@ -6,35 +6,44 @@ import { decodeLabResult, formatLabResult } from '@/lib/labResult'
 
 const PREFIX = '#lab='
 
+const SEPARATOR = '|'
+
+let changes = 0
+
 function subscribe(onChange: () => void): () => void {
-  window.addEventListener('hashchange', onChange)
+  function onHashChange() {
+    changes += 1
+    onChange()
+  }
+  window.addEventListener('hashchange', onHashChange)
   return () => {
-    window.removeEventListener('hashchange', onChange)
+    window.removeEventListener('hashchange', onHashChange)
   }
 }
 
-function readHash(): string {
-  return window.location.hash
+function readSnapshot(): string {
+  return `${String(changes)}${SEPARATOR}${window.location.hash}`
 }
 
-function serverHash(): string {
-  return ''
+function serverSnapshot(): string {
+  return `0${SEPARATOR}`
 }
 
 export function useLabPrefill(): string | null {
-  const hash = useSyncExternalStore(subscribe, readHash, serverHash)
+  const snapshot = useSyncExternalStore(subscribe, readSnapshot, serverSnapshot)
+  const hash = snapshot.slice(snapshot.indexOf(SEPARATOR) + 1)
   const [taken, setTaken] = useState<string | null>(null)
   if (hash.startsWith(PREFIX) && hash !== taken) setTaken(hash)
 
   useEffect(() => {
-    if (taken !== null && window.location.hash === taken) {
+    if (window.location.hash.startsWith(PREFIX)) {
       window.history.replaceState(
         null,
         '',
         window.location.pathname + window.location.search,
       )
     }
-  }, [taken])
+  }, [snapshot])
 
   return useMemo(() => {
     if (taken === null) return null

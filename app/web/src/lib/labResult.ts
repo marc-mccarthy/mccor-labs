@@ -23,6 +23,7 @@ export { MAILTO_BODY_MAX }
 
 const FORMAT_VERSION = 1
 const VERSION_MAX = 20
+const UNSAFE_NAME = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/
 const STEP_KEYS = ['name', 'verdict', 'humanSignOff', 'ruleId', 'unanswered']
 
 export interface LabResultStep {
@@ -98,6 +99,7 @@ function parseStep(value: unknown): LabResultStep | null {
   if (!isRecord(value) || !hasExactKeys(value, STEP_KEYS)) return null
   const { name, verdict, humanSignOff, ruleId, unanswered } = value
   if (name !== null && (typeof name !== 'string' || name.length > NAME_MAX)) return null
+  if (name !== null && UNSAFE_NAME.test(name)) return null
   const knownVerdict = VERDICTS.find((candidate) => candidate === verdict)
   const knownRule = RULE_IDS.find((candidate) => candidate === ruleId)
   if (knownVerdict === undefined || knownRule === undefined) return null

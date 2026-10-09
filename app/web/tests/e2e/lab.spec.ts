@@ -231,7 +231,7 @@ test('/lab/should-this-be-ai/ works by keyboard alone through to the contact pag
   await expect(page.getByText(contactLabCopy.added)).toHaveCount(0)
 })
 
-test('/contact/ fills the email from a #lab= link on a full page load', async ({
+test('/lab/should-this-be-ai/ result fills the /contact/ email from a #lab= link on a full page load', async ({
   page,
 }) => {
   const allYes = Object.fromEntries(QUESTION_KEYS.map((key) => [key, 'yes'])) as Record<

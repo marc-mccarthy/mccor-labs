@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { EMPTY_ANSWERS, classifyStep } from '@/content/lab/rubric'
 import { encodeLabResult, toLabResult } from '@/lib/labResult'
@@ -32,6 +32,29 @@ describe('useLabPrefill', () => {
     window.history.replaceState(null, '', '/contact/#lab=garbage')
     render(<Probe />)
     expect(screen.getByTestId('prefill')).toHaveTextContent('none')
+    expect(window.location.hash).toBe('')
+  })
+
+  it('reads and clears a fragment that arrives after mount', async () => {
+    render(<Probe />)
+    expect(screen.getByTestId('prefill')).toHaveTextContent('none')
+    await act(async () => {
+      window.location.hash = `lab=${encoded}`
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(screen.getByTestId('prefill')).toHaveTextContent('Step 1: not answered yet')
+    expect(window.location.hash).toBe('')
+  })
+
+  it('clears a repeat of the same fragment', async () => {
+    window.history.replaceState(null, '', `/contact/#lab=${encoded}`)
+    render(<Probe />)
+    expect(window.location.hash).toBe('')
+    await act(async () => {
+      window.location.hash = `lab=${encoded}`
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(screen.getByTestId('prefill')).toHaveTextContent('Step 1: not answered yet')
     expect(window.location.hash).toBe('')
   })
 

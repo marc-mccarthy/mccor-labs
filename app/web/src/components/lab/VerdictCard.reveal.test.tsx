@@ -1,9 +1,8 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Reveal } from '@/components/motion/Reveal'
 import { EMPTY_ANSWERS, classifyStep } from '@/content/lab/rubric'
-import { WhyDrawer } from './WhyDrawer'
+import { VerdictCard } from './VerdictCard'
 
 const gate = vi.hoisted(() => ({
   release: () => undefined,
@@ -57,38 +56,35 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('WhyDrawer inside Reveal', () => {
-  it.fails(
-    'keeps the panel open when Reveal swaps in its motion wrapper (known hazard: the drawer must live outside Reveal until its state is lifted)',
-    async () => {
-      const { container } = render(
-        <Reveal>
-          <WhyDrawer
-            position={1}
-            name="Pay suppliers"
-            result={classifyStep(answers)}
-            answers={answers}
-            snippet={<pre>R2 source</pre>}
-          />
-        </Reveal>,
-      )
-      expect(container.querySelector('[data-reveal="pending"]')).not.toBeNull()
-      const button = screen.getByRole('button', { name: /^Why\?/ })
-      await userEvent.click(button)
-      expect(button).toHaveAttribute('aria-expanded', 'true')
-      expect(button).toHaveFocus()
+describe('VerdictCard while Reveal swaps in its motion wrapper', () => {
+  it('keeps an open Why panel open and focused', async () => {
+    const { container } = render(
+      <VerdictCard
+        position={1}
+        name="Pay suppliers"
+        result={classifyStep(answers)}
+        answers={answers}
+        snippet={<pre>R2 source</pre>}
+        revealOrder={0}
+      />,
+    )
+    expect(container.querySelector('[data-reveal="pending"]')).not.toBeNull()
+    const button = screen.getByRole('button', { name: /^Why\?/ })
+    await userEvent.click(button)
+    expect(button).toHaveAttribute('aria-expanded', 'true')
+    expect(button).toHaveFocus()
 
-      await act(async () => {
-        gate.release()
-        await gate.promise
-      })
-      await waitFor(() => {
-        expect(container.querySelector('[data-reveal=""]')).not.toBeNull()
-      })
+    await act(async () => {
+      gate.release()
+      await gate.promise
+    })
+    await waitFor(() => {
+      expect(container.querySelector('[data-reveal=""]')).not.toBeNull()
+    })
 
-      const after = screen.getByRole('button', { name: /^Why\?/ })
-      expect(after).toHaveAttribute('aria-expanded', 'true')
-      expect(after).toHaveFocus()
-    },
-  )
+    const after = screen.getByRole('button', { name: /^Why\?/ })
+    expect(after).toBe(button)
+    expect(after).toHaveAttribute('aria-expanded', 'true')
+    expect(after).toHaveFocus()
+  })
 })

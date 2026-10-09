@@ -20,6 +20,18 @@ override_resource {
   values          = { id = "rhp-test" }
 }
 
+override_resource {
+  target          = aws_cloudfront_distribution.site
+  override_during = plan
+  values          = { arn = "arn:aws:cloudfront::111111111111:distribution/ETEST" }
+}
+
+override_resource {
+  target          = aws_cloudfront_origin_access_control.api
+  override_during = plan
+  values          = { id = "oac-api-test" }
+}
+
 variables {
   name            = "t"
   aliases         = ["example.com", "www.example.com"]
@@ -194,8 +206,13 @@ run "api_origins" {
   }
 
   assert {
-    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[0].cache_policy_id == data.aws_cloudfront_cache_policy.disabled.id && aws_cloudfront_distribution.site.ordered_cache_behavior[0].origin_request_policy_id == data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
-    error_message = "The API behavior must use CachingDisabled and AllViewerExceptHostHeader."
+    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[0].response_headers_policy_id == "rhp-test"
+    error_message = "The API behavior must use the security headers policy."
+  }
+
+  assert {
+    condition     = anytrue([for o in aws_cloudfront_distribution.site.origin : o.origin_id == "api-contact" && o.origin_access_control_id == "oac-api-test"])
+    error_message = "The API origin must be signed by the API OAC."
   }
 
   assert {
@@ -214,7 +231,38 @@ run "api_origins" {
   }
 
   assert {
+    condition     = aws_lambda_permission.api_url["contact"].source_arn == "arn:aws:cloudfront::111111111111:distribution/ETEST" && aws_lambda_permission.api_invoke["contact"].source_arn == "arn:aws:cloudfront::111111111111:distribution/ETEST"
+    error_message = "Both permissions must be scoped to this distribution."
+  }
+
+  assert {
+    condition     = aws_lambda_permission.api_invoke["contact"].principal == "cloudfront.amazonaws.com"
+    error_message = "The invoke permission must name the CloudFront principal."
+  }
+
+  assert {
     condition     = aws_lambda_permission.api_invoke["contact"].action == "lambda:InvokeFunction" && aws_lambda_permission.api_invoke["contact"].invoked_via_function_url == true
     error_message = "CloudFront must be allowed lambda:InvokeFunction via the Function URL."
+  }
+}
+
+run "api_order" {
+  command = plan
+
+  variables {
+    api_origins = [
+      { path_pattern = "/api/contact", function_url_domain = "abc123.lambda-url.us-east-1.on.aws" },
+      { path_pattern = "/api/*", function_url_domain = "def456.lambda-url.us-east-1.on.aws" },
+    ]
+  }
+
+  assert {
+    condition     = [for b in aws_cloudfront_distribution.site.ordered_cache_behavior : b.path_pattern] == ["/api/contact", "/api/*"]
+    error_message = "Behaviors must keep the api_origins order: CloudFront uses the first match."
+  }
+
+  assert {
+    condition     = [for b in aws_cloudfront_distribution.site.ordered_cache_behavior : b.target_origin_id] == ["api-contact", "api"]
+    error_message = "Each behavior must target its own origin."
   }
 }

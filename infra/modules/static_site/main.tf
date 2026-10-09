@@ -62,10 +62,12 @@ resource "aws_cloudfront_function" "viewer_request" {
 locals {
   csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
-  api_origins = {
-    for origin in var.api_origins :
-    trim(replace(origin.path_pattern, "/[^a-z0-9]+/", "-"), "-") => origin
-  }
+  api_routes = [
+    for o in var.api_origins :
+    merge(o, { origin_id = trim(replace(lower(o.path_pattern), "/[^a-z0-9]+/", "-"), "-") })
+  ]
+
+  api_origins = { for r in local.api_routes : r.origin_id => r }
 }
 
 resource "aws_cloudfront_response_headers_policy" "site" {
@@ -160,10 +162,10 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   dynamic "ordered_cache_behavior" {
-    for_each = local.api_origins
+    for_each = local.api_routes
     content {
       path_pattern               = ordered_cache_behavior.value.path_pattern
-      target_origin_id           = ordered_cache_behavior.key
+      target_origin_id           = ordered_cache_behavior.value.origin_id
       viewer_protocol_policy     = "https-only"
       allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
       cached_methods             = ["GET", "HEAD"]

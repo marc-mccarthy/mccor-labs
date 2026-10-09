@@ -36,6 +36,9 @@ jobs:
       actions: read
       id-token: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - name: Monthly run cap
         id: cap
         env:
@@ -43,17 +46,8 @@ jobs:
         run: |
           set -euo pipefail
           since=$(date -u +%Y-%m-01)
-          used=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/eval.yml/runs?created=%3E%3D$since&per_page=100" \
-            --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID)] | length")
-          echo "Eval runs this month before this one: $used of $MONTHLY_RUN_CAP" >>"$GITHUB_STEP_SUMMARY"
-          if [ "$used" -ge "$MONTHLY_RUN_CAP" ]; then
-            echo "::warning::Eval cap reached ($used runs since $since); no AWS call made"
-            echo "run=false" >>"$GITHUB_OUTPUT"
-          else
-            echo "run=true" >>"$GITHUB_OUTPUT"
-          fi
-      - if: steps.cap.outputs.run == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/eval.yml/runs?created=%3E%3D$since&per_page=100" \
+            | bash .github/scripts/eval-cap.sh "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >>"$GITHUB_OUTPUT"
       - if: steps.cap.outputs.run == 'true'
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
       - if: steps.cap.outputs.run == 'true'
@@ -82,7 +76,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::150701180133:role/mccorlabs-github-evals
           aws-region: ${{ env.AWS_REGION }}
-          role-duration-seconds: 3600
+          role-duration-seconds: 1200
       - name: Run evals
         if: steps.cap.outputs.run == 'true'
         id: run

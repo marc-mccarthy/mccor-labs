@@ -37,17 +37,26 @@ describe('privacy document', () => {
     )
   })
 
-  it('has a live lab subsection with four paragraphs before the reading subsection', () => {
+  it('has a live lab subsection with four paragraphs, verdict marks subsection with two paragraphs, before the reading subsection', () => {
     const blocks = section('What we collect, and when').blocks
-    const start = blocks.findIndex(
+    const labStart = blocks.findIndex(
       (block) => block.kind === 'h3' && block.text === 'When you use the live lab',
     )
-    const end = blocks.findIndex(
+    const marksStart = blocks.findIndex(
+      (block) => block.kind === 'h3' && block.text === 'When you mark a verdict as wrong',
+    )
+    const readStart = blocks.findIndex(
       (block) => block.kind === 'h3' && block.text === 'When you simply read the site',
     )
-    expect(start).toBeGreaterThan(-1)
-    expect(end).toBe(start + 5)
-    expect(blocks.slice(start + 1, end).every((block) => block.kind === 'p')).toBe(true)
+    expect(labStart).toBeGreaterThan(-1)
+    expect(marksStart).toBe(labStart + 5)
+    expect(readStart).toBe(marksStart + 3)
+    expect(
+      blocks.slice(labStart + 1, marksStart).every((block) => block.kind === 'p'),
+    ).toBe(true)
+    expect(
+      blocks.slice(marksStart + 1, readStart).every((block) => block.kind === 'p'),
+    ).toBe(true)
   })
 
   it('points the access log line at the lab log', () => {
@@ -72,5 +81,27 @@ describe('privacy document', () => {
     expect(allText()).toContain(
       'Live lab text: not kept. Daily run counts: 7 days. Technical logs: 3 days.',
     )
+  })
+
+  it('covers verdict marks and the weekly digest', () => {
+    const text = allText().join('\n')
+    expect(text).toContain('Wrong?')
+    expect(text).toContain('which rule in our rubric')
+    expect(text).toContain('three fixed reasons')
+    expect(text).toContain('90 days')
+    expect(text).toContain('7 days')
+    const blocks = section('What we collect, and when').blocks
+    const marksStart = blocks.findIndex(
+      (block) => block.kind === 'h3' && block.text === 'When you mark a verdict as wrong',
+    )
+    const readStart = blocks.findIndex(
+      (block) => block.kind === 'h3' && block.text === 'When you simply read the site',
+    )
+    const marksText = blocks
+      .slice(marksStart, readStart)
+      .flatMap((block) => (block.kind === 'ul' ? block.items : [block.text]))
+      .filter((t) => t)
+      .join('\n')
+    expect(marksText).not.toContain('TODO(owner)')
   })
 })

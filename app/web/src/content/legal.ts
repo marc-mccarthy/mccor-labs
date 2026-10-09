@@ -80,6 +80,15 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'Our server writes a short technical log for each run: the time, whether it succeeded, how long it took and how many tokens it used. It never includes what you typed. These logs are deleted after 3 days.',
         },
+        { kind: 'h3', text: 'When you mark a verdict as wrong' },
+        {
+          kind: 'p',
+          text: 'If you press "Wrong?" on a verdict in our lab and send it, we store four things: which of the six verdicts it was, which rule in our rubric gave that verdict, the version of our rubric, and which of three fixed reasons you picked. We store nothing you typed, nothing about your steps, and nothing that identifies you or your device. We also keep a count of how many marks arrive each day, so we can stop accepting them after 500 in a day.',
+        },
+        {
+          kind: 'p',
+          text: 'Once a week, an automated email tells us how many marks each rule and verdict received for each reason. We use these counts to improve the rubric.',
+        },
         { kind: 'h3', text: 'When you simply read the site' },
         {
           kind: 'p',
@@ -145,6 +154,10 @@ export const privacy: LegalDocument = {
         {
           kind: 'p',
           text: 'Live lab text: not kept. Daily run counts: 7 days. Technical logs: 3 days.',
+        },
+        {
+          kind: 'p',
+          text: 'Verdict marks are deleted automatically after 90 days. Daily counts are deleted after 7 days.',
         },
         {
           kind: 'p',

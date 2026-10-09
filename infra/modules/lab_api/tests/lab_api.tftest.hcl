@@ -33,6 +33,18 @@ override_resource {
   values          = { arn = "arn:aws:lambda:us-east-1:111111111111:function:t-contact" }
 }
 
+override_resource {
+  target          = aws_lambda_function_url.feedback
+  override_during = plan
+  values          = { function_url = "https://fb123.lambda-url.us-east-1.on.aws/" }
+}
+
+override_resource {
+  target          = aws_lambda_function.feedback
+  override_during = plan
+  values          = { arn = "arn:aws:lambda:us-east-1:111111111111:function:t-lab-feedback" }
+}
+
 run "storage_and_role" {
   command = plan
 
@@ -115,12 +127,18 @@ run "function" {
   }
 
   assert {
-    condition     = output.api_origins == [{ path_pattern = "/api/contact", function_url_domain = "abc123.lambda-url.us-east-1.on.aws" }]
+    condition = output.api_origins == [
+      { path_pattern = "/api/contact", function_url_domain = "abc123.lambda-url.us-east-1.on.aws" },
+      { path_pattern = "/api/feedback", function_url_domain = "fb123.lambda-url.us-east-1.on.aws" },
+    ]
     error_message = "api_origins must carry the path and the bare Function URL host."
   }
 
   assert {
-    condition     = output.function_arns == { contact = "arn:aws:lambda:us-east-1:111111111111:function:t-contact" }
+    condition = output.function_arns == {
+      contact  = "arn:aws:lambda:us-east-1:111111111111:function:t-contact"
+      feedback = "arn:aws:lambda:us-east-1:111111111111:function:t-lab-feedback"
+    }
     error_message = "function_arns must be keyed by function name."
   }
 }

@@ -4,9 +4,13 @@ import { R1 } from './R1'
 import { R2 } from './R2'
 import { R3 } from './R3'
 import { R4 } from './R4'
+import { R5 } from './R5'
 import { R6 } from './R6'
 import { R7 } from './R7'
 import { R8 } from './R8'
+import { R9 } from './R9'
+import { R10 } from './R10'
+import { R11 } from './R11'
 import { R12 } from './R12'
 import { R13 } from './R13'
 
@@ -193,4 +197,61 @@ describe('R7, R8 and R13: a safe fixed-form checklist', () => {
       ).toBe(false)
     }
   })
+})
+
+describe('R5: free text once the step is safe', () => {
+  it.each(SAFE)('fires on free text: %o', (partial) => {
+    expect(R5.when(given({ ...partial, fixedForm: 'no' }))).toBe(true)
+  })
+  it.each([UNCHECKED, ...UNKNOWN_GATES])(
+    'stays silent unless the step is safe: %o',
+    (partial) => {
+      expect(R5.when(given({ ...partial, fixedForm: 'no' }))).toBe(false)
+    },
+  )
+  it('signs off only when a mistake is costly and checked first', () => {
+    expect(
+      R5.humanSignOff(given({ costly: 'yes', checkable: 'yes', fixedForm: 'no' })),
+    ).toBe(true)
+    expect(R5.humanSignOff(given({ costly: 'no', fixedForm: 'no' }))).toBe(false)
+  })
+  it('says a language model', () => {
+    expect(R5.verdict).toBe('language-model')
+  })
+})
+
+const NO_CHECKLIST = { costly: 'no', fixedForm: 'yes', checklist: 'no' } as const
+
+describe('R9 to R11: fixed input with no checklist', () => {
+  it.each(UNKNOWN)('R9 fires when pastCases is %s', (pastCases) => {
+    expect(R9.when(given({ ...NO_CHECKLIST, pastCases }))).toBe(true)
+    expect(R9.verdict).toBe('unclear')
+  })
+  it('R10 fires with past cases and signs off only when costly', () => {
+    expect(R10.when(given({ ...NO_CHECKLIST, pastCases: 'yes' }))).toBe(true)
+    expect(R10.verdict).toBe('classic-ml')
+    expect(R10.humanSignOff(given({ ...NO_CHECKLIST, pastCases: 'yes' }))).toBe(false)
+    expect(
+      R10.humanSignOff(
+        given({ ...NO_CHECKLIST, costly: 'yes', checkable: 'yes', pastCases: 'yes' }),
+      ),
+    ).toBe(true)
+  })
+  it('R11 fires with no past cases and keeps a person on it', () => {
+    expect(R11.when(given({ ...NO_CHECKLIST, pastCases: 'no' }))).toBe(true)
+    expect(R11.verdict).toBe('do-not-automate')
+    expect(R11.humanSignOff(given({ ...NO_CHECKLIST, pastCases: 'no' }))).toBe(false)
+  })
+  it.each([UNCHECKED, ...UNKNOWN_GATES])(
+    'all three stay silent unless the step is safe: %o',
+    (partial) => {
+      for (const rule of [R9, R10, R11]) {
+        expect(
+          rule.when(
+            given({ ...partial, fixedForm: 'yes', checklist: 'no', pastCases: 'yes' }),
+          ),
+        ).toBe(false)
+      }
+    },
+  )
 })

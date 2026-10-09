@@ -4,6 +4,7 @@ import casesJson from '../cases.json'
 import { parseCases, type ArgueCase, type EvalCase, type RaceCase } from './cases'
 import type { ToolCaller } from './judge'
 import { runEvals, stageCases, type ModelPort, type RunInput } from './run'
+import { costUsd } from './trace'
 
 const raceCase: RaceCase = {
   id: 'race-one',
@@ -222,8 +223,42 @@ describe('runEvals', () => {
     expect(result?.outputTokens).toBe(30)
     expect(result?.guardrailTextUnits).toBe(2)
     expect(result?.latencyMs).toBe(300)
-    expect(result?.costUsd).toBeGreaterThan(0)
+    expect(result?.costUsd).toBe(costUsd(150, 30, 2))
+    expect(trace.totals.costUsd).toBe(result?.costUsd)
     expect(trace.totals.inputTokens).toBe(150)
+  })
+
+  it('throws when a staged run has no case to stage', async () => {
+    const { port, argue } = fakePort()
+    await expect(
+      runEvals(input({ cases: [argueCase], staged: true, port })),
+    ).rejects.toThrow('staged run requested but no case could be staged')
+    expect(argue).not.toHaveBeenCalled()
+  })
+
+  it('cuts the stored output to 2000 characters', async () => {
+    const long = 'x'.repeat(2500)
+    const { port } = fakePort({
+      argue: () =>
+        Promise.resolve({
+          ...usage,
+          out: { blocked: false, text: long, stopReason: 'end_turn' },
+        }),
+    })
+    const trace = await runEvals(input({ cases: [argueCase], port }))
+    expect(trace.cases[0]?.output).toBe('x'.repeat(2000))
+  })
+
+  it('cuts race answers joined by commas to 2000 characters', async () => {
+    const { port } = fakePort({
+      race: (c) =>
+        Promise.resolve({
+          ...usage,
+          out: { blocked: false, answers: c.examples.map(() => 'y'.repeat(1000)) },
+        }),
+    })
+    const trace = await runEvals(input({ cases: [raceCase], port }))
+    expect(trace.cases[0]?.output).toHaveLength(2000)
   })
 
   it('rejects when the port rejects', async () => {

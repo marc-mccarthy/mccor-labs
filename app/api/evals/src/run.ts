@@ -53,12 +53,20 @@ export function stageCases(cases: EvalCase[]): {
   }
 }
 
+const MAX_OUTPUT_CHARS = 2000
+
+function cutOutput(text: string): string {
+  return Array.from(text).slice(0, MAX_OUTPUT_CHARS).join('')
+}
+
 function raceOutputText(out: RaceOutput): string {
-  return out.blocked === false ? out.answers.join(', ') : `blocked at ${out.blocked}`
+  return cutOutput(
+    out.blocked === false ? out.answers.join(', ') : `blocked at ${out.blocked}`,
+  )
 }
 
 function argueOutputText(out: ArgueOutput): string {
-  return out.blocked === false ? out.text : `blocked at ${out.blocked}`
+  return cutOutput(out.blocked === false ? out.text : `blocked at ${out.blocked}`)
 }
 
 function caseResult(
@@ -112,6 +120,9 @@ export async function runEvals(input: RunInput): Promise<EvalTrace> {
   const scored = input.staged
     ? stageCases(input.cases)
     : { cases: input.cases, stagedCaseIds: [] }
+  if (input.staged && scored.stagedCaseIds.length === 0) {
+    throw new Error('staged run requested but no case could be staged')
+  }
   const results: CaseResult[] = []
   for (const [i, original] of input.cases.entries()) {
     results.push(

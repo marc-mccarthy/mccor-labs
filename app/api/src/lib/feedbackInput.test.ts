@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { VERDICT_IDS } from '../config'
 import {
@@ -15,6 +16,59 @@ const valid = {
   rubricVersion: '2.0.0',
   reason: 'needs-less',
 }
+
+function webSource(path: string): string {
+  return readFileSync(
+    new URL(`../../../web/src/content/lab/${path}`, import.meta.url),
+    'utf8',
+  )
+}
+
+function webRuleIds(): string[] {
+  const block = /export const RULE_IDS = \[([\s\S]*?)\] as const/.exec(
+    webSource('rubric.ts'),
+  )
+  if (!block?.[1]) throw new Error('RULE_IDS not found in app/web rubric.ts')
+  return [...block[1].matchAll(/'(R\d+)'/g)].map((match) => match[1] ?? '')
+}
+
+function webRuleVerdict(): Record<string, string> {
+  const block = /export const RULE_VERDICT\b[^=]*=\s*\{([\s\S]*?)\}/.exec(
+    webSource('rules/index.ts'),
+  )
+  if (!block?.[1])
+    throw new Error('RULE_VERDICT literal map not found in app/web rules/index.ts')
+  return Object.fromEntries(
+    [...block[1].matchAll(/\b(R\d+):\s*'([a-z-]+)'/g)].map((match) => [
+      match[1] ?? '',
+      match[2] ?? '',
+    ]),
+  )
+}
+
+function webRubricVersion(): string {
+  const match = /export const RUBRIC_VERSION = '([^']+)'/.exec(webSource('rubric.ts'))
+  if (!match?.[1]) throw new Error('RUBRIC_VERSION not found in app/web rubric.ts')
+  return match[1]
+}
+
+describe('RULE_IDS', () => {
+  it('matches the web rubric list', () => {
+    expect([...RULE_IDS]).toEqual(webRuleIds())
+  })
+})
+
+describe('RULE_VERDICT', () => {
+  it('matches the web rule map', () => {
+    expect({ ...RULE_VERDICT }).toEqual(webRuleVerdict())
+  })
+})
+
+describe('RUBRIC_VERSIONS', () => {
+  it('contains the web rubric version', () => {
+    expect(RUBRIC_VERSIONS as readonly string[]).toContain(webRubricVersion())
+  })
+})
 
 describe('parseFeedback', () => {
   it('fixes the enums and the byte limit', () => {

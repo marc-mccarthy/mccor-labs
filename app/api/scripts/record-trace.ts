@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path'
 
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime'
 
-import { MODEL_ID, MODEL_LABEL, PRICES_AS_OF } from '../src/config'
+import { BEDROCK_CLIENT, MODEL_ID, MODEL_LABEL, PRICES_AS_OF } from '../src/config'
 import { argueModel } from '../src/lab/argue'
 import { runCostUsd, textUnits } from '../src/lab/cost'
 import { raceModel } from '../src/lab/race'
@@ -42,6 +42,10 @@ async function recordRace(
 ): Promise<RaceTrace> {
   const expected = request.examples.map((example) => example.expected)
   const run = await raceModel(client, request.examples, now)
+  if (run.rawToolInput === null) fail('model returned no submit_answers call')
+  if (run.stopReason !== 'tool_use') {
+    fail(`unexpected stop reason: ${run.stopReason ?? 'none'}`)
+  }
   const units = guardrailUnits(
     totalChars(request.examples.flatMap((example) => [example.input, example.expected])),
     totalChars(run.answers),
@@ -129,7 +133,11 @@ async function main(): Promise<void> {
     if (existing.length > 0)
       fail(`${existing.join(', ')} already exists; pass --force to overwrite`)
   }
-  const client = new BedrockRuntimeClient({ region: 'us-east-1', maxAttempts: 2 })
+  const client = new BedrockRuntimeClient({
+    region: 'us-east-1',
+    maxAttempts: BEDROCK_CLIENT.maxAttempts,
+    requestHandler: { requestTimeout: BEDROCK_CLIENT.requestTimeoutMs },
+  })
   const race = await recordRace(client, raceRequest)
   const argue = await recordArgue(client, argueRequest)
   await mkdir(TRACES_DIR, { recursive: true })

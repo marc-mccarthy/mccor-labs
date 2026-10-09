@@ -14,18 +14,37 @@ export function scoreAnswers(
   return { correct, total: expected.length }
 }
 
+const STOP_WORDS = new Set([
+  'the',
+  'and',
+  'for',
+  'with',
+  'you',
+  'your',
+  'our',
+  'this',
+  'that',
+  'from',
+  'have',
+  'are',
+  'was',
+  'can',
+  'not',
+])
+
 function tokens(text: string): Set<string> {
   return new Set(
     normalizeAnswer(text)
       .split(/[^\p{L}\p{N}]+/u)
-      .filter(Boolean),
+      .filter((token) => token.length >= 3 && !STOP_WORDS.has(token)),
   )
 }
 
-function sharedCount(a: Set<string>, b: Set<string>): number {
+function jaccard(a: Set<string>, b: Set<string>): number {
   let shared = 0
   for (const token of a) if (b.has(token)) shared += 1
-  return shared
+  const union = a.size + b.size - shared
+  return union === 0 ? 0 : shared / union
 }
 
 function pickNeighbour(
@@ -33,23 +52,12 @@ function pickNeighbour(
   examples: RaceExample[],
   tokenSets: Set<string>[],
 ): RaceExample | undefined {
-  const others = examples.map((example, j) => ({ example, j })).filter(({ j }) => j !== i)
-  const counts = new Map<string, number>()
-  for (const { example } of others) {
-    const key = normalizeAnswer(example.expected)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
-  }
-  let best: { example: RaceExample; score: number; common: number } | undefined
-  for (const { example, j } of others) {
-    const score = sharedCount(tokenSets[i] ?? new Set(), tokenSets[j] ?? new Set())
-    const common = counts.get(normalizeAnswer(example.expected)) ?? 0
-    if (
-      best === undefined ||
-      score > best.score ||
-      (score === best.score && common > best.common)
-    )
-      best = { example, score, common }
-  }
+  let best: { example: RaceExample; score: number } | undefined
+  examples.forEach((example, j) => {
+    if (j === i) return
+    const score = jaccard(tokenSets[i] ?? new Set(), tokenSets[j] ?? new Set())
+    if (best === undefined || score > best.score) best = { example, score }
+  })
   return best?.example
 }
 

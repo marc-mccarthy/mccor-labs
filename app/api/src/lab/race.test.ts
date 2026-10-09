@@ -33,6 +33,7 @@ function toolReply(input: unknown) {
         ],
       },
     },
+    stopReason: 'tool_use',
     usage: { inputTokens: 200, outputTokens: 40 },
   } as never
 }
@@ -53,16 +54,20 @@ describe('distinctAnswers', () => {
 })
 
 describe('buildRacePrompt', () => {
-  it('numbers the inputs and never includes the expected answers in the user text', () => {
+  it('lists the labels as JSON data, then the numbered inputs without expected answers', () => {
     const { user, labels: found } = buildRacePrompt(examples)
-    expect(user).toBe('1. charged twice\n2. cannot log in')
+    expect(user).toBe(
+      'Allowed answers (data): ["billing","account"]\n1. charged twice\n2. cannot log in',
+    )
     expect(found).toEqual(labels)
   })
 
-  it('lists the allowed answers and asks for one submit_answers call', () => {
+  it('keeps the system prompt fixed text with no expected answer in it', () => {
     const { system } = buildRacePrompt(examples)
-    expect(system).toContain('"billing", "account"')
     expect(system).toContain('submit_answers tool once')
+    for (const { expected } of examples) expect(system).not.toContain(expected)
+    const other = [{ input: 'x', expected: 'refund' }, ...examples]
+    expect(buildRacePrompt(other).system).toBe(system)
   })
 })
 
@@ -123,6 +128,16 @@ describe('readAnswers', () => {
     expect(readAnswers(raw, 2, labels)).toEqual(['', ''])
   })
 
+  it('matches labels ignoring case and spacing but returns the label as written', () => {
+    const raw = {
+      answers: [
+        { index: 1, answer: ' BILLING ' },
+        { index: 2, answer: 'Account' },
+      ],
+    }
+    expect(readAnswers(raw, 2, ['Billing', 'account'])).toEqual(['Billing', 'account'])
+  })
+
   it('keeps the first answer for a duplicate index', () => {
     const raw = {
       answers: [
@@ -140,7 +155,7 @@ describe('raceModel', () => {
     await raceModel(new BedrockRuntimeClient({}), examples, stubNow(0, 1))
     const input = bedrock.commandCalls(ConverseCommand)[0]?.args[0].input
     expect(input?.modelId).toBe('us.amazon.nova-2-lite-v1:0')
-    expect(input?.inferenceConfig).toEqual({ maxTokens: 300 })
+    expect(input?.inferenceConfig).toEqual({ maxTokens: 300, temperature: 0 })
     expect(input?.additionalModelRequestFields).toEqual({
       reasoningConfig: { type: 'disabled' },
     })
@@ -158,6 +173,7 @@ describe('raceModel', () => {
     const out = await raceModel(new BedrockRuntimeClient({}), examples, stubNow(10, 510))
     expect(out.answers).toEqual(['billing', 'account'])
     expect(out.rawToolInput).toEqual(raw)
+    expect(out.stopReason).toBe('tool_use')
     expect(out.inputTokens).toBe(200)
     expect(out.outputTokens).toBe(40)
     expect(out.ms).toBe(500)
@@ -177,5 +193,6 @@ describe('raceModel', () => {
     const out = await raceModel(new BedrockRuntimeClient({}), examples, stubNow(0, 1))
     expect(out.answers).toEqual(['', ''])
     expect(out.rawToolInput).toBeNull()
+    expect(out.stopReason).toBeNull()
   })
 })

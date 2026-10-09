@@ -10,6 +10,7 @@ export const ROUTES = [
   '/careers/',
   '/privacy/',
   '/terms/',
+  '/lab/should-this-be-ai/',
 ] as const
 
 export function trackThreeRequests(page: Page): () => Promise<string[]> {

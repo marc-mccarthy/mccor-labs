@@ -13,6 +13,12 @@ describe('sitemap', () => {
     }
   })
 
+  it('lists the lab', () => {
+    expect(sitemap().map((e) => e.url)).toContain(
+      'https://mccorlabs.com/lab/should-this-be-ai/',
+    )
+  })
+
   it('never emits a duplicate url', () => {
     const urls = sitemap().map((e) => e.url)
     expect(new Set(urls).size).toBe(urls.length)

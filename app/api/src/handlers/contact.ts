@@ -52,6 +52,10 @@ function newReference(): string {
   return randomUUID().slice(0, 8).toUpperCase()
 }
 
+function errorName(error: unknown): string {
+  return error instanceof Error ? error.name : 'unknown'
+}
+
 function log(fields: Record<string, string | number>): void {
   console.info(JSON.stringify(fields))
 }
@@ -71,8 +75,16 @@ export async function handler(
     return json(400, { reason: check.reason })
   }
 
+  const reference = newReference()
+  let config: ContactConfig
   try {
-    const config = readConfig(process.env)
+    config = readConfig(process.env)
+  } catch (error) {
+    log({ outcome: 'config', reference, error: errorName(error) })
+    return json(500, { reason: 'server' })
+  }
+
+  try {
     const now = new Date()
     const unit = await takeUnit({
       client: documentClient,
@@ -86,7 +98,6 @@ export async function handler(
       log({ outcome: 'daily_cap' })
       return json(429, { reason: 'daily_cap' })
     }
-    const reference = newReference()
     await sendOwnerEmail(sesClient, {
       from: config.from,
       to: config.to,
@@ -96,7 +107,7 @@ export async function handler(
     log({ outcome: 'sent', reference, used: unit.used })
     return json(200, { ok: true, reference })
   } catch (error) {
-    log({ outcome: 'error', error: error instanceof Error ? error.name : 'unknown' })
+    log({ outcome: 'error', reference, error: errorName(error) })
     return json(500, { reason: 'server' })
   }
 }

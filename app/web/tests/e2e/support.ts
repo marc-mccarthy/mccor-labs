@@ -11,6 +11,7 @@ export const ROUTES = [
   '/privacy/',
   '/terms/',
   '/lab/should-this-be-ai/',
+  '/lab/evals/',
 ] as const
 
 export function trackThreeRequests(page: Page): () => Promise<string[]> {

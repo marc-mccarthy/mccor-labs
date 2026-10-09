@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { evalsCopy } from '@/content/lab/evalsCopy'
 import { site } from '@/content/site'
 
 const ROUTES = [
@@ -13,6 +14,7 @@ const ROUTES = [
   { path: '/privacy/', heading: 'Privacy Policy' },
   { path: '/terms/', heading: 'Terms' },
   { path: '/lab/should-this-be-ai/', heading: 'Should This Be AI?' },
+  { path: '/lab/evals/', heading: evalsCopy.title },
 ] as const
 
 test.describe('routes', () => {

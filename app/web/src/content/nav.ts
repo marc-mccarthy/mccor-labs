@@ -14,3 +14,5 @@ export const footerNav: readonly NavItem[] = [
   { label: 'Privacy', href: '/privacy/' },
   { label: 'Terms', href: '/terms/' },
 ]
+
+export const unlistedPages: readonly string[] = ['/lab/evals/']

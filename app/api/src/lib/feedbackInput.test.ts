@@ -4,6 +4,7 @@ import {
   FEEDBACK_MAX_BYTES,
   FEEDBACK_REASONS,
   RULE_IDS,
+  RUBRIC_VERSIONS,
   RULE_VERDICT,
   parseFeedback,
 } from './feedbackInput'
@@ -27,6 +28,7 @@ describe('parseFeedback', () => {
     ])
     expect(FEEDBACK_REASONS).toEqual(['needs-less', 'needs-more', 'questions-missed'])
     expect(RULE_IDS).toEqual(Array.from({ length: 13 }, (_, i) => `R${String(i + 1)}`))
+    expect(RUBRIC_VERSIONS).toEqual(['2.0.0'])
     expect(FEEDBACK_MAX_BYTES).toBe(512)
     expect(RULE_VERDICT).toEqual({
       R1: 'unclear',
@@ -89,6 +91,9 @@ describe('parseFeedback', () => {
     ['an empty version', { ...valid, rubricVersion: '' }],
     ['a version with spaces', { ...valid, rubricVersion: '1 0' }],
     ['a 33-character version', { ...valid, rubricVersion: 'a'.repeat(33) }],
+    ['a hostname as version', { ...valid, rubricVersion: 'evil.example.com' }],
+    ['an unlisted version', { ...valid, rubricVersion: '1.0.0' }],
+    ['a version with trailing whitespace', { ...valid, rubricVersion: '2.0.0 ' }],
   ])('rejects %s', (_, raw) => {
     expect(parseFeedback(raw)).toBeNull()
   })

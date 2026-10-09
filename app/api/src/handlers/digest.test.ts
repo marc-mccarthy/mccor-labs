@@ -59,7 +59,7 @@ describe('digest handler', () => {
     expect(ses.commandCalls(SendEmailCommand)).toHaveLength(1)
   })
 
-  it('rejects when SES fails so Scheduler retries', async () => {
+  it('rejects with the SES error when SES fails', async () => {
     ses.on(SendEmailCommand).rejects(new Error('MessageRejected'))
     const { handler } = setup([])
     await expect(handler()).rejects.toThrow('MessageRejected')

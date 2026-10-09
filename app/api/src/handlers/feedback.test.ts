@@ -1,13 +1,13 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LambdaFunctionURLEvent } from '../lib/http'
 import { createFeedbackHandler } from './feedback'
 
 const ddb = mockClient(DynamoDBDocumentClient)
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}))
-const now = new Date('2026-10-09T12:00:00Z')
+const now = new Date('2026-10-09T23:30:00Z')
 const body = JSON.stringify({
   verdictId: 'rules',
   ruleId: 'R8',
@@ -24,7 +24,7 @@ function event(method: string, raw: string): LambdaFunctionURLEvent {
   } as unknown as LambdaFunctionURLEvent
 }
 
-function setup(ok = true) {
+function setup(ok = true, at = now) {
   const takeUnit = vi
     .fn()
     .mockResolvedValue({ ok, used: ok ? 1 : 500, remaining: ok ? 499 : 0 })
@@ -32,14 +32,21 @@ function setup(ok = true) {
     client,
     table: 'mccorlabs-lab',
     cap: 500,
-    now: () => now,
+    now: () => at,
     newId: () => '01TEST',
     takeUnit,
   })
   return { handler, takeUnit }
 }
 
-beforeEach(() => ddb.reset())
+beforeEach(() => {
+  ddb.reset()
+  vi.spyOn(console, 'info').mockImplementation(() => undefined)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('feedback handler', () => {
   it('rejects non-POST with 405', async () => {
@@ -108,19 +115,52 @@ describe('feedback handler', () => {
     )
     const put = ddb.commandCalls(PutCommand)[0]?.args[0].input
     expect(put?.ConditionExpression).toBe('attribute_not_exists(pk)')
-    expect(put?.Item).toMatchObject({
+    expect(put?.Item).toEqual({
       pk: 'mark#01TEST',
       verdictId: 'rules',
       ruleId: 'R8',
       rubricVersion: '2.0.0',
       reason: 'needs-less',
-      expiresAt: 1791547200 + 90 * 86400,
+      createdAt: '2026-10-09T23:30:00.000Z',
+      expiresAt: 1791588600 + 90 * 86400,
     })
   })
 
-  it('rejects when the write fails', async () => {
-    ddb.on(PutCommand).rejects(new Error('ConditionalCheckFailed'))
+  it('keys the counter on the UTC day just after midnight', async () => {
+    ddb.on(PutCommand).resolves({})
+    const at = new Date('2026-10-10T00:30:00Z')
+    const { handler, takeUnit } = setup(true, at)
+    await handler(event('POST', body))
+    expect(takeUnit).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'feedback#2026-10-10', now: at }),
+    )
+  })
+
+  it('rejects an unlisted rubric version with 400 before the counter', async () => {
+    const { handler, takeUnit } = setup()
+    const raw = JSON.stringify({ ...JSON.parse(body), rubricVersion: 'evil.example.com' })
+    expect(await handler(event('POST', raw))).toMatchObject({ statusCode: 400 })
+    expect(takeUnit).not.toHaveBeenCalled()
+  })
+
+  it('returns 500 server and logs only the error name when the write fails', async () => {
+    ddb.on(PutCommand).rejects(new Error('ConditionalCheckFailed: secret'))
     const { handler } = setup()
-    await expect(handler(event('POST', body))).rejects.toThrow('ConditionalCheckFailed')
+    const result = await handler(event('POST', body))
+    expect(result).toMatchObject({ statusCode: 500 })
+    expect(JSON.parse(result.body)).toEqual({ reason: 'server' })
+    expect(console.info).toHaveBeenCalledTimes(1)
+    expect(console.info).toHaveBeenCalledWith(
+      JSON.stringify({ outcome: 'error', error: 'Error' }),
+    )
+  })
+
+  it('returns 500 server when the counter throws', async () => {
+    const { handler, takeUnit } = setup()
+    takeUnit.mockRejectedValue(new Error('boom'))
+    const result = await handler(event('POST', body))
+    expect(result).toMatchObject({ statusCode: 500 })
+    expect(JSON.parse(result.body)).toEqual({ reason: 'server' })
+    expect(ddb.commandCalls(PutCommand)).toHaveLength(0)
   })
 })

@@ -20,30 +20,43 @@ interface FeedbackDeps {
   takeUnit: typeof realTakeUnit
 }
 
+function errorName(error: unknown): string {
+  return error instanceof Error ? error.name : 'unknown'
+}
+
+function log(fields: Record<string, string | number>): void {
+  console.info(JSON.stringify(fields))
+}
+
 export function createFeedbackHandler(deps: FeedbackDeps) {
   return async (event: LambdaFunctionURLEvent): Promise<LambdaFunctionURLResult> => {
     if (event.requestContext.http.method !== 'POST')
       return json(405, { reason: 'method' })
     const feedback = parseFeedback(parseJsonBody<unknown>(event, FEEDBACK_MAX_BYTES))
     if (!feedback) return json(400, { reason: 'validation' })
-    const now = deps.now()
-    const unit = await deps.takeUnit({
-      client: deps.client,
-      table: deps.table,
-      key: `feedback#${now.toISOString().slice(0, 10)}`,
-      cap: deps.cap,
-      ttlDays: 7,
-      now,
-    })
-    if (!unit.ok) return json(429, { reason: 'daily_cap' })
-    await deps.client.send(
-      new PutCommand({
-        TableName: deps.table,
-        Item: toMarkItem(feedback, now, deps.newId(now)),
-        ConditionExpression: 'attribute_not_exists(pk)',
-      }),
-    )
-    return json(202, { ok: true })
+    try {
+      const now = deps.now()
+      const unit = await deps.takeUnit({
+        client: deps.client,
+        table: deps.table,
+        key: `feedback#${now.toISOString().slice(0, 10)}`,
+        cap: deps.cap,
+        ttlDays: 7,
+        now,
+      })
+      if (!unit.ok) return json(429, { reason: 'daily_cap' })
+      await deps.client.send(
+        new PutCommand({
+          TableName: deps.table,
+          Item: toMarkItem(feedback, now, deps.newId(now)),
+          ConditionExpression: 'attribute_not_exists(pk)',
+        }),
+      )
+      return json(202, { ok: true })
+    } catch (error) {
+      log({ outcome: 'error', error: errorName(error) })
+      return json(500, { reason: 'server' })
+    }
   }
 }
 

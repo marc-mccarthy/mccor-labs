@@ -16,6 +16,7 @@ export const RULE_IDS = [
   'R13',
 ] as const
 export const FEEDBACK_REASONS = ['needs-less', 'needs-more', 'questions-missed'] as const
+export const RUBRIC_VERSIONS = ['2.0.0'] as const
 export const FEEDBACK_MAX_BYTES = 512
 
 export type RuleId = (typeof RULE_IDS)[number]
@@ -45,7 +46,6 @@ export interface Feedback {
 }
 
 const KEYS = 'reason,rubricVersion,ruleId,verdictId'
-const RUBRIC_VERSION = /^[0-9A-Za-z][0-9A-Za-z.-]{0,31}$/
 
 function isOneOf<T extends string>(list: readonly T[], value: unknown): value is T {
   return typeof value === 'string' && (list as readonly string[]).includes(value)
@@ -59,7 +59,6 @@ export function parseFeedback(raw: unknown): Feedback | null {
   if (!isOneOf(VERDICT_IDS, verdictId) || !isOneOf(FEEDBACK_REASONS, reason)) return null
   if (!isOneOf(RULE_IDS, ruleId)) return null
   if (verdictId === 'unclear' || RULE_VERDICT[ruleId] !== verdictId) return null
-  if (typeof rubricVersion !== 'string' || !RUBRIC_VERSION.test(rubricVersion))
-    return null
+  if (!isOneOf(RUBRIC_VERSIONS, rubricVersion)) return null
   return { verdictId, ruleId, rubricVersion, reason }
 }

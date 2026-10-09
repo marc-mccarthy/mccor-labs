@@ -20,6 +20,7 @@ import {
   type Frequency,
   type QuestionKey,
 } from '@/content/lab/rubric'
+import { cn } from '@/lib/cn'
 
 import type { Step } from './workflowState'
 
@@ -35,6 +36,9 @@ export interface StepCardProps {
   readonly onMove: (direction: 'up' | 'down') => void
   readonly onRemove: () => void
   readonly controlRef: (control: StepControl, element: HTMLElement | null) => void
+  readonly open: boolean
+  readonly verdictLabel: string
+  readonly onToggle: () => void
   readonly children?: ReactNode
 }
 
@@ -187,14 +191,44 @@ export function StepCard({
   onMove,
   onRemove,
   controlRef,
+  open,
+  verdictLabel,
+  onToggle,
   children,
 }: StepCardProps) {
   const label = stepLabel(position, step.name)
+  const questions = visibleQuestions(step.answers)
+  const answered = questions.filter((key) => step.answers[key] !== null).length
+  const summary = fillTemplate(builderCopy.toggle, {
+    step: label,
+    verdict: verdictLabel,
+    answered: fillTemplate(builderCopy.answered, {
+      count: answered,
+      total: questions.length,
+    }),
+  })
   return (
     <li data-testid={`step-${String(position)}`}>
       <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-display text-lg">{label}</h3>
+          <h3 className="hidden font-display text-lg md:block">{label}</h3>
+          <h3 className="w-full font-display text-lg md:hidden">
+            <Button
+              variant="ghost"
+              size="md"
+              className="h-auto min-h-11 w-full min-w-11 justify-start py-2 text-left whitespace-normal"
+              type="button"
+              data-step-toggle
+              aria-expanded={open}
+              aria-controls={`${step.id}-body`}
+              ref={(element: HTMLButtonElement | null) => {
+                controlRef('toggle', element)
+              }}
+              onClick={onToggle}
+            >
+              {summary}
+            </Button>
+          </h3>
           <StepControls
             label={label}
             position={position}
@@ -204,7 +238,10 @@ export function StepCard({
             controlRef={controlRef}
           />
         </div>
-        <div id={`${step.id}-body`} className="flex flex-col gap-4">
+        <div
+          id={`${step.id}-body`}
+          className={cn(open ? 'block' : 'hidden', 'space-y-4 md:block')}
+        >
           <div className="flex flex-col gap-1">
             <label htmlFor={`${step.id}-name`} className="font-medium">
               {fillTemplate(builderCopy.stepNameLabel, { n: position })}
@@ -223,7 +260,7 @@ export function StepCard({
               }}
             />
           </div>
-          {visibleQuestions(step.answers).map((key) => (
+          {questions.map((key) => (
             <ChoiceGroup
               key={key}
               name={`${step.id}-${key}`}

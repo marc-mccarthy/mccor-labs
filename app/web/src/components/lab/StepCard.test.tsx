@@ -17,6 +17,9 @@ function setup(overrides: Partial<StepCardProps> = {}) {
     onMove: vi.fn(),
     onRemove: vi.fn(),
     controlRef: vi.fn(),
+    open: true,
+    verdictLabel: 'Worth a conversation',
+    onToggle: vi.fn(),
     ...overrides,
   }
   render(
@@ -113,5 +116,32 @@ describe('StepCard', () => {
   it('hides Remove when only one step is left', () => {
     setup({ position: 1, total: 1 })
     expect(screen.queryByRole('button', { name: /Remove/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('StepCard accordion', () => {
+  it('summarises a collapsed step with its name, verdict and answered count', () => {
+    setup({
+      open: false,
+      verdictLabel: 'A simple program',
+      step: {
+        id: 'step-2',
+        name: 'Send invoices',
+        answers: { ...EMPTY_ANSWERS, costly: 'no', fixedForm: 'yes' },
+      },
+    })
+    const toggle = screen.getByRole('button', {
+      name: /Step 2, Send invoices\. A simple program\. 2 of 5 answered/,
+    })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('aria-controls', 'step-2-body')
+    expect(document.getElementById('step-2-body')).toHaveClass('hidden', 'md:block')
+  })
+
+  it('shows the body when open and reports a toggle', async () => {
+    const props = setup({ open: true })
+    expect(document.getElementById('step-2-body')).toHaveClass('block', 'md:block')
+    await userEvent.click(screen.getByRole('button', { name: /answered/ }))
+    expect(props.onToggle).toHaveBeenCalled()
   })
 })

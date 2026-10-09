@@ -29,6 +29,7 @@ import {
   type RuleId,
 } from '@/content/lab/rubric'
 
+import { FeedbackMarksProvider } from './feedbackMarks'
 import { StepCard, type StepControl } from './StepCard'
 import { VerdictCard } from './VerdictCard'
 import { initialWorkflow, workflowReducer, type Step } from './workflowState'
@@ -175,96 +176,98 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
   }
 
   return (
-    <Section aria-labelledby="lab-builder-heading">
-      <Container>
-        <h2 id="lab-builder-heading" className="font-display text-2xl">
-          {builderCopy.heading}
-        </h2>
-        <p className="mt-2 text-muted">{builderCopy.intro}</p>
-        <ol className="mt-6 flex flex-col gap-4">
-          {steps.map((step, index) => {
-            const position = index + 1
-            const result = classifyStep(step.answers)
-            const open = step.id === openId
-            return (
-              <StepCard
-                key={step.id}
-                step={step}
-                position={position}
-                total={steps.length}
-                open={open}
-                verdictLabel={verdictCopy[result.verdict].label}
-                onToggle={() => {
-                  setOpenId(open ? null : step.id)
-                }}
-                onRename={(name) => {
-                  handleRename(step, name)
-                }}
-                onAnswer={(key, value) => {
-                  handleAnswer(step, position, key, value)
-                }}
-                onFrequency={(value) => {
-                  handleFrequency(step, value)
-                }}
-                onMove={(direction) => {
-                  handleMove(step, position, direction)
-                }}
-                onRemove={() => {
-                  handleRemove(step, position)
-                }}
-                controlRef={(control, element) => {
-                  registerControl(step.id, control, element)
-                }}
-              >
-                <VerdictCard
+    <FeedbackMarksProvider>
+      <Section aria-labelledby="lab-builder-heading">
+        <Container>
+          <h2 id="lab-builder-heading" className="font-display text-2xl">
+            {builderCopy.heading}
+          </h2>
+          <p className="mt-2 text-muted">{builderCopy.intro}</p>
+          <ol className="mt-6 flex flex-col gap-4">
+            {steps.map((step, index) => {
+              const position = index + 1
+              const result = classifyStep(step.answers)
+              const open = step.id === openId
+              return (
+                <StepCard
+                  key={step.id}
+                  step={step}
                   position={position}
-                  name={step.name}
-                  result={result}
-                  answers={step.answers}
-                  snippet={snippets[result.ruleId]}
-                  revealOrder={staggerIds.has(step.id) ? index : 0}
-                />
-              </StepCard>
-            )
-          })}
-        </ol>
-        {state.removed !== null && steps.length < MAX_STEPS ? (
-          <div ref={undoRef} data-undo onFocus={pauseUndo} onBlur={resumeUndo}>
-            <p>{builderCopy.removedNotice}</p>
+                  total={steps.length}
+                  open={open}
+                  verdictLabel={verdictCopy[result.verdict].label}
+                  onToggle={() => {
+                    setOpenId(open ? null : step.id)
+                  }}
+                  onRename={(name) => {
+                    handleRename(step, name)
+                  }}
+                  onAnswer={(key, value) => {
+                    handleAnswer(step, position, key, value)
+                  }}
+                  onFrequency={(value) => {
+                    handleFrequency(step, value)
+                  }}
+                  onMove={(direction) => {
+                    handleMove(step, position, direction)
+                  }}
+                  onRemove={() => {
+                    handleRemove(step, position)
+                  }}
+                  controlRef={(control, element) => {
+                    registerControl(step.id, control, element)
+                  }}
+                >
+                  <VerdictCard
+                    position={position}
+                    name={step.name}
+                    result={result}
+                    answers={step.answers}
+                    snippet={snippets[result.ruleId]}
+                    revealOrder={staggerIds.has(step.id) ? index : 0}
+                  />
+                </StepCard>
+              )
+            })}
+          </ol>
+          {state.removed !== null && steps.length < MAX_STEPS ? (
+            <div ref={undoRef} data-undo onFocus={pauseUndo} onBlur={resumeUndo}>
+              <p>{builderCopy.removedNotice}</p>
+              <Button
+                variant="link"
+                size="md"
+                className="min-w-11"
+                type="button"
+                onClick={undo}
+              >
+                {builderCopy.undo}
+              </Button>
+            </div>
+          ) : null}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
-              variant="link"
+              ref={addRef}
+              variant="secondary"
               size="md"
               className="min-w-11"
               type="button"
-              onClick={undo}
+              aria-disabled={atLimit ? 'true' : undefined}
+              aria-describedby={atLimit ? ADD_LIMIT_ID : undefined}
+              onClick={handleAdd}
             >
-              {builderCopy.undo}
+              {builderCopy.add}
             </Button>
+            {atLimit ? (
+              <p id={ADD_LIMIT_ID} className="text-sm text-muted">
+                {builderCopy.addLimit}
+              </p>
+            ) : null}
           </div>
-        ) : null}
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Button
-            ref={addRef}
-            variant="secondary"
-            size="md"
-            className="min-w-11"
-            type="button"
-            aria-disabled={atLimit ? 'true' : undefined}
-            aria-describedby={atLimit ? ADD_LIMIT_ID : undefined}
-            onClick={handleAdd}
-          >
-            {builderCopy.add}
-          </Button>
-          {atLimit ? (
-            <p id={ADD_LIMIT_ID} className="text-sm text-muted">
-              {builderCopy.addLimit}
-            </p>
-          ) : null}
-        </div>
-        <p role="status" data-lab-status className="sr-only">
-          <span key={status.seq}>{status.text}</span>
-        </p>
-      </Container>
-    </Section>
+          <p role="status" data-lab-status className="sr-only">
+            <span key={status.seq}>{status.text}</span>
+          </p>
+        </Container>
+      </Section>
+    </FeedbackMarksProvider>
   )
 }

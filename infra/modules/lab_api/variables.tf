@@ -80,4 +80,9 @@ variable "brake_extra_roles" {
     arn  = string
   }))
   default = {}
+
+  validation {
+    condition     = alltrue([for key in keys(var.brake_extra_roles) : key == "evals"])
+    error_message = "brake_extra_roles may only contain the key evals."
+  }
 }

@@ -318,3 +318,15 @@ run "brake_covers_phase_3_roles" {
     error_message = "the Budgets role must attach the deny policy to all four roles"
   }
 }
+
+run "brake_rejects_unknown_extra_role" {
+  command = plan
+
+  variables {
+    brake_extra_roles = {
+      other = { name = "t-other", arn = "arn:aws:iam::111111111111:role/t-other" }
+    }
+  }
+
+  expect_failures = [var.brake_extra_roles]
+}

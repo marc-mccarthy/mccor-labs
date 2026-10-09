@@ -44,3 +44,8 @@ output "lab_model_arns" {
   description = "Foundation-model ARNs behind the inference profile, one per profile region"
   value       = local.lab_model_arns
 }
+
+output "brake_role_names" {
+  description = "Names of the roles the spend brake attaches its deny policy to"
+  value       = toset([for role in values(local.brake_roles) : role.name])
+}

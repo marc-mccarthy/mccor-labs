@@ -216,6 +216,11 @@ run "digest_scheduler_trust" {
   }
 
   assert {
+    condition     = local.digest_scheduler_assume_policy.Statement[0].Action == "sts:AssumeRole" && local.digest_scheduler_assume_policy.Statement[0].Effect == "Allow"
+    error_message = "The scheduler trust must be an Allow of sts:AssumeRole."
+  }
+
+  assert {
     condition     = length(local.digest_scheduler_assume_policy.Statement) == 1 && local.digest_scheduler_assume_policy.Statement[0].Principal.Service == "scheduler.amazonaws.com"
     error_message = "Only EventBridge Scheduler may assume the scheduler role."
   }

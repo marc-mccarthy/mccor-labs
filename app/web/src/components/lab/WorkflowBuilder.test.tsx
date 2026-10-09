@@ -402,4 +402,25 @@ describe('WorkflowBuilder live lab', () => {
       within(panel).getByText(verdictCopy[classifyStep(first.answers).verdict].label),
     ).toBeInTheDocument()
   })
+
+  it('keeps the live lab on the same step when that step is moved', async () => {
+    mocks.env.labLive = true
+    render(<WorkflowBuilder snippets={snippets} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice intake' }))
+    const second = presets[0]?.steps[1]
+    if (second === undefined) throw new Error('no preset step')
+    const picker = screen.getByLabelText(labLive.stepPicker)
+    await userEvent.selectOptions(
+      picker,
+      within(picker).getByRole('option', { name: `Step 2, ${second.name}` }),
+    )
+    expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(second.name)
+    await userEvent.click(
+      screen.getByRole('button', { name: `Move Step 2, ${second.name} up` }),
+    )
+    expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(second.name)
+    expect(within(picker).getByRole('option', { selected: true })).toHaveTextContent(
+      `Step 1, ${second.name}`,
+    )
+  })
 })

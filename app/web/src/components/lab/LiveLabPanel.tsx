@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
@@ -15,11 +15,12 @@ import {
 } from '@/lib/lab'
 
 import { ArgueLane } from './ArgueLane'
-import { RaceInputs, MIN_EXAMPLES, isRaceReady } from './RaceInputs'
+import { MIN_EXAMPLES, RaceInputs, filledExamples, isRaceReady } from './RaceInputs'
 import { RaceLane } from './RaceLane'
 import { useLabRun } from './useLabRun'
 
 export interface LiveLabStep {
+  readonly id: string
   readonly name: string
   readonly verdict: Verdict
   readonly frequency: Frequency
@@ -35,12 +36,26 @@ interface RaceBlockProps {
   readonly onExamplesChange: (next: RaceExample[]) => void
   readonly frequency: Frequency
   readonly onAnnounce: (text: string) => void
+  readonly onRunningChange: (running: boolean) => void
 }
 
 interface ArgueBlockProps {
   readonly stepName: string
   readonly verdict: Verdict
   readonly onAnnounce: (text: string) => void
+  readonly onRunningChange: (running: boolean) => void
+}
+
+function useReportRunning(
+  running: boolean,
+  onRunningChange: (running: boolean) => void,
+): void {
+  useEffect(() => {
+    onRunningChange(running)
+    return () => {
+      onRunningChange(false)
+    }
+  }, [running, onRunningChange])
 }
 
 function emptyExamples(): RaceExample[] {
@@ -58,6 +73,7 @@ function RaceBlock({
   onExamplesChange,
   frequency,
   onAnnounce,
+  onRunningChange,
 }: RaceBlockProps) {
   const { state, start } = useLabRun(
     'race',
@@ -65,10 +81,11 @@ function RaceBlock({
     labLive.raceHeading,
     onAnnounce,
   )
+  useReportRunning(state.status === 'running', onRunningChange)
 
   function run() {
     start({
-      examples: examples.map(({ input, expected }) => ({
+      examples: filledExamples(examples).map(({ input, expected }) => ({
         input: input.trim(),
         expected: expected.trim(),
       })),
@@ -83,13 +100,13 @@ function RaceBlock({
         onRun={run}
         disabledReason={isRaceReady(examples) ? undefined : labLive.raceNeedsExamples}
         frequency={frequency}
-        examples={ranExamples(state, examples.length)}
+        examples={ranExamples(state, filledExamples(examples).length)}
       />
     </div>
   )
 }
 
-function ArgueBlock({ stepName, verdict, onAnnounce }: ArgueBlockProps) {
+function ArgueBlock({ stepName, verdict, onAnnounce, onRunningChange }: ArgueBlockProps) {
   const [typed, setTyped] = useState<string | null>(null)
   const summary = typed ?? stepName
   const { state, start } = useLabRun(
@@ -98,6 +115,7 @@ function ArgueBlock({ stepName, verdict, onAnnounce }: ArgueBlockProps) {
     labLive.argueHeading,
     onAnnounce,
   )
+  useReportRunning(state.status === 'running', onRunningChange)
 
   return (
     <ArgueLane
@@ -105,6 +123,7 @@ function ArgueBlock({ stepName, verdict, onAnnounce }: ArgueBlockProps) {
       onSummaryChange={setTyped}
       verdict={verdict}
       state={state}
+      disabledReason={summary.trim() === '' ? labLive.argueDisabledNoName : undefined}
       onRun={() => {
         start({ stepSummary: summary.trim(), verdict })
       }}
@@ -113,13 +132,16 @@ function ArgueBlock({ stepName, verdict, onAnnounce }: ArgueBlockProps) {
 }
 
 export function LiveLabPanel({ steps, onAnnounce }: LiveLabPanelProps) {
-  const [selected, setSelected] = useState(0)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [examples, setExamples] = useState<RaceExample[]>(emptyExamples)
+  const [raceRunning, setRaceRunning] = useState(false)
+  const [argueRunning, setArgueRunning] = useState(false)
   const headingId = useId()
   const pickerId = useId()
-  const index = Math.min(selected, steps.length - 1)
-  const step = steps[index]
+  const busyId = useId()
+  const step = steps.find((item) => item.id === selectedId) ?? steps[0]
   if (step === undefined) return null
+  const busy = raceRunning || argueRunning
 
   return (
     <Section aria-labelledby={headingId}>
@@ -133,32 +155,41 @@ export function LiveLabPanel({ steps, onAnnounce }: LiveLabPanelProps) {
           </label>
           <select
             id={pickerId}
-            className="min-h-11 w-full max-w-md rounded-lg border border-border-strong bg-surface px-3 py-2 text-text"
-            value={String(index)}
+            className="min-h-11 w-full max-w-md rounded-lg border border-border-strong bg-surface px-3 py-2 text-text aria-disabled:opacity-50"
+            value={step.id}
+            aria-disabled={busy ? 'true' : undefined}
+            aria-describedby={busy ? busyId : undefined}
             onChange={(event) => {
-              setSelected(Number(event.target.value))
+              if (!busy) setSelectedId(event.target.value)
             }}
           >
             {steps.map((item, at) => (
-              <option key={at} value={String(at)}>
+              <option key={item.id} value={item.id}>
                 {stepLabel(at + 1, item.name)}
               </option>
             ))}
           </select>
+          {busy ? (
+            <p id={busyId} className="mt-1 text-sm text-muted">
+              {labLive.stepPickerBusy}
+            </p>
+          ) : null}
         </div>
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <RaceBlock
-            key={`race-${String(index)}`}
+            key={`race-${step.id}`}
             examples={examples}
             onExamplesChange={setExamples}
             frequency={step.frequency}
             onAnnounce={onAnnounce}
+            onRunningChange={setRaceRunning}
           />
           <ArgueBlock
-            key={`argue-${String(index)}`}
+            key={`argue-${step.id}-${step.verdict}`}
             stepName={step.name}
             verdict={step.verdict}
             onAnnounce={onAnnounce}
+            onRunningChange={setArgueRunning}
           />
         </div>
       </Container>

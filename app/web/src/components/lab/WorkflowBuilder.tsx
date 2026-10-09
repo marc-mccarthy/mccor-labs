@@ -343,6 +343,7 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
       {env.labLive && (
         <LiveLabPanel
           steps={steps.map((step) => ({
+            id: step.id,
             name: step.name,
             verdict: classifyStep(step.answers).verdict,
             frequency: step.answers.frequency,

@@ -77,12 +77,17 @@ export function LaneTrigger({
 export interface LaneErrorProps {
   readonly reason: ErrorReason
   readonly onRetry?: () => void
+  readonly validationText?: string
 }
 
-export function LaneError({ reason, onRetry }: LaneErrorProps) {
+export function LaneError({ reason, onRetry, validationText }: LaneErrorProps) {
+  const text =
+    reason === 'validation' && validationText !== undefined
+      ? validationText
+      : ERROR_TEXT[reason]
   return (
     <div role="alert" className="space-y-3 text-sm">
-      <p>{ERROR_TEXT[reason]}</p>
+      <p>{text}</p>
       {onRetry === undefined ? null : (
         <Button
           variant="secondary"

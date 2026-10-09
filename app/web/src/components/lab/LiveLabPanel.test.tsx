@@ -48,8 +48,13 @@ const ARGUE: ArgueResult = {
 }
 
 const STEPS: LiveLabStep[] = [
-  { name: 'Sort incoming mail', verdict: 'language-model', frequency: 'daily' },
-  { name: 'Approve refunds', verdict: 'do-not-automate', frequency: null },
+  {
+    id: 'step-1',
+    name: 'Sort incoming mail',
+    verdict: 'language-model',
+    frequency: 'daily',
+  },
+  { id: 'step-2', name: 'Approve refunds', verdict: 'do-not-automate', frequency: null },
 ]
 
 function liveRace(): LaneState<RaceResult> {
@@ -189,7 +194,7 @@ describe('LiveLabPanel', () => {
       expect(container.querySelectorAll('section')).toHaveLength(3)
     })
     await userEvent.type(screen.getByLabelText(labLive.argueInputLabel), ' now')
-    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), '1')
+    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), 'step-2')
     expect(container.querySelectorAll('section[aria-labelledby]')).toHaveLength(1)
     expect(screen.queryByText(ARGUE.text)).toBeNull()
     expect(screen.queryByText('2 of 2 correct')).toBeNull()
@@ -213,16 +218,115 @@ describe('LiveLabPanel', () => {
   it('keeps the examples when the step changes', async () => {
     render(<LiveLabPanel steps={STEPS} onAnnounce={vi.fn()} />)
     await userEvent.type(screen.getByLabelText(labLive.exampleInputLabel(1)), 'keep me')
-    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), '1')
+    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), 'step-2')
     expect(screen.getByLabelText(labLive.exampleInputLabel(1))).toHaveValue('keep me')
   })
 
   it('clamps the selection when the steps shrink', async () => {
     const { rerender } = render(<LiveLabPanel steps={STEPS} onAnnounce={vi.fn()} />)
-    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), '1')
+    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), 'step-2')
     rerender(<LiveLabPanel steps={STEPS.slice(0, 1)} onAnnounce={vi.fn()} />)
     expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(
       'Sort incoming mail',
+    )
+  })
+
+  it('disables argue with a described reason while the summary is blank', async () => {
+    const steps: LiveLabStep[] = [{ ...STEPS[0], name: '' } as LiveLabStep]
+    render(<LiveLabPanel steps={steps} onAnnounce={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: labLive.argueButton })
+    expect(trigger).toHaveAttribute('aria-disabled', 'true')
+    expect(trigger).toHaveAccessibleDescription(labLive.argueDisabledNoName)
+    await userEvent.click(trigger)
+    expect(postLab).not.toHaveBeenCalled()
+    await userEvent.type(screen.getByLabelText(labLive.argueInputLabel), '   ')
+    expect(trigger).toHaveAttribute('aria-disabled', 'true')
+    await userEvent.type(screen.getByLabelText(labLive.argueInputLabel), 'Pay suppliers')
+    expect(trigger).not.toHaveAttribute('aria-disabled')
+  })
+
+  it('stays on the same step through a reorder', async () => {
+    const onAnnounce = vi.fn()
+    const { rerender } = render(<LiveLabPanel steps={STEPS} onAnnounce={onAnnounce} />)
+    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), 'step-2')
+    rerender(
+      <LiveLabPanel
+        steps={[STEPS[1], STEPS[0]] as LiveLabStep[]}
+        onAnnounce={onAnnounce}
+      />,
+    )
+    expect(screen.getByLabelText(labLive.stepPicker)).toHaveValue('step-2')
+    expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue('Approve refunds')
+  })
+
+  it('falls back to the first step when the selected step is removed', async () => {
+    const onAnnounce = vi.fn()
+    const { rerender } = render(<LiveLabPanel steps={STEPS} onAnnounce={onAnnounce} />)
+    await userEvent.selectOptions(screen.getByLabelText(labLive.stepPicker), 'step-2')
+    rerender(<LiveLabPanel steps={[STEPS[0]] as LiveLabStep[]} onAnnounce={onAnnounce} />)
+    expect(screen.getByLabelText(labLive.stepPicker)).toHaveValue('step-1')
+    expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(
+      'Sort incoming mail',
+    )
+  })
+
+  it('resets the argue lane when the verdict of the selected step changes', async () => {
+    postLab.mockResolvedValue(liveArgue())
+    const onAnnounce = vi.fn()
+    const { rerender } = render(<LiveLabPanel steps={STEPS} onAnnounce={onAnnounce} />)
+    await userEvent.click(screen.getByRole('button', { name: labLive.argueButton }))
+    await waitFor(() => {
+      expect(screen.getByText(ARGUE.text)).toBeInTheDocument()
+    })
+    const changed = [
+      { ...STEPS[0], verdict: 'rules' } as LiveLabStep,
+      STEPS[1],
+    ] as LiveLabStep[]
+    rerender(<LiveLabPanel steps={changed} onAnnounce={onAnnounce} />)
+    expect(screen.queryByText(ARGUE.text)).toBeNull()
+    expect(screen.getByText(verdictCopy.rules.label)).toBeInTheDocument()
+  })
+
+  it('locks the step picker while a lane runs and ignores changes', async () => {
+    let finish: (state: LaneState<ArgueResult>) => void = () => undefined
+    postLab.mockReturnValue(
+      new Promise<LaneState<ArgueResult>>((resolve) => {
+        finish = resolve
+      }),
+    )
+    render(<LiveLabPanel steps={STEPS} onAnnounce={vi.fn()} />)
+    const picker = screen.getByLabelText(labLive.stepPicker)
+    expect(picker).not.toHaveAttribute('aria-disabled')
+    await userEvent.click(screen.getByRole('button', { name: labLive.argueButton }))
+    expect(picker).toHaveAttribute('aria-disabled', 'true')
+    expect(picker).toHaveAccessibleDescription(labLive.stepPickerBusy)
+    await userEvent.selectOptions(picker, 'step-2')
+    expect(picker).toHaveValue('step-1')
+    finish(liveArgue())
+    await waitFor(() => {
+      expect(picker).not.toHaveAttribute('aria-disabled')
+    })
+    await userEvent.selectOptions(picker, 'step-2')
+    expect(picker).toHaveValue('step-2')
+  })
+
+  it('races only the filled examples when a third one is blank', async () => {
+    postLab.mockResolvedValue(liveRace())
+    render(<LiveLabPanel steps={STEPS} onAnnounce={vi.fn()} />)
+    await fillExamples()
+    await userEvent.click(screen.getByRole('button', { name: labLive.addExample }))
+    const trigger = screen.getByRole('button', { name: labLive.raceButton })
+    expect(trigger).not.toHaveAttribute('aria-disabled')
+    await userEvent.click(trigger)
+    expect(postLab).toHaveBeenCalledWith(
+      'race',
+      {
+        examples: [
+          { input: 'Invoice from Acme', expected: 'billing' },
+          { input: 'Parcel is late', expected: 'shipping' },
+        ],
+      },
+      parseRaceResult,
     )
   })
 })

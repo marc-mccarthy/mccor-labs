@@ -48,6 +48,7 @@ export const labLive = {
   arguing: 'Arguing…',
   argueInputLabel: 'What this step does',
   argueVerdictLabel: 'The rubric says',
+  argueDisabledNoName: 'Name this step first, then argue against its verdict.',
   argueAttribution: 'written by a model; the verdict is from the rubric',
   raceNeedsExamples: 'Fill in at least 2 examples',
   inputNotice:
@@ -88,6 +89,8 @@ export const labLive = {
   errorServer: 'The lab had a problem. Retry in a moment.',
   errorTimeout: 'The run took longer than 20 seconds. Retry.',
   errorValidation: 'Check each example has text and a right answer, then retry.',
+  argueErrorValidation: 'Check this step has a name, then retry.',
+  stepPickerBusy: 'Wait for the running test to finish before switching steps.',
   retry: 'Retry',
   announceRunning: (lane: string) => `${lane}: running`,
   announceDone: (lane: string) => `${lane}: result ready`,

@@ -19,6 +19,7 @@ export interface ArgueLaneProps {
   readonly state: LaneState<ArgueResult>
   readonly onRun: () => void
   readonly recordedSummary?: string
+  readonly disabledReason?: string
 }
 
 const FIELD =
@@ -31,6 +32,7 @@ export function ArgueLane({
   state,
   onRun,
   recordedSummary,
+  disabledReason,
 }: ArgueLaneProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const baseId = useId()
@@ -41,7 +43,7 @@ export function ArgueLane({
 
   function retry() {
     triggerRef.current?.focus()
-    if (!running) onRun()
+    if (!running && disabledReason === undefined) onRun()
   }
 
   return (
@@ -69,6 +71,7 @@ export function ArgueLane({
         label={labLive.argueButton}
         runningLabel={labLive.arguing}
         running={running}
+        disabledReason={disabledReason}
         onRun={onRun}
         triggerRef={triggerRef}
       />
@@ -81,7 +84,11 @@ export function ArgueLane({
       </p>
       {state.status === 'blocked' ? <LaneBlocked /> : null}
       {state.status === 'error' ? (
-        <LaneError reason={state.reason} onRetry={retry} />
+        <LaneError
+          reason={state.reason}
+          onRetry={retry}
+          validationText={labLive.argueErrorValidation}
+        />
       ) : null}
       {state.status === 'running' ||
       state.status === 'live' ||

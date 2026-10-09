@@ -1,6 +1,21 @@
+import type { Verdict } from '@/content/lab/rubric'
 import { signedPostJson } from '@/lib/signedPost'
 
 export type LabKind = 'race' | 'argue'
+
+export interface RaceExample {
+  input: string
+  expected: string
+}
+
+export interface RaceRequest {
+  examples: RaceExample[]
+}
+
+export interface ArgueRequest {
+  stepSummary: string
+  verdict: Verdict
+}
 
 export interface LaneResult {
   answers: string[]
@@ -36,6 +51,16 @@ export interface ArgueResult {
   costUsd: number
 }
 
+export interface LabRequests {
+  race: RaceRequest
+  argue: ArgueRequest
+}
+
+export interface LabResults {
+  race: RaceResult
+  argue: ArgueResult
+}
+
 export type LaneState<R> =
   | { status: 'idle' }
   | { status: 'running' }
@@ -47,7 +72,7 @@ export type LaneState<R> =
       result: R
       runsLeft: number | null
     }
-  | { status: 'blocked'; stage: 'input' | 'output' }
+  | { status: 'blocked'; stage: 'input' | 'output'; runsLeft: number }
   | { status: 'error'; reason: 'network' | 'server' | 'timeout' | 'validation' }
 
 export const LAB_TIMEOUT_MS = 20_000
@@ -127,8 +152,9 @@ function failure(reason: ErrorReason): LaneState<never> {
 function parseOk<R>(body: unknown, parse: (v: unknown) => R | null): LaneState<R> {
   if (!isRecord(body)) return failure('server')
   if (body.mode === 'blocked') {
-    return body.stage === 'input' || body.stage === 'output'
-      ? { status: 'blocked', stage: body.stage }
+    const { stage, runsLeft } = body
+    return (stage === 'input' || stage === 'output') && isCount(runsLeft)
+      ? { status: 'blocked', stage, runsLeft }
       : failure('server')
   }
   const result = parse(body.result)
@@ -159,7 +185,7 @@ export function toLaneState<R>(
 
 async function exchange(
   kind: LabKind,
-  body: unknown,
+  body: LabRequests[LabKind],
   post: typeof signedPostJson,
 ): Promise<{ status: number; body: unknown }> {
   const response = await post(`/api/lab/${kind}`, body)
@@ -167,12 +193,12 @@ async function exchange(
   return { status: response.status, body: parsed }
 }
 
-export async function postLab<R>(
-  kind: LabKind,
-  body: unknown,
-  parse: (v: unknown) => R | null,
+export async function postLab<K extends LabKind>(
+  kind: K,
+  body: LabRequests[K],
+  parse: (v: unknown) => LabResults[K] | null,
   options: { timeoutMs?: number; post?: typeof signedPostJson } = {},
-): Promise<LaneState<R>> {
+): Promise<LaneState<LabResults[K]>> {
   const { timeoutMs = LAB_TIMEOUT_MS, post = signedPostJson } = options
   let timer: ReturnType<typeof setTimeout> | undefined
   const timeout = new Promise<'timeout'>((resolve) => {

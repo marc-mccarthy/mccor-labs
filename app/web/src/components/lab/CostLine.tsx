@@ -1,6 +1,6 @@
 import { labLive } from '@/content/lab/copy'
 import type { Frequency } from '@/content/lab/rubric'
-import { formatMonthlyUsd, formatUsd, monthlyModelUsd } from '@/lib/labCost'
+import { USD_FLOOR, formatMonthlyUsd, formatUsd, monthlyModelUsd } from '@/lib/labCost'
 
 export interface CostLineProps {
   readonly costUsd: number
@@ -21,6 +21,7 @@ function monthlySentence(
   }
   const monthly = monthlyModelUsd(costUsd, examples, frequency)
   if (monthly === null) return null
+  if (monthly > 0 && monthly < USD_FLOOR) return labLive.monthlyUnderFloor(frequency)
   return labLive.monthly(frequency, formatMonthlyUsd(monthly).value)
 }
 

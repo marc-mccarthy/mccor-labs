@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { labLive } from '@/content/lab/copy'
-import { postLab, type LabKind, type LaneState } from '@/lib/lab'
+import {
+  postLab,
+  type LabKind,
+  type LabRequests,
+  type LabResults,
+  type LaneState,
+} from '@/lib/lab'
 
 const TIME_FORMAT = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -33,13 +39,14 @@ function finishText<R>(state: LaneState<R>, laneName: string): string | null {
   }
 }
 
-export function useLabRun<R>(
-  kind: LabKind,
-  parse: (v: unknown) => R | null,
+export function useLabRun<K extends LabKind>(
+  kind: K,
+  parse: (v: unknown) => LabResults[K] | null,
   laneName: string,
   onAnnounce: (text: string) => void,
   run: typeof postLab = postLab,
-): { state: LaneState<R>; start: (body: unknown) => void } {
+): { state: LaneState<LabResults[K]>; start: (body: LabRequests[K]) => void } {
+  type R = LabResults[K]
   const [state, setState] = useState<LaneState<R>>({ status: 'idle' })
   const running = useRef(false)
   const mounted = useRef(false)
@@ -52,7 +59,7 @@ export function useLabRun<R>(
   }, [])
 
   const start = useCallback(
-    (body: unknown) => {
+    (body: LabRequests[K]) => {
       if (running.current) return
       running.current = true
       setState({ status: 'running' })

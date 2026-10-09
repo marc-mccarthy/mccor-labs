@@ -73,6 +73,8 @@ export const labLive = {
   frequencyPhrase,
   monthly: (frequency: Exclude<Frequency, null>, usd: string) =>
     `If this runs ${frequencyPhrase[frequency]}, one item each time: about ${usd} USD a month for the model, against about 0 USD for a simple program`,
+  monthlyUnderFloor: (frequency: Exclude<Frequency, null>) =>
+    `If this runs ${frequencyPhrase[frequency]}, one item each time: less than 0.0001 USD a month for the model, against about 0 USD for a simple program`,
   priceNote: (date: string) => `AWS list prices on ${date}; excludes hosting`,
   runsLeft: (n: number) => `${String(n)} live runs left today`,
   recordedCap: (time: string) =>

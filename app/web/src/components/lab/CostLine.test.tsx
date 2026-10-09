@@ -61,6 +61,54 @@ describe('CostLine', () => {
     expect(screen.queryByText(/If this runs/)).toBeNull()
   })
 
+  it('pins the projected sentence for 0.002 USD over 5 examples, daily', () => {
+    render(
+      <CostLine
+        costUsd={0.002}
+        examples={5}
+        frequency="daily"
+        pricesAsOf="2026-10-09"
+        recorded={false}
+      />,
+    )
+    expect(screen.getByText(/^If this runs once a day,/).textContent).toBe(
+      'If this runs once a day, one item each time: about 0.02 USD a month for the model, against about 0 USD for a simple program',
+    )
+  })
+
+  it('says less than 0.0001 and never "about under" for a tiny projection', () => {
+    const { container } = render(
+      <CostLine
+        costUsd={0.000001}
+        examples={1}
+        frequency="daily"
+        pricesAsOf="2026-10-09"
+        recorded={false}
+      />,
+    )
+    expect(container.textContent).not.toContain('about under')
+    expect(screen.getByText(/^If this runs once a day,/).textContent).toBe(
+      labLive.monthlyUnderFloor('daily'),
+    )
+  })
+
+  it('says about 0 for a zero cost and never "about under"', () => {
+    const { container } = render(
+      <CostLine
+        costUsd={0}
+        examples={1}
+        frequency="daily"
+        pricesAsOf="2026-10-09"
+        recorded={false}
+      />,
+    )
+    expect(container.textContent).not.toContain('about under')
+    expect(container).toHaveTextContent('Cost of this run 0 USD')
+    expect(screen.getByText(/^If this runs once a day,/)).toHaveTextContent(
+      'about 0 USD a month for the model',
+    )
+  })
+
   it('writes the monthly line in USD only', () => {
     render(
       <CostLine

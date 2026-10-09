@@ -35,6 +35,7 @@ import {
 
 import { FeedbackMarksProvider } from './feedbackMarks'
 import { ProgressRail, summarize } from './ProgressRail'
+import { SendResult } from './SendResult'
 import { StepCard, type StepControl } from './StepCard'
 import { SummaryTable } from './SummaryTable'
 import { VerdictCard } from './VerdictCard'
@@ -331,6 +332,13 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
           position: index + 1,
           name: step.name,
           result: classifyStep(step.answers),
+        }))}
+      />
+      <SendResult
+        steps={steps.map((step) => ({
+          name: step.name,
+          result: classifyStep(step.answers),
+          answers: step.answers,
         }))}
       />
     </FeedbackMarksProvider>

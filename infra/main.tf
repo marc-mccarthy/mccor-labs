@@ -67,6 +67,6 @@ module "site" {
   aliases           = local.has_domain ? local.hostnames : []
   certificate_arn   = one(module.certificate[*].certificate_arn)
   force_destroy     = !var.protect_data
-  api_origins       = try(module.lab_api[0].api_origins, [])
-  api_function_arns = try(module.lab_api[0].function_arns, {})
+  api_origins       = local.has_domain ? module.lab_api[0].api_origins : []
+  api_function_arns = local.has_domain ? module.lab_api[0].function_arns : {}
 }

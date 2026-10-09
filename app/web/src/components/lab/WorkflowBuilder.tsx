@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useReducer, useRef, useState, type ReactNode } from 'react'
+import {
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+  type FocusEvent,
+  type ReactNode,
+} from 'react'
 
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
@@ -47,6 +54,8 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
   const controls = useRef(new Map<string, HTMLElement>())
   const pendingFocus = useRef<string | null>(null)
   const addRef = useRef<HTMLButtonElement>(null)
+  const undoRef = useRef<HTMLDivElement>(null)
+  const [undoFocused, setUndoFocused] = useState(false)
 
   const { steps } = state
   const atLimit = steps.length >= MAX_STEPS
@@ -58,6 +67,21 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
     const element = target === 'add' ? addRef.current : controls.current.get(target)
     element?.focus()
   })
+
+  useEffect(() => {
+    if (state.removed === null || undoFocused) return
+    function expireUndo() {
+      if (undoRef.current?.contains(document.activeElement)) {
+        pendingFocus.current = 'add'
+      }
+      setUndoFocused(false)
+      dispatch({ type: 'expire-undo' })
+    }
+    const timer = window.setTimeout(expireUndo, 10_000)
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [state.removed, undoFocused])
 
   function announce(text: string) {
     setStatus((previous) => ({ text, seq: previous.seq + 1 }))
@@ -104,12 +128,50 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
     dispatch({ type: 'frequency', id: step.id, value })
   }
 
-  function handleMove(step: Step, direction: 'up' | 'down') {
+  function handleMove(step: Step, position: number, direction: 'up' | 'down') {
+    const newPosition = direction === 'up' ? position - 1 : position + 1
+    if (newPosition < 1 || newPosition > steps.length) return
     dispatch({ type: 'move', id: step.id, direction })
+    pendingFocus.current = `${step.id}:${direction === 'up' ? 'up' : 'down'}`
+    announce(
+      fillTemplate(direction === 'up' ? statusCopy.movedUp : statusCopy.movedDown, {
+        step: stepLabel(newPosition, step.name),
+      }),
+    )
   }
 
-  function handleRemove(step: Step) {
+  function handleRemove(step: Step, position: number) {
     dispatch({ type: 'remove', id: step.id })
+    setUndoFocused(false)
+    const next = steps.filter((s) => s.id !== step.id)[position - 1]
+    if (next === undefined) {
+      pendingFocus.current = 'add'
+    } else {
+      setOpenId(next.id)
+      pendingFocus.current = `${next.id}:name`
+    }
+    announce(fillTemplate(statusCopy.removed, { step: stepLabel(position, step.name) }))
+  }
+
+  function undo() {
+    const next = workflowReducer(state, { type: 'undo' })
+    if (next === state || state.removed === null) return
+    const { step, index } = state.removed
+    dispatch({ type: 'undo' })
+    setUndoFocused(false)
+    setOpenId(step.id)
+    pendingFocus.current = `${step.id}:name`
+    announce(fillTemplate(statusCopy.restored, { step: stepLabel(index + 1, step.name) }))
+  }
+
+  function pauseUndo() {
+    setUndoFocused(true)
+  }
+
+  function resumeUndo(event: FocusEvent<HTMLDivElement>) {
+    const target = event.relatedTarget
+    if (target instanceof Node && event.currentTarget.contains(target)) return
+    setUndoFocused(false)
   }
 
   return (
@@ -145,10 +207,10 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
                   handleFrequency(step, value)
                 }}
                 onMove={(direction) => {
-                  handleMove(step, direction)
+                  handleMove(step, position, direction)
                 }}
                 onRemove={() => {
-                  handleRemove(step)
+                  handleRemove(step, position)
                 }}
                 controlRef={(control, element) => {
                   registerControl(step.id, control, element)
@@ -166,6 +228,20 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
             )
           })}
         </ol>
+        {state.removed !== null && steps.length < MAX_STEPS ? (
+          <div ref={undoRef} data-undo onFocus={pauseUndo} onBlur={resumeUndo}>
+            <p>{builderCopy.removedNotice}</p>
+            <Button
+              variant="link"
+              size="md"
+              className="min-w-11"
+              type="button"
+              onClick={undo}
+            >
+              {builderCopy.undo}
+            </Button>
+          </div>
+        ) : null}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Button
             ref={addRef}

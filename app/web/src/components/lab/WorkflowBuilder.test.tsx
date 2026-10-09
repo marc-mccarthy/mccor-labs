@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -7,6 +7,7 @@ import {
   builderCopy,
   fillTemplate,
   questionCopy,
+  statusCopy,
   verdictCopy,
 } from '@/content/lab/copy'
 import { MAX_STEPS } from '@/content/lab/limits'
@@ -135,5 +136,147 @@ describe('WorkflowBuilder', () => {
     expect(block(1)).toHaveClass('motion-safe:starting:opacity-0')
     expect(block(1)).toHaveTextContent(verdictCopy['language-model'].label)
     expect(block(2)).toBe(secondBefore)
+  })
+})
+
+describe('WorkflowBuilder move, remove and undo', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  async function threeSteps() {
+    render(<WorkflowBuilder snippets={snippets} />)
+    await userEvent.type(nameField(1), 'One')
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    await userEvent.type(nameField(2), 'Two')
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    await userEvent.type(nameField(3), 'Three')
+  }
+
+  it('keeps focus on the same button of the moved step', async () => {
+    await threeSteps()
+    await userEvent.click(screen.getByRole('button', { name: 'Move Step 2, Two up' }))
+    expect(screen.getByRole('button', { name: 'Move Step 1, Two up' })).toHaveFocus()
+    expect(status()).toHaveTextContent('Moved up. Now Step 1, Two.')
+  })
+
+  it('focuses the next step name after a remove, or Add when none is left', async () => {
+    await threeSteps()
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Step 2, Two' }))
+    expect(nameField(2)).toHaveValue('Three')
+    expect(nameField(2)).toHaveFocus()
+    expect(status()).toHaveTextContent(
+      fillTemplate(statusCopy.removed, { step: 'Step 2, Two' }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Step 2, Three' }))
+    expect(screen.getByRole('button', { name: builderCopy.add })).toHaveFocus()
+  })
+
+  it('re-renders the status node when the same removal message repeats', async () => {
+    render(<WorkflowBuilder snippets={snippets} />)
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Step 2' }))
+    const first = status()?.firstElementChild
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Step 2' }))
+    const second = status()?.firstElementChild
+    expect(second?.textContent).toBe(first?.textContent)
+    expect(second).not.toBe(first)
+  })
+
+  it('offers Undo that restores the step in place', async () => {
+    await threeSteps()
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Step 2, Two' }))
+    expect(screen.getByText(builderCopy.removedNotice)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.undo }))
+    expect(nameField(2)).toHaveValue('Two')
+    expect(nameField(2)).toHaveFocus()
+    expect(status()).toHaveTextContent('Step 2, Two restored.')
+  })
+
+  async function removeWithFakeTimers() {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    render(<WorkflowBuilder snippets={snippets} />)
+    await user.click(screen.getByRole('button', { name: builderCopy.add }))
+    await user.click(screen.getByRole('button', { name: 'Remove Step 2' }))
+    return user
+  }
+
+  async function advance(ms: number) {
+    vi.setTimerTickMode('manual')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms)
+    })
+  }
+
+  function undoButton() {
+    return screen.queryByRole('button', { name: builderCopy.undo })
+  }
+
+  it('withdraws Undo after ten seconds', async () => {
+    await removeWithFakeTimers()
+    expect(undoButton()).toBeInTheDocument()
+    await advance(10_000)
+    expect(undoButton()).not.toBeInTheDocument()
+  })
+
+  it('pauses the Undo countdown while focus is inside the Undo block', async () => {
+    await removeWithFakeTimers()
+    act(() => {
+      undoButton()?.focus()
+    })
+    await advance(15_000)
+    expect(undoButton()).toBeInTheDocument()
+    act(() => {
+      screen.getByRole('button', { name: builderCopy.add }).focus()
+    })
+    await advance(9_999)
+    expect(undoButton()).toBeInTheDocument()
+    await advance(1)
+    expect(undoButton()).not.toBeInTheDocument()
+  })
+
+  it('moves focus to Add when Undo expires while it still holds focus', async () => {
+    await removeWithFakeTimers()
+    const undo = undoButton()
+    act(() => {
+      undo?.focus()
+    })
+    fireEvent.blur(undo!, { relatedTarget: null })
+    expect(undo).toHaveFocus()
+    await advance(10_000)
+    expect(undoButton()).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: builderCopy.add })).toHaveFocus()
+  })
+
+  it('restarts the countdown after an Undo that held focus unmounts', async () => {
+    const user = await removeWithFakeTimers()
+    act(() => {
+      undoButton()?.focus()
+    })
+    await user.click(undoButton()!)
+    expect(undoButton()).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Remove Step 2' }))
+    expect(undoButton()).toBeInTheDocument()
+    await advance(10_000)
+    expect(undoButton()).not.toBeInTheDocument()
+  })
+
+  it('hides Undo at eight steps and never announces a restore that did not happen', async () => {
+    render(<WorkflowBuilder snippets={snippets} />)
+    for (let i = 1; i < MAX_STEPS; i += 1) {
+      await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    }
+    await userEvent.click(
+      screen.getByRole('button', { name: `Remove Step ${String(MAX_STEPS)}` }),
+    )
+    expect(undoButton()).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    expect(screen.getAllByTestId(/^step-\d+$/)).toHaveLength(MAX_STEPS)
+    expect(undoButton()).not.toBeInTheDocument()
+    expect(screen.queryByText(builderCopy.removedNotice)).not.toBeInTheDocument()
+    expect(status()).not.toHaveTextContent(/restored/)
+    expect(nameField(MAX_STEPS)).toHaveFocus()
   })
 })

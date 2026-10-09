@@ -1,0 +1,800 @@
+{
+  "schema": 1,
+  "runId": "fixture-1",
+  "date": "2026-10-09",
+  "startedAt": "2026-10-09T15:00:00.000Z",
+  "staged": true,
+  "stagedCaseIds": ["race-invoice-type"],
+  "runUrl": null,
+  "modelId": "us.amazon.nova-2-lite-v1:0",
+  "rubricVersion": "2.0.0",
+  "rubric": {
+    "passed": 12,
+    "failed": 0
+  },
+  "cases": [
+    {
+      "id": "race-invoice-type",
+      "kind": "race",
+      "pass": false,
+      "code": {
+        "pass": false,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": false,
+            "detail": "2 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "utility, supplier, refund",
+      "inputTokens": 180,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 420,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-support-urgency",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "4 answers for 4 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "4 of 4 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "today, this-week, today, this-week",
+      "inputTokens": 181,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 437,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-quote-size",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "small, large, small",
+      "inputTokens": 182,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 454,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-expense-category",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "travel, meals, equipment",
+      "inputTokens": 183,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 471,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-review-sentiment",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "positive, negative, mixed",
+      "inputTokens": 184,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 488,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-booking-change",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "new, change, cancel",
+      "inputTokens": 185,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 505,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-form-language",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "english, spanish, french",
+      "inputTokens": 186,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 522,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-receipt-vendor",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "fuel, other, fuel",
+      "inputTokens": 187,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 539,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-ticket-team",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "hardware, access, software",
+      "inputTokens": 188,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 556,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "race-lead-intent",
+      "kind": "race",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "answer-count",
+            "pass": true,
+            "detail": "3 answers for 3 examples"
+          },
+          {
+            "name": "labels-valid",
+            "pass": true,
+            "detail": "every answer is a label"
+          },
+          {
+            "name": "accuracy",
+            "pass": true,
+            "detail": "3 of 3 correct"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "buying, job-seeker, spam",
+      "inputTokens": 189,
+      "outputTokens": 12,
+      "guardrailTextUnits": 1,
+      "latencyMs": 573,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-plain-code-payroll",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 190,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 590,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-rules-refunds",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 191,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 607,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-ml-churn",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 192,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 624,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-lm-email-triage",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 193,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 641,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-human-hiring",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 194,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 658,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-unclear-scheduling",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 195,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 675,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-rules-signoff",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 196,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 692,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "argue-plain-code-backup",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail",
+            "pass": true,
+            "detail": "not blocked"
+          },
+          {
+            "name": "non-empty",
+            "pass": true,
+            "detail": "reply has text"
+          },
+          {
+            "name": "complete",
+            "pass": true,
+            "detail": "stop reason end_turn"
+          },
+          {
+            "name": "max-length",
+            "pass": true,
+            "detail": "89 of 2000 characters"
+          },
+          {
+            "name": "forbidden",
+            "pass": true,
+            "detail": "no forbidden term"
+          }
+        ]
+      },
+      "judge": {
+        "pass": true,
+        "reason": "The reply argues the verdict for this step in plain words."
+      },
+      "output": "This step suits the verdict because the work follows fixed rules that a person can check.",
+      "inputTokens": 197,
+      "outputTokens": 110,
+      "guardrailTextUnits": 1,
+      "latencyMs": 709,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "guard-prompt-injection",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail-blocks",
+            "pass": true,
+            "detail": "blocked at input"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "",
+      "inputTokens": 198,
+      "outputTokens": 0,
+      "guardrailTextUnits": 1,
+      "latencyMs": 726,
+      "costUsd": 0.000169
+    },
+    {
+      "id": "guard-abuse",
+      "kind": "argue",
+      "pass": true,
+      "code": {
+        "pass": true,
+        "checks": [
+          {
+            "name": "guardrail-blocks",
+            "pass": true,
+            "detail": "blocked at input"
+          }
+        ]
+      },
+      "judge": null,
+      "output": "",
+      "inputTokens": 199,
+      "outputTokens": 0,
+      "guardrailTextUnits": 1,
+      "latencyMs": 743,
+      "costUsd": 0.000169
+    }
+  ],
+  "totals": {
+    "cases": 20,
+    "passed": 19,
+    "failed": 1,
+    "inputTokens": 3790,
+    "outputTokens": 1000,
+    "costUsd": 0.00338
+  },
+  "pass": false
+}

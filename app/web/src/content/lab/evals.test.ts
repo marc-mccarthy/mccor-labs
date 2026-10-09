@@ -198,6 +198,26 @@ describe('TRACE_DIR', () => {
   })
 })
 
+describe('fixture trace', () => {
+  it('parses the staged failing fixture used by the e2e build', () => {
+    const fixtures = path.join(process.cwd(), 'tests/fixtures/evals')
+    const [fixture, ...rest] = loadTraces(fixtures)
+    expect(rest).toEqual([])
+    expect(fixture).toMatchObject({
+      runId: 'fixture-1',
+      staged: true,
+      stagedCaseIds: ['race-invoice-type'],
+      pass: false,
+      runUrl: null,
+      totals: { cases: 20, passed: 19, failed: 1, costUsd: 0.00338 },
+    })
+    expect(fixture?.cases).toHaveLength(20)
+    expect(fixture?.cases.filter((c) => !c.pass).map((c) => c.id)).toEqual([
+      'race-invoice-type',
+    ])
+  })
+})
+
 describe('evalsCopy', () => {
   it('is pinned', () => {
     expect(evalsCopy).toEqual({

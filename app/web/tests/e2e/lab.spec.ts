@@ -1,14 +1,29 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import {
   answerCopy,
   builderCopy,
+  contactLabCopy,
   fillTemplate,
   questionCopy,
+  sendCopy,
   whyCopy,
 } from '@/content/lab/copy'
-import { QUESTION_KEYS } from '@/content/lab/rubric'
+import {
+  EMPTY_ANSWERS,
+  QUESTION_KEYS,
+  classifyStep,
+  type QuestionKey,
+  type StepAnswers,
+} from '@/content/lab/rubric'
+import { site } from '@/content/site'
+import {
+  encodeLabResult,
+  formatLabResult,
+  labMailtoHref,
+  toLabResult,
+} from '@/lib/labResult'
 
 const PATH = '/lab/should-this-be-ai/'
 
@@ -31,6 +46,28 @@ async function answerStep(page: Page, n: number, name: string) {
       .getByRole('group', { name: questionCopy[key].text })
       .getByRole('radio', { name: answerCopy.yes })
       .check()
+  }
+}
+
+async function tabTo(page: Page, target: Locator, key: 'Tab' | 'Shift+Tab' = 'Tab') {
+  for (let i = 0; i < 80; i += 1) {
+    if (await target.evaluate((element) => element === document.activeElement)) return
+    await page.keyboard.press(key)
+  }
+  throw new Error(`Keyboard focus never reached ${target.toString()}`)
+}
+
+function expectedMailto(
+  steps: readonly { name: string; answers: StepAnswers }[],
+  includeNames: boolean,
+) {
+  const result = toLabResult(
+    steps.map(({ name, answers }) => ({ name, answers, result: classifyStep(answers) })),
+    includeNames,
+  )
+  return {
+    encoded: encodeLabResult(result),
+    href: labMailtoHref(site.contactEmail, formatLabResult(result)),
   }
 }
 
@@ -107,5 +144,144 @@ test.describe('lab at 390 px', () => {
         .locator('label', { has: page.getByRole('radio', { name, exact: true }) })
         .evaluate((element) => getComputedStyle(element).backgroundColor)
     expect(await fill(answerCopy.yes)).not.toBe(await fill(answerCopy.no))
+  })
+})
+
+test('/lab/should-this-be-ai/ works by keyboard alone through to the contact page', async ({
+  page,
+}) => {
+  await page.goto(PATH)
+  const status = page.locator('[data-lab-status]')
+
+  await tabTo(page, page.getByRole('button', { name: builderCopy.add }))
+  await page.keyboard.press('Enter')
+  await expect(page.getByLabel('Name of step 2')).toBeFocused()
+  await expect(status).toHaveText('Step 2 added.')
+
+  await page.keyboard.type('Send invoices')
+  await expect(status).toHaveText('Step 2 added.')
+
+  const step2 = page.getByTestId('step-2')
+  for (const key of QUESTION_KEYS) {
+    await tabTo(
+      page,
+      step2
+        .getByRole('group', { name: questionCopy[key].text })
+        .getByRole('radio', { name: answerCopy.yes }),
+    )
+    await page.keyboard.press('Space')
+  }
+  await expect(status).toHaveText(
+    'Step 2, Send invoices: a checklist your team can edit + human sign-off',
+  )
+
+  await tabTo(
+    page,
+    page.getByRole('button', { name: 'Move Step 2, Send invoices up' }),
+    'Shift+Tab',
+  )
+  await page.keyboard.press('Enter')
+  await expect(
+    page.getByRole('button', { name: 'Move Step 1, Send invoices up' }),
+  ).toBeFocused()
+  await expect(status).toHaveText('Moved up. Now Step 1, Send invoices.')
+
+  await tabTo(page, page.getByRole('button', { name: 'Remove Step 1, Send invoices' }))
+  await page.keyboard.press('Enter')
+  await expect(page.getByLabel('Name of step 1')).toBeFocused()
+  await expect(status).toHaveText(
+    'Step 1, Send invoices removed. Undo is available for 10 seconds.',
+  )
+
+  const why = page.getByTestId('step-1').getByRole('button', { name: /^Why\?/ })
+  await tabTo(page, why)
+  await page.keyboard.press('Enter')
+  await expect(why).toHaveAttribute('aria-expanded', 'true')
+  await expect(why).toBeFocused()
+
+  await page.evaluate(() => {
+    ;(window as unknown as { labMarker: boolean }).labMarker = true
+  })
+  await tabTo(page, page.getByRole('link', { name: sendCopy.button }))
+  await page.keyboard.press('Enter')
+  await page.waitForURL('**/contact/')
+  await expect(page.getByText(contactLabCopy.added)).toBeVisible()
+  expect(new URL(page.url()).hash).toBe('')
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { labMarker?: boolean }).labMarker === true,
+    ),
+  ).toBe(true)
+  await expect(
+    page.getByRole('link', { name: contactLabCopy.emailResults }),
+  ).toHaveAttribute(
+    'href',
+    expectedMailto([{ name: '', answers: EMPTY_ANSWERS }], false).href,
+  )
+
+  await page.goBack()
+  await page.waitForURL(`**${PATH}`)
+  await page.goForward()
+  await page.waitForURL('**/contact/')
+  expect(page.url()).not.toContain('#')
+  await expect(page.getByText(contactLabCopy.added)).toHaveCount(0)
+})
+
+test('/contact/ fills the email from a #lab= link on a full page load', async ({
+  page,
+}) => {
+  const allYes = Object.fromEntries(QUESTION_KEYS.map((key) => [key, 'yes'])) as Record<
+    QuestionKey,
+    'yes'
+  >
+  const { encoded, href } = expectedMailto(
+    [{ name: 'Send invoices', answers: { ...EMPTY_ANSWERS, ...allYes } }],
+    true,
+  )
+  await page.goto(`/contact/#lab=${encoded}`)
+  await expect(page.getByText(contactLabCopy.added)).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: contactLabCopy.emailResults }),
+  ).toHaveAttribute('href', href)
+  expect(href).toContain(encodeURIComponent('Step 1, Send invoices'))
+  await expect.poll(() => page.url()).not.toContain('#')
+})
+
+test.describe('lab by keyboard at 390 px', () => {
+  test.use({ viewport: { width: 390, height: 844 } })
+
+  test('/lab/should-this-be-ai/ keeps the focused control visible after Add, Remove and Undo', async ({
+    page,
+  }) => {
+    await page.goto(PATH)
+    const add = page.getByRole('button', { name: builderCopy.add })
+    const name2 = page.getByLabel('Name of step 2')
+
+    await tabTo(page, add)
+    await page.keyboard.press('Enter')
+    await expect(name2).toBeFocused()
+    await expect(name2).toBeVisible()
+
+    await tabTo(page, page.getByRole('button', { name: 'Remove Step 2' }), 'Shift+Tab')
+    await page.keyboard.press('Enter')
+    await expect(add).toBeFocused()
+    await expect(add).toBeVisible()
+
+    await tabTo(page, page.getByRole('button', { name: builderCopy.undo }), 'Shift+Tab')
+    await page.keyboard.press('Enter')
+    await expect(name2).toBeFocused()
+    await expect(name2).toBeVisible()
+
+    const step2 = page.getByTestId('step-2')
+    await tabTo(page, step2.getByRole('button', { name: /^Why\?/ }))
+    await page.keyboard.press('Enter')
+    await tabTo(page, step2.getByRole('button', { name: whyCopy.showCode }))
+    await page.keyboard.press('Enter')
+    const code = step2.getByRole('region', {
+      name: fillTemplate(whyCopy.codeLabel, { rule: 'R1' }),
+    })
+    await tabTo(page, code)
+    await expect(code).toBeFocused()
+    await expect(code).toBeVisible()
   })
 })

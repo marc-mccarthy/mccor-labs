@@ -38,3 +38,21 @@ variable "contact_daily_cap" {
     error_message = "contact_daily_cap must be a whole number of at least 1."
   }
 }
+
+variable "lab_model_id" {
+  description = "Inference profile ID the lab Lambda calls through Converse"
+  type        = string
+  default     = "us.amazon.nova-2-lite-v1:0"
+}
+
+variable "lab_foundation_model_id" {
+  description = "Foundation model ID behind the inference profile"
+  type        = string
+  default     = "amazon.nova-2-lite-v1:0"
+}
+
+variable "lab_profile_regions" {
+  description = "Regions the inference profile routes to, one foundation-model ARN each"
+  type        = list(string)
+  default     = ["us-east-1", "us-east-2", "us-west-2"]
+}

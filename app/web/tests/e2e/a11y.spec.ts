@@ -11,6 +11,7 @@ const PATHS = [
   '/careers/',
   '/privacy/',
   '/terms/',
+  '/lab/should-this-be-ai/',
   '/404.html',
 ] as const
 

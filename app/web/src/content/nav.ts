@@ -9,6 +9,7 @@ export const nav: readonly NavItem[] = [
 
 export const footerNav: readonly NavItem[] = [
   ...nav,
+  { label: 'Should This Be AI?', href: '/lab/should-this-be-ai/' },
   { label: 'Careers', href: '/careers/' },
   { label: 'Privacy', href: '/privacy/' },
   { label: 'Terms', href: '/terms/' },

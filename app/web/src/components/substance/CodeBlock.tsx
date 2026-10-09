@@ -4,9 +4,10 @@ interface CodeBlockProps {
   code: string
   lang: string
   filename?: string
+  scrollLabel?: string
 }
 
-export async function CodeBlock({ code, lang, filename }: CodeBlockProps) {
+export async function CodeBlock({ code, lang, filename, scrollLabel }: CodeBlockProps) {
   const html = await highlight(code, lang)
 
   return (
@@ -18,6 +19,9 @@ export async function CodeBlock({ code, lang, filename }: CodeBlockProps) {
       ) : null}
       <div
         className="overflow-x-auto text-sm [&>pre]:p-4"
+        {...(scrollLabel === undefined
+          ? {}
+          : { role: 'region', 'aria-label': scrollLabel, tabIndex: 0 })}
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>

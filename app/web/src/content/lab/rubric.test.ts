@@ -58,6 +58,10 @@ describe('rubric vocabulary', () => {
   it('carries a semantic rubric version', () => {
     expect(RUBRIC_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
   })
+
+  it('pins the rubric version', () => {
+    expect(RUBRIC_VERSION).toBe('2.0.0')
+  })
 })
 
 const VALUES: readonly Answer[] = ['yes', 'no', 'not-sure', null]
@@ -157,6 +161,22 @@ describe('classifyStep', () => {
         classifyStep({ ...EMPTY_ANSWERS, costly: 'no', fixedForm: 'no', frequency })
           .ruleId,
       ).toBe('R5')
+    }
+  })
+
+  it('has no rule whose condition reads frequency', () => {
+    const frequencies = ['daily', 'weekly', 'monthly-or-less', null] as const
+    for (const answers of ALL) {
+      const baseline = classifyStep({ ...answers, frequency: null })
+      for (const frequency of frequencies) {
+        const result = classifyStep({ ...answers, frequency })
+        expect(result.verdict, JSON.stringify({ answers, frequency })).toBe(
+          baseline.verdict,
+        )
+      }
+    }
+    for (const rule of RULES) {
+      expect(rule.when.toString(), rule.id).not.toContain('.frequency')
     }
   })
 

@@ -23,7 +23,7 @@ const DISABLED_SEND = 'min-w-11 aria-disabled:opacity-50 aria-disabled:hover:bg-
 type Phase = 'idle' | 'sending' | 'error' | 'sent' | 'daily_cap'
 
 export interface WrongControlProps {
-  readonly verdict: Verdict
+  readonly verdict: Exclude<Verdict, 'unclear'>
   readonly ruleId: RuleId
   readonly rubricVersion: string
   readonly stepLabel: string
@@ -67,7 +67,7 @@ export function WrongControl({
     ? 'has-checked:bg-surface'
     : 'has-checked:bg-elevated'
   const sending = phase === 'sending'
-  const hintShown = attempted && reason === null
+  const hintNeeded = reason === null
 
   async function submit() {
     if (sending || inFlight.current) return
@@ -131,25 +131,25 @@ export function WrongControl({
             size="md"
             className={DISABLED_SEND}
             aria-disabled={reason === null || sending}
-            aria-describedby={hintShown ? hintId : undefined}
+            aria-describedby={hintNeeded ? hintId : undefined}
             onClick={() => {
               void submit()
             }}
           >
             {sending ? feedbackCopy.sending : feedbackCopy.send}
           </Button>
-          {hintShown ? (
-            <p id={hintId} className="text-sm text-muted">
+          {hintNeeded ? (
+            <p id={hintId} className={attempted ? 'text-sm text-muted' : 'sr-only'}>
               {feedbackCopy.pickFirst}
             </p>
           ) : null}
         </div>
-        {phase === 'error' ? (
-          <p role="alert" className="mt-3 text-sm">
-            {feedbackCopy.error}
-          </p>
-        ) : null}
       </div>
+      {phase === 'error' ? (
+        <p role="alert" className="mt-3 text-sm">
+          {feedbackCopy.error}
+        </p>
+      ) : null}
     </div>
   )
 }

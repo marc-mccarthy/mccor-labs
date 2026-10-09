@@ -1,19 +1,20 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { feedbackCopy } from '@/content/lab/feedback'
 import type { Verdict } from '@/content/lab/rubric'
 import { sendFeedback } from '@/lib/feedback'
-import { WrongControl } from './WrongControl'
+import { WrongControl, type WrongControlProps } from './WrongControl'
 
 vi.mock('@/lib/feedback', () => ({ sendFeedback: vi.fn() }))
 const send = vi.mocked(sendFeedback)
 const legend = feedbackCopy.legend
+const LIVE = '[aria-live], [role="status"], [role="log"]'
 
 function renderControl({
   verdict = 'rules',
   alreadySent = false,
-}: { verdict?: Verdict; alreadySent?: boolean } = {}) {
+}: { verdict?: WrongControlProps['verdict']; alreadySent?: boolean } = {}) {
   const onSent = vi.fn()
   const view = render(
     <WrongControl
@@ -158,5 +159,76 @@ describe('WrongControl', () => {
     expect(screen.queryByRole('button', { name: /^Wrong\?/ })).toBeNull()
     expect(screen.queryByRole('button', { name: feedbackCopy.send })).toBeNull()
     expect(send).not.toHaveBeenCalled()
+  })
+
+  it('never accepts the unclear verdict', () => {
+    expectTypeOf<WrongControlProps['verdict']>().toEqualTypeOf<
+      Exclude<Verdict, 'unclear'>
+    >()
+  })
+
+  it('lets only the in-flight guard stop a second send in the same act', async () => {
+    send.mockReturnValue(new Promise(() => undefined))
+    const { user } = renderControl()
+    await open(user)
+    await user.click(screen.getByRole('radio', { name: 'A simpler tool would do' }))
+    const sendButton = screen.getByRole('button', { name: feedbackCopy.send })
+    act(() => {
+      sendButton.click()
+      sendButton.click()
+    })
+    expect(send).toHaveBeenCalledTimes(1)
+  })
+
+  it('has no live region while open or in the error state', async () => {
+    send.mockResolvedValue('error')
+    const { user, container } = renderControl()
+    expect(container.querySelector(LIVE)).toBeNull()
+    await open(user)
+    expect(container.querySelector(LIVE)).toBeNull()
+    await user.click(screen.getByRole('radio', { name: 'A simpler tool would do' }))
+    await user.click(screen.getByRole('button', { name: feedbackCopy.send }))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(container.querySelector(LIVE)).toBeNull()
+    expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1)
+  })
+
+  it('points aria-controls at a panel that holds the radio group', async () => {
+    const { user, container } = renderControl()
+    const toggle = screen.getByRole('button', { name: /^Wrong\?/ })
+    const panelId = toggle.getAttribute('aria-controls') ?? ''
+    expect(container.querySelector(`[id="${panelId}"]`)).not.toBeNull()
+    await open(user)
+    const panel = container.querySelector(`[id="${panelId}"]`)
+    expect(panel).toContainElement(screen.getByRole('group', { name: legend }))
+  })
+
+  it('describes Send with the hint while no reason is picked, visible only after an attempt', async () => {
+    const { user } = renderControl()
+    await open(user)
+    const sendButton = screen.getByRole('button', { name: feedbackCopy.send })
+    expect(sendButton).toHaveAccessibleDescription(feedbackCopy.pickFirst)
+    expect(screen.getByText(feedbackCopy.pickFirst)).toHaveClass('sr-only')
+    await user.click(sendButton)
+    expect(screen.getByText(feedbackCopy.pickFirst)).not.toHaveClass('sr-only')
+    await user.click(screen.getByRole('radio', { name: 'A simpler tool would do' }))
+    expect(sendButton).not.toHaveAccessibleDescription()
+    expect(screen.queryByText(feedbackCopy.pickFirst)).toBeNull()
+  })
+
+  it('keeps the error visible when the panel is collapsed', async () => {
+    send.mockResolvedValue('error')
+    const { user } = renderControl()
+    await open(user)
+    await user.click(screen.getByRole('radio', { name: 'A simpler tool would do' }))
+    await user.click(screen.getByRole('button', { name: feedbackCopy.send }))
+    await screen.findByRole('alert')
+    await open(user)
+    expect(screen.getByRole('button', { name: /^Wrong\?/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    expect(screen.getByRole('alert')).toBeVisible()
+    expect(screen.getByRole('alert')).toHaveTextContent(feedbackCopy.error)
   })
 })

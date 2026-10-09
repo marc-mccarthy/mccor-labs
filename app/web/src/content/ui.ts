@@ -1,3 +1,5 @@
+import { site } from './site'
+
 export const ui = {
   skipToContent: 'Skip to content',
   openMenu: 'Open menu',
@@ -18,11 +20,16 @@ export const ui = {
     'The evaluation, the approval gates and the cost ceilings ship with the feature, so you can tell whether it is right.',
   formSubmit: 'Send message',
   formSending: 'Sending…',
-  formSuccess: 'Thanks — we will reply within one working day.',
+  formSuccess: 'Thanks — your message has reached us.',
+  formReference: 'Reference',
+  formErrorDailyCap: `Our form has reached today's limit. Email us at ${site.contactEmail}; your message is still in the box below.`,
+  formErrorTooFast:
+    'That was quicker than we expect from a person. Please press Send again.',
+  formMailtoSubject: 'Website enquiry',
   formErrorValidation:
     'Something was wrong with that submission. Please check and retry.',
   formErrorRateLimit: 'Too many attempts. Please wait a minute and try again.',
-  formErrorServer: 'We could not send that. Please email us instead.',
+  formErrorServer: `We could not send that. Email us at ${site.contactEmail}; your message is still in the box below.`,
   footerRights: 'All rights reserved.',
   contactNotLive: 'Our contact form is not live yet — book a call or email us directly.',
   contactLabelName: 'Name',

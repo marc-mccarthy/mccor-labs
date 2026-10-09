@@ -1,23 +1,61 @@
 'use client'
 
-import { useState, type SubmitEvent } from 'react'
+import { useEffect, useRef, useState, type SubmitEvent } from 'react'
 
 import { BookingCta } from '@/components/layout/BookingCta'
 import { Reveal } from '@/components/motion/Reveal'
 import { Button } from '@/components/ui/button'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
-import { submitContact, validateContact, type ContactErrors } from '@/lib/contact'
+import {
+  contactMailtoHref,
+  submitContact,
+  validateContact,
+  type ContactError,
+  type ContactErrors,
+} from '@/lib/contact'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
 
 const FIELD =
   'border-border-strong bg-surface text-text placeholder:text-muted w-full rounded-lg border px-3 py-2'
 
+function errorMessage(error: ContactError): string {
+  if (error === 'daily_cap') return ui.formErrorDailyCap
+  if (error === 'too_fast') return ui.formErrorTooFast
+  if (error === 'rate_limit') return ui.formErrorRateLimit
+  if (error === 'validation') return ui.formErrorValidation
+  return ui.formErrorServer
+}
+
+function offersMailto(error: ContactError): boolean {
+  return error === 'daily_cap' || error === 'server'
+}
+
+function StatusText({ text, href }: { text: string; href: string | null }) {
+  if (href === null) return text
+  const [before, after] = text.split(site.contactEmail)
+  return (
+    <>
+      {before}
+      <a href={href} className="text-accent underline underline-offset-4">
+        {site.contactEmail}
+      </a>
+      {after}
+    </>
+  )
+}
+
 export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [errors, setErrors] = useState<ContactErrors>({})
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
+  const [mailtoHref, setMailtoHref] = useState<string | null>(null)
+  const openedAt = useRef(0)
+
+  useEffect(() => {
+    openedAt.current = Date.now()
+  }, [])
 
   if (endpoint === null) {
     return (
@@ -47,6 +85,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       message: field('message'),
       budget: field('budget'),
       honeypot: field('honeypot'),
+      elapsedMs: Date.now() - openedAt.current,
     }
 
     const found = validateContact(request)
@@ -54,6 +93,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     if (Object.keys(found).length > 0) {
       setStatus('idle')
       setMessage('')
+      setMailtoHref(null)
       return
     }
 
@@ -62,17 +102,21 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
     if (result.ok) {
       setStatus('sent')
-      setMessage(ui.formSuccess)
+      setMessage(
+        result.reference === null
+          ? ui.formSuccess
+          : `${ui.formSuccess} ${ui.formReference} ${result.reference}.`,
+      )
+      setMailtoHref(null)
       return
     }
 
     setStatus('error')
-    setMessage(
-      result.error === 'rate_limit'
-        ? ui.formErrorRateLimit
-        : result.error === 'validation'
-          ? ui.formErrorValidation
-          : ui.formErrorServer,
+    setMessage(errorMessage(result.error))
+    setMailtoHref(
+      offersMailto(result.error)
+        ? contactMailtoHref(site.contactEmail, ui.formMailtoSubject, request.message)
+        : null,
     )
   }
 
@@ -185,7 +229,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       </div>
 
       <p role="status" aria-live="polite" className="text-sm text-muted">
-        {message}
+        <StatusText text={message} href={mailtoHref} />
       </p>
     </form>
   )

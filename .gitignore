@@ -23,6 +23,7 @@ infra/**/.superpowers/
 app/web/.next/
 app/web/out/
 app/web/tsconfig.tsbuildinfo
+app/web/next-env.d.ts
 
 test-results/
 playwright-report/

@@ -40,6 +40,7 @@ interface Overrides {
   onRun?: () => void
   onSummaryChange?: (value: string) => void
   recordedSummary?: string
+  disabledReason?: string
 }
 
 function setup(overrides: Overrides = {}) {
@@ -129,7 +130,7 @@ describe('ArgueLane', () => {
     ['network', labLive.errorNetwork],
     ['server', labLive.errorServer],
     ['timeout', labLive.errorTimeout],
-    ['validation', labLive.errorValidation],
+    ['validation', labLive.argueErrorValidation],
   ] as const)('shows a %s error as an alert with Retry', (reason, text) => {
     setup({ state: { status: 'error', reason } })
     const alert = screen.getByRole('alert')
@@ -142,6 +143,29 @@ describe('ArgueLane', () => {
     await userEvent.click(screen.getByRole('button', { name: labLive.retry }))
     expect(props.onRun).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('button', { name: labLive.argueButton })).toHaveFocus()
+  })
+
+  it('uses argue wording for the validation error, not the race wording', () => {
+    setup({ state: { status: 'error', reason: 'validation' } })
+    expect(screen.getByRole('alert')).not.toHaveTextContent(labLive.errorValidation)
+  })
+
+  it('describes the disabled reason and ignores clicks', async () => {
+    const { props } = setup({ disabledReason: labLive.argueDisabledNoName })
+    const trigger = screen.getByRole('button', { name: labLive.argueButton })
+    expect(trigger).toHaveAttribute('aria-disabled', 'true')
+    expect(trigger).toHaveAccessibleDescription(labLive.argueDisabledNoName)
+    await userEvent.click(trigger)
+    expect(props.onRun).not.toHaveBeenCalled()
+  })
+
+  it('does not run from Retry while the trigger is disabled', async () => {
+    const { props } = setup({
+      state: { status: 'error', reason: 'validation' },
+      disabledReason: labLive.argueDisabledNoName,
+    })
+    await userEvent.click(screen.getByRole('button', { name: labLive.retry }))
+    expect(props.onRun).not.toHaveBeenCalled()
   })
 
   it('keeps focus on the trigger after a click', async () => {

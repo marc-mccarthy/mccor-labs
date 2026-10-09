@@ -6,6 +6,8 @@ import {
   builderCopy,
   contactLabCopy,
   fillTemplate,
+  presets,
+  presetsCopy,
   questionCopy,
   sendCopy,
   whyCopy,
@@ -24,6 +26,8 @@ import {
   labMailtoHref,
   toLabResult,
 } from '@/lib/labResult'
+
+import { trackSceneRequests, trackThreeRequests } from './support'
 
 const PATH = '/lab/should-this-be-ai/'
 
@@ -284,4 +288,22 @@ test.describe('lab by keyboard at 390 px', () => {
     await expect(code).toBeFocused()
     await expect(code).toBeVisible()
   })
+})
+
+test('/lab/should-this-be-ai/ never fetches three.js or a scene while in use', async ({
+  page,
+}) => {
+  const three = trackThreeRequests(page)
+  const scenes = trackSceneRequests(page)
+  await page.goto(PATH, { waitUntil: 'load' })
+  await page
+    .getByRole('button', {
+      name: fillTemplate(presetsCopy.load, { preset: presets[0]!.title }),
+    })
+    .click()
+  await page.mouse.wheel(0, 4000)
+  await page.waitForTimeout(1000)
+  expect(await three()).toEqual([])
+  expect(await scenes()).toEqual([])
+  await expect(page.locator('canvas')).toHaveCount(0)
 })

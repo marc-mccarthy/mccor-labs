@@ -81,6 +81,25 @@ async function measureCls(page: Page, path: string): Promise<number> {
   return page.evaluate(() => (window as unknown as { cls: number }).cls)
 }
 
+async function observeWorstInteraction(page: Page) {
+  await page.addInitScript(() => {
+    const holder = window as unknown as { worst: number }
+    holder.worst = 0
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const event = entry as PerformanceEntry & { interactionId: number }
+        if (event.interactionId > 0) {
+          holder.worst = Math.max(holder.worst, entry.duration)
+        }
+      }
+    }).observe({
+      type: 'event',
+      durationThreshold: 16,
+      buffered: true,
+    } as PerformanceObserverInit)
+  })
+}
+
 test.describe('hard gates', () => {
   test.describe.configure({ retries: 2 })
 
@@ -171,22 +190,7 @@ test.describe('hard gates', () => {
   })
 
   test('INP on / with a scene rendering is under 200 ms', async ({ page }) => {
-    await page.addInitScript(() => {
-      const holder = window as unknown as { worst: number }
-      holder.worst = 0
-      new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) {
-          const event = entry as PerformanceEntry & { interactionId: number }
-          if (event.interactionId > 0) {
-            holder.worst = Math.max(holder.worst, entry.duration)
-          }
-        }
-      }).observe({
-        type: 'event',
-        durationThreshold: 16,
-        buffered: true,
-      } as PerformanceObserverInit)
-    })
+    await observeWorstInteraction(page)
     await page.goto('/')
     await expect(page.locator('[data-scene-status="active"]').first()).toBeAttached({
       timeout: 15_000,
@@ -202,6 +206,25 @@ test.describe('hard gates', () => {
       active: document.querySelectorAll('[data-scene-status="active"]').length,
     }))
     expect(active).toBeGreaterThan(0)
+    expect(worst).toBeLessThan(INP_MAX_MS)
+  })
+
+  test('INP on /lab/should-this-be-ai/ while answering is under 200 ms', async ({
+    page,
+  }) => {
+    await observeWorstInteraction(page)
+    await page.goto('/lab/should-this-be-ai/')
+    await page.getByRole('button', { name: 'Load Invoice intake' }).click()
+    const costly = page.getByTestId('step-1').getByRole('group', { name: /cost money/ })
+    for (let i = 0; i < 15; i += 1) {
+      await costly
+        .getByRole('radio', { name: i % 2 === 0 ? 'Yes' : 'No', exact: true })
+        .click()
+      await page.waitForTimeout(120)
+    }
+    const worst = await page.evaluate(
+      () => (window as unknown as { worst: number }).worst,
+    )
     expect(worst).toBeLessThan(INP_MAX_MS)
   })
 })

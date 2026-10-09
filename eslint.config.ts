@@ -38,6 +38,7 @@ export default tseslint.config(
       '**/node_modules/**',
       'app/web/.next/**',
       'app/web/out/**',
+      'app/api/dist/**',
       'app/web/next-env.d.ts',
       'infra/**',
       'docs/ui-references/**',
@@ -58,6 +59,20 @@ export default tseslint.config(
       parserOptions: {
         projectService: true,
         tsconfigRootDir: join(import.meta.dirname, 'app/web'),
+      },
+    },
+  },
+
+  {
+    files: ['app/api/**/*.ts'],
+    extends: [
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: join(import.meta.dirname, 'app/api'),
       },
     },
   },

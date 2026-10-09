@@ -22,6 +22,7 @@ infra/**/.superpowers/
 
 app/web/.next/
 app/web/out/
+app/api/dist/
 app/web/tsconfig.tsbuildinfo
 
 test-results/

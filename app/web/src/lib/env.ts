@@ -22,6 +22,15 @@ function optionalUrl(name: string, raw: string | undefined): string | null {
   return raw
 }
 
+function optionalEndpoint(name: string, raw: string | undefined): string | null {
+  if (raw === undefined || raw === '') return null
+  if (raw.startsWith('/') && !raw.startsWith('//')) return raw
+  if (raw.startsWith('//')) {
+    throw new Error(`${name} must not be protocol-relative, received: ${raw}`)
+  }
+  return optionalUrl(name, raw)
+}
+
 function requiredInProduction(name: string, raw: string | undefined): string | null {
   const value = optionalUrl(name, raw)
   if (value === null && process.env.NODE_ENV === 'production') {
@@ -43,7 +52,7 @@ export const env = {
     'NEXT_PUBLIC_BOOKING_URL',
     process.env.NEXT_PUBLIC_BOOKING_URL,
   ),
-  contactEndpoint: optionalUrl(
+  contactEndpoint: optionalEndpoint(
     'NEXT_PUBLIC_CONTACT_ENDPOINT',
     process.env.NEXT_PUBLIC_CONTACT_ENDPOINT,
   ),

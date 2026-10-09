@@ -40,6 +40,23 @@ describe('env', () => {
     expect(env.contactEndpoint).toBeNull()
   })
 
+  it('accepts a root-relative contact endpoint', async () => {
+    const env = await loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: '/api/contact' })
+    expect(env.contactEndpoint).toBe('/api/contact')
+  })
+
+  it('rejects a protocol-relative contact endpoint', async () => {
+    await expect(
+      loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: '//evil.example/x' }),
+    ).rejects.toThrow(/NEXT_PUBLIC_CONTACT_ENDPOINT/)
+  })
+
+  it('rejects a bare relative contact endpoint', async () => {
+    await expect(
+      loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: 'api/contact' }),
+    ).rejects.toThrow(/NEXT_PUBLIC_CONTACT_ENDPOINT/)
+  })
+
   it('allows a missing booking url in development so dev works without 1Password', async () => {
     const env = await loadEnv({
       NEXT_PUBLIC_BOOKING_URL: undefined,

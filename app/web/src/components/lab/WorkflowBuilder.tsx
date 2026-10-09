@@ -34,6 +34,7 @@ import {
 
 import { FeedbackMarksProvider } from './feedbackMarks'
 import { StepCard, type StepControl } from './StepCard'
+import { SummaryTable } from './SummaryTable'
 import { VerdictCard } from './VerdictCard'
 import { initialWorkflow, workflowReducer, type Step } from './workflowState'
 
@@ -307,6 +308,13 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
           </p>
         </Container>
       </Section>
+      <SummaryTable
+        rows={steps.map((step, index) => ({
+          position: index + 1,
+          name: step.name,
+          result: classifyStep(step.answers),
+        }))}
+      />
     </FeedbackMarksProvider>
   )
 }

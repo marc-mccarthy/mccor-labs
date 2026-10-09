@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "eval": "esbuild evals/src/cli.ts --bundle --platform=node --format=esm --target=node24 --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --outfile=dist/eval.mjs && node dist/eval.mjs",
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run"

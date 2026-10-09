@@ -1,28 +1,20 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+tfplan
 *_override.tf
 crash.log
-
 terraform.tfvars
 settings.auto.tfvars
-
-.build/
+infra/modules/**/.terraform.lock.hcl
 
 node_modules/
-
-**/console*
-**/ui-preferences/
-**/ui-references/
-**/.playwright-mcp/
-**/.playwright-cli/
-
-infra/**/superpowers/
-infra/**/.superpowers/
-
+.build/
 app/web/.next/
 app/web/out/
 app/web/tsconfig.tsbuildinfo
+app/web/next-env.d.ts
 
 test-results/
 playwright-report/
@@ -30,8 +22,13 @@ lighthouse-report/
 .playwright/
 
 .env.local
+.claude/settings.local.json
 
 .media-work/
-.claude/settings.local.json
-*.tfplan
-tfplan
+**/console*
+**/ui-preferences/
+**/ui-references/
+**/.playwright-mcp/
+**/.playwright-cli/
+infra/**/superpowers/
+infra/**/.superpowers/

@@ -5,7 +5,10 @@ import { R2 } from './R2'
 import { R3 } from './R3'
 import { R4 } from './R4'
 import { R6 } from './R6'
+import { R7 } from './R7'
+import { R8 } from './R8'
 import { R12 } from './R12'
+import { R13 } from './R13'
 
 const UNKNOWN: readonly Answer[] = [null, 'not-sure']
 const SAFE: readonly Partial<StepAnswers>[] = [
@@ -130,5 +133,64 @@ describe('R12: costly and unchecked, but a fixed-form checklist', () => {
       R12.humanSignOff(given({ ...UNCHECKED, fixedForm: 'yes', checklist: 'yes' })),
     ).toBe(false)
     expect(R12.why).toMatch(/past cases/)
+  })
+})
+
+const CHECKLIST = { fixedForm: 'yes', checklist: 'yes' } as const
+
+describe('R7, R8 and R13: a safe fixed-form checklist', () => {
+  it.each(SAFE)('R7 fires when the team rarely changes it: %o', (partial) => {
+    expect(R7.when(given({ ...partial, ...CHECKLIST, changes: 'no' }))).toBe(true)
+    expect(R7.verdict).toBe('plain-code')
+  })
+  it.each(SAFE)('R8 fires when the team changes it often: %o', (partial) => {
+    expect(R8.when(given({ ...partial, ...CHECKLIST, changes: 'yes' }))).toBe(true)
+    expect(R8.verdict).toBe('rules')
+  })
+  it.each(UNKNOWN)('R13 fires when changes is %s', (changes) => {
+    expect(R13.when(given({ costly: 'no', ...CHECKLIST, changes }))).toBe(true)
+    expect(R13.verdict).toBe('unclear')
+  })
+  it('signs off only when a mistake is costly and checked first', () => {
+    for (const [rule, changes] of [
+      [R7, 'no'],
+      [R8, 'yes'],
+    ] as const) {
+      expect(rule.humanSignOff(given({ costly: 'no', ...CHECKLIST, changes }))).toBe(
+        false,
+      )
+      expect(
+        rule.humanSignOff(
+          given({ costly: 'yes', checkable: 'yes', ...CHECKLIST, changes }),
+        ),
+      ).toBe(true)
+    }
+    expect(
+      R13.humanSignOff(given({ costly: 'yes', checkable: 'yes', ...CHECKLIST })),
+    ).toBe(false)
+  })
+  it.each([UNCHECKED, ...UNKNOWN_GATES])(
+    'all three stay silent unless the step is safe: %o',
+    (partial) => {
+      for (const changes of ['yes', 'no', null] as const) {
+        for (const rule of [R7, R8, R13]) {
+          expect(rule.when(given({ ...partial, ...CHECKLIST, changes }))).toBe(false)
+        }
+      }
+    },
+  )
+  it('all three stay silent without a fixed-form checklist', () => {
+    for (const rule of [R7, R8, R13]) {
+      expect(
+        rule.when(
+          given({ costly: 'no', fixedForm: 'no', checklist: 'yes', changes: 'no' }),
+        ),
+      ).toBe(false)
+      expect(
+        rule.when(
+          given({ costly: 'no', fixedForm: 'yes', checklist: 'no', changes: 'no' }),
+        ),
+      ).toBe(false)
+    }
   })
 })

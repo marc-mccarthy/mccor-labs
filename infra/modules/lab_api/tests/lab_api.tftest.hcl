@@ -18,6 +18,7 @@ variables {
   ses_identity_arn = "arn:aws:ses:us-east-1:111111111111:identity/example.com"
   contact_from     = "website@example.com"
   contact_to       = "owner@example.com"
+  alert_email      = "alerts@example.com"
 }
 
 override_resource {

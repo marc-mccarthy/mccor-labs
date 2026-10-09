@@ -59,6 +59,7 @@ module "lab_api" {
   ses_identity_arn = module.mailserver[0].ses_identity_arn
   contact_from     = "website@${var.domain_name}"
   contact_to       = "${var.admin_mailbox}@${var.domain_name}"
+  alert_email      = var.alert_email
 }
 
 module "site" {

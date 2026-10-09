@@ -47,12 +47,31 @@ override_resource {
   values          = { arn = "arn:aws:ssm:us-east-1:111111111111:parameter/mccorlabs/labs/should-this-be-ai/enabled" }
 }
 
+override_resource {
+  target          = aws_iam_role.lab
+  override_during = plan
+  values          = { arn = "arn:aws:iam::111111111111:role/t-lab" }
+}
+
+override_resource {
+  target          = aws_iam_role.lab_brake
+  override_during = plan
+  values          = { arn = "arn:aws:iam::111111111111:role/t-lab-brake" }
+}
+
+override_resource {
+  target          = aws_iam_policy.lab_brake_deny
+  override_during = plan
+  values          = { arn = "arn:aws:iam::111111111111:policy/t-lab-brake-deny" }
+}
+
 variables {
   name             = "t"
   package_dir      = "../../../app/api/dist"
   ses_identity_arn = "arn:aws:ses:us-east-1:111111111111:identity/example.com"
   contact_from     = "website@example.com"
   contact_to       = "owner@example.com"
+  alert_email      = "alerts@example.com"
 }
 
 run "guardrail" {
@@ -163,5 +182,49 @@ run "lab_policy" {
   assert {
     condition     = aws_iam_role.lab.name == "t-lab"
     error_message = "The lab role must be <name>-lab."
+  }
+}
+
+run "brake" {
+  command = plan
+
+  assert {
+    condition     = aws_budgets_budget.lab_brake.name == "t-lab-brake" && aws_budgets_budget.lab_brake.limit_amount == "22" && aws_budgets_budget.lab_brake.limit_unit == "USD" && aws_budgets_budget.lab_brake.budget_type == "COST"
+    error_message = "The brake budget must be a 22 USD monthly cost budget of its own."
+  }
+
+  assert {
+    condition     = aws_budgets_budget_action.lab_brake.action_type == "APPLY_IAM_POLICY" && aws_budgets_budget_action.lab_brake.approval_model == "AUTOMATIC" && aws_budgets_budget_action.lab_brake.notification_type == "ACTUAL"
+    error_message = "The brake must apply an IAM policy automatically on actual spend."
+  }
+
+  assert {
+    condition     = aws_budgets_budget_action.lab_brake.action_threshold[0].action_threshold_type == "PERCENTAGE" && aws_budgets_budget_action.lab_brake.action_threshold[0].action_threshold_value == 100
+    error_message = "The brake must fire at 100 percent of the brake budget."
+  }
+
+  assert {
+    condition     = contains(aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles, aws_iam_role.lab.name)
+    error_message = "The brake must attach the deny policy to the lab role."
+  }
+
+  assert {
+    condition     = keys(local.brake_roles) == ["lab"]
+    error_message = "The brake must list only the lab role in this phase."
+  }
+
+  assert {
+    condition     = length(local.lab_brake_deny_policy.Statement) == 1 && local.lab_brake_deny_policy.Statement[0].Effect == "Deny" && local.lab_brake_deny_policy.Statement[0].Action == ["bedrock:*"]
+    error_message = "The deny policy must be one Deny statement on bedrock:*."
+  }
+
+  assert {
+    condition     = local.lab_brake_policy.Statement[0].Action == ["iam:AttachRolePolicy", "iam:DetachRolePolicy"] && local.lab_brake_policy.Statement[0].Resource == ["arn:aws:iam::111111111111:role/t-lab"] && local.lab_brake_policy.Statement[0].Condition.ArnEquals["iam:PolicyARN"] == "arn:aws:iam::111111111111:policy/t-lab-brake-deny"
+    error_message = "The Budgets role may attach and detach only the deny policy, on the lab role only."
+  }
+
+  assert {
+    condition     = local.lab_brake_assume_policy.Statement[0].Principal.Service == "budgets.amazonaws.com"
+    error_message = "Only AWS Budgets may assume the brake role."
   }
 }

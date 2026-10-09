@@ -56,3 +56,19 @@ variable "lab_profile_regions" {
   type        = list(string)
   default     = ["us-east-1", "us-east-2", "us-west-2"]
 }
+
+variable "alert_email" {
+  description = "Address the spend brake notifies when it fires"
+  type        = string
+}
+
+variable "brake_usd" {
+  description = "Monthly account spend in USD at which the brake denies Bedrock to the lab role"
+  type        = number
+  default     = 22
+
+  validation {
+    condition     = var.brake_usd > 0
+    error_message = "brake_usd must be greater than 0."
+  }
+}

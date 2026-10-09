@@ -17,7 +17,7 @@ const TIME_FORMAT = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 })
 
-function formatRecordedAt(recordedAt: string): string {
+export function formatRecordedAt(recordedAt: string): string {
   const date = new Date(recordedAt)
   return Number.isNaN(date.getTime()) ? recordedAt : `${TIME_FORMAT.format(date)} UTC`
 }

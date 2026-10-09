@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EMPTY_ANSWERS, classifyStep } from '@/content/lab/rubric'
+import { FeedbackMarksProvider } from './feedbackMarks'
 import { VerdictCard } from './VerdictCard'
 
 const gate = vi.hoisted(() => ({
@@ -59,14 +60,17 @@ afterEach(() => {
 describe('VerdictCard while Reveal swaps in its motion wrapper', () => {
   it('keeps an open Why panel open and focused', async () => {
     const { container } = render(
-      <VerdictCard
-        position={1}
-        name="Pay suppliers"
-        result={classifyStep(answers)}
-        answers={answers}
-        snippet={<pre>R2 source</pre>}
-        revealOrder={0}
-      />,
+      <FeedbackMarksProvider>
+        <VerdictCard
+          stepId="step-1"
+          position={1}
+          name="Pay suppliers"
+          result={classifyStep(answers)}
+          answers={answers}
+          snippet={<pre>R2 source</pre>}
+          revealOrder={0}
+        />
+      </FeedbackMarksProvider>,
     )
     expect(container.querySelector('[data-reveal="pending"]')).not.toBeNull()
     const button = screen.getByRole('button', { name: /^Why\?/ })

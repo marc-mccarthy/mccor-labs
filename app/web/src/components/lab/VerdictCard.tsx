@@ -6,12 +6,15 @@ import { Reveal } from '@/components/motion/Reveal'
 import { readDurationSeconds } from '@/components/motion/tokens'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { signOffCopy, verdictCopy } from '@/content/lab/copy'
+import { signOffCopy, stepLabel, verdictCopy } from '@/content/lab/copy'
 import type { RubricResult, StepAnswers } from '@/content/lab/rubric'
 import { cn } from '@/lib/cn'
 
+import { markKey, useFeedbackMarks } from './feedbackMarks'
+import { isResolved } from './ProgressRail'
 import { VERDICT_STYLE } from './verdictStyle'
 import { WhyDrawer } from './WhyDrawer'
+import { WrongControl } from './WrongControl'
 
 const MAX_STAGGER_STEPS = 3
 
@@ -25,6 +28,7 @@ function staggerInterval(): number {
 }
 
 export interface VerdictCardProps {
+  readonly stepId: string
   readonly position: number
   readonly name: string
   readonly result: RubricResult
@@ -34,6 +38,7 @@ export interface VerdictCardProps {
 }
 
 export function VerdictCard({
+  stepId,
   position,
   name,
   result,
@@ -43,6 +48,8 @@ export function VerdictCard({
 }: VerdictCardProps) {
   const { verdict, humanSignOff } = result
   const style = VERDICT_STYLE[verdict]
+  const { alreadySent, recordSent } = useFeedbackMarks()
+  const key = markKey(stepId, verdict, result.ruleId)
 
   return (
     <Card className={cn('mt-4', style.card)}>
@@ -72,6 +79,19 @@ export function VerdictCard({
         answers={answers}
         snippet={snippet}
       />
+      {verdict !== 'unclear' && isResolved(answers) ? (
+        <WrongControl
+          key={`${verdict}:${result.ruleId}:${result.rubricVersion}`}
+          verdict={verdict}
+          ruleId={result.ruleId}
+          rubricVersion={result.rubricVersion}
+          stepLabel={stepLabel(position, name)}
+          alreadySent={alreadySent(key)}
+          onSent={() => {
+            recordSent(key)
+          }}
+        />
+      ) : null}
     </Card>
   )
 }

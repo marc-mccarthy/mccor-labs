@@ -2,6 +2,7 @@ import { render } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { EMPTY_ANSWERS, classifyStep } from '@/content/lab/rubric'
+import { FeedbackMarksProvider } from './feedbackMarks'
 import { VerdictCard } from './VerdictCard'
 
 const { readDurationSeconds } = vi.hoisted(() => ({
@@ -20,14 +21,17 @@ vi.mock('@/components/motion/tokens', () => ({ readDurationSeconds }))
 
 function delayFor(revealOrder: number) {
   const { container, unmount } = render(
-    <VerdictCard
-      position={1}
-      name=""
-      result={classifyStep(EMPTY_ANSWERS)}
-      answers={EMPTY_ANSWERS}
-      snippet={<pre />}
-      revealOrder={revealOrder}
-    />,
+    <FeedbackMarksProvider>
+      <VerdictCard
+        stepId="step-1"
+        position={1}
+        name=""
+        result={classifyStep(EMPTY_ANSWERS)}
+        answers={EMPTY_ANSWERS}
+        snippet={<pre />}
+        revealOrder={revealOrder}
+      />
+    </FeedbackMarksProvider>,
   )
   const delay = Number(
     container.querySelector('[data-delay]')?.getAttribute('data-delay'),

@@ -272,6 +272,7 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
                       }}
                     >
                       <VerdictCard
+                        stepId={step.id}
                         position={position}
                         name={step.name}
                         result={result}

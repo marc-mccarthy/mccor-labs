@@ -14,12 +14,21 @@ import {
 } from './labCost'
 
 describe('formatUsd', () => {
+  it('shows an exact zero as 0 USD', () => {
+    expect(formatText(formatUsd(0))).toBe('0 USD')
+  })
+
   it.each([
     [0.00009, 'under 0.0001'],
     [0, '0'],
     [0.0001, '0.0001'],
-    [0.0026202, '0.0026'],
+    [0.0026202, '0.0027'],
     [0.00338, '0.0034'],
+    [0.00334, '0.0034'],
+    [0.0003, '0.0003'],
+    [0.00030000000000000003, '0.0003'],
+    [0.00010000000000000002, '0.0001'],
+    [0.00340001, '0.0035'],
   ])('formats %s as %s USD', (input, value) => {
     expect(formatUsd(input)).toEqual({ value, unit: 'USD' })
   })
@@ -32,6 +41,12 @@ describe('formatMonthlyUsd', () => {
     expect(formatMonthlyUsd(12.345)).toEqual({ value: '12.35', unit: 'USD' })
   })
 
+  it('rounds up to the cent, never down', () => {
+    expect(formatMonthlyUsd(12.341)).toEqual({ value: '12.35', unit: 'USD' })
+    expect(formatMonthlyUsd(0.0101)).toEqual({ value: '0.02', unit: 'USD' })
+    expect(formatMonthlyUsd(0.0192)).toEqual({ value: '0.02', unit: 'USD' })
+  })
+
   it('keeps small amounts readable instead of rounding to 0.00', () => {
     expect(formatMonthlyUsd(0.0004)).toEqual({ value: '0.0004', unit: 'USD' })
     expect(formatMonthlyUsd(0.00001)).toEqual({ value: 'under 0.0001', unit: 'USD' })
@@ -40,6 +55,7 @@ describe('formatMonthlyUsd', () => {
   it('compares after rounding, so 0.009999 reads 0.01 and not 0.0100', () => {
     expect(formatMonthlyUsd(0.009999)).toEqual({ value: '0.01', unit: 'USD' })
     expect(formatMonthlyUsd(0.0049)).toEqual({ value: '0.0049', unit: 'USD' })
+    expect(formatMonthlyUsd(0.00334)).toEqual({ value: '0.0034', unit: 'USD' })
   })
 })
 
@@ -62,7 +78,7 @@ describe('formatTokens', () => {
 
 describe('formatText', () => {
   it('joins value and unit with one space', () => {
-    expect(formatText(formatUsd(0.0026202))).toBe('0.0026 USD')
+    expect(formatText(formatUsd(0.0026202))).toBe('0.0027 USD')
     expect(formatText(formatUsd(0.00001))).toBe('under 0.0001 USD')
     expect(formatText(formatMs(1234))).toBe('1.23 s')
   })

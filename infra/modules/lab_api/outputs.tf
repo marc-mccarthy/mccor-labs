@@ -34,3 +34,13 @@ output "lab_guardrail_version" {
   description = "Published version of the lab Bedrock guardrail that the handler calls"
   value       = aws_bedrock_guardrail_version.lab.version
 }
+
+output "lab_profile_arn" {
+  description = "ARN of the Nova inference profile the lab and the eval role invoke"
+  value       = local.lab_profile_arn
+}
+
+output "lab_model_arns" {
+  description = "Foundation-model ARNs behind the inference profile, one per profile region"
+  value       = local.lab_model_arns
+}

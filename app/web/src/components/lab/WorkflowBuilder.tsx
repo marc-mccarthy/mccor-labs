@@ -33,8 +33,10 @@ import {
   type QuestionKey,
   type RuleId,
 } from '@/content/lab/rubric'
+import { env } from '@/lib/env'
 
 import { FeedbackMarksProvider } from './feedbackMarks'
+import { LiveLabPanel } from './LiveLabPanel'
 import { ProgressRail, summarize } from './ProgressRail'
 import { SendResult } from './SendResult'
 import { StepCard, type StepControl } from './StepCard'
@@ -337,6 +339,16 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
           result: classifyStep(step.answers),
         }))}
       />
+      {env.labLive && (
+        <LiveLabPanel
+          steps={steps.map((step) => ({
+            name: step.name,
+            verdict: classifyStep(step.answers).verdict,
+            frequency: step.answers.frequency,
+          }))}
+          onAnnounce={announce}
+        />
+      )}
       <SendResult
         steps={steps.map((step) => ({
           name: step.name,

@@ -15,10 +15,19 @@ afterEach(() => {
   delete mutableEnv.NEXT_PUBLIC_SITE_URL
   delete mutableEnv.NEXT_PUBLIC_CONTACT_ENDPOINT
   delete mutableEnv.NEXT_PUBLIC_BOOKING_URL
+  delete mutableEnv.NEXT_PUBLIC_LAB_LIVE
   mutableEnv.NODE_ENV = 'test'
 })
 
 describe('env', () => {
+  it('turns the live lab on only for the value 1', async () => {
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '1' })).labLive).toBe(true)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: 'true' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '0' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: undefined })).labLive).toBe(false)
+  })
+
   it('defaults the site url to production', async () => {
     const env = await loadEnv({ NEXT_PUBLIC_SITE_URL: undefined })
     expect(env.siteUrl).toBe('https://mccorlabs.com')

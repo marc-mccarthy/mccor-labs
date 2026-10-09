@@ -56,4 +56,5 @@ export const env = {
     'NEXT_PUBLIC_CONTACT_ENDPOINT',
     process.env.NEXT_PUBLIC_CONTACT_ENDPOINT,
   ),
+  labLive: process.env.NEXT_PUBLIC_LAB_LIVE === '1',
 } as const

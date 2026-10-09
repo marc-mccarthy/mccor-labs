@@ -289,4 +289,12 @@ describe('WorkflowBuilder move, remove and undo', () => {
     expect(status()).toHaveTextContent('Loaded the Invoice intake example with 4 steps.')
     expect(load).toHaveFocus()
   })
+
+  it('keeps the summary sticky at lg for every visitor and marks it as sticky layout', () => {
+    render(<WorkflowBuilder snippets={snippets} />)
+    const aside = screen.getByRole('complementary')
+    expect(aside).toHaveClass('lg:sticky', 'lg:top-24')
+    expect(aside).not.toHaveClass('lg:motion-safe:sticky')
+    expect(aside).toHaveAttribute('data-sticky-layout')
+  })
 })

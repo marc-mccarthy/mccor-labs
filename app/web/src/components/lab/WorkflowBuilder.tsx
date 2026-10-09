@@ -17,6 +17,7 @@ import {
   fillTemplate,
   presets,
   presetsCopy,
+  progressCopy,
   statusCopy,
   stepLabel,
   verdictCopy,
@@ -33,6 +34,7 @@ import {
 } from '@/content/lab/rubric'
 
 import { FeedbackMarksProvider } from './feedbackMarks'
+import { ProgressRail, summarize } from './ProgressRail'
 import { StepCard, type StepControl } from './StepCard'
 import { SummaryTable } from './SummaryTable'
 import { VerdictCard } from './VerdictCard'
@@ -64,6 +66,11 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
 
   const { steps } = state
   const atLimit = steps.length >= MAX_STEPS
+  const classified = steps.map((step) => ({
+    answers: step.answers,
+    result: classifyStep(step.answers),
+  }))
+  const progress = summarize(classified)
 
   useEffect(() => {
     const target = pendingFocus.current
@@ -223,89 +230,100 @@ export function WorkflowBuilder({ snippets }: WorkflowBuilderProps) {
             {builderCopy.heading}
           </h2>
           <p className="mt-2 text-muted">{builderCopy.intro}</p>
-          <ol className="mt-6 flex flex-col gap-4">
-            {steps.map((step, index) => {
-              const position = index + 1
-              const result = classifyStep(step.answers)
-              const open = step.id === openId
-              return (
-                <StepCard
-                  key={step.id}
-                  step={step}
-                  position={position}
-                  total={steps.length}
-                  open={open}
-                  verdictLabel={verdictCopy[result.verdict].label}
-                  onToggle={() => {
-                    setOpenId(open ? null : step.id)
-                  }}
-                  onRename={(name) => {
-                    handleRename(step, name)
-                  }}
-                  onAnswer={(key, value) => {
-                    handleAnswer(step, position, key, value)
-                  }}
-                  onFrequency={(value) => {
-                    handleFrequency(step, value)
-                  }}
-                  onMove={(direction) => {
-                    handleMove(step, position, direction)
-                  }}
-                  onRemove={() => {
-                    handleRemove(step, position)
-                  }}
-                  controlRef={(control, element) => {
-                    registerControl(step.id, control, element)
-                  }}
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-10">
+            <div>
+              <ol className="mt-6 flex flex-col gap-4">
+                {steps.map((step, index) => {
+                  const position = index + 1
+                  const result = classifyStep(step.answers)
+                  const open = step.id === openId
+                  return (
+                    <StepCard
+                      key={step.id}
+                      step={step}
+                      position={position}
+                      total={steps.length}
+                      open={open}
+                      verdictLabel={verdictCopy[result.verdict].label}
+                      onToggle={() => {
+                        setOpenId(open ? null : step.id)
+                      }}
+                      onRename={(name) => {
+                        handleRename(step, name)
+                      }}
+                      onAnswer={(key, value) => {
+                        handleAnswer(step, position, key, value)
+                      }}
+                      onFrequency={(value) => {
+                        handleFrequency(step, value)
+                      }}
+                      onMove={(direction) => {
+                        handleMove(step, position, direction)
+                      }}
+                      onRemove={() => {
+                        handleRemove(step, position)
+                      }}
+                      controlRef={(control, element) => {
+                        registerControl(step.id, control, element)
+                      }}
+                    >
+                      <VerdictCard
+                        position={position}
+                        name={step.name}
+                        result={result}
+                        answers={step.answers}
+                        snippet={snippets[result.ruleId]}
+                        revealOrder={staggerIds.has(step.id) ? index : 0}
+                      />
+                    </StepCard>
+                  )
+                })}
+              </ol>
+              {state.removed !== null && steps.length < MAX_STEPS ? (
+                <div ref={undoRef} data-undo onFocus={pauseUndo} onBlur={resumeUndo}>
+                  <p>{builderCopy.removedNotice}</p>
+                  <Button
+                    variant="link"
+                    size="md"
+                    className="min-w-11"
+                    type="button"
+                    onClick={undo}
+                  >
+                    {builderCopy.undo}
+                  </Button>
+                </div>
+              ) : null}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Button
+                  ref={addRef}
+                  variant="secondary"
+                  size="md"
+                  className="min-w-11"
+                  type="button"
+                  aria-disabled={atLimit ? 'true' : undefined}
+                  aria-describedby={atLimit ? ADD_LIMIT_ID : undefined}
+                  onClick={handleAdd}
                 >
-                  <VerdictCard
-                    position={position}
-                    name={step.name}
-                    result={result}
-                    answers={step.answers}
-                    snippet={snippets[result.ruleId]}
-                    revealOrder={staggerIds.has(step.id) ? index : 0}
-                  />
-                </StepCard>
-              )
-            })}
-          </ol>
-          {state.removed !== null && steps.length < MAX_STEPS ? (
-            <div ref={undoRef} data-undo onFocus={pauseUndo} onBlur={resumeUndo}>
-              <p>{builderCopy.removedNotice}</p>
-              <Button
-                variant="link"
-                size="md"
-                className="min-w-11"
-                type="button"
-                onClick={undo}
-              >
-                {builderCopy.undo}
-              </Button>
-            </div>
-          ) : null}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button
-              ref={addRef}
-              variant="secondary"
-              size="md"
-              className="min-w-11"
-              type="button"
-              aria-disabled={atLimit ? 'true' : undefined}
-              aria-describedby={atLimit ? ADD_LIMIT_ID : undefined}
-              onClick={handleAdd}
-            >
-              {builderCopy.add}
-            </Button>
-            {atLimit ? (
-              <p id={ADD_LIMIT_ID} className="text-sm text-muted">
-                {builderCopy.addLimit}
+                  {builderCopy.add}
+                </Button>
+                {atLimit ? (
+                  <p id={ADD_LIMIT_ID} className="text-sm text-muted">
+                    {builderCopy.addLimit}
+                  </p>
+                ) : null}
+              </div>
+              <p role="status" data-lab-status className="sr-only">
+                <span key={status.seq}>{status.text}</span>
               </p>
-            ) : null}
+            </div>
+            <aside
+              aria-label={progressCopy.heading}
+              data-sticky-layout
+              className="mt-10 self-start lg:sticky lg:top-24 lg:mt-0"
+            >
+              <ProgressRail {...progress} />
+            </aside>
           </div>
-          <p role="status" data-lab-status className="sr-only">
-            <span key={status.seq}>{status.text}</span>
-          </p>
         </Container>
       </Section>
       <SummaryTable

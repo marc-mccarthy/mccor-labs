@@ -36,14 +36,14 @@ export function useLabPrefill(): string | null {
   if (hash.startsWith(PREFIX) && hash !== taken) setTaken(hash)
 
   useEffect(() => {
-    if (window.location.hash.startsWith(PREFIX)) {
+    if (hash.startsWith(PREFIX) && window.location.hash === hash) {
       window.history.replaceState(
         null,
         '',
         window.location.pathname + window.location.search,
       )
     }
-  }, [snapshot])
+  }, [hash, snapshot])
 
   return useMemo(() => {
     if (taken === null) return null

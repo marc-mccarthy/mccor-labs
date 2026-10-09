@@ -86,6 +86,26 @@ run "guardrail" {
     condition     = length(aws_bedrock_guardrail.lab.content_policy_config[0].filters_config) == 6
     error_message = "The lab guardrail must set all five content filters plus prompt attack."
   }
+
+  assert {
+    condition     = alltrue([for f in aws_bedrock_guardrail.lab.content_policy_config[0].filters_config : f.input_strength == "HIGH"])
+    error_message = "Every lab guardrail filter must block input at HIGH."
+  }
+
+  assert {
+    condition     = alltrue([for f in aws_bedrock_guardrail.lab.content_policy_config[0].filters_config : f.output_strength == "HIGH" if f.type != "PROMPT_ATTACK"])
+    error_message = "The five content filters must block output at HIGH."
+  }
+
+  assert {
+    condition     = alltrue([for f in aws_bedrock_guardrail.lab.content_policy_config[0].filters_config : f.output_strength == "NONE" if f.type == "PROMPT_ATTACK"])
+    error_message = "The prompt-attack filter must not set an output strength."
+  }
+
+  assert {
+    condition     = aws_bedrock_guardrail.lab.content_policy_config[0].tier_config[0].tier_name == "CLASSIC"
+    error_message = "The lab guardrail must use the CLASSIC tier."
+  }
 }
 
 run "kill_flag_and_logs" {
@@ -204,13 +224,33 @@ run "brake" {
   }
 
   assert {
-    condition     = contains(aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles, aws_iam_role.lab.name)
-    error_message = "The brake must attach the deny policy to the lab role."
+    condition     = aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].roles == toset(["t-lab"])
+    error_message = "The brake must attach the deny policy to the lab role and nothing else."
+  }
+
+  assert {
+    condition     = aws_budgets_budget_action.lab_brake.definition[0].iam_action_definition[0].policy_arn == "arn:aws:iam::111111111111:policy/t-lab-brake-deny"
+    error_message = "The brake must attach the deny policy."
+  }
+
+  assert {
+    condition     = aws_budgets_budget.lab_brake.cost_types[0].include_credit == false
+    error_message = "Credits must not hide spend from the brake."
   }
 
   assert {
     condition     = keys(local.brake_roles) == ["lab"]
     error_message = "The brake must list only the lab role in this phase."
+  }
+
+  assert {
+    condition     = local.lab_brake_deny_policy.Statement[0].Resource == ["*"]
+    error_message = "The deny policy must cover every Bedrock resource."
+  }
+
+  assert {
+    condition     = length(local.lab_brake_policy.Statement) == 1
+    error_message = "The Budgets role policy must be one statement."
   }
 
   assert {
@@ -221,6 +261,11 @@ run "brake" {
   assert {
     condition     = local.lab_brake_policy.Statement[0].Action == ["iam:AttachRolePolicy", "iam:DetachRolePolicy"] && local.lab_brake_policy.Statement[0].Resource == ["arn:aws:iam::111111111111:role/t-lab"] && local.lab_brake_policy.Statement[0].Condition.ArnEquals["iam:PolicyARN"] == "arn:aws:iam::111111111111:policy/t-lab-brake-deny"
     error_message = "The Budgets role may attach and detach only the deny policy, on the lab role only."
+  }
+
+  assert {
+    condition     = length(local.lab_brake_assume_policy.Statement) == 1 && local.lab_brake_assume_policy.Statement[0].Condition.StringEquals["aws:SourceAccount"] == "111111111111"
+    error_message = "The brake role must be assumable only from this account."
   }
 
   assert {

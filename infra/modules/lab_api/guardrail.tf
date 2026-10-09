@@ -29,4 +29,8 @@ resource "aws_bedrock_guardrail" "lab" {
 resource "aws_bedrock_guardrail_version" "lab" {
   guardrail_arn = aws_bedrock_guardrail.lab.guardrail_arn
   description   = "lab"
+
+  lifecycle {
+    replace_triggered_by = [aws_bedrock_guardrail.lab]
+  }
 }

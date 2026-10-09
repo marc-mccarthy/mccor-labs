@@ -40,6 +40,10 @@ resource "aws_budgets_budget" "lab_brake" {
   limit_amount = tostring(var.brake_usd)
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
+
+  cost_types {
+    include_credit = false
+  }
 }
 
 resource "aws_iam_policy" "lab_brake_deny" {

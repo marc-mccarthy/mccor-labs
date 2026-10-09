@@ -1,0 +1,9 @@
+{
+  "examples": [
+    { "input": "I was charged twice for the March invoice.", "expected": "billing" },
+    { "input": "Please send a copy of last month's invoice.", "expected": "billing" },
+    { "input": "I cannot log in after resetting my password.", "expected": "account" },
+    { "input": "How do I add a second user to our account?", "expected": "account" },
+    { "input": "The delivery arrived with a cracked lid.", "expected": "damage" }
+  ]
+}

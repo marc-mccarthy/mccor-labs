@@ -75,3 +75,31 @@ resource "aws_iam_role_policy" "contact" {
   role   = aws_iam_role.contact.id
   policy = jsonencode(local.contact_policy)
 }
+
+resource "aws_lambda_function" "contact" {
+  function_name    = "${var.name}-contact"
+  role             = aws_iam_role.contact.arn
+  runtime          = "nodejs24.x"
+  architectures    = ["arm64"]
+  handler          = "index.handler"
+  filename         = "${var.package_dir}/contact.zip"
+  source_code_hash = filebase64sha256("${var.package_dir}/contact.zip")
+  memory_size      = 256
+  timeout          = 10
+
+  environment {
+    variables = {
+      TABLE_NAME        = aws_dynamodb_table.lab.name
+      CONTACT_DAILY_CAP = tostring(var.contact_daily_cap)
+      CONTACT_FROM      = var.contact_from
+      CONTACT_TO        = var.contact_to
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.contact, aws_iam_role_policy.contact]
+}
+
+resource "aws_lambda_function_url" "contact" {
+  function_name      = aws_lambda_function.contact.function_name
+  authorization_type = "AWS_IAM"
+}

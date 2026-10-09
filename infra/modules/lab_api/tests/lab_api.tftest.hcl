@@ -20,6 +20,18 @@ variables {
   contact_to       = "owner@example.com"
 }
 
+override_resource {
+  target          = aws_lambda_function_url.contact
+  override_during = plan
+  values          = { function_url = "https://abc123.lambda-url.us-east-1.on.aws/" }
+}
+
+override_resource {
+  target          = aws_lambda_function.contact
+  override_during = plan
+  values          = { arn = "arn:aws:lambda:us-east-1:111111111111:function:t-contact" }
+}
+
 run "storage_and_role" {
   command = plan
 
@@ -62,5 +74,44 @@ run "storage_and_role" {
   assert {
     condition     = length(local.contact_policy.Statement) == 3
     error_message = "The contact role must carry exactly logs, counter and mail."
+  }
+}
+
+run "function" {
+  command = plan
+
+  assert {
+    condition     = aws_lambda_function.contact.runtime == "nodejs24.x" && tolist(aws_lambda_function.contact.architectures) == tolist(["arm64"])
+    error_message = "Contact must run nodejs24.x on arm64."
+  }
+
+  assert {
+    condition     = aws_lambda_function.contact.handler == "index.handler" && aws_lambda_function.contact.timeout == 10 && aws_lambda_function.contact.memory_size == 256
+    error_message = "Handler, timeout or memory drifted."
+  }
+
+  assert {
+    condition = aws_lambda_function.contact.environment[0].variables == tomap({
+      TABLE_NAME        = "t-lab"
+      CONTACT_DAILY_CAP = "50"
+      CONTACT_FROM      = "website@example.com"
+      CONTACT_TO        = "owner@example.com"
+    })
+    error_message = "Contact environment variables drifted."
+  }
+
+  assert {
+    condition     = aws_lambda_function_url.contact.authorization_type == "AWS_IAM"
+    error_message = "The Function URL must require IAM so only CloudFront OAC can call it."
+  }
+
+  assert {
+    condition     = output.api_origins == [{ path_pattern = "/api/contact", function_url_domain = "abc123.lambda-url.us-east-1.on.aws" }]
+    error_message = "api_origins must carry the path and the bare Function URL host."
+  }
+
+  assert {
+    condition     = output.function_arns == { contact = "arn:aws:lambda:us-east-1:111111111111:function:t-contact" }
+    error_message = "function_arns must be keyed by function name."
   }
 }

@@ -59,10 +59,37 @@ describe('privacy document', () => {
     ).toBe(true)
   })
 
-  it('points the access log line at the lab log', () => {
+  it('points the access log line at the contact form and lab logs', () => {
     expect(allText()).toContain(
-      'We do not keep server access logs for this website. The live lab keeps the short technical log described above.',
+      'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.',
     )
+  })
+
+  it('describes the live contact form', () => {
+    const text = allText().join(' ')
+    expect(text).toContain('emails your message to us')
+    expect(text).toContain('does not save your message anywhere else')
+    expect(text).toContain('deleted automatically after 7 days')
+    expect(text).toContain('technical log for 3 days')
+    expect(text).toContain('what happened (sent, rejected and why, or the type of error)')
+    expect(text).toContain('today’s message count')
+    expect(text).toContain('within 3 seconds')
+  })
+
+  it('places the contact form text under the contact form subsection', () => {
+    const blocks = section('What we collect, and when').blocks
+    const formStart = blocks.findIndex(
+      (block) => block.kind === 'h3' && block.text === 'When you use the contact form',
+    )
+    const mailStart = blocks.findIndex(
+      (block) => block.kind === 'h3' && block.text === 'When you email us directly',
+    )
+    const formText = blocks
+      .slice(formStart, mailStart)
+      .flatMap((block) => (block.kind === 'ul' ? block.items : [block.text]))
+      .join(' ')
+    expect(formText).toContain('emails your message to us')
+    expect(formText).toContain('within 3 seconds')
   })
 
   it('lists the live lab text among what AWS receives', () => {

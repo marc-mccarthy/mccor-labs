@@ -56,6 +56,22 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
+          text: 'When you press Send, the form goes over HTTPS to a small program we run on Amazon Web Services. It checks the form, adds one to a count of today’s messages, and emails your message to us. It does not save your message anywhere else.',
+        },
+        {
+          kind: 'p',
+          text: 'The daily count is a number next to today’s date and holds nothing about you. It is deleted automatically after 7 days.',
+        },
+        {
+          kind: 'p',
+          text: 'The program keeps a technical log for 3 days: the time, what happened (sent, rejected and why, or the type of error), a reference number, and today’s message count. It never logs your name, email address, company, budget or message.',
+        },
+        {
+          kind: 'p',
+          text: 'If the form is sent within 3 seconds of the page opening, we ask you to send it again. People rarely type that fast; scripts do.',
+        },
+        {
+          kind: 'p',
           text: 'The form includes a hidden field that automated bots fill in and people do not. If it is filled in, we discard the submission. It collects nothing about you.',
         },
         { kind: 'h3', text: 'When you email us directly' },
@@ -115,7 +131,7 @@ export const privacy: LegalDocument = {
         { kind: 'h3', text: 'Server logs' },
         {
           kind: 'p',
-          text: 'We do not keep server access logs for this website. The live lab keeps the short technical log described above.',
+          text: 'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.',
         },
       ],
     },

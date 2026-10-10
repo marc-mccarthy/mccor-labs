@@ -73,3 +73,43 @@ if out="$(run_sync)"; then fail "sync succeeded with no mailboxes in SSM"; fi
 [[ "$out" == *"refusing to remove any account"* ]] || fail "empty SSM message: $out"
 [[ "$(cat "$ACCOUNTS_FILE")" == "$before" ]] || fail "accounts changed although SSM had no mailboxes"
 echo "ok an empty SSM list removes nothing"
+
+awk '/^for attempt in 1 2 3 4 5; do$/ { on = 1 } /^docker compose up -d$/ { on = 0 } on' "$TEMPLATE" |
+  sed -e "s#/opt/mail/sync-accounts.sh#$BASE/fake-sync.sh#" >"$BASE/boot-sync.sh"
+grep -q 'fake-sync.sh' "$BASE/boot-sync.sh" || fail "boot sync block not found in template"
+
+cat >"$BASE/fake-sync.sh" <<'FAKE'
+#!/usr/bin/env bash
+count=$(($(cat "$CALLS") + 1))
+echo "$count" >"$CALLS"
+[[ "$count" -gt "$FAIL_TIMES" ]]
+FAKE
+cat >"$BASE/bin/sleep" <<'SLEEP'
+#!/usr/bin/env bash
+echo "$1" >>"$SLEPT"
+SLEEP
+chmod +x "$BASE/fake-sync.sh" "$BASE/bin/sleep"
+export CALLS="$BASE/calls" SLEPT="$BASE/slept"
+
+run_boot() {
+  echo 0 >"$CALLS"
+  : >"$SLEPT"
+  FAIL_TIMES="$1" ACCOUNTS="$2" PATH="$BASE/bin:$PATH" bash -euo pipefail "$BASE/boot-sync.sh" 2>&1
+}
+
+printf 'marcm@example.test|{SHA512-CRYPT}x\n' >"$BASE/existing.cf"
+: >"$BASE/empty.cf"
+
+out="$(run_boot 2 "$BASE/existing.cf")" || fail "boot retry exited non-zero: $out"
+[[ "$(cat "$CALLS")" == 3 && "$(tr '\n' ' ' <"$SLEPT")" == "10 20 " && "$out" != *WARNING* ]] ||
+  fail "boot retry calls=$(cat "$CALLS") slept=$(tr '\n' ' ' <"$SLEPT") out=$out"
+echo "ok boot sync retries a failing SSM read and stops once it succeeds"
+
+out="$(run_boot 99 "$BASE/existing.cf")" || fail "boot fallback exited non-zero: $out"
+[[ "$(cat "$CALLS")" == 5 && "$out" == *"starting with the existing accounts file"* ]] ||
+  fail "boot fallback calls=$(cat "$CALLS") out=$out"
+echo "ok boot sync gives up after five tries and starts with the existing accounts"
+
+if out="$(run_boot 99 "$BASE/empty.cf")"; then fail "boot started with no accounts"; fi
+[[ "$out" == *"no mailboxes were written"* ]] || fail "empty accounts message: $out"
+echo "ok boot still refuses to start when there are no accounts at all"

@@ -19,45 +19,45 @@ and `docs/content/team.md` are already done on `feat/team-portraits`.
   leaves `kirstenh@` working on the server with its last password.
 - Mail is stored on the `maildata` volume at `/var/mail-data/mail-data/` (container `/var/mail/`),
   and the module snapshots that volume (`snapshot_tag` output).
-- The 1Password item `Development/mccor-labs/mailboxes` holds each user's password, including
-  `kirstenh`.
+- `op://Development/mccor-labs/mailboxes` is that map of names, not passwords. Passwords are
+  `random_password` values Terraform writes to SSM (`docs/plans/ci-terraform-apply.md:855`).
 - Shell access is `aws ssm start-session --target <mail_instance_id>`.
 
 ## Steps
 
 Each step is run by the owner or with the owner's explicit go-ahead. Nothing here runs automatically.
+The owner decided on 2026-10-09 that her stored mail is deleted, not exported.
 
-1. **Decide what happens to her stored mail.** Either export it first (IMAP copy from her account,
-   or a tarball of `/var/mail-data/mail-data/mccorlabs.com/kirstenh/` taken over SSM), or accept
-   that it is deleted in step 5. The latest volume snapshot also holds it until that snapshot ages
-   out.
-2. **Edit the 1Password field behind `TF_VAR_mailboxes`** to drop the `kirstenh` entry. Leave
-   `admin_mailbox` as `marcm`.
-3. **Plan.** Run `infra/deploy.sh` in plan mode, or `op run --env-file=app.env -- terraform
--chdir=infra plan`. The only destroys must be `module.mailserver[0].random_password.mailbox["kirstenh"]`
-   and `module.mailserver[0].aws_ssm_parameter.mailbox["kirstenh"]`. Stop if the plan touches the
-   instance, the volume, or any other mailbox.
-4. **Apply** through `infra/deploy.sh` (or the deploy workflow), which keeps its existing guards.
-5. **Remove the account on the server.** Over SSM:
-   `sudo docker exec mailserver setup email del kirstenh@mccorlabs.com`. Check `setup help` on
-   the running 16.0.1 image first to confirm the flag that also deletes the maildir. Then confirm
-   `grep -c '|' /var/mail-data/config/postfix-accounts.cf` reports 4.
+The `fix/mail-prune-accounts` branch makes `sync-accounts.sh` remove accounts whose SSM parameter is
+gone, refuse to run when SSM cannot be read, and refuse to prune when SSM lists no mailboxes. It also
+allowlists the four deletions this removal needs. Because `user_data_replace_on_change = true`
+(`infra/modules/mailserver/main.tf:250`), deploying it replaces the mail instance; the mail volume and
+its config persist, and the new instance prunes `kirstenh` on its first sync.
+
+1. **Edit `op://Development/mccor-labs/mailboxes`** (vault Development, item mccor-labs, field
+   mailboxes) to drop the `kirstenh = "Kirsten H"` entry. Leave
+   `admin_mailbox` as `marcm`. Do this before step 3, or the deploy keeps her mailbox.
+2. **Review the PR for `fix/mail-prune-accounts`** and its CI.
+3. **Merge it.** The deploy workflow runs on push to `main`. Its plan must delete or replace only
+   `module.mailserver[0].aws_instance.mail`, `module.mailserver[0].aws_volume_attachment.mail`,
+   `module.mailserver[0].aws_ssm_parameter.mailbox["kirstenh"]` and
+   `module.mailserver[0].random_password.mailbox["kirstenh"]`; `scripts/plan-guard.sh` blocks
+   anything else. Expect a few minutes without mail while the new instance boots.
+4. **Confirm the prune.** Over `aws ssm start-session --target <mail_instance_id>`:
+   `sudo grep -c '|' /var/mail-data/config/postfix-accounts.cf` reports 4, and
+   `sudo /opt/mail/sync-accounts.sh` prints no `added`, `removed` or `updated` line.
+5. **Delete her stored mail.** `sudo rm -rf /var/mail-data/mail-data/mccorlabs.com/kirstenh`.
+   The latest volume snapshot still holds it until that snapshot ages out.
 6. **Verify the address is dead.** Send a test message to `kirstenh@mccorlabs.com` from an outside
    account and confirm it bounces with "user unknown". Confirm IMAP login as `kirstenh` fails.
-7. **Remove her entry from the 1Password `mailboxes` item** so the password is not left behind.
-8. **Update `docs/plans/ci-terraform-apply.md:855`** to list four users.
-
-## Follow-up worth doing
-
-`sync-accounts.sh` should remove accounts that no longer have an SSM parameter, so the next removal
-is one Terraform change instead of a manual server step. That is a code change to
-`setup.sh.tftpl` with its own test, done separately.
+7. **Empty `infra/destroy-allowlist.txt`** and update `docs/plans/ci-terraform-apply.md:855` to
+   list four users, in one follow-up commit.
 
 ## Rulings
 
-- Ruling: remove the account by hand on the server instead of rebuilding the instance (cost if
-  wrong: the account survives a later rebuild only if SSM still has it, which step 3 removes).
-- Ruling: her stored mail is the owner's call in step 1, not a default (cost if wrong: mail the
-  owner wanted is gone once the snapshot ages out).
-- Ruling: the pruning fix in `sync-accounts.sh` is a separate change (cost if wrong: one more
-  manual step if another mailbox is removed before it lands).
+- Ruling: remove her through the pruning sync on a replaced instance, not by hand on the server
+  (cost if wrong: a few minutes of mail downtime during the replacement).
+- Ruling: her stored mail is deleted, per the owner (cost if wrong: mail is gone once the latest
+  snapshot ages out).
+- Ruling: the sync refuses to prune when SSM is unreadable or empty (cost if wrong: a broken SSM
+  read leaves stale accounts until it is fixed, instead of wiping every account).

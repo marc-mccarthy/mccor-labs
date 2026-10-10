@@ -72,6 +72,8 @@ jobs:
         run: bash scripts/plan-guard.test.sh
       - name: Publish guard test
         run: bash infra/tests/publish-guard.test.sh
+      - name: Mailbox sync test
+        run: bash infra/tests/sync-accounts.test.sh
       - name: Init and validate
         run: |
           terraform -chdir=infra init -backend=false -input=false

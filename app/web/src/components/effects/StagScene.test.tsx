@@ -47,7 +47,8 @@ vi.mock('three', () => ({
     dispose = spies.materialDispose
   },
   Points: class {
-    position = { x: 0 }
+    position = { x: 0, y: 0, z: 0 }
+    scale = { x: 1, y: 1, z: 1 }
     frustumCulled = true
   },
 }))

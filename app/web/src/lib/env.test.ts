@@ -15,10 +15,19 @@ afterEach(() => {
   delete mutableEnv.NEXT_PUBLIC_SITE_URL
   delete mutableEnv.NEXT_PUBLIC_CONTACT_ENDPOINT
   delete mutableEnv.NEXT_PUBLIC_BOOKING_URL
+  delete mutableEnv.NEXT_PUBLIC_LAB_LIVE
   mutableEnv.NODE_ENV = 'test'
 })
 
 describe('env', () => {
+  it('turns the live lab on only for the value 1', async () => {
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '1' })).labLive).toBe(true)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: 'true' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '0' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '' })).labLive).toBe(false)
+    expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: undefined })).labLive).toBe(false)
+  })
+
   it('defaults the site url to production', async () => {
     const env = await loadEnv({ NEXT_PUBLIC_SITE_URL: undefined })
     expect(env.siteUrl).toBe('https://mccorlabs.com')
@@ -38,6 +47,23 @@ describe('env', () => {
   it('treats a missing contact endpoint as null rather than failing', async () => {
     const env = await loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: undefined })
     expect(env.contactEndpoint).toBeNull()
+  })
+
+  it('accepts a root-relative contact endpoint', async () => {
+    const env = await loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: '/api/contact' })
+    expect(env.contactEndpoint).toBe('/api/contact')
+  })
+
+  it('rejects a protocol-relative contact endpoint', async () => {
+    await expect(
+      loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: '//evil.example/x' }),
+    ).rejects.toThrow(/NEXT_PUBLIC_CONTACT_ENDPOINT/)
+  })
+
+  it('rejects a bare relative contact endpoint', async () => {
+    await expect(
+      loadEnv({ NEXT_PUBLIC_CONTACT_ENDPOINT: 'api/contact' }),
+    ).rejects.toThrow(/NEXT_PUBLIC_CONTACT_ENDPOINT/)
   })
 
   it('allows a missing booking url in development so dev works without 1Password', async () => {

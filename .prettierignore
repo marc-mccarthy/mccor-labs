@@ -2,6 +2,7 @@ node_modules/
 pnpm-lock.yaml
 app/web/.next/
 app/web/out/
+app/api/dist/
 app/web/next-env.d.ts
 app/web/tsconfig.json
 test-results/

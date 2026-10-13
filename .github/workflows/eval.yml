@@ -1,0 +1,112 @@
+name: Eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      staged:
+        description: Swap one race answer to stage a failure; the trace is labelled staged
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - app/web/src/content/lab/rubric.ts
+      - app/web/src/content/lab/rules/**
+      - app/api/src/**
+      - app/api/evals/**
+
+concurrency:
+  group: eval
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  MONTHLY_RUN_CAP: '15'
+
+jobs:
+  eval:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Monthly run cap
+        id: cap
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          since=$(date -u +%Y-%m-01)
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/eval.yml/runs?created=%3E%3D$since&per_page=100" \
+            | bash .github/scripts/eval-cap.sh "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" >>"$GITHUB_OUTPUT"
+      - if: steps.cap.outputs.run == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - if: steps.cap.outputs.run == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          cache: pnpm
+      - if: steps.cap.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Rubric tests
+        if: steps.cap.outputs.run == 'true'
+        run: |
+          set -uo pipefail
+          pnpm -F web exec vitest run src/content/lab --reporter=default --reporter=json --outputFile.json="$RUNNER_TEMP/rubric.json" || true
+          test -s "$RUNNER_TEMP/rubric.json"
+      - name: Rubric version
+        if: steps.cap.outputs.run == 'true'
+        id: rubric
+        run: |
+          set -euo pipefail
+          v=$(grep -oE "RUBRIC_VERSION = '[^']+'" app/web/src/content/lab/rubric.ts | cut -d"'" -f2)
+          test -n "$v"
+          echo "version=$v" >>"$GITHUB_OUTPUT"
+      - if: steps.cap.outputs.run == 'true'
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
+        with:
+          role-to-assume: arn:aws:iam::150701180133:role/mccorlabs-github-evals
+          aws-region: ${{ env.AWS_REGION }}
+          role-duration-seconds: 1200
+      - name: Run evals
+        if: steps.cap.outputs.run == 'true'
+        id: run
+        env:
+          STAGED: ${{ inputs.staged == true }}
+          RUBRIC_VERSION: ${{ steps.rubric.outputs.version }}
+        run: |
+          set +e
+          set -uo pipefail
+          pnpm -F api eval \
+            --run-id "$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --rubric-version "$RUBRIC_VERSION" \
+            --rubric-report "$RUNNER_TEMP/rubric.json" \
+            --out ../web/src/content/lab/evals \
+            --staged="$STAGED" \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          status=$?
+          echo "status=$status" >>"$GITHUB_OUTPUT"
+      - name: Format trace
+        if: steps.cap.outputs.run == 'true' && always()
+        run: pnpm exec prettier --write "app/web/src/content/lab/evals/*-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.json"
+      - if: steps.cap.outputs.run == 'true' && always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: eval-trace-${{ github.run_id }}-${{ github.run_attempt }}
+          path: app/web/src/content/lab/evals/*-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Gate
+        if: steps.cap.outputs.run == 'true'
+        env:
+          STATUS: ${{ steps.run.outputs.status }}
+        run: test "$STATUS" = 0

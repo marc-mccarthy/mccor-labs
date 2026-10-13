@@ -20,3 +20,18 @@ variable "force_destroy" {
   type        = bool
   default     = false
 }
+
+variable "api_origins" {
+  description = "Lambda Function URL origins served under the site domain, one per path pattern"
+  type = list(object({
+    path_pattern        = string
+    function_url_domain = string
+  }))
+  default = []
+}
+
+variable "api_function_arns" {
+  description = "Function ARN per endpoint name that CloudFront may invoke through its Function URL"
+  type        = map(string)
+  default     = {}
+}

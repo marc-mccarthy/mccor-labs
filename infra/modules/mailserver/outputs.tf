@@ -46,3 +46,8 @@ output "alerts_topic_arn" {
   description = "SNS topic every CloudWatch alarm publishes to"
   value       = aws_sns_topic.alerts.arn
 }
+
+output "ses_identity_arn" {
+  description = "ARN of the SES domain identity, for least-privilege senders"
+  value       = aws_ses_domain_identity.main.arn
+}

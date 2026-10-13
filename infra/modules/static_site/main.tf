@@ -33,6 +33,22 @@ data "aws_cloudfront_cache_policy" "optimized" {
   name = "Managed-CachingOptimized"
 }
 
+data "aws_cloudfront_cache_policy" "disabled" {
+  name = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  name = "Managed-AllViewerExceptHostHeader"
+}
+
+resource "aws_cloudfront_origin_access_control" "api" {
+  count                             = length(var.api_origins) > 0 ? 1 : 0
+  name                              = "${var.name}-api-oac"
+  origin_access_control_origin_type = "lambda"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_function" "viewer_request" {
   name    = "${var.name}-viewer-request"
   comment = "host + trailing-slash redirects, directory index rewrite for ${var.name}"
@@ -45,6 +61,13 @@ resource "aws_cloudfront_function" "viewer_request" {
 
 locals {
   csp = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+
+  api_routes = [
+    for o in var.api_origins :
+    merge(o, { origin_id = trim(replace(lower(o.path_pattern), "/[^a-z0-9]+/", "-"), "-") })
+  ]
+
+  api_origins = { for r in local.api_routes : r.origin_id => r }
 }
 
 resource "aws_cloudfront_response_headers_policy" "site" {
@@ -107,6 +130,22 @@ resource "aws_cloudfront_distribution" "site" {
     origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
+  dynamic "origin" {
+    for_each = local.api_origins
+    content {
+      origin_id                = origin.key
+      domain_name              = origin.value.function_url_domain
+      origin_access_control_id = aws_cloudfront_origin_access_control.api[0].id
+
+      custom_origin_config {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "https-only"
+        origin_ssl_protocols   = ["TLSv1.2"]
+      }
+    }
+  }
+
   default_cache_behavior {
     target_origin_id           = "s3-site"
     viewer_protocol_policy     = "redirect-to-https"
@@ -119,6 +158,21 @@ resource "aws_cloudfront_distribution" "site" {
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.viewer_request.arn
+    }
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = local.api_routes
+    content {
+      path_pattern               = ordered_cache_behavior.value.path_pattern
+      target_origin_id           = ordered_cache_behavior.value.origin_id
+      viewer_protocol_policy     = "https-only"
+      allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+      cached_methods             = ["GET", "HEAD"]
+      compress                   = true
+      cache_policy_id            = data.aws_cloudfront_cache_policy.disabled.id
+      origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+      response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
     }
   }
 
@@ -173,4 +227,24 @@ resource "aws_s3_bucket_policy" "site" {
   bucket     = aws_s3_bucket.site.id
   policy     = data.aws_iam_policy_document.site.json
   depends_on = [aws_s3_bucket_public_access_block.site]
+}
+
+resource "aws_lambda_permission" "api_url" {
+  for_each               = var.api_function_arns
+  statement_id           = "AllowCloudFrontInvokeFunctionUrl"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = each.value
+  principal              = "cloudfront.amazonaws.com"
+  source_arn             = aws_cloudfront_distribution.site.arn
+  function_url_auth_type = "AWS_IAM"
+}
+
+resource "aws_lambda_permission" "api_invoke" {
+  for_each                 = var.api_function_arns
+  statement_id             = "AllowCloudFrontInvokeFunction"
+  action                   = "lambda:InvokeFunction"
+  function_name            = each.value
+  principal                = "cloudfront.amazonaws.com"
+  source_arn               = aws_cloudfront_distribution.site.arn
+  invoked_via_function_url = true
 }

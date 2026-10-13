@@ -58,9 +58,11 @@ for (const path of ROUTES) {
 
       const sticky = await page.evaluate(
         () =>
-          [...document.querySelectorAll('body *:not(header, header *)')].filter(
-            (element) => getComputedStyle(element).position === 'sticky',
-          ).length,
+          [
+            ...document.querySelectorAll(
+              'body *:not(header, header *, [data-sticky-layout])',
+            ),
+          ].filter((element) => getComputedStyle(element).position === 'sticky').length,
       )
       expect(sticky).toBe(0)
 

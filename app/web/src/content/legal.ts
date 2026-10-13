@@ -27,7 +27,7 @@ export const privacy: LegalDocument = {
       blocks: [
         {
           kind: 'p',
-          text: 'We collect what you send us through the contact form, and nothing else. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.',
+          text: 'We collect what you send us through the contact form. If you use the live part of our lab, the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.',
         },
         {
           kind: 'p',
@@ -56,12 +56,54 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
+          text: 'When you press Send, the form goes over HTTPS to a small program we run on Amazon Web Services. It checks the form, adds one to a count of today’s messages, and emails your message to us. It does not save your message anywhere else.',
+        },
+        {
+          kind: 'p',
+          text: 'The daily count is a number next to today’s date and holds nothing about you. It is deleted automatically after 7 days.',
+        },
+        {
+          kind: 'p',
+          text: 'The program keeps a technical log for 3 days: the time, what happened (sent, rejected and why, or the type of error), a reference number, and today’s message count. It never logs your name, email address, company, budget or message.',
+        },
+        {
+          kind: 'p',
+          text: 'If the form is sent within 3 seconds of the page opening, we ask you to send it again. People rarely type that fast; scripts do.',
+        },
+        {
+          kind: 'p',
           text: 'The form includes a hidden field that automated bots fill in and people do not. If it is filled in, we discard the submission. It collects nothing about you.',
         },
         { kind: 'h3', text: 'When you email us directly' },
         {
           kind: 'p',
           text: 'We receive whatever you send, including your email address and anything in your signature or attachments. Same use: replying to you.',
+        },
+        { kind: 'h3', text: 'When you use the live lab' },
+        {
+          kind: 'p',
+          text: 'The lab’s builder runs in your browser. Step names and answers stay in your browser’s memory and are gone when you close the tab.',
+        },
+        {
+          kind: 'p',
+          text: 'If you choose Race this step or Argue the other side, the examples or step description you type are sent to Amazon Bedrock, an AWS service, to run that one test. AWS processes it in its US regions (N. Virginia, Ohio or Oregon). We do not store the text, and we have turned off Bedrock’s request logging.',
+        },
+        {
+          kind: 'p',
+          text: 'Our server keeps a count of how many live runs happened each day, with no link to you, for 7 days. The lab shows you how many runs are left today.',
+        },
+        {
+          kind: 'p',
+          text: 'Our server writes a short technical log for each run: the time, whether it succeeded, how long it took and how many tokens it used. It never includes what you typed. These logs are deleted after 3 days.',
+        },
+        { kind: 'h3', text: 'When you mark a verdict as wrong' },
+        {
+          kind: 'p',
+          text: 'If you press "Wrong?" on a verdict in our lab and send it, we store four things: which of the six verdicts it was, which rule in our rubric gave that verdict, the version of our rubric, and which of three fixed reasons you picked. We store nothing you typed, nothing about your steps, and nothing that identifies you or your device. We also keep a count of how many marks arrive each day, so we can stop accepting them after 500 in a day.',
+        },
+        {
+          kind: 'p',
+          text: 'Once a week, an automated email tells us how many marks each rule and verdict received for each reason. We use these counts to improve the rubric.',
         },
         { kind: 'h3', text: 'When you simply read the site' },
         {
@@ -87,7 +129,10 @@ export const privacy: LegalDocument = {
           text: 'The site does store a small amount of information in your own browser to remember your preferences. This never leaves your device, is never sent to us, and you can clear it at any time through your browser settings.',
         },
         { kind: 'h3', text: 'Server logs' },
-        { kind: 'p', text: 'We do not keep server access logs for this website.' },
+        {
+          kind: 'p',
+          text: 'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.',
+        },
       ],
     },
     {
@@ -97,7 +142,7 @@ export const privacy: LegalDocument = {
         {
           kind: 'ul',
           items: [
-            'Amazon Web Services gets contact form submissions in transit and at rest, and the email itself. They host this site and run the email delivery. Data is processed in the US East (N. Virginia) region',
+            'Amazon Web Services gets contact form submissions in transit and at rest, the email itself, and the text of any live lab test you run. They host this site, run the email delivery and run the lab’s AI model. Contact data is processed in the US East (N. Virginia) region; live lab tests may be processed in N. Virginia, Ohio or Oregon',
             'Google (Calendar appointment scheduling) gets whatever you enter when you book a call, typically your name, email address and any note you add. This happens only if you click through to book, and Google’s own privacy policy applies from that point',
           ],
         },
@@ -121,6 +166,14 @@ export const privacy: LegalDocument = {
         {
           kind: 'p',
           text: 'Contact form submissions and email correspondence are kept for TODO(owner): retention period, 24 months proposed, from our last exchange, then deleted. If your enquiry becomes a project, the correspondence is kept as a business record for as long as we are required to keep it.',
+        },
+        {
+          kind: 'p',
+          text: 'Live lab text: not kept. Daily run counts: 7 days. Technical logs: 3 days.',
+        },
+        {
+          kind: 'p',
+          text: 'Verdict marks are deleted automatically after 90 days. Daily counts are deleted after 7 days.',
         },
         {
           kind: 'p',

@@ -50,10 +50,25 @@ module "certificate" {
   zone_id           = aws_route53_zone.this[0].zone_id
 }
 
+module "lab_api" {
+  count  = local.has_domain ? 1 : 0
+  source = "./modules/lab_api"
+
+  name              = var.name
+  package_dir       = "${path.module}/../app/api/dist"
+  ses_identity_arn  = module.mailserver[0].ses_identity_arn
+  contact_from      = "website@${var.domain_name}"
+  contact_to        = "${var.admin_mailbox}@${var.domain_name}"
+  alert_email       = var.alert_email
+  brake_extra_roles = { for role in aws_iam_role.evals : "evals" => { name = role.name, arn = role.arn } }
+}
+
 module "site" {
-  source          = "./modules/static_site"
-  name            = var.name
-  aliases         = local.has_domain ? local.hostnames : []
-  certificate_arn = one(module.certificate[*].certificate_arn)
-  force_destroy   = !var.protect_data
+  source            = "./modules/static_site"
+  name              = var.name
+  aliases           = local.has_domain ? local.hostnames : []
+  certificate_arn   = one(module.certificate[*].certificate_arn)
+  force_destroy     = !var.protect_data
+  api_origins       = local.has_domain ? module.lab_api[0].api_origins : []
+  api_function_arns = local.has_domain ? module.lab_api[0].function_arns : {}
 }

@@ -1,12 +1,26 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { submitContact, validateContact, type ContactRequest } from './contact'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { signedPostJson } from '@/lib/signedPost'
+import {
+  MAILTO_BODY_MAX,
+  contactMailtoHref,
+  submitContact,
+  validateContact,
+  type ContactRequest,
+} from './contact'
+
+vi.mock('@/lib/signedPost', () => ({ signedPostJson: vi.fn() }))
 
 const valid: ContactRequest = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
   message: 'We need a marketing site and a client portal.',
   honeypot: '',
+  elapsedMs: 5000,
 }
+
+beforeEach(() => {
+  vi.mocked(signedPostJson).mockReset()
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -44,31 +58,32 @@ describe('validateContact', () => {
 
 describe('submitContact', () => {
   it('returns a server error without fetching when no endpoint is configured', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
     const result = await submitContact(valid, null)
     expect(result).toEqual({ ok: false, error: 'server' })
-    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(signedPostJson).not.toHaveBeenCalled()
   })
 
   it('refuses to send a payload it knows is invalid', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
     const result = await submitContact(
       { ...valid, email: 'nope' },
       'https://api.test/contact',
     )
     expect(result).toEqual({ ok: false, error: 'validation' })
-    expect(fetchSpy).not.toHaveBeenCalled()
+    expect(signedPostJson).not.toHaveBeenCalled()
   })
 
   it('reports success on a 200', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    vi.mocked(signedPostJson).mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     )
-    expect(await submitContact(valid, 'https://api.test/contact')).toEqual({ ok: true })
+    expect(await submitContact(valid, 'https://api.test/contact')).toEqual({
+      ok: true,
+      reference: null,
+    })
   })
 
   it('maps a 429 to rate_limit', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 429 }))
+    vi.mocked(signedPostJson).mockResolvedValue(new Response('', { status: 429 }))
     expect(await submitContact(valid, 'https://api.test/contact')).toEqual({
       ok: false,
       error: 'rate_limit',
@@ -76,7 +91,7 @@ describe('submitContact', () => {
   })
 
   it('maps a 400 to validation', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 400 }))
+    vi.mocked(signedPostJson).mockResolvedValue(new Response('', { status: 400 }))
     expect(await submitContact(valid, 'https://api.test/contact')).toEqual({
       ok: false,
       error: 'validation',
@@ -84,7 +99,7 @@ describe('submitContact', () => {
   })
 
   it('maps a network failure to server rather than throwing', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+    vi.mocked(signedPostJson).mockRejectedValue(new Error('offline'))
     expect(await submitContact(valid, 'https://api.test/contact')).toEqual({
       ok: false,
       error: 'server',
@@ -93,14 +108,87 @@ describe('submitContact', () => {
 
   it('forwards a filled honeypot to the server rather than filtering it client-side', async () => {
     const filled = { ...valid, honeypot: 'a bot wrote this' }
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
-    const result = await submitContact(filled, 'https://api.test/contact')
-    expect(fetchSpy).toHaveBeenCalledWith(
-      'https://api.test/contact',
-      expect.objectContaining({ body: JSON.stringify(filled) }),
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
     )
-    expect(result).toEqual({ ok: true })
+    const result = await submitContact(filled, 'https://api.test/contact')
+    expect(signedPostJson).toHaveBeenCalledWith('https://api.test/contact', filled)
+    expect(result).toEqual({ ok: true, reference: null })
+  })
+
+  it('returns the reference from a 200', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, reference: 'AB12CD34' }), { status: 200 }),
+    )
+    expect(await submitContact(valid, '/api/contact')).toEqual({
+      ok: true,
+      reference: 'AB12CD34',
+    })
+  })
+
+  it('maps a 429 with reason daily_cap to daily_cap', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ reason: 'daily_cap' }), { status: 429 }),
+    )
+    expect(await submitContact(valid, '/api/contact')).toEqual({
+      ok: false,
+      error: 'daily_cap',
+    })
+  })
+
+  it('maps a 429 with a non-JSON body to rate_limit', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(new Response('Too Many', { status: 429 }))
+    expect(await submitContact(valid, '/api/contact')).toEqual({
+      ok: false,
+      error: 'rate_limit',
+    })
+  })
+
+  it('maps a 400 with reason too_fast to too_fast', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ reason: 'too_fast' }), { status: 400 }),
+    )
+    expect(await submitContact(valid, '/api/contact')).toEqual({
+      ok: false,
+      error: 'too_fast',
+    })
+  })
+
+  it('maps a 400 with reason validation to validation', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ reason: 'validation' }), { status: 400 }),
+    )
+    expect(await submitContact(valid, '/api/contact')).toEqual({
+      ok: false,
+      error: 'validation',
+    })
+  })
+})
+
+describe('contactMailtoHref', () => {
+  it('carries the subject and the whole message when it fits', () => {
+    expect(contactMailtoHref('hello@mccorlabs.com', 'Website enquiry', 'Hi there')).toBe(
+      'mailto:hello@mccorlabs.com?subject=Website%20enquiry&body=Hi%20there',
+    )
+  })
+
+  it('cuts a long message to the cap and marks the cut', () => {
+    const href = contactMailtoHref(
+      'hello@mccorlabs.com',
+      'Website enquiry',
+      'é'.repeat(5000),
+    )
+    const body = decodeURIComponent(href.split('&body=')[1] ?? '')
+    expect(encodeURIComponent(body).length).toBeLessThanOrEqual(MAILTO_BODY_MAX)
+    expect(body.endsWith('…')).toBe(true)
+  })
+
+  it('never splits a surrogate pair', () => {
+    const href = contactMailtoHref(
+      'hello@mccorlabs.com',
+      'Website enquiry',
+      '😀'.repeat(2000),
+    )
+    expect(() => decodeURIComponent(href.split('&body=')[1] ?? '')).not.toThrow()
   })
 })

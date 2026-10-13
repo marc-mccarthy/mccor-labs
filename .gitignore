@@ -13,6 +13,7 @@ node_modules/
 .build/
 app/web/.next/
 app/web/out/
+app/api/dist/
 app/web/tsconfig.tsbuildinfo
 app/web/next-env.d.ts
 

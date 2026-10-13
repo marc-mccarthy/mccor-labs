@@ -112,7 +112,7 @@ describe('WorkflowDiagram', () => {
     })
   })
 
-  it('centres each label column on its node', () => {
+  it('centers each label column on its node', () => {
     mockMatchMedia(false)
     const { container } = render(
       <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,

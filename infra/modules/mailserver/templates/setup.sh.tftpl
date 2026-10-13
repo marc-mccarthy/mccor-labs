@@ -290,7 +290,16 @@ fi
 echo "accounts file now has $(grep -c '|' "$ACCOUNTS" 2>/dev/null || echo 0) mailbox(es)"
 SYNC
 chmod +x /opt/mail/sync-accounts.sh
-/opt/mail/sync-accounts.sh
+for attempt in 1 2 3 4 5; do
+  if /opt/mail/sync-accounts.sh; then
+    break
+  fi
+  if [ "$attempt" -eq 5 ]; then
+    echo "WARNING: mailbox sync failed $attempt times; starting with the existing accounts file" >&2
+    break
+  fi
+  sleep $((attempt * 10))
+done
 
 if [ ! -s "$ACCOUNTS" ]; then
   echo "FATAL: no mailboxes were written to $ACCOUNTS -- the mail server would not start" >&2

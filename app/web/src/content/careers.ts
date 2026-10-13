@@ -39,7 +39,7 @@ export const roles: readonly Role[] = [
       'Three or more years building and maintaining production software',
       'Comfort across the stack, and honesty about where your depth actually is',
       "Experience inheriting someone else's codebase without rewriting it on reflex",
-      'The judgement to know when good enough is good enough',
+      'The judgment to know when good enough is good enough',
     ],
     applySubject: 'Application: Software Engineer II',
   },

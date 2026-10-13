@@ -1,7 +1,7 @@
 # Job postings — full text
 
 Standalone, board-ready postings. These are longer than the `/careers` page
-cards in `docs/content/careers.md`; the cards summarise, these are the full text
+cards in `docs/content/careers.md`; the cards summarize, these are the full text
 for a role detail page, LinkedIn, or a job board.
 
 **Before publishing any of these, the owner must supply or explicitly decline:**
@@ -200,7 +200,7 @@ material most B2B technical marketing lacks.
   services. Bring numbers
 - Ability to write clearly about technical work. A writing sample matters more
   than a certification
-- Comfort operating as the only marketing person in the organisation
+- Comfort operating as the only marketing person in the organization
 - Preference for measurable over decorative
 - Based in or moving to the Twin Cities metro
 
@@ -208,7 +208,7 @@ material most B2B technical marketing lacks.
 
 - Experience marketing a development agency, consultancy or software firm
 - Working technical SEO knowledge — not just keyword tooling
-- Having built a case-study programme from nothing
+- Having built a case-study program from nothing
 - Familiarity with how developers evaluate a vendor, because they do not respond
   to conventional B2B marketing
 

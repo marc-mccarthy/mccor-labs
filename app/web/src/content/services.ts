@@ -39,7 +39,7 @@ export const services: readonly Service[] = [
     deliverables: [
       'Technical design and data model',
       'Working application, deployed',
-      'Authentication, authorisation and audit where the domain needs them',
+      'Authentication, authorization and audit where the domain needs them',
       'Automated tests covering the paths that matter',
       'Infrastructure as code',
       'Runbook and handover',
@@ -57,7 +57,7 @@ export const services: readonly Service[] = [
       'Feasibility assessment, including where AI is the wrong answer',
       'MCP server or LLM feature, integrated with your systems',
       'Evaluation harness and a quality baseline you can re-run',
-      'Cost and latency modelling before commitment, not after',
+      'Cost and latency modeling before commitment, not after',
       'Documentation your team can maintain',
     ],
     capabilities: [
@@ -105,9 +105,9 @@ export const services: readonly Service[] = [
       'A second opinion for development teams — architecture review, code review, and help getting unstuck.',
     detail:
       'Sometimes the useful thing is not another pair of hands but someone who has seen the failure mode before. We review architecture before it is expensive to change, audit code for the problems that only show up under load or in front of an auditor, and work alongside your team on the part of the system nobody wants to touch. We tell you what we actually think, including when the answer is that your existing plan is fine.',
-    outcome: 'Prioritised, specific findings your own team can act on.',
+    outcome: 'Prioritized, specific findings your own team can act on.',
     deliverables: [
-      'Architecture or code review with prioritised, specific findings',
+      'Architecture or code review with prioritized, specific findings',
       'Written recommendations, ordered by what they cost and what they save',
       'Pairing sessions with your developers',
       'Follow-up review once changes land',

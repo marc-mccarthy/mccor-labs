@@ -152,7 +152,7 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
-          text: 'We have never sold personal information and will not. We do not "share" it for cross-context behavioural advertising, in the sense those terms are used in US state privacy laws.',
+          text: 'We have never sold personal information and will not. We do not "share" it for cross-context behavioral advertising, in the sense those terms are used in US state privacy laws.',
         },
         {
           kind: 'p',
@@ -227,7 +227,7 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
-          text: 'If you are a Minnesota resident, the Minnesota Consumer Data Privacy Act gives you comparable rights. We will honour them regardless of whether the Act’s size thresholds apply to a firm of this size.',
+          text: 'If you are a Minnesota resident, the Minnesota Consumer Data Privacy Act gives you comparable rights. We will honor them regardless of whether the Act’s size thresholds apply to a firm of this size.',
         },
       ],
     },

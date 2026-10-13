@@ -124,7 +124,7 @@ That is the complete list. We do not use a CRM, an email marketing platform, an
 analytics provider, an advertising network, or a chat widget.
 
 **We have never sold personal information and will not.** We do not "share" it
-for cross-context behavioural advertising, in the sense those terms are used in
+for cross-context behavioral advertising, in the sense those terms are used in
 US state privacy laws.
 
 **Booking a call is a deliberate handoff.** The booking button is an ordinary
@@ -179,7 +179,7 @@ no opt-out to exercise. We will not discriminate against you for making a
 request.
 
 If you are a **Minnesota** resident, the Minnesota Consumer Data Privacy Act
-gives you comparable rights. We will honour them regardless of whether the Act's
+gives you comparable rights. We will honor them regardless of whether the Act's
 size thresholds apply to a firm of this size.
 
 ## Children

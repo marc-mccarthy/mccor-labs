@@ -1,5 +1,5 @@
 import { team } from '@/content/team'
-import { portraits } from '@/lib/portraits'
+import { portraits, type PortraitSlug } from '@/lib/portraits'
 import { render, screen } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,7 +22,7 @@ describe('TeamGrid', () => {
   it('renders every name, role, bio and mailto link', () => {
     mockMatchMedia(false)
     render(<TeamGrid />)
-    expect(team).toHaveLength(5)
+    expect(team).toHaveLength(4)
     for (const member of team) {
       expect(screen.getByRole('heading', { name: member.name })).toBeInTheDocument()
       expect(screen.getByText(member.role)).toBeInTheDocument()
@@ -42,28 +42,26 @@ describe('TeamGrid', () => {
     expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0)
   })
 
-  it('renders only Nate as a photograph with explicit width and height', () => {
+  it('renders every member as a photograph with explicit width and height', () => {
     mockMatchMedia(false)
     render(<TeamGrid />)
-    const images = screen.getAllByRole('img')
-    expect(images).toHaveLength(1)
-    const image = images[0]
-    if (!image) throw new Error('image missing')
-    const nate = portraits.nateb
-    if (!nate) throw new Error('nateb portrait missing')
-    expect(image).toHaveAttribute('width', String(nate.width))
-    expect(image).toHaveAttribute('height', String(nate.height))
-    expect(image).toHaveAttribute('src', `/${nate.webp}`)
-    const avif = image.closest('picture')?.querySelector('source[type="image/avif"]')
-    expect(avif).toHaveAttribute('srcset', `/${nate.avif}`)
+    expect(screen.getAllByRole('img')).toHaveLength(team.length)
+    for (const member of team) {
+      const image = screen.getByAltText(`Portrait of ${member.name}`)
+      const portrait = portraits[member.mediaSlot as PortraitSlug]
+      if (!portrait) throw new Error(`${member.name} portrait missing`)
+      expect(image).toHaveAttribute('width', String(portrait.width))
+      expect(image).toHaveAttribute('height', String(portrait.height))
+      expect(image).toHaveAttribute('src', `/${portrait.webp}`)
+      const avif = image.closest('picture')?.querySelector('source[type="image/avif"]')
+      expect(avif).toHaveAttribute('srcset', `/${portrait.avif}`)
+    }
   })
 
-  it('renders a designed panel for each null mediaSlot, not an image', () => {
-    mockMatchMedia(false)
-    render(<TeamGrid />)
-    const nulls = team.filter((member) => member.mediaSlot === null)
-    expect(nulls).toHaveLength(4)
-    expect(screen.getAllByTestId('team-panel')).toHaveLength(4)
+  it('gives every member a published portrait', () => {
+    for (const member of team) {
+      expect(portraits[member.mediaSlot as PortraitSlug]).toBeDefined()
+    }
   })
 
   it('renders a single section and all members under reduced motion', () => {

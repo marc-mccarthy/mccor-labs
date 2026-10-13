@@ -207,12 +207,13 @@ cat > /opt/mail/sync-accounts.sh <<'SYNC'
 #!/usr/bin/env bash
 set -euo pipefail
 
-ACCOUNTS="/var/mail-data/config/postfix-accounts.cf"
+ACCOUNTS="$${ACCOUNTS_FILE:-/var/mail-data/config/postfix-accounts.cf}"
 touch "$ACCOUNTS"
 chmod 600 "$ACCOUNTS"
 SCRATCH="$(mktemp)"
 trap 'rm -f "$SCRATCH"' EXIT
 CHANGED=0
+WANTED=""
 
 has_account() {
   awk -F'|' -v addr="$1" '$1 == addr { found = 1 } END { exit !found }' "$ACCOUNTS"
@@ -233,12 +234,19 @@ add_account() {
   printf '%s|{SHA512-CRYPT}%s\n' "$1" "$hash" >> "$ACCOUNTS"
 }
 
+if ! PARAMS="$(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
+                 --with-decryption --query 'Parameters[].[Name,Value]' --output text)"; then
+  echo "FATAL: could not read mailbox passwords from SSM; accounts left unchanged" >&2
+  exit 1
+fi
+
 while read -r NAME PASS; do
   [ -n "$NAME" ] || continue
   LOCAL="$${NAME##*/}"
 
   case "$LOCAL" in _*) continue ;; esac
   ADDR="$LOCAL@${domain}"
+  WANTED="$WANTED $ADDR"
 
   if ! has_account "$ADDR"; then
     add_account "$ADDR" "$PASS"
@@ -256,8 +264,23 @@ while read -r NAME PASS; do
   add_account "$ADDR" "$PASS"
   echo "updated password for $ADDR"
   CHANGED=$((CHANGED + 1))
-done < <(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix} \
-           --with-decryption --query 'Parameters[].[Name,Value]' --output text)
+done <<< "$PARAMS"
+
+if [ -z "$WANTED" ]; then
+  echo "FATAL: SSM returned no mailboxes; refusing to remove any account" >&2
+  exit 1
+fi
+
+EXISTING="$(awk -F'|' -v suffix="@${domain}" \
+  'length($1) > length(suffix) && substr($1, length($1) - length(suffix) + 1) == suffix { print $1 }' "$ACCOUNTS")"
+
+while read -r ADDR; do
+  [ -n "$ADDR" ] || continue
+  case " $WANTED " in *" $ADDR "*) continue ;; esac
+  drop_account "$ADDR"
+  echo "removed $ADDR"
+  CHANGED=$((CHANGED + 1))
+done <<< "$EXISTING"
 
 if [ "$CHANGED" -gt 0 ] && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
   echo "reloading mailserver to pick up $CHANGED mailbox change(s)"
@@ -267,7 +290,16 @@ fi
 echo "accounts file now has $(grep -c '|' "$ACCOUNTS" 2>/dev/null || echo 0) mailbox(es)"
 SYNC
 chmod +x /opt/mail/sync-accounts.sh
-/opt/mail/sync-accounts.sh
+for attempt in 1 2 3 4 5; do
+  if /opt/mail/sync-accounts.sh; then
+    break
+  fi
+  if [ "$attempt" -eq 5 ]; then
+    echo "WARNING: mailbox sync failed $attempt times; starting with the existing accounts file" >&2
+    break
+  fi
+  sleep $((attempt * 10))
+done
 
 if [ ! -s "$ACCOUNTS" ]; then
   echo "FATAL: no mailboxes were written to $ACCOUNTS -- the mail server would not start" >&2

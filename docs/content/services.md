@@ -64,7 +64,7 @@ learn rather than from what was assumed at the start.
 
 - Technical design and data model
 - Working application, deployed
-- Authentication, authorisation and audit where the domain needs them
+- Authentication, authorization and audit where the domain needs them
 - Automated tests covering the paths that matter
 - Infrastructure as code
 - Runbook and handover
@@ -89,7 +89,7 @@ query would do.
 - Feasibility assessment, including where AI is the wrong answer
 - MCP server or LLM feature, integrated with your systems
 - Evaluation harness and a quality baseline you can re-run
-- Cost and latency modelling before commitment, not after
+- Cost and latency modeling before commitment, not after
 - Documentation your team can maintain
 
 ---
@@ -108,7 +108,7 @@ answer is that your existing plan is fine.
 
 **Deliverables:**
 
-- Architecture or code review with prioritised, specific findings
+- Architecture or code review with prioritized, specific findings
 - Written recommendations, ordered by what they cost and what they save
 - Pairing sessions with your developers
 - Follow-up review once changes land
@@ -167,8 +167,9 @@ alternatives.
 - Five services is at the upper limit for one page before it starts reading as
   an undifferentiated list. If a sixth appears, consider grouping.
 - Every service here is visibly covered by a named team member in
-  `docs/content/team.md`: websites and applications by Marc, Ashley and Marie
-  between them; AI integration and teaching by Marc; consulting by Nate. Keep it
+  `app/web/src/content/team.ts`: websites and applications by Marc, Ashley and
+  Marie between them; AI integration and teaching by Marc and Ashley; consulting
+  by Nate. Keep it
   that way — a service nobody on the team page appears to deliver reads as
   padding.
 - Every claim of delivered work in the AI integration section came from the

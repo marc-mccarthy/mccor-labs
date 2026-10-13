@@ -7,11 +7,18 @@ export interface Portrait {
   height: number
 }
 
-export const portraits: Partial<Record<PortraitSlug, Portrait>> = {
-  nateb: {
-    avif: 'media/team/nateb.avif',
-    webp: 'media/team/nateb.webp',
+function portrait(slug: PortraitSlug): Portrait {
+  return {
+    avif: `media/team/${slug}.avif`,
+    webp: `media/team/${slug}.webp`,
     width: 320,
     height: 400,
-  },
+  }
+}
+
+export const portraits: Partial<Record<PortraitSlug, Portrait>> = {
+  marcm: portrait('marcm'),
+  nateb: portrait('nateb'),
+  ashleyt: portrait('ashleyt'),
+  mariem: portrait('mariem'),
 }

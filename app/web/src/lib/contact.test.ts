@@ -16,6 +16,7 @@ vi.mock('@/lib/signedPost', () => ({ signedPostJson: vi.fn() }))
 const valid: ContactRequest = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
+  phone: '(202) 555-0123',
   message: 'We need a marketing site and a client portal.',
   honeypot: '',
   elapsedMs: 5000,
@@ -56,6 +57,27 @@ describe('validateContact', () => {
   it('rejects a malformed email', () => {
     expect(validateContact({ ...valid, email: 'nope' }).email).toBeTruthy()
   })
+
+  it('requires a phone number', () => {
+    expect(validateContact({ ...valid, phone: '' }).phone).toBe(ui.contactErrorPhone)
+    expect(validateContact({ ...valid, phone: '   ' }).phone).toBe(ui.contactErrorPhone)
+  })
+
+  it('rejects an invalid phone number with the invalid message', () => {
+    expect(validateContact({ ...valid, phone: '5551234567' }).phone).toBe(
+      ui.contactErrorPhoneInvalid,
+    )
+    expect(validateContact({ ...valid, phone: '202555' }).phone).toBe(
+      ui.contactErrorPhoneInvalid,
+    )
+  })
+
+  it.each(['2025550123', '+12025550123', '(202) 555-0123'])(
+    'accepts the phone number %s',
+    (phone) => {
+      expect(validateContact({ ...valid, phone }).phone).toBeUndefined()
+    },
+  )
 
   it('requires a message of at least ten characters', () => {
     expect(validateContact({ ...valid, message: 'too short' }).message).toBeTruthy()
@@ -137,8 +159,29 @@ describe('submitContact', () => {
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     )
     const result = await submitContact(filled, 'https://api.test/contact')
-    expect(signedPostJson).toHaveBeenCalledWith('https://api.test/contact', filled)
+    expect(signedPostJson).toHaveBeenCalledWith('https://api.test/contact', {
+      ...filled,
+      phone: '+12025550123',
+    })
     expect(result).toEqual({ ok: true, reference: null })
+  })
+
+  it('posts the phone number in E.164 form', async () => {
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    )
+    await submitContact(valid, 'https://api.test/contact')
+    const body = vi.mocked(signedPostJson).mock.calls[0]?.[1] as ContactRequest
+    expect(body.phone).toBe('+12025550123')
+  })
+
+  it('refuses to send an invalid phone number', async () => {
+    const result = await submitContact(
+      { ...valid, phone: '5551234567' },
+      'https://api.test/contact',
+    )
+    expect(result).toEqual({ ok: false, error: 'validation' })
+    expect(signedPostJson).not.toHaveBeenCalled()
   })
 
   it('returns the reference from a 200', async () => {

@@ -16,10 +16,10 @@ locals {
         Resource = ["${aws_cloudwatch_log_group.digest.arn}:*"]
       },
       {
-        Sid      = "ScanMarks"
+        Sid      = "QueryMarks"
         Effect   = "Allow"
-        Action   = ["dynamodb:Scan"]
-        Resource = [aws_dynamodb_table.lab.arn]
+        Action   = ["dynamodb:Query"]
+        Resource = ["${aws_dynamodb_table.lab.arn}/index/marks"]
       },
       {
         Sid       = "Mail"

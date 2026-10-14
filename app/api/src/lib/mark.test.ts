@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { MARK_TTL_DAYS, toMarkItem } from './mark'
 
 describe('toMarkItem', () => {
-  it('keys by mark#<id> and expires after 90 days', () => {
+  it('keys by mark#<id>, tags kind mark and expires after 90 days', () => {
     const now = new Date('2026-10-09T12:00:00Z')
     const item = toMarkItem(
       { verdictId: 'rules', ruleId: 'R4', rubricVersion: '1.0.0', reason: 'needs-more' },
@@ -12,6 +12,7 @@ describe('toMarkItem', () => {
     expect(MARK_TTL_DAYS).toBe(90)
     expect(item).toEqual({
       pk: 'mark#01ABC',
+      kind: 'mark',
       verdictId: 'rules',
       ruleId: 'R4',
       rubricVersion: '1.0.0',

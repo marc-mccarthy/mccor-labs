@@ -117,6 +117,7 @@ describe('feedback handler', () => {
     expect(put?.ConditionExpression).toBe('attribute_not_exists(pk)')
     expect(put?.Item).toEqual({
       pk: 'mark#01TEST',
+      kind: 'mark',
       verdictId: 'rules',
       ruleId: 'R8',
       rubricVersion: '2.0.0',

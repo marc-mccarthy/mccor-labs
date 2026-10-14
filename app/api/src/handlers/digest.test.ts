@@ -12,7 +12,7 @@ const now = new Date('2026-10-12T13:00:00Z')
 beforeEach(() => ses.reset())
 
 function setup(records: MarkRecord[]) {
-  const scan = vi.fn().mockResolvedValue(records)
+  const query = vi.fn().mockResolvedValue(records)
   const handler = createDigestHandler({
     client: DynamoDBDocumentClient.from(new DynamoDBClient({})),
     ses: new SESv2Client({}),
@@ -20,21 +20,21 @@ function setup(records: MarkRecord[]) {
     from: 'lab@mccorlabs.com',
     to: 'owner@mccorlabs.com',
     now: () => now,
-    scanMarks: scan,
+    queryMarks: query,
   })
-  return { handler, scan }
+  return { handler, query }
 }
 
 describe('digest handler', () => {
-  it('scans the last 7 days and sends one plain-text email', async () => {
+  it('queries the last 7 days and sends one plain-text email', async () => {
     ses.on(SendEmailCommand).resolves({ MessageId: 'm1' })
-    const { handler, scan } = setup([
+    const { handler, query } = setup([
       { ruleId: 'R4', verdictId: 'rules', reason: 'needs-less', rubricVersion: '2.0.0' },
       { ruleId: 'R4', verdictId: 'rules', reason: 'needs-less', rubricVersion: '2.0.0' },
       { ruleId: 'R12', verdictId: 'rules', reason: 'needs-more', rubricVersion: '2.0.0' },
     ])
     expect(await handler()).toEqual({ total: 3 })
-    expect(scan).toHaveBeenCalledWith(
+    expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
         table: 'mccorlabs-lab',
         since: new Date('2026-10-05T13:00:00Z'),

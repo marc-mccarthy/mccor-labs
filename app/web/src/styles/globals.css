@@ -327,7 +327,8 @@
       display: block;
     }
 
-    :root:not([data-motion='paused']) [data-service-rail] {
+    :root:not([data-motion='paused']) [data-service-rail],
+    :root:not([data-motion='paused']) [data-process-rail] {
       transform: scaleY(0);
       animation: rail-fill linear both;
       animation-timeline: view();
@@ -436,5 +437,29 @@
     transform: none;
     transition: transform var(--duration-standard) var(--ease-route)
       calc(var(--i) * var(--stagger-interval));
+  }
+}
+
+[data-process-counter] {
+  counter-reset: active var(--active-index) total var(--stage-count);
+}
+
+[data-process-counter]::before {
+  content: counter(active, decimal-leading-zero) ' / '
+    counter(total, decimal-leading-zero) / '';
+}
+
+@keyframes chip-pulse {
+  50% {
+    transform: scale(1.08);
+    border-color: var(--color-brand);
+  }
+}
+
+[data-card-state='active'] [data-process-chip] {
+  @variant md {
+    @variant motion-on {
+      animation: chip-pulse var(--duration-standard) var(--ease-standard);
+    }
   }
 }

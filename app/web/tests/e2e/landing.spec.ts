@@ -317,3 +317,89 @@ test.describe('systems gates', () => {
     await page.mouse.up()
   })
 })
+
+test.describe('process track', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+  const processStage = (page: Page) => page.getByTestId('process-stage')
+
+  async function pinProcess(page: Page, fraction: number) {
+    await processStage(page).waitFor()
+    await page.evaluate((at) => {
+      const pin = document.querySelector('[data-testid="process-stage"]')?.parentElement
+        ?.parentElement
+      if (!pin) throw new Error('process pin not found')
+      const top = window.scrollY + pin.getBoundingClientRect().top
+      window.scrollTo(0, top + at * (pin.offsetHeight - window.innerHeight))
+    }, fraction)
+    await expect
+      .poll(() =>
+        processStage(page).evaluate((node) => Math.abs(node.getBoundingClientRect().top)),
+      )
+      .toBeLessThan(1)
+  }
+
+  test('process track shows no clipped card at rest at 1440', async ({ page }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/', { waitUntil: 'load' })
+    await pinProcess(page, 0)
+    await expect
+      .poll(() =>
+        page
+          .getByTestId('process-group')
+          .evaluate((node) => node.style.getPropertyValue('--track-shift')),
+      )
+      .toBe('0px')
+    const edges = await page.getByTestId('process-clip').evaluate((clip) => ({
+      clipRight: clip.getBoundingClientRect().right,
+      cards: [...clip.querySelectorAll('[data-process-card]')].map((card) => {
+        const rect = card.getBoundingClientRect()
+        return { left: rect.left, right: rect.right }
+      }),
+    }))
+    const shown = edges.cards.filter((card) => card.left < edges.clipRight)
+    expect(shown.length).toBeGreaterThan(0)
+    for (const card of shown) {
+      expect(card.right).toBeLessThanOrEqual(edges.clipRight + 1)
+    }
+  })
+
+  test('process stage content is centred while pinned at 1440', async ({ page }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/', { waitUntil: 'load' })
+    await pinProcess(page, 0.5)
+    const centre = await page.getByTestId('process-group').evaluate((node) => {
+      const rect = node.getBoundingClientRect()
+      return rect.top + rect.height / 2
+    })
+    expect(Math.abs(centre - 900 / 2)).toBeLessThanOrEqual(900 * 0.1)
+  })
+
+  test('process cards keep full-opacity text', async ({ page }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/', { waitUntil: 'load' })
+    const cards = page.locator('[data-process-card]')
+    await expect(cards).toHaveCount(5)
+    const opacities = await cards.evaluateAll((nodes) =>
+      nodes.map((node) => getComputedStyle(node).opacity),
+    )
+    expect(opacities).toEqual(['1', '1', '1', '1', '1'])
+  })
+
+  test('process stack shows a rail at 390', async ({ page }) => {
+    await atViewport(page, 390, 844)
+    await page.goto('/', { waitUntil: 'load' })
+    const track = page.locator('[data-testid="process-clip"] ol')
+    await track.evaluate((node) => {
+      node.scrollIntoView({ block: 'center' })
+    })
+    const rail = page.locator('[data-process-rail]')
+    await expect(rail).toBeVisible()
+    const heights = await rail.evaluate((node: HTMLElement) => ({
+      rail: node.offsetHeight,
+      track: node.parentElement?.querySelector('ol')?.offsetHeight ?? 0,
+    }))
+    expect(heights.track).toBeGreaterThan(0)
+    expect(Math.abs(heights.rail - heights.track)).toBeLessThanOrEqual(2)
+  })
+})

@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState, type SubmitEvent } from 'react'
 
 import { BookingCta } from '@/components/layout/BookingCta'
-import { Reveal } from '@/components/motion/Reveal'
+import { Stagger } from '@/components/motion/Stagger'
 import { Button } from '@/components/ui/button'
+import { fieldVariants } from '@/components/ui/field'
 import { contactLabCopy } from '@/content/lab/copy'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
@@ -23,8 +24,8 @@ type Status = 'idle' | 'sending' | 'sent' | 'error'
 
 const FIELD_ORDER = ['name', 'email', 'message'] as const
 
-const FIELD =
-  'border-border-strong bg-surface text-text placeholder:text-muted w-full rounded-lg border px-3 py-2'
+const LABEL =
+  'mb-1 block text-sm text-text motion-on:transition-colors motion-on:duration-(--duration-pointer) group-focus-within/field:text-accent'
 
 function errorMessage(error: ContactError): string {
   if (error === 'daily_cap') return ui.formErrorDailyCap
@@ -173,16 +174,16 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         </div>
       )}
 
-      <Reveal>
-        <div>
-          <label htmlFor="name" className="mb-1 block text-sm text-text">
+      <Stagger>
+        <div className="group/field">
+          <label htmlFor="name" className={LABEL}>
             {ui.contactLabelName}
           </label>
           <input
             id="name"
             name="name"
             autoComplete="name"
-            className={FIELD}
+            className={fieldVariants({ kind: 'input' })}
             aria-invalid={errors.name !== undefined}
             aria-describedby={errors.name === undefined ? undefined : 'name-error'}
           />
@@ -192,11 +193,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             </p>
           )}
         </div>
-      </Reveal>
-
-      <Reveal>
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm text-text">
+        <div className="group/field">
+          <label htmlFor="email" className={LABEL}>
             {ui.contactLabelEmail}
           </label>
           <input
@@ -204,7 +202,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             name="email"
             type="email"
             autoComplete="email"
-            className={FIELD}
+            className={fieldVariants({ kind: 'input' })}
             aria-invalid={errors.email !== undefined}
             aria-describedby={errors.email === undefined ? undefined : 'email-error'}
           />
@@ -214,11 +212,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             </p>
           )}
         </div>
-      </Reveal>
-
-      <Reveal>
-        <div>
-          <label htmlFor="company" className="mb-1 block text-sm text-text">
+        <div className="group/field">
+          <label htmlFor="company" className={LABEL}>
             {ui.contactLabelCompany}{' '}
             <span className="text-muted">{ui.contactOptional}</span>
           </label>
@@ -227,31 +222,45 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             name="company"
             autoComplete="organization"
             maxLength={100}
-            className={FIELD}
+            className={fieldVariants({ kind: 'input' })}
           />
         </div>
-      </Reveal>
-
-      <Reveal>
-        <div>
-          <label htmlFor="budget" className="mb-1 block text-sm text-text">
+        <div className="group/field">
+          <label htmlFor="budget" className={LABEL}>
             {ui.contactLabelBudget}{' '}
             <span className="text-muted">{ui.contactOptional}</span>
           </label>
-          <select id="budget" name="budget" className={FIELD} defaultValue="">
-            <option value="">{ui.contactBudgetPlaceholder}</option>
-            {site.budgetOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="budget"
+              name="budget"
+              className={fieldVariants({ kind: 'select' })}
+              defaultValue=""
+            >
+              <option value="">{ui.contactBudgetPlaceholder}</option>
+              {site.budgetOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              data-select-chevron=""
+              className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted group-focus-within/field:text-accent motion-on:transition-transform motion-on:group-focus-within/field:rotate-180"
+            >
+              <path d="M3 6l5 5 5-5" />
+            </svg>
+          </div>
         </div>
-      </Reveal>
-
-      <Reveal>
-        <div>
-          <label htmlFor="message" className="mb-1 block text-sm text-text">
+        <div className="group/field">
+          <label htmlFor="message" className={LABEL}>
             {ui.contactLabelMessage}
           </label>
           <textarea
@@ -260,7 +269,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             rows={6}
             key={prefill ?? 'empty'}
             defaultValue={prefill ?? undefined}
-            className={FIELD}
+            className={fieldVariants({ kind: 'textarea' })}
             aria-invalid={errors.message !== undefined}
             aria-describedby={errors.message === undefined ? undefined : 'message-error'}
           />
@@ -270,7 +279,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             </p>
           )}
         </div>
-      </Reveal>
+      </Stagger>
 
       <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>

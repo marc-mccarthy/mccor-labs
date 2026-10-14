@@ -364,6 +364,67 @@ test.describe('live form', () => {
     expect(mock.requests).toHaveLength(1)
   })
 
+  test('budget select matches input height and has pointer cursor', async ({ page }) => {
+    await open(page)
+    const name = await page.locator('#name').boundingBox()
+    const budget = await page.locator('#budget').boundingBox()
+    expect(name).not.toBeNull()
+    expect(budget).not.toBeNull()
+    expect(budget?.height).toBe(name?.height)
+    await expect
+      .poll(() =>
+        page.locator('#budget').evaluate((node) => getComputedStyle(node).cursor),
+      )
+      .toBe('pointer')
+  })
+
+  test('invalid field shows brand border', async ({ page }) => {
+    await open(page)
+    await submit(page)
+    const brand = await tokenColor(page, '--color-brand')
+    await expect
+      .poll(() =>
+        page.locator('#name').evaluate((node) => getComputedStyle(node).borderColor),
+      )
+      .toBe(brand)
+    await page.locator('#name').fill('Ada Lovelace')
+    await page.locator('#message').fill('A message long enough to pass validation.')
+    await page.locator('#email').fill('not-an-email')
+    await page.locator('#email').press('Enter')
+    await expect(page.locator('#email-error')).toBeVisible()
+    await expect(page.locator('#email')).toBeFocused()
+    await expect
+      .poll(() =>
+        page.locator('#email').evaluate((node) => getComputedStyle(node).outlineColor),
+      )
+      .toBe(brand)
+  })
+
+  test('label accent follows only the focused field', async ({ page }) => {
+    await open(page)
+    const accent = await tokenColor(page, '--color-accent')
+    await page.locator('#name').focus()
+    const color = (id: string) =>
+      page.locator(`label[for="${id}"]`).evaluate((node) => getComputedStyle(node).color)
+    await expect.poll(() => color('name')).toBe(accent)
+    expect(await color('email')).not.toBe(accent)
+  })
+
+  test.describe('reduced motion', () => {
+    test.use({ contextOptions: { reducedMotion: 'reduce' } })
+
+    test('chevron stays still under reduced motion', async ({ page }) => {
+      await open(page)
+      await page.locator('#budget').focus()
+      const transform = await page
+        .locator('[data-select-chevron]')
+        .evaluate((node) => getComputedStyle(node).transform)
+      expect(transform).toBe('none')
+      const animations = await page.evaluate(() => document.getAnimations().length)
+      expect(animations).toBe(0)
+    })
+  })
+
   test.describe('panel at 1440', () => {
     test.use({ viewport: { width: 1440, height: 900 } })
 

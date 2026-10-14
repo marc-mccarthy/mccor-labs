@@ -6,7 +6,7 @@ import { useRef } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
-import { useScrollProgress } from '@/components/motion/useScrollProgress'
+import { useScrollProgressValue } from '@/components/motion/useScrollProgress'
 import { VideoPauseToggle } from '@/components/motion/VideoPauseToggle'
 import { useVideoAttach } from '@/components/motion/VideoMotionHero'
 import { ui } from '@/content/ui'
@@ -26,7 +26,7 @@ const PIN_HEIGHT = '150vh'
 
 export function SystemsScene() {
   const ref = useRef<HTMLDivElement>(null)
-  const progress = useScrollProgress(ref)
+  const progress = useScrollProgressValue(ref)
   const {
     videoRef,
     shouldAttachVideo,

@@ -5,19 +5,30 @@ import { SectionHeading } from '@/components/ui/section-heading'
 import { proof } from '@/content/proof'
 import { ui } from '@/content/ui'
 
+const COLUMNS_CLASS =
+  'sm:[&>*:first-child]:pr-8 sm:[&>*+*]:border-l sm:[&>*+*]:border-border sm:[&>*+*]:pl-8'
+
 export function DeliveredStrip() {
   return (
-    <Section className="border-y border-border py-8 sm:py-12">
+    <Section className="relative border-y border-border py-8 sm:py-12">
+      <span
+        aria-hidden="true"
+        data-signal-sweep
+        className="pointer-events-none absolute inset-x-0 -top-px block"
+      />
       <Container>
         <SectionHeading className="font-mono text-sm tracking-wider text-muted uppercase">
           {ui.deliveredHeading}
         </SectionHeading>
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:justify-between">
+        <div className={`mt-6 grid gap-8 sm:grid-cols-2 sm:gap-0 ${COLUMNS_CLASS}`}>
           <Stagger>
-            {proof.map((point) => (
-              <p key={point.text} className="font-mono text-lg text-text">
-                {point.text}
-              </p>
+            {proof.map((point, index) => (
+              <div key={point.text} className="flex flex-col gap-3">
+                <span aria-hidden="true" className="font-mono text-sm text-accent">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <p className="font-mono text-xl text-text">{point.text}</p>
+              </div>
             ))}
           </Stagger>
         </div>

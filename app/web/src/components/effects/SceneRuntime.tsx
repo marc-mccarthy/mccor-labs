@@ -41,6 +41,7 @@ const VELOCITY_RANGE = 60
 const VELOCITY_EASE = 0.1
 const VELOCITY_REST = 0.001
 const STATS_CAPACITY = 600
+export const IDLE_START_TIMEOUT_MS = 2000
 
 export interface SceneSamples {
   render: number[]
@@ -128,7 +129,9 @@ function whenIdleAfterLoad(callback: () => void): () => void {
 
   const schedule = () => {
     if (typeof window.requestIdleCallback === 'function') {
-      idleHandle = window.requestIdleCallback(callback)
+      idleHandle = window.requestIdleCallback(callback, {
+        timeout: IDLE_START_TIMEOUT_MS,
+      })
     } else {
       timeoutHandle = window.setTimeout(callback, 0)
     }

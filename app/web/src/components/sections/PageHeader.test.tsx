@@ -119,4 +119,63 @@ describe('PageHeader', () => {
     expect(image).toHaveClass('object-center', 'h-full', 'w-full', 'object-cover')
     expect(image).not.toHaveClass('object-right')
   })
+
+  it('renders the pre-slot markup byte for byte when no scene is passed', () => {
+    const bare = renderToString(
+      <PageHeader title="Services" description="What we build." image="/a.webp" />,
+    )
+    expect(
+      renderToString(
+        <PageHeader
+          title="Services"
+          description="What we build."
+          image="/a.webp"
+          scene={undefined}
+        />,
+      ),
+    ).toBe(bare)
+    expect(
+      renderToString(
+        <PageHeader
+          title="Services"
+          description="What we build."
+          image="/a.webp"
+          scene={null}
+        />,
+      ),
+    ).toBe(bare)
+    expect(bare).toContain(
+      '<div style="transform:none"><img src="/a.webp" alt="" fetchPriority="high" decoding="async" data-testid="header-image" class="h-full w-full object-cover object-right"/></div>',
+    )
+  })
+
+  it('stacks the scene over the image inside one parallax wrapper', () => {
+    render(
+      <PageHeader
+        title="Contact"
+        description="Talk to us."
+        image="/a.webp"
+        scene={<div data-testid="band-scene" />}
+      />,
+    )
+    const image = screen.getByTestId('header-image')
+    const wrapper = image.parentElement!
+    expect(wrapper.tagName).toBe('DIV')
+    expect(wrapper.className).toBe('relative h-full')
+    expect([...wrapper.children]).toEqual([image, screen.getByTestId('band-scene')])
+    expect(wrapper.parentElement!.parentElement!.className).toBe(
+      'absolute inset-0 mask-t-from-80% mask-b-from-45% *:h-full',
+    )
+  })
+
+  it('ignores the scene when there is no image band', () => {
+    render(
+      <PageHeader
+        title="Careers"
+        description="Join us."
+        scene={<div data-testid="band-scene" />}
+      />,
+    )
+    expect(screen.queryByTestId('band-scene')).not.toBeInTheDocument()
+  })
 })

@@ -18,6 +18,7 @@ vi.mock('three', () => ({
 }))
 
 import {
+  IDLE_START_TIMEOUT_MS,
   SceneRuntime,
   resetWebGL2Probe,
   type SceneContext,
@@ -217,6 +218,52 @@ describe('SceneRuntime', () => {
     unmount()
     expect(rendererDispose).toHaveBeenCalledTimes(1)
     expect(resizeDisconnect).toHaveBeenCalledTimes(1)
+  })
+
+  describe('idle start', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('starts on the idle timeout when the browser never goes idle', async () => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const pending: { callback: IdleRequestCallback; timeout: number | undefined }[] = []
+      vi.stubGlobal(
+        'requestIdleCallback',
+        vi.fn((callback: IdleRequestCallback, options?: IdleRequestOptions) => {
+          pending.push({ callback, timeout: options?.timeout })
+          return pending.length
+        }),
+      )
+      vi.stubGlobal('cancelIdleCallback', vi.fn())
+      const build = vi.fn((): SceneHandle => ({ render: vi.fn(), dispose: vi.fn() }))
+
+      const { container, unmount } = render(
+        <SceneRuntime fallback={<div />} build={build} />,
+      )
+
+      expect(IDLE_START_TIMEOUT_MS).toBe(2000)
+      expect(pending).toHaveLength(1)
+      expect(pending[0]!.timeout).toBe(IDLE_START_TIMEOUT_MS)
+      expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+        'data-scene-status',
+        'idle',
+      )
+      expect(rendererCtor).not.toHaveBeenCalled()
+
+      act(() => {
+        pending[0]!.callback({ didTimeout: true, timeRemaining: () => 0 })
+      })
+      await waitFor(() => {
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+      expect(rendererCtor).toHaveBeenCalledTimes(1)
+      unmount()
+    })
   })
 
   describe('offscreen pause', () => {

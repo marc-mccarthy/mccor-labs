@@ -109,6 +109,8 @@ describe('design tokens', () => {
       '--text-display-sm',
       '--text-display-md',
       '--text-display-lg',
+      '--text-hero',
+      '--text-hero-lg',
       '--space-xs',
       '--space-sm',
       '--space-md',
@@ -160,6 +162,8 @@ describe('design tokens', () => {
       return (match?.[1] ?? '').match(/[\d.]+/g)?.map(Number)
     }
     const half = (values: number[] | undefined) => values?.map((value) => value / 2)
+    expect(clampOf('--text-hero')).toHaveLength(4)
+    expect(clampOf('--text-hero-lg')).toHaveLength(4)
     expect(clampOf('--text-hero')).toEqual(half(clampOf('--text-display-md')))
     expect(clampOf('--text-hero-lg')).toEqual(half(clampOf('--text-display-lg')))
   })

@@ -11,7 +11,7 @@ Applies to Claude Code and Antigravity. Claude-only detail is in CLAUDE.md.
 ## Files you write
 
 - Add no comments to any file: no `//`, `/* */`, `#`, `<!-- -->` or JSDoc. Exempt: tool directives such as shebang lines, `@vitest-environment`, `eslint-disable` and `use client`.
-- No text baked into images or SVG. No invented logos, clients or certifications.
+- No text baked into images or SVG.
 
 ## Antigravity (Gemini)
 

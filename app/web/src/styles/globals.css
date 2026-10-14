@@ -466,6 +466,61 @@
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes panel-transmit {
+    0% {
+      background-size: 25% 100%;
+      background-position: 0% 0;
+      opacity: 0.4;
+    }
+
+    70% {
+      background-size: 25% 100%;
+      background-position: 100% 0;
+    }
+
+    100% {
+      background-size: 100% 100%;
+      background-position: 100% 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes receipt-tick-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes receipt-reference-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-xs));
+    }
+  }
+
+  :root:not([data-motion='paused'])
+    [data-panel-cell]:has(form[data-status='sent'])
+    [data-panel-edge] {
+    background-repeat: no-repeat;
+    transform: none;
+    animation: panel-transmit var(--duration-scene) var(--ease-route) backwards;
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  :root:not([data-motion='paused']) [data-receipt-tick] {
+    transform-origin: left;
+    animation: receipt-tick-draw var(--duration-standard) var(--ease-route)
+      var(--duration-scene) backwards;
+  }
+
+  :root:not([data-motion='paused']) [data-receipt-reference] {
+    animation: receipt-reference-rise var(--duration-standard) var(--ease-route)
+      calc(var(--duration-scene) + var(--stagger-interval)) backwards;
+  }
+}
+
 @keyframes signal-draw {
   from {
     stroke-dashoffset: 1;

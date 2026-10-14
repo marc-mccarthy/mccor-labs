@@ -106,6 +106,36 @@ async function submitWith(page: Page, responder: Responder) {
   await submit(page)
 }
 
+function signatureAnimations(page: Page) {
+  return page.evaluate(() =>
+    document
+      .getAnimations()
+      .filter((animation) => {
+        const target = (animation.effect as KeyframeEffect | null)?.target
+        return (
+          target instanceof Element &&
+          target.closest(
+            '[data-panel-edge], [data-receipt-tick], [data-receipt-reference]',
+          ) !== null
+        )
+      })
+      .map((animation) =>
+        'animationName' in animation ? (animation.animationName as string) : '',
+      ),
+  )
+}
+
+async function expectSignatureSettles(page: Page) {
+  await submitWith(page, reply(200, { reference: REFERENCE }))
+  await expect(page.locator('[data-receipt-reference]')).toBeVisible()
+  expect(await signatureAnimations(page)).toContain('panel-transmit')
+  await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
+  const opacity = await page
+    .locator('[data-panel-edge]')
+    .evaluate((node) => getComputedStyle(node).opacity)
+  expect(opacity).toBe('1')
+}
+
 function sweepCount(page: Page) {
   return page.evaluate(
     () =>
@@ -706,6 +736,31 @@ test.describe('live form', () => {
       })
     })
   }
+
+  test.describe('sent signature', () => {
+    test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+    test('sent signature plays once and settles', async ({ page }) => {
+      await open(page)
+      await expectSignatureSettles(page)
+    })
+
+    test('390 sent signature plays on the panel', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 })
+      await open(page)
+      await expectSignatureSettles(page)
+    })
+  })
+
+  test('sent signature is static under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await open(page)
+    await submitWith(page, reply(200, { reference: REFERENCE }))
+    await expect(page.locator('[data-receipt-reference]')).toBeVisible()
+    expect(await liveAnimations(page)).toEqual([])
+    const tick = page.locator('[data-receipt-tick]')
+    expect(await tick.evaluate((node) => getComputedStyle(node).transform)).toBe('none')
+  })
 
   test('sent toast is static under reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })

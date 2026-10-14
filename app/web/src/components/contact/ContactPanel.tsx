@@ -59,7 +59,10 @@ export function ContactPanel({
       <GlowField anchor="right" />
       <Container>
         <div className="group/panel grid gap-(--space-2xl) lg:grid-cols-[minmax(0,36rem)_1fr]">
-          <div className="group relative isolate rounded-xl border border-border bg-surface p-6 sm:p-8">
+          <div
+            data-panel-cell=""
+            className="group relative isolate rounded-xl border border-border bg-surface p-6 sm:p-8"
+          >
             <Spotlight size="panel" trigger="focus-within" />
             <span
               aria-hidden="true"

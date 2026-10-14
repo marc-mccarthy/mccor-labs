@@ -76,6 +76,22 @@ describe('privacy document', () => {
     expect(text).toContain('within 3 seconds')
   })
 
+  it('lists the required phone number after the email address', () => {
+    const list = section('What We Collect, and When').blocks.find(
+      (block) => block.kind === 'ul',
+    )
+    const items = list?.kind === 'ul' ? list.items : []
+    const email = items.indexOf('Your email address — required, so we can reply')
+    expect(email).toBeGreaterThan(-1)
+    expect(items[email + 1]).toBe('Your phone number — required (US or Canada)')
+  })
+
+  it('says the technical log never includes the phone number', () => {
+    expect(allText().join(' ')).toContain(
+      'It never logs your name, email address, phone number, company, budget or message.',
+    )
+  })
+
   it('places the contact form text under the contact form subsection', () => {
     const blocks = section('What We Collect, and When').blocks
     const formStart = blocks.findIndex(

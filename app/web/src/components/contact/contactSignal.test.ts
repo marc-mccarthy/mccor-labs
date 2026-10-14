@@ -12,10 +12,11 @@ import { contactCharge, contactSignal, messageFill } from './contactSignal'
 
 vi.mock('@/lib/signedPost', () => ({ signedPostJson: vi.fn() }))
 
-const EMPTY = { name: '', email: '', message: '' }
+const EMPTY = { name: '', email: '', phone: '', message: '' }
 const FULL = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
+  phone: '(202) 555-0123',
   message: 'A message long enough to pass validation.',
 }
 
@@ -30,29 +31,32 @@ describe('contactCharge', () => {
     expect(contactCharge(FULL)).toBe(1)
   })
 
-  it('gives a third each to a trimmed name and a valid-looking email', () => {
+  it('gives a quarter each to a trimmed name, a valid-looking email and a valid phone', () => {
     expect(contactCharge({ ...EMPTY, name: '   ' })).toBe(0)
-    expect(contactCharge({ ...EMPTY, name: ' Ada ' })).toBeCloseTo(1 / 3, 10)
+    expect(contactCharge({ ...EMPTY, name: ' Ada ' })).toBeCloseTo(1 / 4, 10)
     expect(contactCharge({ ...EMPTY, email: 'ada@example' })).toBe(0)
-    expect(contactCharge({ ...EMPTY, email: 'ada@example.com' })).toBeCloseTo(1 / 3, 10)
+    expect(contactCharge({ ...EMPTY, email: 'ada@example.com' })).toBeCloseTo(1 / 4, 10)
+    expect(contactCharge({ ...EMPTY, phone: '(202) 555-012' })).toBe(0)
+    expect(contactCharge({ ...EMPTY, phone: '(102) 555-0123' })).toBe(0)
+    expect(contactCharge({ ...EMPTY, phone: '(202) 555-0123' })).toBeCloseTo(1 / 4, 10)
   })
 
-  it('fills the message third in proportion to MESSAGE_MIN', () => {
+  it('fills the message quarter in proportion to MESSAGE_MIN', () => {
     const half = 'x'.repeat(MESSAGE_MIN / 2)
-    expect(contactCharge({ ...EMPTY, message: `  ${half}  ` })).toBeCloseTo(1 / 6, 10)
+    expect(contactCharge({ ...EMPTY, message: `  ${half}  ` })).toBeCloseTo(1 / 8, 10)
     expect(contactCharge({ ...EMPTY, message: 'x'.repeat(MESSAGE_MIN * 3) })).toBeCloseTo(
-      1 / 3,
+      1 / 4,
       10,
     )
   })
 
   it('gives no credit to a name over the limit', () => {
-    expect(contactCharge({ ...FULL, name: 'x'.repeat(101) })).toBeCloseTo(2 / 3, 10)
+    expect(contactCharge({ ...FULL, name: 'x'.repeat(101) })).toBeCloseTo(3 / 4, 10)
     expect(contactCharge({ ...FULL, name: 'x'.repeat(100) })).toBe(1)
   })
 
   it('gives no credit to a message over the limit', () => {
-    expect(contactCharge({ ...FULL, message: 'x'.repeat(5001) })).toBeCloseTo(2 / 3, 10)
+    expect(contactCharge({ ...FULL, message: 'x'.repeat(5001) })).toBeCloseTo(3 / 4, 10)
     expect(contactCharge({ ...FULL, message: 'x'.repeat(5000) })).toBe(1)
   })
 })
@@ -129,9 +133,11 @@ describe('ContactForm drives the signal', () => {
 
   async function fill() {
     await userEvent.type(screen.getByLabelText(/name/i), FULL.name)
-    expect(contactSignal.getSnapshot().charge).toBeCloseTo(1 / 3, 10)
+    expect(contactSignal.getSnapshot().charge).toBeCloseTo(1 / 4, 10)
     await userEvent.type(screen.getByLabelText(/email/i), FULL.email)
-    expect(contactSignal.getSnapshot().charge).toBeCloseTo(2 / 3, 10)
+    expect(contactSignal.getSnapshot().charge).toBeCloseTo(2 / 4, 10)
+    await userEvent.type(screen.getByLabelText(/phone/i), '2025550123')
+    expect(contactSignal.getSnapshot().charge).toBeCloseTo(3 / 4, 10)
     await userEvent.type(screen.getByLabelText(/message/i), FULL.message)
     expect(contactSignal.getSnapshot().charge).toBe(1)
   }

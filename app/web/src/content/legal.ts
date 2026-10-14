@@ -45,6 +45,7 @@ export const privacy: LegalDocument = {
           items: [
             'Your name — required',
             'Your email address — required, so we can reply',
+            'Your phone number — required (US or Canada)',
             'Your company — optional',
             'Your budget range — optional',
             'Your message — required',
@@ -64,7 +65,7 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
-          text: 'The program keeps a technical log for 3 days: the time, what happened (sent, rejected and why, or the type of error), a reference number, and today’s message count. It never logs your name, email address, company, budget or message.',
+          text: 'The program keeps a technical log for 3 days: the time, what happened (sent, rejected and why, or the type of error), a reference number, and today’s message count. It never logs your name, email address, phone number, company, budget or message.',
         },
         {
           kind: 'p',

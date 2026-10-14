@@ -12,6 +12,9 @@ import { builtWithEndpoint } from './support'
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const REFERENCE = 'MC-7Q4K'
+const VALID_PHONE = '2025550123'
+const FORMATTED_PHONE = '(202) 555-0123'
+const INVALID_PHONE = '5551234567'
 
 type Responder = (route: Route) => Promise<void>
 
@@ -93,6 +96,7 @@ async function open(page: Page, hash = '') {
 async function fillValid(page: Page) {
   await page.locator('#name').fill('Ada Lovelace')
   await page.locator('#email').fill('ada@example.com')
+  await page.locator('#phone').fill(VALID_PHONE)
   await page.locator('#message').fill('A message long enough to pass validation.')
 }
 
@@ -180,6 +184,7 @@ const STATES: State[] = [
       await submit(page)
       await expect(page.locator('#name-error')).toBeVisible()
       await expect(page.locator('#email-error')).toBeVisible()
+      await expect(page.locator('#phone-error')).toBeVisible()
       await expect(page.locator('#message-error')).toBeVisible()
     },
   },
@@ -187,10 +192,35 @@ const STATES: State[] = [
     name: 'focus-invalid',
     drive: async (page) => {
       await page.locator('#name').fill('Ada Lovelace')
+      await page.locator('#phone').fill(VALID_PHONE)
       await page.locator('#message').fill('A message long enough to pass validation.')
       await submit(page)
       await expect(page.locator('#email-error')).toBeVisible()
       await expect(page.locator('#email')).toBeFocused()
+    },
+  },
+  {
+    name: 'phone-error',
+    drive: async (page) => {
+      await page.locator('#name').fill('Ada Lovelace')
+      await page.locator('#email').fill('ada@example.com')
+      await page.locator('#phone').fill(INVALID_PHONE)
+      await page.locator('#message').fill('A message long enough to pass validation.')
+      await submit(page)
+      await expect(page.locator('#phone-error')).toHaveText(ui.contactErrorPhoneInvalid)
+      await expect(page.locator('#phone')).toBeFocused()
+    },
+  },
+  {
+    name: 'blur errors',
+    drive: async (page) => {
+      await page.locator('#email').fill('not-an-email')
+      await page.locator('#phone').fill(INVALID_PHONE)
+      await page.locator('#company').focus()
+      await expect(page.locator('#email-error')).toHaveText(ui.contactErrorEmail)
+      await expect(page.locator('#phone-error')).toHaveText(ui.contactErrorPhoneInvalid)
+      await expect(page.locator('#name-error')).toHaveCount(0)
+      await expect(page.locator('#message-error')).toHaveCount(0)
     },
   },
   {
@@ -459,6 +489,7 @@ test.describe('live form', () => {
       )
       .toBe(brand)
     await page.locator('#name').fill('Ada Lovelace')
+    await page.locator('#phone').fill(VALID_PHONE)
     await page.locator('#message').fill('A message long enough to pass validation.')
     await page.locator('#email').fill('not-an-email')
     await page.locator('#email').press('Enter')
@@ -469,6 +500,80 @@ test.describe('live form', () => {
         page.locator('#email').evaluate((node) => getComputedStyle(node).outlineColor),
       )
       .toBe(brand)
+  })
+
+  test('phone formats as you type', async ({ page }) => {
+    await open(page)
+    const phone = page.locator('#phone')
+    await phone.pressSequentially(VALID_PHONE)
+    await expect(phone).toHaveValue(FORMATTED_PHONE)
+    await phone.fill('+12025550123')
+    await expect(phone).toHaveValue(FORMATTED_PHONE)
+    await phone.fill('')
+    await phone.pressSequentially('2025')
+    await expect(phone).toHaveValue('(202) 5')
+  })
+
+  test('phone hint stays and error joins the description', async ({ page }) => {
+    await open(page)
+    const phone = page.locator('#phone')
+    await expect(page.locator('#phone-hint')).toHaveText(ui.contactPhoneHint)
+    await expect(phone).toHaveAttribute('aria-describedby', 'phone-hint')
+    await submit(page)
+    await expect(phone).toHaveAttribute('aria-describedby', 'phone-hint phone-error')
+    await expect(page.locator('#phone-error')).toHaveText(ui.contactErrorPhone)
+  })
+
+  test('empty submit shows every field error and focuses the first', async ({ page }) => {
+    await open(page)
+    await submit(page)
+    await expect(page.locator('#name-error')).toHaveText(ui.contactErrorName)
+    await expect(page.locator('#email-error')).toHaveText(ui.contactErrorEmail)
+    await expect(page.locator('#phone-error')).toHaveText(ui.contactErrorPhone)
+    await expect(page.locator('#message-error')).toHaveText(ui.contactErrorMessage)
+    await expect(page.locator('#name')).toBeFocused()
+    expect(mock.requests).toHaveLength(0)
+  })
+
+  test('dirty email and phone show errors on blur and clear when fixed', async ({
+    page,
+  }) => {
+    await open(page)
+    await page.locator('#email').fill('not-an-email')
+    await page.locator('#phone').fill(INVALID_PHONE)
+    await expect(page.locator('#email-error')).toHaveText(ui.contactErrorEmail)
+    await page.locator('#company').focus()
+    await expect(page.locator('#phone-error')).toHaveText(ui.contactErrorPhoneInvalid)
+    await expect(page.locator('#name-error')).toHaveCount(0)
+    await expect(page.locator('#message-error')).toHaveCount(0)
+    await page.locator('#email').fill('ada@example.com')
+    await expect(page.locator('#email-error')).toHaveCount(0)
+    await page.locator('#phone').fill(VALID_PHONE)
+    await expect(page.locator('#phone-error')).toHaveCount(0)
+    await expect(page.locator('#phone')).toHaveAttribute('aria-invalid', 'false')
+    expect(mock.requests).toHaveLength(0)
+  })
+
+  test('tabbing through untouched fields shows no errors', async ({ page }) => {
+    await open(page)
+    await page.locator('#name').focus()
+    for (let step = 0; step < 5; step += 1) await page.keyboard.press('Tab')
+    await expect(page.locator('#message')).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('button', { name: ui.formSubmit })).toBeFocused()
+    await expect(page.locator('[id$="-error"]')).toHaveCount(0)
+    await expect(page.locator('[aria-invalid="true"]')).toHaveCount(0)
+  })
+
+  test('send click is not swallowed by the message blur', async ({ page }) => {
+    await open(page)
+    await page.locator('#message').fill('too short')
+    await page.getByRole('button', { name: ui.formSubmit }).click()
+    await expect(page.locator('#name-error')).toBeVisible()
+    await expect(page.locator('#email-error')).toBeVisible()
+    await expect(page.locator('#phone-error')).toBeVisible()
+    await expect(page.locator('#message-error')).toBeVisible()
+    await expect(page.locator('#name')).toBeFocused()
   })
 
   test('label accent follows only the focused field', async ({ page }) => {
@@ -608,6 +713,7 @@ test.describe('live form', () => {
       mock.responder = tier.reply
       await page.locator('#name').fill('Ada Lovelace')
       await page.locator('#email').fill('ada@example.com')
+      await page.locator('#phone').fill(VALID_PHONE)
       await page
         .locator('#message')
         .fill(`Message long enough to pass validation ${tier.text.slice(0, 8)}.`)

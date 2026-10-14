@@ -1,6 +1,7 @@
 export interface ContactInput {
   name: string
   email: string
+  phone: string
   company: string
   budget: string
   message: string
@@ -14,6 +15,7 @@ export type ContactCheck =
 export const MIN_FILL_MS = 3000
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PHONE = /^\+1[2-9]\d{2}[2-9]\d{6}$/
 const INVALID: ContactCheck = { kind: 'invalid', reason: 'validation' }
 
 function text(record: Record<string, unknown>, key: string): string | null {
@@ -28,6 +30,7 @@ function isValid(input: ContactInput): boolean {
     input.name.length <= 100 &&
     input.email.length <= 254 &&
     EMAIL.test(input.email) &&
+    (input.phone === '' || PHONE.test(input.phone)) &&
     input.company.length <= 100 &&
     input.budget.length <= 40 &&
     input.message.length >= 10 &&
@@ -48,12 +51,14 @@ export function checkContact(body: unknown): ContactCheck {
 
   const name = text(record, 'name')
   const email = text(record, 'email')
+  const phone = text(record, 'phone')
   const company = text(record, 'company')
   const budget = text(record, 'budget')
   const message = text(record, 'message')
   if (
     name === null ||
     email === null ||
+    phone === null ||
     company === null ||
     budget === null ||
     message === null
@@ -64,6 +69,7 @@ export function checkContact(body: unknown): ContactCheck {
   const input: ContactInput = {
     name: name.trim(),
     email: email.trim(),
+    phone: phone.trim(),
     company: company.trim(),
     budget: budget.trim(),
     message: message.trim(),

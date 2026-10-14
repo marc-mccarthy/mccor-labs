@@ -57,6 +57,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
+  const [errorKind, setErrorKind] = useState<ContactError | null>(null)
+  const [, setReference] = useState<string | null>(null)
   const [submitCount, setSubmitCount] = useState(0)
   const openedAt = useRef(0)
   const prefill = useLabPrefill()
@@ -118,14 +120,19 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       setStatus('idle')
       setMessage('')
       setMailtoHref(null)
+      setErrorKind(null)
+      setReference(null)
       return
     }
 
     setStatus('sending')
+    setErrorKind(null)
+    setReference(null)
     const result = await submitContact(request, endpoint)
 
     if (result.ok) {
       setStatus('sent')
+      setReference(result.reference)
       setMessage(
         result.reference === null
           ? ui.formSuccess
@@ -136,6 +143,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     }
 
     setStatus('error')
+    setErrorKind(result.error)
     setMessage(errorMessage(result.error))
     setMailtoHref(
       offersMailto(result.error)
@@ -153,7 +161,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         if (status === 'sent') setStatus('idle')
       }}
       noValidate
-      className="max-w-xl space-y-5"
+      data-status={status}
+      data-error={errorKind ?? undefined}
+      aria-busy={status === 'sending'}
+      className="group/form max-w-xl space-y-5"
     >
       {prefill !== null && (
         <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4">

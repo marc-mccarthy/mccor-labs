@@ -363,6 +363,23 @@ test.describe('live form', () => {
     await expectStatus(page, `${ui.formSuccess} ${ui.formReference} ${REFERENCE}.`)
     expect(mock.requests).toHaveLength(1)
   })
+
+  test('contact form exposes status', async ({ page }) => {
+    await open(page)
+    const form = page.locator('form[data-status]')
+    await expect(form).toHaveAttribute('data-status', 'idle')
+    await expect(form).not.toHaveAttribute('data-error', /.*/)
+    await submitWith(page, reply(200, { reference: REFERENCE }))
+    await expect(form).toHaveAttribute('data-status', 'sent')
+    await expect(form).toHaveAttribute('aria-busy', 'false')
+    await expect(form).not.toHaveAttribute('data-error', /.*/)
+    mock.responder = reply(500, {})
+    await page.locator('#message').fill('Another message long enough to pass validation.')
+    await expect(form).toHaveAttribute('data-status', 'idle')
+    await submit(page)
+    await expect(form).toHaveAttribute('data-status', 'error')
+    await expect(form).toHaveAttribute('data-error', 'server')
+  })
 })
 
 test.describe('fallback', () => {

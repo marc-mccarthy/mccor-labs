@@ -1,9 +1,21 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 
+import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 
 async function atViewport(page: Page, width: number, height: number) {
   await page.setViewportSize({ width, height })
+}
+
+async function tokenColor(page: Page, name: string) {
+  return page.evaluate((token) => {
+    const probe = document.createElement('div')
+    probe.style.color = `var(${token})`
+    document.body.append(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+  }, name)
 }
 
 test('no horizontal overflow at 390', async ({ page }) => {
@@ -110,5 +122,78 @@ test.describe('motion pause', () => {
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'paused')
     await expect(toggle(page)).toHaveAttribute('aria-pressed', 'false')
     expect(await loopingOrScrollLinked(page)).toBe(0)
+  })
+})
+
+const heroPauseToggle = (page: Page) =>
+  page.getByRole('button', { name: ui.pauseVideo }).first()
+
+const computedOf = (locator: Locator, property: 'cursor' | 'transform') =>
+  locator.evaluate((node, prop) => getComputedStyle(node)[prop], property)
+
+test('pause toggle has pointer cursor', async ({ page }) => {
+  await atViewport(page, 1440, 900)
+  await page.goto('/')
+  const toggle = heroPauseToggle(page)
+  await expect(toggle).toBeVisible()
+  expect(await computedOf(toggle, 'cursor')).toBe('pointer')
+})
+
+test.describe('press feedback', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+  test('press scales on active and pause toggle pressed border uses accent', async ({
+    page,
+  }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/')
+    const toggle = heroPauseToggle(page)
+    await expect(toggle).toBeVisible()
+    await toggle.hover()
+    await page.mouse.down()
+    await expect.poll(() => computedOf(toggle, 'transform')).not.toBe('none')
+    await page.mouse.up()
+
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    const accent = await tokenColor(page, '--color-accent')
+    await expect
+      .poll(() => toggle.evaluate((node) => getComputedStyle(node).borderTopColor))
+      .toBe(accent)
+  })
+
+  test('mobile menu opens at 390 with pointer cursor and press feedback', async ({
+    page,
+  }) => {
+    await atViewport(page, 390, 844)
+    await page.goto('/')
+    const button = page.getByRole('button', { name: ui.openMenu })
+    expect(await computedOf(button, 'cursor')).toBe('pointer')
+    await button.click()
+    const menu = page.locator('#mobile-nav')
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole('link')).toHaveCount(nav.length + 1)
+    const link = menu.getByRole('link').first()
+    await expect(link).toHaveClass(/\bpress\b/)
+    await link.hover()
+    await page.mouse.down()
+    await expect.poll(() => computedOf(link, 'transform')).not.toBe('none')
+    await page.mouse.up()
+  })
+
+  test('footer links carry press feedback', async ({ page }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/')
+    const links = page.locator('nav[aria-label="Footer"] a')
+    const count = await links.count()
+    expect(count).toBeGreaterThan(0)
+    for (let index = 0; index < count; index += 1) {
+      await expect(links.nth(index)).toHaveClass(/\bpress\b/)
+    }
+    const link = links.first()
+    await link.scrollIntoViewIfNeeded()
+    await link.hover()
+    await page.mouse.down()
+    await expect.poll(() => computedOf(link, 'transform')).not.toBe('none')
+    await page.mouse.up()
   })
 })

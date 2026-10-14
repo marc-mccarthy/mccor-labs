@@ -198,6 +198,15 @@ describe('Header mobile menu', () => {
     )
   })
 
+  it('gives the menu button and every menu link press feedback', () => {
+    render(<Header />)
+    expect(screen.getByRole('button', { name: ui.openMenu })).toHaveClass('press')
+    const links = within(menu()).getAllByRole('link', { hidden: true })
+    for (const item of nav) {
+      expect(links.find((el) => el.textContent === item.label)).toHaveClass('press')
+    }
+  })
+
   it('draws the menu icon as three lines that only transition when motion is allowed', () => {
     render(<Header />)
     const toggle = screen.getByRole('button', { name: ui.openMenu })
@@ -234,6 +243,13 @@ describe('Footer signal', () => {
     const signal = container.querySelector('[data-footer-signal]')!
     expect(signal).toHaveAttribute('aria-hidden', 'true')
     expect(signal).toHaveClass('hidden', 'bg-brand', 'h-px')
+  })
+
+  it('gives every footer link press feedback', () => {
+    render(<Footer />)
+    for (const item of footerNav) {
+      expect(screen.getAllByRole('link', { name: item.label })[0]).toHaveClass('press')
+    }
   })
 
   it('gives every footer link the nav hover underline', () => {

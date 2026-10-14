@@ -18,7 +18,7 @@ export function MotionPauseToggle() {
       aria-describedby={osReduced ? hintId : undefined}
       title={osReduced ? ui.pauseMotionSystemHint : undefined}
       onClick={toggle}
-      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors duration-(--duration-pointer) ease-(--ease-pointer) hover:text-accent focus-visible:text-accent aria-disabled:hover:text-muted"
+      className="inline-flex h-11 w-11 shrink-0 press items-center justify-center rounded-full border border-border text-muted hover:text-accent focus-visible:text-accent aria-disabled:hover:text-muted aria-pressed:border-accent"
     >
       <svg
         width="16"

@@ -8,6 +8,18 @@
   }
 }
 
+@utility press {
+  transition-property: transform, color, background-color, border-color, opacity;
+  transition-duration: var(--duration-pointer);
+  transition-timing-function: var(--ease-pointer);
+
+  @variant motion-on {
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+}
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('/fonts/geist-sans-variable.woff2') format('woff2');
@@ -114,6 +126,11 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+  }
+
+  button:not(:disabled),
+  [role='button'] {
+    cursor: pointer;
   }
 
   body {

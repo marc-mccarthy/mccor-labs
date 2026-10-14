@@ -68,4 +68,9 @@ describe('Button', () => {
     expect(classes).toContain('duration-(--duration-pointer)')
     expect(classes).toContain('ease-(--ease-pointer)')
   })
+
+  it('carries press feedback', () => {
+    render(<Button>Pressable</Button>)
+    expect(classesOf('Pressable')).toContain('press')
+  })
 })

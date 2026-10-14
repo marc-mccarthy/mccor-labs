@@ -24,7 +24,7 @@ export function Footer() {
             <Link
               key={item.href}
               href={item.href}
-              className={`justify-self-start text-sm text-muted transition-colors hover:text-text ${UNDERLINE}`}
+              className={`press justify-self-start text-sm text-muted hover:text-text ${UNDERLINE}`}
             >
               {item.label}
             </Link>

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
+import { GlowField } from '@/components/ui/glow-field'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { PipelineDiagram } from '@/components/substance/PipelineDiagram'
 import { retrievalPipeline } from '@/content/substance'
@@ -18,9 +19,17 @@ const Pipeline3D = motionScene(
 
 export function PipelineSection() {
   return (
-    <Section>
+    <Section className="relative isolate">
+      <GlowField anchor="center" />
       <Container>
-        <SectionHeading className="mb-8">{ui.pipelineHeading}</SectionHeading>
+        <SectionHeading
+          className="mb-8"
+          size="md"
+          words
+          eyebrow={{ index: '03', label: ui.eyebrows.retrieval }}
+        >
+          {ui.pipelineHeading}
+        </SectionHeading>
         <div className="relative">
           <Pipeline3D
             stages={retrievalPipeline.stages}

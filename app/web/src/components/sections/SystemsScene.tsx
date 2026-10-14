@@ -7,6 +7,7 @@ import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
 import { useScrollProgressValue } from '@/components/motion/useScrollProgress'
+import { Eyebrow } from '@/components/ui/eyebrow'
 import { VideoPauseToggle } from '@/components/motion/VideoPauseToggle'
 import { useVideoAttach } from '@/components/motion/VideoMotionHero'
 import { ui } from '@/content/ui'
@@ -82,6 +83,11 @@ export function SystemsScene() {
               className="pointer-events-none absolute inset-0 z-5"
             />
             <Container className="relative z-10">
+              <Eyebrow
+                index="02"
+                label={ui.eyebrows.evaluation}
+                className="drop-shadow"
+              />
               <h2 className="max-w-2xl text-display-md leading-tight font-semibold text-text drop-shadow-md">
                 {ui.systemsHeading}
               </h2>

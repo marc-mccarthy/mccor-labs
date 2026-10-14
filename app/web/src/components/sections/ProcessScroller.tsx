@@ -6,8 +6,10 @@ import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
 import { useScrollProgressValue } from '@/components/motion/useScrollProgress'
+import { GlowField } from '@/components/ui/glow-field'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { process } from '@/content/process'
+import { cn } from '@/lib/cn'
 
 const VIEWPORT_UNITS = 100
 const PIN_UNITS = 200
@@ -41,17 +43,31 @@ function StageCard({ stage }: { stage: (typeof process)[number] }) {
 
 interface ProcessScrollerProps {
   heading?: string
+  eyebrow?: { index: string; label: string }
+  headingSize?: 'sm' | 'md'
+  glow?: boolean
 }
 
-function ProcessHeading({ heading }: ProcessScrollerProps) {
+function ProcessHeading({
+  heading,
+  eyebrow,
+  headingSize,
+}: Pick<ProcessScrollerProps, 'heading' | 'eyebrow' | 'headingSize'>) {
   return heading ? (
     <Container className="mb-8">
-      <SectionHeading>{heading}</SectionHeading>
+      <SectionHeading size={headingSize} eyebrow={eyebrow} words={eyebrow !== undefined}>
+        {heading}
+      </SectionHeading>
     </Container>
   ) : null
 }
 
-export function ProcessScroller({ heading }: ProcessScrollerProps) {
+export function ProcessScroller({
+  heading,
+  eyebrow,
+  headingSize,
+  glow = false,
+}: ProcessScrollerProps) {
   const reducedMotion = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLOListElement>(null)
@@ -71,8 +87,9 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
 
   if (reducedMotion) {
     return (
-      <Section>
-        <ProcessHeading heading={heading} />
+      <Section className={glow ? 'relative isolate' : undefined}>
+        {glow && <GlowField anchor="left" />}
+        <ProcessHeading heading={heading} eyebrow={eyebrow} headingSize={headingSize} />
         <Container>
           <ol className="flex flex-col gap-6">
             {process.map((stage) => (
@@ -87,11 +104,21 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
   }
 
   return (
-    <Section className="motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0">
+    <Section
+      className={cn(
+        'motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0',
+        glow && 'relative isolate',
+      )}
+    >
+      {glow && <GlowField anchor="left" />}
       <div ref={ref}>
         <Pinned height={`${String(PIN_UNITS)}vh`} from="md">
           <div className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden">
-            <ProcessHeading heading={heading} />
+            <ProcessHeading
+              heading={heading}
+              eyebrow={eyebrow}
+              headingSize={headingSize}
+            />
             <Container>
               <ol
                 ref={trackRef}

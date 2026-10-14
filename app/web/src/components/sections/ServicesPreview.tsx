@@ -11,7 +11,6 @@ import { ui } from '@/content/ui'
 import { cn } from '@/lib/cn'
 
 const FEATURED_SLUG = 'ai-engineering'
-const FEATURED_LABEL = 'Featured'
 
 const CARD_INTERACTION = [
   'hover:border-border-strong',
@@ -34,9 +33,16 @@ const STAGGER_INTERVAL_SECONDS = 0.08
 
 export function ServicesPreview() {
   return (
-    <Section>
+    <Section className="relative isolate">
+      <GlowField anchor="right" />
       <Container>
-        <SectionHeading>{ui.servicesHeading}</SectionHeading>
+        <SectionHeading
+          size="md"
+          words
+          eyebrow={{ index: '01', label: ui.eyebrows.services }}
+        >
+          {ui.servicesHeading}
+        </SectionHeading>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
           {services.map((service, index) => {
             const featured = service.slug === FEATURED_SLUG
@@ -59,7 +65,7 @@ export function ServicesPreview() {
                   <Spotlight />
                   {featured && (
                     <p className="font-mono text-xs tracking-widest text-muted uppercase">
-                      {FEATURED_LABEL}
+                      {ui.featured}
                     </p>
                   )}
                   <h3 className="text-xl font-semibold text-text">

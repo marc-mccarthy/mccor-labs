@@ -10,7 +10,7 @@ const COLUMNS_CLASS =
 
 export function DeliveredStrip() {
   return (
-    <Section className="relative border-y border-border py-8 sm:py-12">
+    <Section size="compact" className="relative border-y border-border">
       <span
         aria-hidden="true"
         data-signal-sweep

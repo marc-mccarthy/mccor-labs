@@ -7,7 +7,7 @@ import { ui } from '@/content/ui'
 
 export function CtaBlock() {
   return (
-    <Section className="relative overflow-hidden">
+    <Section size="spacious" className="relative overflow-hidden">
       <img
         src="/media/brand/cta-terminus.webp"
         alt=""
@@ -28,7 +28,15 @@ export function CtaBlock() {
           className="pointer-events-none absolute right-12 bottom-0 hidden h-[110%] w-auto xl:block"
         />
         <div className="flex flex-col items-start gap-6 rounded-xl border border-border bg-linear-to-r from-surface via-surface/90 to-surface/40 p-8 sm:p-12">
-          <SectionHeading>{ui.ctaHeading}</SectionHeading>
+          <div>
+            <SectionHeading
+              size="md"
+              words
+              eyebrow={{ index: '05', label: ui.eyebrows.contact }}
+            >
+              {ui.ctaHeading}
+            </SectionHeading>
+          </div>
           <Reveal>
             <div className="flex flex-col items-start gap-6">
               <p className="max-w-2xl text-lg text-muted">{ui.ctaBody}</p>

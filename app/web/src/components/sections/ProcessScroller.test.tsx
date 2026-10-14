@@ -42,6 +42,26 @@ describe('ProcessScroller', () => {
     ).toBeInTheDocument()
   })
 
+  it.each([false, true])(
+    'renders the eyebrow and glow when asked (reduced: %s)',
+    (reduced) => {
+      mockMatchMedia(reduced)
+      const { container } = render(
+        <ProcessScroller
+          heading="How it runs"
+          eyebrow={{ index: '04', label: 'Engagement' }}
+          headingSize="md"
+          glow
+        />,
+      )
+      expect(screen.getByText('Engagement')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 2, name: 'How it runs' })).toHaveClass(
+        'text-display-md',
+      )
+      expect(container.querySelector('section')).toHaveClass('relative', 'isolate')
+    },
+  )
+
   it('pins the track from md up and stacks it below md when motion is allowed', () => {
     mockMatchMedia(false)
     render(<ProcessScroller />)

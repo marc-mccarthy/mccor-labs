@@ -67,6 +67,13 @@ describe('CtaBlock', () => {
     expect(screen.getByRole('heading', { name: ui.ctaHeading })).toBeInTheDocument()
   })
 
+  it('renders the numbered eyebrow and keeps the h2 name', () => {
+    render(<CtaBlock />)
+    expect(screen.getByText(ui.eyebrows.contact)).toBeInTheDocument()
+    expect(screen.getByText('05')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: ui.ctaHeading })).toBeVisible()
+  })
+
   it('puts a decorative, lazily loaded image behind the card', () => {
     render(<CtaBlock />)
     const image = screen.getByTestId('cta-image')

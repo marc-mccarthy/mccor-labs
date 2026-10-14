@@ -13,6 +13,14 @@ export const ui = {
   ctaBody:
     'Thirty minutes, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
   deliveredHeading: 'Delivered',
+  featured: 'Featured',
+  eyebrows: {
+    services: 'Services',
+    evaluation: 'Evaluation',
+    retrieval: 'Retrieval',
+    engagement: 'Engagement',
+    contact: 'Contact',
+  },
   servicesHeading: 'What we build',
   pipelineHeading: 'How retrieval is built',
   processHeading: 'How an engagement runs',

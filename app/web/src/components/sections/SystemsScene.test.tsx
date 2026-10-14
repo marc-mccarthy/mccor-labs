@@ -25,6 +25,16 @@ function mockMatchMedia(reduced: boolean, desktop = false) {
 }
 
 describe('SystemsScene', () => {
+  it('renders the numbered eyebrow above the h2', () => {
+    mockMatchMedia(false)
+    render(<SystemsScene />)
+    expect(screen.getByText(ui.eyebrows.evaluation)).toBeInTheDocument()
+    expect(screen.getByText('02')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: ui.systemsHeading }),
+    ).toBeInTheDocument()
+  })
+
   it('renders the heading and copy outside the effect wrapper', async () => {
     mockMatchMedia(false)
     render(<SystemsScene />)

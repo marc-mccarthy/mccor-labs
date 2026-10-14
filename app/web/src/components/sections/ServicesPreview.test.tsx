@@ -37,6 +37,20 @@ describe('ServicesPreview', () => {
     expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(services.length)
   })
 
+  it('renders the numbered eyebrow outside the h2', () => {
+    mockMatchMedia(false)
+    render(<ServicesPreview />)
+    const eyebrow = screen.getByText(ui.eyebrows.services)
+    expect(screen.getByText('01')).toBeInTheDocument()
+    expect(eyebrow.closest('h2')).toBeNull()
+  })
+
+  it('labels the featured card from content', () => {
+    mockMatchMedia(false)
+    render(<ServicesPreview />)
+    expect(screen.getByText(ui.featured)).toBeInTheDocument()
+  })
+
   it('links each service to its anchor on /services/', () => {
     mockMatchMedia(false)
     render(<ServicesPreview />)

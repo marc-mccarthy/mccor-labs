@@ -1,5 +1,13 @@
 @import 'tailwindcss';
 
+@custom-variant motion-on {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion='paused']) & {
+      @slot;
+    }
+  }
+}
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('/fonts/geist-sans-variable.woff2') format('woff2');

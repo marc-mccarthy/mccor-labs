@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { Reveal } from './Reveal'
+import { splitWords } from './splitWords'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -128,5 +129,93 @@ describe('Reveal once the animation chunk loads', () => {
     expect(wrapper?.style.opacity).toBe('0')
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+  })
+})
+
+describe('Reveal className', () => {
+  it('wraps reduced-motion children in a div carrying the class', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <Reveal className="lg:row-span-2">
+        <p>content</p>
+      </Reveal>,
+    )
+    const wrapper = container.firstElementChild as HTMLElement
+    expect(wrapper.tagName).toBe('DIV')
+    expect(wrapper).toHaveClass('lg:row-span-2')
+    expect(wrapper).toContainElement(screen.getByText('content'))
+  })
+
+  it('puts the class on the motion-mode wrapper', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <Reveal className="lg:row-span-2">
+        <p>content</p>
+      </Reveal>,
+    )
+    expect(container.firstElementChild).toHaveClass('lg:row-span-2')
+  })
+})
+
+describe('Reveal words variant', () => {
+  it('keeps the accessible text and tags each word with its index', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <Reveal variant="words">
+        <h2>{splitWords('Built to last, shipped')}</h2>
+      </Reveal>,
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Built to last, shipped' }),
+    ).toBeInTheDocument()
+    const words = Array.from(container.querySelectorAll<HTMLElement>('[data-word]'))
+    expect(words.map((w) => w.textContent)).toEqual(['Built', 'to', 'last,', 'shipped'])
+    expect(words.map((w) => w.style.getPropertyValue('--i'))).toEqual([
+      '0',
+      '1',
+      '2',
+      '3',
+    ])
+  })
+
+  it('does not fade or translate the wrapper', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <Reveal variant="words">
+        <h2>{splitWords('one two')}</h2>
+      </Reveal>,
+    )
+    const wrapper = container.querySelector<HTMLElement>('[data-reveal]')
+    expect(wrapper).not.toBeNull()
+    expect(wrapper?.style.opacity).toBe('')
+    expect(wrapper?.style.transform).toBe('')
+  })
+
+  it('marks the wrapper shown once in view', async () => {
+    mockMatchMedia(false)
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: 0,
+      bottom: 100,
+    } as DOMRect)
+    const { container } = render(
+      <Reveal variant="words">
+        <h2>{splitWords('one two')}</h2>
+      </Reveal>,
+    )
+    await waitFor(() => {
+      expect(container.querySelector('[data-reveal="shown"]')).not.toBeNull()
+    })
+    vi.restoreAllMocks()
+  })
+
+  it('renders plain children under reduced motion', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <Reveal variant="words">
+        <h2>{splitWords('one two')}</h2>
+      </Reveal>,
+    )
+    expect(container.querySelector('[data-reveal]')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'one two' })).toBeInTheDocument()
   })
 })

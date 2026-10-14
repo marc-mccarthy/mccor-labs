@@ -45,3 +45,20 @@ describe('Stagger', () => {
     }
   })
 })
+
+describe('Stagger itemClassName', () => {
+  it.each([false, true])(
+    'passes each index class to the item wrapper (reduced: %s)',
+    (reduced) => {
+      mockMatchMedia(reduced)
+      render(
+        <Stagger itemClassName={(index) => `item-${String(index)}`}>
+          <p>first</p>
+          <p>second</p>
+        </Stagger>,
+      )
+      expect(screen.getByText('first').parentElement).toHaveClass('item-0')
+      expect(screen.getByText('second').parentElement).toHaveClass('item-1')
+    },
+  )
+})

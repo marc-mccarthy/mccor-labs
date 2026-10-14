@@ -37,7 +37,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           crossOrigin="anonymous"
         />
         <noscript>
-          <style>{'[data-reveal]{opacity:1!important;transform:none!important}'}</style>
+          <style>
+            {
+              '[data-reveal]{opacity:1!important;transform:none!important}[data-reveal] [data-word]{transform:none!important}'
+            }
+          </style>
         </noscript>
       </head>
       <body className="flex min-h-dvh flex-col">

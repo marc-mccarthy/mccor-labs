@@ -397,3 +397,17 @@
     stroke-dashoffset: 1;
   }
 }
+
+[data-reveal='armed'] [data-word] {
+  @variant motion-on {
+    transform: translateY(100%);
+  }
+}
+
+[data-reveal='shown'] [data-word] {
+  @variant motion-on {
+    transform: none;
+    transition: transform var(--duration-standard) var(--ease-route)
+      calc(var(--i) * var(--stagger-interval));
+  }
+}

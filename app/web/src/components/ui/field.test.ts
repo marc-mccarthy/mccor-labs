@@ -49,6 +49,16 @@ describe('fieldVariants', () => {
   )
 
   it.each(['input', 'select', 'textarea'] as const)(
+    '%s de-emphasises with tokens while the form is sending',
+    (kind) => {
+      const out = fieldVariants({ kind })
+      expect(out).toContain('group-data-[status=sending]/form:border-border')
+      expect(out).toContain('group-data-[status=sending]/form:text-muted')
+      expect(out).not.toMatch(/opacity/)
+    },
+  )
+
+  it.each(['input', 'select', 'textarea'] as const)(
     '%s contains no colour literal',
     (kind) => {
       expect(fieldVariants({ kind })).not.toMatch(/#|rgb\(|hsl\(|oklch\(/)

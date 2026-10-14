@@ -9,6 +9,7 @@ import { fieldVariants } from '@/components/ui/field'
 import { contactLabCopy } from '@/content/lab/copy'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
+import { cn } from '@/lib/cn'
 import {
   contactMailtoHref,
   submitContact,
@@ -59,6 +60,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [errorKind, setErrorKind] = useState<ContactError | null>(null)
   const [, setReference] = useState<string | null>(null)
   const [validationRun, setValidationRun] = useState(0)
+  const sending = status === 'sending'
   const formRef = useRef<HTMLFormElement>(null)
   const openedAt = useRef(0)
   const prefill = useLabPrefill()
@@ -163,7 +165,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       noValidate
       data-status={status}
       data-error={errorKind ?? undefined}
-      aria-busy={status === 'sending'}
+      aria-busy={sending}
       className="group/form space-y-5"
     >
       {prefill !== null && (
@@ -182,6 +184,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             id="name"
             name="name"
             autoComplete="name"
+            readOnly={sending}
             className={fieldVariants({ kind: 'input' })}
             aria-invalid={errors.name !== undefined}
             aria-describedby={errors.name === undefined ? undefined : 'name-error'}
@@ -204,6 +207,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             name="email"
             type="email"
             autoComplete="email"
+            readOnly={sending}
             className={fieldVariants({ kind: 'input' })}
             aria-invalid={errors.email !== undefined}
             aria-describedby={errors.email === undefined ? undefined : 'email-error'}
@@ -227,6 +231,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             name="company"
             autoComplete="organization"
             maxLength={100}
+            readOnly={sending}
             className={fieldVariants({ kind: 'input' })}
           />
         </div>
@@ -274,6 +279,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             rows={6}
             key={prefill ?? 'empty'}
             defaultValue={prefill ?? undefined}
+            readOnly={sending}
             className={fieldVariants({ kind: 'textarea' })}
             aria-invalid={errors.message !== undefined}
             aria-describedby={errors.message === undefined ? undefined : 'message-error'}
@@ -300,14 +306,28 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div
+        className={cn('relative flex items-center gap-4', sending && 'cursor-progress')}
+      >
         <Button
           type="submit"
-          aria-disabled={status === 'sending' || status === 'sent'}
-          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          aria-disabled={sending || status === 'sent'}
+          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group-data-[status=sending]/form:aria-disabled:cursor-progress group-data-[status=sending]/form:aria-disabled:opacity-100"
         >
-          {status === 'sending' ? ui.formSending : ui.formSubmit}
+          {sending ? ui.formSending : ui.formSubmit}
         </Button>
+        {sending && (
+          <span
+            aria-hidden="true"
+            data-send-track=""
+            className="absolute inset-x-0 -bottom-2 h-0.5 overflow-hidden rounded-full bg-border"
+          >
+            <span
+              data-send-bar=""
+              className="block h-full w-full bg-accent motion-on:animate-[send-sweep_calc(var(--duration-standard)*4)_linear_infinite]"
+            />
+          </span>
+        )}
       </div>
 
       <p role="status" aria-live="polite" className="text-sm text-muted">

@@ -105,6 +105,32 @@ async function submitWith(page: Page, responder: Responder) {
   await submit(page)
 }
 
+function sweepCount(page: Page) {
+  return page.evaluate(
+    () =>
+      document
+        .getAnimations()
+        .filter((animation) => (animation as CSSAnimation).animationName === 'send-sweep')
+        .length,
+  )
+}
+
+function liveAnimations(page: Page) {
+  return page.evaluate(() =>
+    document.getAnimations().map((animation) => {
+      const target = (animation.effect as KeyframeEffect | null)?.target ?? null
+      const name =
+        'animationName' in animation
+          ? (animation.animationName as string)
+          : (animation as CSSTransition).transitionProperty
+      const tag = target?.tagName ?? ''
+      const id = target?.id ?? ''
+      const classes = (target?.getAttribute('class') ?? '').slice(0, 80)
+      return `${animation.constructor.name} ${name} ${tag}#${id}.${classes}`
+    }),
+  )
+}
+
 async function expectStatus(page: Page, text: string) {
   await expect(page.locator('form').getByRole('status')).toHaveText(text)
 }
@@ -413,6 +439,21 @@ test.describe('live form', () => {
   test.describe('reduced motion', () => {
     test.use({ contextOptions: { reducedMotion: 'reduce' } })
 
+    test('sending bar is static under reduced motion', async ({ page }) => {
+      await open(page)
+      const pending = gated()
+      mock.release = pending.release
+      await submitWith(page, pending.responder)
+      const bar = page.locator('[data-send-bar]')
+      await expect(bar).toBeVisible()
+      const transform = await bar.evaluate((node) => getComputedStyle(node).transform)
+      expect(transform).toBe('none')
+      const track = await page.locator('[data-send-track]').boundingBox()
+      const fill = await bar.boundingBox()
+      expect(fill?.width).toBe(track?.width)
+      expect(await liveAnimations(page)).toEqual([])
+    })
+
     test('chevron stays still under reduced motion', async ({ page }) => {
       await open(page)
       await page.locator('#budget').focus()
@@ -420,9 +461,29 @@ test.describe('live form', () => {
         .locator('[data-select-chevron]')
         .evaluate((node) => getComputedStyle(node).transform)
       expect(transform).toBe('none')
-      const animations = await page.evaluate(() => document.getAnimations().length)
-      expect(animations).toBe(0)
+      expect(await liveAnimations(page)).toEqual([])
     })
+  })
+
+  test('sending state is busy and read-only', async ({ page }) => {
+    await open(page)
+    const pending = gated()
+    mock.release = pending.release
+    await submitWith(page, pending.responder)
+    const form = page.locator('form')
+    await expect(form).toHaveAttribute('aria-busy', 'true')
+    await expect(page.locator('#name')).toHaveJSProperty('readOnly', true)
+    await expect(page.locator('#budget')).toHaveJSProperty('disabled', false)
+    const opacity = await page
+      .getByRole('button', { name: ui.formSending })
+      .evaluate((node) => getComputedStyle(node).opacity)
+    expect(opacity).toBe('1')
+    await expect.poll(() => sweepCount(page)).toBe(1)
+    pending.release()
+    await expect(form).toHaveAttribute('data-status', 'sent')
+    await expect(form).toHaveAttribute('aria-busy', 'false')
+    await expect(page.locator('[data-send-track]')).toHaveCount(0)
+    await expect.poll(() => sweepCount(page)).toBe(0)
   })
 
   test.describe('invalid focus with motion', () => {

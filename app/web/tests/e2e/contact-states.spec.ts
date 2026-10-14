@@ -207,7 +207,6 @@ const STATES: State[] = [
     drive: async (page) => {
       await submitWith(page, reply(200, { reference: REFERENCE }))
       await expectStatus(page, `${ui.formSuccess} ${ui.formReference} ${REFERENCE}.`)
-      await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
     },
   },
   {
@@ -215,7 +214,6 @@ const STATES: State[] = [
     drive: async (page) => {
       await submitWith(page, reply(200, {}))
       await expectStatus(page, ui.formSuccess)
-      await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
     },
   },
   {
@@ -280,8 +278,22 @@ async function settleReveals(page: Page) {
   )
 }
 
+async function settleAnimations(page: Page) {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => {
+      const end = animation.effect?.getComputedTiming().endTime
+      return (
+        animation.playState === 'finished' ||
+        typeof end !== 'number' ||
+        !Number.isFinite(end)
+      )
+    }),
+  )
+}
+
 async function expectNoViolations(page: Page) {
   await settleReveals(page)
+  await settleAnimations(page)
   const results = await new AxeBuilder({ page }).withTags(TAGS).analyze()
   expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([])
   await noOverflow(page)

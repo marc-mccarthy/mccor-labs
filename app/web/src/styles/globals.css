@@ -125,6 +125,25 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--color-base);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes focus-settle {
+      from {
+        outline-offset: 6px;
+        outline-color: var(--color-brand);
+      }
+
+      to {
+        outline-offset: 2px;
+        outline-color: var(--color-accent);
+      }
+    }
+
+    :root:not([data-motion='paused']) :focus-visible {
+      animation: focus-settle var(--duration-pointer) var(--ease-pointer);
+    }
   }
 
   body::after {

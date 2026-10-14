@@ -27,9 +27,11 @@ import {
   toLabResult,
 } from '@/lib/labResult'
 
-import { trackSceneRequests, trackThreeRequests } from './support'
+import { builtWithEndpoint, trackSceneRequests, trackThreeRequests } from './support'
 
 const PATH = '/lab/should-this-be-ai/'
+
+const hasEndpoint = builtWithEndpoint()
 
 async function openStep(page: Page, n: number) {
   const toggle = page.getByTestId(`step-${String(n)}`).locator('[data-step-toggle]')
@@ -72,7 +74,21 @@ function expectedMailto(
   return {
     encoded: encodeLabResult(result),
     href: labMailtoHref(site.contactEmail, formatLabResult(result)),
+    text: formatLabResult(result),
   }
+}
+
+async function expectResultsOffered(
+  page: Page,
+  expected: { href: string; text: string },
+) {
+  if (hasEndpoint) {
+    await expect(page.locator('#message')).toHaveValue(expected.text)
+    return
+  }
+  await expect(
+    page.getByRole('link', { name: contactLabCopy.emailResults }),
+  ).toHaveAttribute('href', expected.href)
 }
 
 test.describe('lab at 390 px', () => {
@@ -216,11 +232,9 @@ test('/lab/should-this-be-ai/ works by keyboard alone through to the contact pag
       () => (window as unknown as { labMarker?: boolean }).labMarker === true,
     ),
   ).toBe(true)
-  await expect(
-    page.getByRole('link', { name: contactLabCopy.emailResults }),
-  ).toHaveAttribute(
-    'href',
-    expectedMailto([{ name: '', answers: EMPTY_ANSWERS }], false).href,
+  await expectResultsOffered(
+    page,
+    expectedMailto([{ name: '', answers: EMPTY_ANSWERS }], false),
   )
 
   await page.goBack()
@@ -238,15 +252,14 @@ test('/lab/should-this-be-ai/ result fills the /contact/ email from a #lab= link
     QuestionKey,
     'yes'
   >
-  const { encoded, href } = expectedMailto(
+  const expected = expectedMailto(
     [{ name: 'Send invoices', answers: { ...EMPTY_ANSWERS, ...allYes } }],
     true,
   )
+  const { encoded, href } = expected
   await page.goto(`/contact/#lab=${encoded}`)
   await expect(page.getByText(contactLabCopy.added)).toBeVisible()
-  await expect(
-    page.getByRole('link', { name: contactLabCopy.emailResults }),
-  ).toHaveAttribute('href', href)
+  await expectResultsOffered(page, expected)
   expect(href).toContain(encodeURIComponent('Step 1, Send invoices'))
   await expect.poll(() => page.url()).not.toContain('#')
 })

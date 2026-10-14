@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+import { builtWithEndpoint } from './support'
+
+const hasEndpoint = builtWithEndpoint()
+
 test.describe('contact route', () => {
   test('offers a way to reach the firm @smoke', async ({ page }) => {
     await page.goto('/contact/')
@@ -9,10 +13,20 @@ test.describe('contact route', () => {
   })
 
   test('never renders a submit button without an endpoint', async ({ page }) => {
+    test.skip(hasEndpoint, 'this build sets NEXT_PUBLIC_CONTACT_ENDPOINT')
     await page.goto('/contact/')
     const submit = page.getByRole('button', { name: /send message/i })
     const mailto = page.locator('a[href^="mailto:"]')
     await expect(submit).toHaveCount(0)
     await expect(mailto.first()).toBeVisible()
+  })
+
+  test('renders the live form when built with an endpoint', async ({ page }) => {
+    test.skip(!hasEndpoint, 'this build has no NEXT_PUBLIC_CONTACT_ENDPOINT')
+    await page.goto('/contact/')
+    await expect(page.getByRole('button', { name: /send message/i })).toBeVisible()
+    await expect(page.locator('#name')).toBeVisible()
+    await expect(page.locator('#email')).toBeVisible()
+    await expect(page.locator('#message')).toBeVisible()
   })
 })

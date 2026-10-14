@@ -165,7 +165,7 @@ export const privacy: LegalDocument = {
       blocks: [
         {
           kind: 'p',
-          text: 'Contact form submissions and email correspondence are kept for TODO(owner): retention period, 24 months proposed, from our last exchange, then deleted. If your enquiry becomes a project, the correspondence is kept as a business record for as long as we are required to keep it.',
+          text: 'Contact form submissions and email correspondence are kept for 24 months from our last exchange, then deleted. If your enquiry becomes a project, the correspondence is kept as a business record for as long as we are required to keep it.',
         },
         {
           kind: 'p',

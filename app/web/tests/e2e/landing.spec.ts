@@ -236,9 +236,17 @@ test.describe('service cards', () => {
       .poll(() => card.evaluate((node) => getComputedStyle(node).outlineStyle))
       .not.toBe('none')
     expect(await computedOf(link, 'outlineStyle')).toBe('none')
+    const transparent = await page.evaluate(() => {
+      const probe = document.createElement('div')
+      probe.style.color = 'transparent'
+      document.body.append(probe)
+      const color = getComputedStyle(probe).color
+      probe.remove()
+      return color
+    })
     const linkShadow = await computedOf(link, 'boxShadow')
     expect(
-      linkShadow.replaceAll('rgba(0, 0, 0, 0) 0px 0px 0px 0px', '').replace(/[,\s]/g, ''),
+      linkShadow.replaceAll(`${transparent} 0px 0px 0px 0px`, '').replace(/[,\s]/g, ''),
     ).toBe('')
   })
 })

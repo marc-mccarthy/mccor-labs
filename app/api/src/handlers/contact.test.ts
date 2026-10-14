@@ -20,6 +20,7 @@ const ses = mockClient(SESv2Client)
 const form = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
+  phone: '+12025550123',
   company: 'Analytical Engines',
   budget: '',
   message: 'We need a marketing site and a client portal.',
@@ -206,9 +207,16 @@ describe('contact handler', () => {
       await handler(post(form))
       const logged = loggedText()
       expect(logged).not.toBe('')
-      for (const value of [form.name, form.email, form.company, form.message]) {
+      for (const value of [
+        form.name,
+        form.email,
+        form.phone,
+        form.company,
+        form.message,
+      ]) {
         expect(logged).not.toContain(value)
       }
+      expect(logged).not.toContain('2025550123')
     })
   })
 })

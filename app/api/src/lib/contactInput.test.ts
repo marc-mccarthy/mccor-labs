@@ -4,6 +4,7 @@ import { checkContact } from './contactInput'
 const valid = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
+  phone: '+12025550123',
   company: '',
   budget: '',
   message: 'We need a marketing site and a client portal.',
@@ -18,6 +19,7 @@ describe('checkContact', () => {
       value: {
         name: 'Ada Lovelace',
         email: 'ada@example.com',
+        phone: '+12025550123',
         company: '',
         budget: '',
         message: 'We need a marketing site and a client portal.',
@@ -47,12 +49,23 @@ describe('checkContact', () => {
     ['a name over 100 characters', { ...valid, name: 'x'.repeat(101) }],
     ['a malformed email', { ...valid, email: 'nope' }],
     ['an email with a line break', { ...valid, email: 'a@b.co\r\nBcc: x@y.z' }],
+    ['a phone without the +1 prefix', { ...valid, phone: '2025550123' }],
+    ['a formatted phone', { ...valid, phone: '+1 202 555 0123' }],
+    ['a phone with an area code starting with 1', { ...valid, phone: '+11025550123' }],
+    ['a phone with an exchange starting with 1', { ...valid, phone: '+12021550123' }],
+    ['a non-string phone', { ...valid, phone: 2025550123 }],
+    ['a missing phone', { ...valid, phone: undefined }],
     ['a company over 100 characters', { ...valid, company: 'x'.repeat(101) }],
     ['a budget over 40 characters', { ...valid, budget: 'x'.repeat(41) }],
     ['a message under 10 characters', { ...valid, message: 'too short' }],
     ['a message over 5000 characters', { ...valid, message: 'x'.repeat(5001) }],
   ])('rejects %s', (_label, body) => {
     expect(checkContact(body)).toEqual({ kind: 'invalid', reason: 'validation' })
+  })
+
+  it('trims whitespace around an E.164 phone', () => {
+    const check = checkContact({ ...valid, phone: ' +12025550123 ' })
+    expect(check.kind === 'ok' ? check.value.phone : null).toBe('+12025550123')
   })
 
   it('accepts a missing optional company and budget', () => {

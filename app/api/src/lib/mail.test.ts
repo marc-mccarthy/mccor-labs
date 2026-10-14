@@ -7,6 +7,7 @@ const ses = mockClient(SESv2Client)
 const input = {
   name: 'Ada Lovelace',
   email: 'ada@example.com',
+  phone: '+12025550123',
   company: '',
   budget: '$10k – $25k',
   message: 'We need a marketing site.',
@@ -23,6 +24,7 @@ describe('ownerEmailText', () => {
         'Reference: AB12CD34',
         'Name: Ada Lovelace',
         'Email: ada@example.com',
+        'Phone: +12025550123',
         'Company: (not given)',
         'Budget: $10k – $25k',
         '',

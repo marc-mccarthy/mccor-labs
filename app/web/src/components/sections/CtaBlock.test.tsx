@@ -101,4 +101,40 @@ describe('CtaBlock', () => {
     expect(heading.parentElement).toHaveAttribute('data-reveal')
     expect(heading.parentElement?.parentElement?.closest('[data-reveal]')).toBeNull()
   })
+
+  it('adds a pointer spotlight to the panel when pointer effects are enabled', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(hover: hover) and (pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    const { container } = render(<CtaBlock />)
+    const glow = container.querySelector('[data-spotlight]')
+    expect(glow).not.toBeNull()
+    expect(glow?.parentElement).toHaveClass('group', 'relative', 'isolate')
+  })
+
+  it('omits the spotlight under reduced motion', () => {
+    const { container } = render(<CtaBlock />)
+    expect(container.querySelector('[data-spotlight]')).toBeNull()
+  })
+
+  it('marks the top edge light decorative', () => {
+    const { container } = render(<CtaBlock />)
+    const edge = container.querySelector('[data-cta-edge]')
+    expect(edge).toHaveAttribute('aria-hidden', 'true')
+    expect(edge).toHaveAttribute('data-signal-sweep')
+  })
+
+  it('keeps the stag attributes and wires its hover and drift hooks', () => {
+    const { container } = render(<CtaBlock />)
+    const stag = screen.getByTestId('cta-stag')
+    expect(stag).toHaveAttribute('width', '585')
+    expect(stag).toHaveAttribute('height', '748')
+    expect(stag).toHaveAttribute('decoding', 'async')
+    expect(stag).toHaveAttribute('data-cta-stag')
+    expect(stag.parentElement).toHaveClass('group/cta')
+    expect(container.querySelectorAll('[data-cta-stag]')).toHaveLength(1)
+  })
 })

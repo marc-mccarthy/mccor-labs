@@ -72,6 +72,9 @@ Ruling: E.164 is the only wire format; formatted display in the form only; owner
 Ruling: blur errors only for dirty fields; empty-required errors on submit (cost if wrong: users see empty-field errors later).
 Ruling: visible "US or Canadian number" hint (cost if wrong: one line of extra copy).
 Ruling: `contactReceiptNext` "We will reply by email." left unchanged; flagged to owner (cost if wrong: copy tweak).
+Ruling: the form is already live, so roll out in two steps: this PR's API accepts a missing phone (rejects a malformed one) while the web requires it (cost if wrong: a few phone-less enquiries from stale pages).
+
+T8 Follow-up PR, after this deploy has been live a day: API requires phone again (`contactInput.ts` drops the `input.phone === ''` allowance; tests move "a missing phone" back to rejected; `mail.ts` stops using `orNotGiven` for phone).
 
 ## Verification
 

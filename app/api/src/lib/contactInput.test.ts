@@ -55,7 +55,6 @@ describe('checkContact', () => {
     ['a phone with an exchange starting with 1', { ...valid, phone: '+12021550123' }],
     ['a phone with too many digits', { ...valid, phone: '+120255501234' }],
     ['a non-string phone', { ...valid, phone: 2025550123 }],
-    ['a missing phone', { ...valid, phone: undefined }],
     ['a company over 100 characters', { ...valid, company: 'x'.repeat(101) }],
     ['a budget over 40 characters', { ...valid, budget: 'x'.repeat(41) }],
     ['a message under 10 characters', { ...valid, message: 'too short' }],
@@ -67,6 +66,11 @@ describe('checkContact', () => {
   it('trims whitespace around an E.164 phone', () => {
     const check = checkContact({ ...valid, phone: ' +12025550123 ' })
     expect(check.kind === 'ok' ? check.value.phone : null).toBe('+12025550123')
+  })
+
+  it('accepts a missing phone from pages served before the phone field', () => {
+    const check = checkContact({ ...valid, phone: undefined })
+    expect(check.kind === 'ok' ? check.value.phone : null).toBe('')
   })
 
   it('accepts a missing optional company and budget', () => {

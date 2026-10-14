@@ -32,6 +32,12 @@ describe('ownerEmailText', () => {
       ].join('\n'),
     )
   })
+
+  it('marks a missing phone as not given', () => {
+    expect(ownerEmailText({ ...input, phone: '' }, 'AB12CD34')).toContain(
+      'Phone: (not given)',
+    )
+  })
 })
 
 describe('sendOwnerEmail', () => {

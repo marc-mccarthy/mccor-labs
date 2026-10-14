@@ -30,7 +30,7 @@ function isValid(input: ContactInput): boolean {
     input.name.length <= 100 &&
     input.email.length <= 254 &&
     EMAIL.test(input.email) &&
-    PHONE.test(input.phone) &&
+    (input.phone === '' || PHONE.test(input.phone)) &&
     input.company.length <= 100 &&
     input.budget.length <= 40 &&
     input.message.length >= 10 &&

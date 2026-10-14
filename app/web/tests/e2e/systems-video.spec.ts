@@ -29,3 +29,15 @@ test('phones keep the systems poster and never attach the loop', async ({ page }
   await expect(page.locator(video)).toHaveCount(0)
   await expect(page.locator('[data-testid="systems-poster"]')).toBeVisible()
 })
+
+test('hero video pauses off screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/', { waitUntil: 'load' })
+  const hero = page.locator('section video').first()
+  await expect(hero).toHaveCount(1)
+  await expect
+    .poll(() => hero.evaluate((node: HTMLVideoElement) => node.paused))
+    .toBe(false)
+  await page.locator('section').last().scrollIntoViewIfNeeded()
+  await expect(hero).toHaveJSProperty('paused', true)
+})

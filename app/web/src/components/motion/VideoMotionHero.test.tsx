@@ -22,12 +22,36 @@ function renderHero() {
   )
 }
 
+type ObserverCallback = (entries: { isIntersecting: boolean }[]) => void
+
+function mockIntersectionObserver(initiallyVisible: boolean) {
+  const callbacks: ObserverCallback[] = []
+  class MockIntersectionObserver {
+    constructor(private readonly callback: ObserverCallback) {
+      callbacks.push(callback)
+    }
+    observe() {
+      this.callback([{ isIntersecting: initiallyVisible }])
+    }
+    disconnect = vi.fn()
+  }
+  vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
+  return (isIntersecting: boolean) => {
+    act(() => {
+      callbacks.forEach((callback) => {
+        callback([{ isIntersecting }])
+      })
+    })
+  }
+}
+
 describe('VideoMotionHero', () => {
   let pause: ReturnType<typeof vi.fn<() => void>>
   let load: ReturnType<typeof vi.fn<() => void>>
 
   beforeEach(() => {
     vi.useFakeTimers()
+    mockIntersectionObserver(true)
     pause = vi.fn<() => void>()
     load = vi.fn<() => void>()
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(pause)
@@ -37,6 +61,7 @@ describe('VideoMotionHero', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('attaches the video after the page has loaded', () => {
@@ -174,5 +199,23 @@ describe('VideoMotionHero', () => {
       vi.runAllTimers()
     })
     expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('pauses the video when the hero leaves the viewport', () => {
+    mockMatchMedia(false)
+    const report = mockIntersectionObserver(false)
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    const { container } = renderHero()
+    act(() => {
+      vi.runAllTimers()
+    })
+    expect(container.querySelector('video')).toBeNull()
+    report(true)
+    expect(container.querySelector('video')).not.toBeNull()
+    pause.mockClear()
+    report(false)
+    expect(pause).toHaveBeenCalledTimes(1)
+    report(true)
+    expect(play).toHaveBeenCalled()
   })
 })

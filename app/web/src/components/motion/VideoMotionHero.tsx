@@ -128,6 +128,7 @@ export function VideoMotionHero({
   objectPosition = 'object-right lg:object-[90%_center]',
   children,
 }: VideoMotionHeroProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const {
     videoRef,
     shouldAttachVideo,
@@ -135,10 +136,13 @@ export function VideoMotionHero({
     setVideoLoaded,
     paused,
     togglePaused,
-  } = useVideoAttach({ enabled: Boolean(videoSrc ?? webmSrc) })
+  } = useVideoAttach({ enabled: Boolean(videoSrc ?? webmSrc), onScreenRef: rootRef })
 
   return (
-    <div className={cn('relative w-full overflow-hidden bg-base', className)}>
+    <div
+      ref={rootRef}
+      className={cn('relative w-full overflow-hidden bg-base', className)}
+    >
       <img
         src={posterSrc}
         alt={altText}

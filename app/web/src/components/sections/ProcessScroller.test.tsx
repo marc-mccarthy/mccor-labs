@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { ProcessScroller } from './ProcessScroller'
 import { process } from '@/content/process'
@@ -71,5 +72,53 @@ describe('ProcessScroller', () => {
     mockMatchMedia(false)
     const { container } = render(<ProcessScroller />)
     expect(container.querySelectorAll('section')).toHaveLength(1)
+  })
+
+  it('server-renders the track at rest', () => {
+    mockMatchMedia(false)
+    const html = renderToString(<ProcessScroller />)
+    expect(html).toContain('--shift-md:0%;--shift-lg:0%')
+  })
+
+  it('writes the track shift on mount and on scroll', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 1000, configurable: true })
+    let top = 0
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(
+        () =>
+          ({
+            top,
+            height: 2000,
+            bottom: top + 2000,
+            left: 0,
+            right: 0,
+            width: 0,
+            x: 0,
+            y: top,
+          }) as DOMRect,
+      )
+    render(<ProcessScroller />)
+    const track = screen.getByRole('heading', { name: process[0]!.title }).closest('ol')!
+    expect(track.style.getPropertyValue('--shift-md')).toBe('0%')
+    expect(track.style.getPropertyValue('--shift-lg')).toBe('0%')
+
+    top = -500
+    act(() => {
+      window.dispatchEvent(new Event('scroll'))
+    })
+    const fraction = 0.5
+    const shift = (name: string) => track.style.getPropertyValue(name)
+    expect(shift('--shift-md')).toMatch(/%$/)
+    expect(parseFloat(shift('--shift-md'))).toBeCloseTo(
+      fraction * (process.length - 1) * 100,
+      5,
+    )
+    expect(parseFloat(shift('--shift-lg'))).toBeCloseTo(
+      fraction * (process.length - 2) * 50,
+      5,
+    )
+    rect.mockRestore()
   })
 })

@@ -35,9 +35,11 @@ export function validateContact(request: ContactRequest): ContactErrors {
   if (name.length < 1) errors.name = ui.contactErrorName
   else if (name.length > 100) errors.name = ui.contactErrorNameLength
 
-  if (!EMAIL.test(email)) errors.email = ui.contactErrorEmail
+  if (email.length > 254 || !EMAIL.test(email)) errors.email = ui.contactErrorEmail
 
-  if ((request.company ?? '').length > 100) errors.company = ui.contactErrorCompanyLength
+  if ((request.company ?? '').trim().length > 100) {
+    errors.company = ui.contactErrorCompanyLength
+  }
 
   if (message.length < 10) errors.message = ui.contactErrorMessage
   else if (message.length > 5000) errors.message = ui.contactErrorMessageLength

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ui } from '@/content/ui'
 import { signedPostJson } from '@/lib/signedPost'
 import {
   CONTACT_TIMEOUT_MS,
@@ -30,6 +31,21 @@ afterEach(() => {
 describe('validateContact', () => {
   it('accepts a well-formed submission', () => {
     expect(validateContact(valid)).toEqual({})
+  })
+
+  it('rejects an email longer than 254 characters, as the server does', () => {
+    const local = 'a'.repeat(64)
+    const atLimit = `${local}@${'b'.repeat(254 - 64 - 1 - 4)}.com`
+    expect(atLimit).toHaveLength(254)
+    expect(validateContact({ ...valid, email: atLimit }).email).toBeUndefined()
+    expect(validateContact({ ...valid, email: `a${atLimit}` }).email).toBe(
+      ui.contactErrorEmail,
+    )
+  })
+
+  it('measures the company after trimming, as the server does', () => {
+    const company = ` ${'c'.repeat(100)} `
+    expect(validateContact({ ...valid, company }).company).toBeUndefined()
   })
 
   it('requires a name', () => {

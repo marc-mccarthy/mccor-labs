@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { BookingCta } from '@/components/layout/BookingCta'
@@ -19,11 +19,14 @@ const StagScene = motionScene(
   ),
 )
 
+const sloganSentences = site.slogan.split(/(?<=\.)\s+/)
+
 export function Hero() {
   const [introPlaying, setIntroPlaying] = useState(false)
+  const sectionRef = useRef<HTMLElement | null>(null)
 
   return (
-    <section className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden">
       <Parallax>
         <div className="relative flex min-h-[85vh] items-end">
           <VideoMotionHero
@@ -43,19 +46,30 @@ export function Hero() {
               introPlaying && 'opacity-0',
             )}
             fallback={<HeroMotionCanvas className="opacity-30" />}
+            exitTarget={sectionRef}
           />
           <Container className="relative z-10 pt-16 pb-8 sm:pt-24">
-            <div className="max-w-xl lg:max-w-3xl">
+            <div className="relative isolate max-w-xl lg:max-w-5xl">
+              <div
+                aria-hidden="true"
+                data-hero-scrim
+                className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--color-base)_85%,transparent),transparent)] lg:hidden"
+              />
               <Badge className="mb-5 gap-2 bg-surface/80 font-sans font-semibold backdrop-blur">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand motion-on:animate-pulse" />
                 Senior Engineering & AI Studio
               </Badge>
 
-              <h1 className="text-display-sm leading-tight font-bold tracking-tight text-text drop-shadow-md">
-                {site.slogan}
+              <h1 className="text-display-md leading-tight font-bold text-balance text-text drop-shadow-md lg:text-display-lg">
+                {sloganSentences.map((sentence, index) => (
+                  <Fragment key={sentence}>
+                    {index > 0 && ' '}
+                    <span className="lg:block">{sentence}</span>
+                  </Fragment>
+                ))}
               </h1>
 
-              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted drop-shadow-md motion-safe:animate-lede sm:text-xl">
+              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted drop-shadow-md sm:text-xl motion-on:animate-lede">
                 {site.lede}
               </p>
 

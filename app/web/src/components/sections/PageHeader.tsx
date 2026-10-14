@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Eyebrow } from '@/components/ui/eyebrow'
@@ -13,6 +14,8 @@ interface PageHeaderProps {
   eyebrow?: { index: string; label: string }
   size?: 'md' | 'lg'
   imageClassName?: string
+  scene?: ReactNode
+  handoff?: boolean
 }
 
 const H1_CLASS = {
@@ -35,6 +38,8 @@ export function PageHeader({
   eyebrow,
   size = 'md',
   imageClassName,
+  scene,
+  handoff = false,
 }: PageHeaderProps) {
   const text = (
     <Container className="relative">
@@ -50,22 +55,39 @@ export function PageHeader({
 
   if (!image) return <Section>{text}</Section>
 
+  const bandImage = (
+    <img
+      src={image}
+      alt=""
+      fetchPriority="high"
+      decoding="async"
+      data-testid="header-image"
+      className={cn('h-full w-full object-cover object-right', imageClassName)}
+    />
+  )
+
   return (
-    <Section className="relative flex min-h-[60vh] items-end overflow-hidden pb-0 sm:pb-0">
+    <Section
+      className="relative flex min-h-[60vh] items-end overflow-hidden pb-0 sm:pb-0"
+      data-handoff={handoff ? '' : undefined}
+    >
       <div className={BAND_MASK}>
         <Parallax speed={0.15}>
-          <img
-            src={image}
-            alt=""
-            fetchPriority="high"
-            decoding="async"
-            data-testid="header-image"
-            className={cn('h-full w-full object-cover object-right', imageClassName)}
-          />
+          {scene ? (
+            <div className="relative h-full" data-handoff-zoom={handoff ? '' : undefined}>
+              {bandImage}
+              {scene}
+            </div>
+          ) : (
+            bandImage
+          )}
         </Parallax>
       </div>
       {video && <HeaderVideo video={video} maskClassName={BAND_MASK} />}
-      <div className="absolute inset-0 bg-linear-to-t from-base via-base/80 to-transparent sm:bg-linear-to-r sm:via-base/70" />
+      <div
+        className="absolute inset-0 bg-linear-to-t from-base via-base/80 to-transparent sm:bg-linear-to-r sm:via-base/70"
+        data-handoff-scrim={handoff ? '' : undefined}
+      />
       {text}
       <span
         aria-hidden="true"

@@ -4,6 +4,7 @@ uniform vec3 uColorBase;
 uniform vec3 uColorBrand;
 uniform vec3 uColorAccent;
 uniform float uTime;
+uniform float uExit;
 
 varying float vDepth;
 varying float vSeed;
@@ -28,5 +29,6 @@ void main() {
   float pulse = sin(uTime * 2.0 + vSeed * 6.2831853) * 0.1 + 0.9;
   finalColor *= pulse;
 
-  gl_FragColor = vec4(finalColor, alpha);
+  float fade = 1.0 - smoothstep(0.25, 1.0, uExit);
+  gl_FragColor = vec4(finalColor, alpha * fade);
 }

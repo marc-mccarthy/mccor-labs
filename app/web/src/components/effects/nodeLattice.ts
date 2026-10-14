@@ -80,3 +80,31 @@ export function buildNodeLayout(
     rangeX: maxX - minX,
   }
 }
+
+const VIEWPORT_UNITS = 100
+const GATE_FRACTIONS = [0.15, 0.5, 0.85] as const
+
+export function gateThresholds(
+  pinUnits: number,
+  fractions: readonly number[] = GATE_FRACTIONS,
+): number[] {
+  const start = VIEWPORT_UNITS / (VIEWPORT_UNITS + pinUnits)
+  const end = pinUnits / (VIEWPORT_UNITS + pinUnits)
+  return fractions.map((fraction) => start + fraction * (end - start))
+}
+
+export function gatesPassed(progress: number, thresholds: readonly number[]): number {
+  return thresholds.filter((threshold) => progress >= threshold).length
+}
+
+export const GATE_FLASH_MS = 600
+
+export function stepGateFlash(
+  flash: number,
+  wasPassed: number,
+  nowPassed: number,
+  delta: number,
+): number {
+  if (nowPassed > wasPassed && delta > 0) return 1
+  return Math.max(0, flash - delta / GATE_FLASH_MS)
+}

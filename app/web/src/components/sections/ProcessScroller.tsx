@@ -3,35 +3,116 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
-import { Pinned } from '@/components/motion/Pinned'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
 import { useScrollProgressValue } from '@/components/motion/useScrollProgress'
+import { GlowField } from '@/components/ui/glow-field'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { process } from '@/content/process'
+import { cn } from '@/lib/cn'
 
 const VIEWPORT_UNITS = 100
-const PIN_UNITS = 200
+export const PIN_UNITS = 150
 const PIN_START = VIEWPORT_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
 const PIN_END = PIN_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
 
-function pinnedFraction(progress: number): number {
-  return Math.min(1, Math.max(0, (progress - PIN_START) / (PIN_END - PIN_START)))
+type StageState = 'active' | 'near' | 'far'
+
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value))
 }
 
-function trackShift(fraction: number) {
-  return {
-    '--shift-md': `${String(fraction * (process.length - 1) * 100)}%`,
-    '--shift-lg': `${String(fraction * (process.length - 2) * 50)}%`,
+function pinnedFraction(progress: number): number {
+  return clampUnit((progress - PIN_START) / (PIN_END - PIN_START))
+}
+
+export function trackShift(
+  fraction: number,
+  scrollWidth: number,
+  clientWidth: number,
+): number {
+  return clampUnit(fraction) * Math.max(0, scrollWidth - clientWidth)
+}
+
+export function activeStage(fraction: number): number {
+  return Math.round(clampUnit(fraction) * (process.length - 1))
+}
+
+function stageState(index: number, active: number): StageState {
+  const distance = Math.abs(index - active)
+  if (distance === 0) return 'active'
+  return distance === 1 ? 'near' : 'far'
+}
+
+const PIN_STYLE = { '--pin-height': `${String(PIN_UNITS)}vh` } as CSSProperties
+
+const RESTING_TRACK = {
+  '--track-fraction': '0',
+  '--track-shift': '0px',
+  '--active-index': '1',
+  '--stage-count': String(process.length),
+} as CSSProperties
+
+interface TrackNodes {
+  group: HTMLElement
+  clip: HTMLElement
+  track: HTMLElement
+}
+
+function driveTrack(
+  { group, clip, track }: TrackNodes,
+  progress: ReturnType<typeof useScrollProgressValue>,
+): () => void {
+  const cards = Array.from(track.children) as HTMLElement[]
+  const size = { scroll: 0, client: 0 }
+  let active = -1
+
+  const write = () => {
+    const fraction = pinnedFraction(progress.get())
+    const shift = trackShift(fraction, size.scroll, size.client)
+    group.style.setProperty('--track-fraction', String(fraction))
+    group.style.setProperty('--track-shift', `${String(shift)}px`)
+    const next = activeStage(fraction)
+    if (next === active) return
+    active = next
+    group.style.setProperty('--active-index', String(next + 1))
+    cards.forEach((card, index) => {
+      card.dataset.cardState = stageState(index, next)
+    })
+  }
+
+  const measure = () => {
+    size.scroll = track.scrollWidth
+    size.client = clip.clientWidth
+    write()
+  }
+
+  measure()
+  const stopProgress = progress.on('change', write)
+  if (typeof ResizeObserver === 'undefined') return stopProgress
+
+  const observer = new ResizeObserver(measure)
+  observer.observe(clip)
+  observer.observe(track)
+  return () => {
+    stopProgress()
+    observer.disconnect()
   }
 }
 
-const RESTING_TRACK = trackShift(0) as CSSProperties
-
 function StageCard({ stage }: { stage: (typeof process)[number] }) {
   return (
-    <div className="flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-6">
+    <div
+      data-process-card=""
+      className="flex h-full flex-col gap-3 rounded-xl border border-border bg-surface p-6 motion-safe:md:transition-[translate,border-color,background-color] motion-safe:md:duration-(--duration-standard) motion-safe:md:ease-standard motion-safe:md:group-data-[card-state=active]/stage:border-border-strong motion-safe:md:group-data-[card-state=active]/stage:bg-elevated motion-safe:md:group-data-[card-state=near]/stage:translate-y-2"
+    >
       <p className="font-mono text-sm text-muted">
-        {String(stage.index).padStart(2, '0')} · {stage.duration}
+        {String(stage.index).padStart(2, '0')} ·{' '}
+        <span
+          data-process-chip=""
+          className="inline-block rounded-full border border-border px-2"
+        >
+          {stage.duration}
+        </span>
       </p>
       <h3 className="text-2xl font-semibold text-text">{stage.title}</h3>
       <p className="min-h-[3lh] text-muted">{stage.summary}</p>
@@ -39,77 +120,121 @@ function StageCard({ stage }: { stage: (typeof process)[number] }) {
   )
 }
 
-interface ProcessScrollerProps {
-  heading?: string
+function ProgressRail() {
+  return (
+    <div className="mb-6 hidden items-center gap-4 motion-safe:md:flex">
+      <div
+        data-process-counter=""
+        className="shrink-0 font-mono text-sm text-muted tabular-nums"
+      />
+      <div className="relative flex h-px flex-1 items-center justify-between bg-border">
+        <div
+          data-process-fill=""
+          className="absolute inset-0 origin-left scale-x-100 bg-brand motion-on:scale-x-(--track-fraction)"
+        />
+        {process.map((stage) => (
+          <div
+            key={stage.index}
+            className="relative size-1.5 rounded-full bg-border-strong"
+          />
+        ))}
+      </div>
+    </div>
+  )
 }
 
-function ProcessHeading({ heading }: ProcessScrollerProps) {
+interface ProcessScrollerProps {
+  heading?: string
+  eyebrow?: { index: string; label: string }
+  headingSize?: 'sm' | 'md'
+  glow?: boolean
+}
+
+function ProcessHeading({
+  heading,
+  eyebrow,
+  headingSize,
+}: Pick<ProcessScrollerProps, 'heading' | 'eyebrow' | 'headingSize'>) {
   return heading ? (
     <Container className="mb-8">
-      <SectionHeading>{heading}</SectionHeading>
+      <SectionHeading size={headingSize} eyebrow={eyebrow} words={eyebrow !== undefined}>
+        {heading}
+      </SectionHeading>
     </Container>
   ) : null
 }
 
-export function ProcessScroller({ heading }: ProcessScrollerProps) {
+export function ProcessScroller({
+  heading,
+  eyebrow,
+  headingSize,
+  glow = false,
+}: ProcessScrollerProps) {
   const reducedMotion = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
+  const groupRef = useRef<HTMLDivElement>(null)
+  const clipRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLOListElement>(null)
   const progress = useScrollProgressValue(ref)
 
   useEffect(() => {
+    const group = groupRef.current
+    const clip = clipRef.current
     const track = trackRef.current
-    if (reducedMotion || !track) return undefined
-    const write = (value: number) => {
-      for (const [name, shift] of Object.entries(trackShift(pinnedFraction(value)))) {
-        track.style.setProperty(name, shift)
-      }
-    }
-    write(progress.get())
-    return progress.on('change', write)
+    if (reducedMotion || !group || !clip || !track) return undefined
+    return driveTrack({ group, clip, track }, progress)
   }, [progress, reducedMotion])
 
-  if (reducedMotion) {
-    return (
-      <Section>
-        <ProcessHeading heading={heading} />
-        <Container>
-          <ol className="flex flex-col gap-6">
-            {process.map((stage) => (
-              <li key={stage.index}>
-                <StageCard stage={stage} />
-              </li>
-            ))}
-          </ol>
-        </Container>
-      </Section>
-    )
-  }
-
   return (
-    <Section className="motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0">
-      <div ref={ref}>
-        <Pinned height={`${String(PIN_UNITS)}vh`} from="md">
-          <div className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden">
-            <ProcessHeading heading={heading} />
-            <Container>
-              <ol
-                ref={trackRef}
-                className="flex flex-col gap-6 motion-safe:md:-translate-x-(--shift-md) motion-safe:md:flex-row motion-safe:md:gap-0 motion-safe:lg:-translate-x-(--shift-lg)"
-                style={RESTING_TRACK}
-              >
-                {process.map((stage) => (
-                  <li
-                    key={stage.index}
-                    className="motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2"
+    <Section
+      className={cn(
+        'motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0',
+        glow && 'relative isolate',
+      )}
+    >
+      {glow && <GlowField anchor="left" />}
+      <div ref={ref} className="motion-safe:md:h-(--pin-height)" style={PIN_STYLE}>
+        <div className="motion-safe:md:sticky motion-safe:md:top-0">
+          <div
+            data-testid="process-stage"
+            className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden"
+          >
+            <div ref={groupRef} data-testid="process-group" style={RESTING_TRACK}>
+              <ProcessHeading
+                heading={heading}
+                eyebrow={eyebrow}
+                headingSize={headingSize}
+              />
+              <Container>
+                <ProgressRail />
+                <div
+                  ref={clipRef}
+                  data-testid="process-clip"
+                  className="relative before:absolute before:inset-y-0 before:left-0 before:w-px before:bg-border motion-safe:md:overflow-x-clip motion-safe:md:before:hidden"
+                >
+                  <ol
+                    ref={trackRef}
+                    className="flex flex-col gap-6 pl-6 motion-safe:md:-translate-x-(--track-shift) motion-safe:md:flex-row motion-safe:md:pl-0 motion-reduce:lg:grid motion-reduce:lg:grid-cols-2"
                   >
-                    <StageCard stage={stage} />
-                  </li>
-                ))}
-              </ol>
-            </Container>
+                    {process.map((stage, index) => (
+                      <li
+                        key={stage.index}
+                        data-card-state={stageState(index, 0)}
+                        className="group/stage motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:lg:w-[calc(50%_-_0.75rem)]"
+                      >
+                        <StageCard stage={stage} />
+                      </li>
+                    ))}
+                  </ol>
+                  <div
+                    data-process-rail=""
+                    className="absolute inset-y-0 left-0 w-px origin-top bg-brand motion-safe:md:hidden"
+                  />
+                </div>
+              </Container>
+            </div>
           </div>
-        </Pinned>
+        </div>
       </div>
     </Section>
   )

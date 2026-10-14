@@ -1,0 +1,1118 @@
+{
+  "slug": "contact-polish",
+  "milestones": [
+    {
+      "id": "M0",
+      "goal": "Shared primitives for contact: fieldVariants, Eyebrow and PageHeader size and image position, Spotlight focus-within trigger, BookingCta link variant with header demotion and current-link hover, Reveal focus guard, CopyButton, contact e2e and budget harness, inline link states.",
+      "inventory": [
+        "C0.1 fieldVariants (ui/field.ts)",
+        "C0.2 Eyebrow extract, PageHeader size, eyebrow and imageClassName",
+        "C0.3 Spotlight trigger focus-within",
+        "C0.4 BookingCta link variant, desktop header demotion on /contact, mobile menu CTA kept primary, current-link hover",
+        "C0.5 Reveal focus-within guard",
+        "C0.6 CopyButton (ui/copy-button.tsx)",
+        "C0.7 contact-states.spec.ts and contact-budgets.spec.ts",
+        "C0.8 inline link states (ui/inline-link.ts)"
+      ],
+      "scenarios": [
+        {
+          "id": "S0",
+          "text": "fieldVariants returns h-11 inputs and selects, pointer cursor on select, textarea field-sizing, brand invalid border and outline, no colour literals",
+          "validations": ["pnpm -F web test:run src/components/ui/field.test.ts"]
+        },
+        {
+          "id": "S1",
+          "text": "Eyebrow is shared by SectionHeading and PageHeader; PageHeader default output is unchanged on 8 routes; size lg uses text-display-lg with a full-opacity lede; imageClassName reaches the img",
+          "validations": [
+            "pnpm -F web test:run src/components/ui/eyebrow.test.tsx src/components/ui/section-heading.test.tsx src/components/sections/PageHeader.test.tsx"
+          ]
+        },
+        {
+          "id": "S2",
+          "text": "Spotlight focus-within trigger lights on focus with a default spot position; default hover output unchanged",
+          "validations": ["pnpm -F web test:run src/components/motion/Spotlight.test.tsx"]
+        },
+        {
+          "id": "S3",
+          "text": "BookingCta link variant skips Magnetic and keeps name and href for both booking states; desktop header CTA is a link only on /contact; mobile menu CTA stays primary and the menu works at 390; current link thickens its underline on hover",
+          "validations": [
+            "pnpm -F web test:run src/components/layout/layout.test.tsx src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/lab.spec.ts",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"current contact link thickens on hover|390 mobile menu on contact keeps one accent CTA\""
+          ]
+        },
+        {
+          "id": "S4",
+          "text": "A field tabbed to before its Reveal fires is fully opaque at 390x844",
+          "validations": [
+            "pnpm -F web test:run src/components/motion/Reveal.test.tsx src/components/motion/Reveal.ssr.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 contact field revealed on keyboard focus\""
+          ]
+        },
+        {
+          "id": "S5",
+          "text": "CopyButton copies, reverts its label after 2 s, and shows visible failure text when the clipboard rejects or is missing",
+          "validations": ["pnpm -F web test:run src/components/ui/copy-button.test.tsx"]
+        },
+        {
+          "id": "S6",
+          "text": "Every form state is driven by page.route mocks only and passes axe at 1440 and 390 in both motion modes without horizontal overflow; /contact/ holds CLS 0 and SSR-equals-hydrated under reduce, CLS under budget on a #lab= arrival, and INP while typing without a scene",
+          "validations": [
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact state\"",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts"
+          ]
+        },
+        {
+          "id": "S7",
+          "text": "Inline link constants carry hover, press and decoration states with no colour literals",
+          "validations": ["pnpm -F web test:run src/components/ui/inline-link.test.ts"]
+        }
+      ],
+      "gate": "pass"
+    },
+    {
+      "id": "M1",
+      "goal": "Page-specific polish: status hook, panel shell and aside (both booking states), field system and chevron, focus-first-invalid, busy sending, tiered errors, success receipt, lab strip, message hairline, mailto fallback panel, phone hero crop.",
+      "inventory": [
+        "C1.1 data-status, data-error, aria-busy on the form",
+        "C1.2 ContactPanel shell, aside, PageHeader size lg and eyebrow",
+        "C1.3 fieldVariants applied, select chevron, Stagger",
+        "C1.4 focus first invalid field, scroll margin, error-in",
+        "C1.5 busy sending state",
+        "C1.6 tiered server-error treatment and status link states",
+        "C1.7 success receipt with collapse and reset",
+        "C1.8 lab prefill strip",
+        "C1.9 MESSAGE_MIN export and message hairline",
+        "C1.10 mailto fallback panel",
+        "C1.11 phone hero crop"
+      ],
+      "scenarios": [
+        {
+          "id": "S8",
+          "text": "Form exposes data-status and data-error; the status p, labels, roles and Send message text are unchanged",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact form exposes status\""
+          ]
+        },
+        {
+          "id": "S9",
+          "text": "Panel shell frames both states with no card in a card; aside omits the booking row when bookingUrl is null or the lab strip shows and omits email and booking rows in the fallback; panel stacks before aside at 390 without overflow; h1 stays Contact",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactPanel.test.tsx src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/a11y.spec.ts -g contact",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 panel stacks form before aside without overflow|panel sits beside aside at 1440\""
+          ]
+        },
+        {
+          "id": "S10",
+          "text": "Budget matches input height with a pointer cursor; invalid fields show a brand border and brand focus outline; chevron and stagger are static under reduced motion",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/motion/Stagger.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"budget select matches input height and has pointer cursor|invalid field shows brand border|chevron stays still under reduced motion\"",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact"
+          ]
+        },
+        {
+          "id": "S11",
+          "text": "Empty submit focuses the first invalid field below the sticky header with Lenis active",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"first invalid field takes focus below the header\""
+          ]
+        },
+        {
+          "id": "S12",
+          "text": "Sending sets aria-busy, read-only fields and a full-opacity submit; the sweep runs only under no-preference and the bar is static under reduce; no animation remains after the send",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/ui/field.test.ts",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sending state is busy and read-only|sending bar is static under reduced motion\""
+          ]
+        },
+        {
+          "id": "S13",
+          "text": "daily_cap and server render a brand callout with text-colour status; rate_limit and too_fast a muted wait rule; validation in brand; status mailto link has hover and press states; callout fits at 390",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"server errors are tiered|status mailto link has hover and press states|390 server error callout keeps the mailto in view\""
+          ]
+        },
+        {
+          "id": "S14",
+          "text": "Success collapses the fields into a receipt with text-colour status, the mono reference and copy action, focus on the receipt heading; reset restores an empty form; receipt fits at 390",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactReceipt.test.tsx src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"success becomes a receipt|send another restores an empty form|390 receipt fits the panel\""
+          ]
+        },
+        {
+          "id": "S15",
+          "text": "Lab prefill shows one accent pill, a fresh arrival shows an empty status, the strip wraps and the message is not clipped at 390, and CLS on a #lab= arrival stays under budget",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"lab prefill strip has one accent pill|fresh lab arrival shows an empty status|390 lab strip wraps and the prefilled message is not clipped\"",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/lab.spec.ts",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts -g \"/contact/#lab= CLS is under budget\""
+          ]
+        },
+        {
+          "id": "S16",
+          "text": "MESSAGE_MIN matches validateContact; the hairline fill tracks typed length and jumps without transition under reduce",
+          "validations": [
+            "pnpm -F web test:run src/lib/contact.test.ts src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"message hairline tracks the minimum|message hairline jumps under reduced motion\""
+          ]
+        },
+        {
+          "id": "S17",
+          "text": "Mailto fallback shows the address as the hero link, one booking link and a copy-address button, wraps at 390, and passes axe",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+            "env -u NEXT_PUBLIC_CONTACT_ENDPOINT NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact.spec.ts tests/e2e/a11y.spec.ts tests/e2e/contact-states.spec.ts -g \"contact|fallback\""
+          ]
+        },
+        {
+          "id": "S18",
+          "text": "Phone hero crop moves the orb and trail into frame at 390 and leaves 1440 unchanged",
+          "validations": [
+            "pnpm -F web test:run src/components/sections/PageHeader.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 hero crop shows orb and trail\""
+          ]
+        }
+      ],
+      "gate": "pass"
+    },
+    {
+      "id": "M2",
+      "goal": "Signature moments: desktop transmission beam over the hero, hero-to-panel scroll hand-off, form progress charging the beam, measured scene cost, and the on-panel sent signature at every width.",
+      "inventory": [
+        "C2.1 ContactBeamScene and PageHeader scene slot",
+        "C2.2 seam hand-off to the panel edge",
+        "C2.3 contactSignal store and beam uniforms",
+        "C2.4 scene frame cost and INP with the beam active",
+        "C2.5 sent signature on the panel"
+      ],
+      "scenarios": [
+        {
+          "id": "S19",
+          "text": "Beam scene loads three only after load at md and up with a fine pointer; no scene or three under reduce or at 390; PageHeader without scene is unchanged",
+          "validations": [
+            "pnpm -F web test:run src/components/effects/ContactBeamScene.test.tsx src/components/effects/contactBeamPath.test.ts src/components/sections/PageHeader.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts tests/e2e/a11y.spec.ts tests/e2e/scene-lazy.spec.ts -g contact",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact"
+          ]
+        },
+        {
+          "id": "S20",
+          "text": "Panel edge and hero hand-off run on a scroll timeline only under the motion-on gate; edge renders drawn and CLS stays 0 under reduce",
+          "validations": [
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"panel edge is drawn under reduced motion\"",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact"
+          ]
+        },
+        {
+          "id": "S21",
+          "text": "contactSignal computes charge, resets on unmount, and reaches phase sent after a mocked success",
+          "validations": [
+            "pnpm -F web test:run src/components/contact/contactSignal.test.ts src/components/contact/ContactForm.test.tsx",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact signal reaches sent\""
+          ]
+        },
+        {
+          "id": "S22",
+          "text": "Beam frame cost is logged and INP while typing on /contact/ with the scene active is within budget",
+          "validations": [
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/scene-frame.spec.ts -g contact",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts -g \"INP on /contact/ with the beam scene active\""
+          ]
+        },
+        {
+          "id": "S23",
+          "text": "Sent signature plays once on the panel at 1440 and 390, settles with no animations left, and is static under reduce",
+          "validations": [
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sent signature plays once and settles|390 sent signature plays on the panel|sent signature is static under reduced motion\"",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact"
+          ]
+        }
+      ],
+      "gate": "pass"
+    },
+    {
+      "id": "M3",
+      "goal": "Full verification: types, lint, unit, e2e, budgets and a11y on both the live-form and the fallback builds, 390 coverage, no live POST, no colour literals and no comments in changed files.",
+      "inventory": [
+        "tsc",
+        "lint",
+        "unit suite",
+        "e2e suite (live-form build)",
+        "budgets project",
+        "a11y and contact-states specs",
+        "390 cases",
+        "fallback build checks",
+        "colour literal scan",
+        "comment scan",
+        "manual 1440 and 390 review"
+      ],
+      "scenarios": [
+        {
+          "id": "S24",
+          "text": "Types and lint pass",
+          "validations": ["pnpm -F web exec tsc --noEmit", "pnpm -F web lint"]
+        },
+        {
+          "id": "S25",
+          "text": "Unit suite passes with ContactForm.test.tsx unmodified",
+          "validations": ["pnpm -F web test:run"]
+        },
+        {
+          "id": "S26",
+          "text": "Live-form build keeps Send message in SSR HTML and the full e2e suite passes",
+          "validations": [
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "pnpm -F web test:e2e"
+          ]
+        },
+        {
+          "id": "S27",
+          "text": "Budgets and a11y specs pass, including every /contact/ case at 1440 and 390",
+          "validations": [
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/a11y.spec.ts tests/e2e/contact-states.spec.ts",
+            "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 \""
+          ]
+        },
+        {
+          "id": "S28",
+          "text": "Fallback build passes contact, a11y and fallback state checks",
+          "validations": [
+            "env -u NEXT_PUBLIC_CONTACT_ENDPOINT NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact.spec.ts tests/e2e/a11y.spec.ts tests/e2e/contact-states.spec.ts -g \"contact|fallback\""
+          ]
+        },
+        {
+          "id": "S29",
+          "text": "No colour literals in new or changed files, including globals.css outside the @theme block",
+          "validations": [
+            "! grep -rnE '#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(' app/web/src/components/contact app/web/src/app/contact app/web/src/components/ui/field.ts app/web/src/components/ui/eyebrow.tsx app/web/src/components/ui/copy-button.tsx app/web/src/components/ui/inline-link.ts app/web/src/components/ui/section-heading.tsx app/web/src/components/effects/ContactBeamScene.tsx app/web/src/components/effects/contactBeamPath.ts app/web/src/components/sections/PageHeader.tsx app/web/src/components/motion/Spotlight.tsx app/web/src/components/layout/BookingCta.tsx app/web/src/components/layout/Header.tsx app/web/src/components/layout/underline.ts app/web/tests/e2e/contact-states.spec.ts app/web/tests/e2e/contact-budgets.spec.ts",
+            "! ( awk '/^@theme/{f=1} f&&/^}/{f=0;next} !f' app/web/src/styles/globals.css | grep -nE '#[0-9a-fA-F]{3,8}\\b|rgba?\\(|hsla?\\(|oklch\\(' )"
+          ]
+        },
+        {
+          "id": "S30",
+          "text": "No comments in new or changed files, including trailing comments and GLSL in template strings",
+          "validations": [
+            "! ( grep -rnE '(^|[^:])//|/\\*|<!--' app/web/src/components/contact app/web/src/app/contact app/web/src/components/ui/field.ts app/web/src/components/ui/eyebrow.tsx app/web/src/components/ui/copy-button.tsx app/web/src/components/ui/inline-link.ts app/web/src/components/ui/section-heading.tsx app/web/src/components/effects/ContactBeamScene.tsx app/web/src/components/effects/contactBeamPath.ts app/web/src/components/sections/PageHeader.tsx app/web/src/components/motion/Spotlight.tsx app/web/src/components/layout/BookingCta.tsx app/web/src/components/layout/Header.tsx app/web/src/components/layout/underline.ts app/web/tests/e2e/contact-states.spec.ts app/web/tests/e2e/contact-budgets.spec.ts app/web/src/styles/globals.css | grep -vE 'eslint-disable|@vitest-environment' )"
+          ]
+        }
+      ],
+      "gate": "pending"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "C-M0.1",
+      "milestone": "M0",
+      "title": "C0.1 fieldVariants (ui/field.ts)",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.1 fieldVariants (ui/field.ts). Implement contact plan task C0.1 exactly as written under '#### C0.1' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/ui/field.ts",
+        "app/web/src/components/ui/field.test.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/ui/field.test.ts"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.2",
+      "milestone": "M0",
+      "title": "C0.2 Eyebrow extract, PageHeader size, eyebrow and imageClassName",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.2 Eyebrow extract, PageHeader size, eyebrow and imageClassName. Implement contact plan task C0.2 exactly as written under '#### C0.2' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/ui/eyebrow.tsx",
+        "app/web/src/components/ui/eyebrow.test.tsx",
+        "app/web/src/components/ui/section-heading.tsx",
+        "app/web/src/components/ui/section-heading.test.tsx",
+        "app/web/src/components/sections/PageHeader.tsx",
+        "app/web/src/components/sections/PageHeader.test.tsx"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/ui/eyebrow.test.tsx src/components/ui/section-heading.test.tsx src/components/sections/PageHeader.test.tsx"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.3",
+      "milestone": "M0",
+      "title": "C0.3 Spotlight trigger focus-within",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.3 Spotlight trigger focus-within. Implement contact plan task C0.3 exactly as written under '#### C0.3' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/motion/Spotlight.tsx",
+        "app/web/src/components/motion/Spotlight.test.tsx"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/motion/Spotlight.test.tsx"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.7",
+      "milestone": "M0",
+      "title": "C0.7 contact-states.spec.ts and contact-budgets.spec.ts",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.7 contact-states.spec.ts and contact-budgets.spec.ts. Implement contact plan task C0.7 exactly as written under '#### C0.7' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git.",
+      "paths": [
+        "app/web/tests/e2e/contact-states.spec.ts",
+        "app/web/tests/e2e/contact-budgets.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact state\"",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.4",
+      "milestone": "M0",
+      "title": "C0.4 BookingCta link variant, desktop header demotion on /contact, mobile menu CTA kept primary, current-link hover",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.4 BookingCta link variant, desktop header demotion on /contact, mobile menu CTA kept primary, current-link hover. Implement contact plan task C0.4 exactly as written under '#### C0.4' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/layout/BookingCta.tsx",
+        "app/web/src/components/layout/Header.tsx",
+        "app/web/src/components/layout/underline.ts",
+        "app/web/src/components/layout/layout.test.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/layout/layout.test.tsx src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/lab.spec.ts",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"current contact link thickens on hover|390 mobile menu on contact keeps one accent CTA\""
+      ],
+      "deps": ["C-M0.7"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.5",
+      "milestone": "M0",
+      "title": "C0.5 Reveal focus-within guard",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.5 Reveal focus-within guard. Implement contact plan task C0.5 exactly as written under '#### C0.5' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/styles/globals.css",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/motion/Reveal.test.tsx src/components/motion/Reveal.ssr.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 contact field revealed on keyboard focus\""
+      ],
+      "deps": ["C-M0.7"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.6",
+      "milestone": "M0",
+      "title": "C0.6 CopyButton (ui/copy-button.tsx)",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.6 CopyButton (ui/copy-button.tsx). Implement contact plan task C0.6 exactly as written under '#### C0.6' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/ui/copy-button.tsx",
+        "app/web/src/components/ui/copy-button.test.tsx"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/ui/copy-button.test.tsx"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M0.8",
+      "milestone": "M0",
+      "title": "C0.8 inline link states (ui/inline-link.ts)",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C0.8 inline link states (ui/inline-link.ts). Implement contact plan task C0.8 exactly as written under '#### C0.8' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/ui/inline-link.ts",
+        "app/web/src/components/ui/inline-link.test.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/ui/inline-link.test.ts"
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.1",
+      "milestone": "M1",
+      "title": "C1.1 data-status, data-error, aria-busy on the form",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.1 data-status, data-error, aria-busy on the form. Implement contact plan task C1.1 exactly as written under '#### C1.1' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact form exposes status\""
+      ],
+      "deps": [],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.2",
+      "milestone": "M1",
+      "title": "C1.2 ContactPanel shell, aside, PageHeader size lg and eyebrow",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.2 ContactPanel shell, aside, PageHeader size lg and eyebrow. Implement contact plan task C1.2 exactly as written under '#### C1.2' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/app/contact/page.tsx",
+        "app/web/src/components/contact/ContactPanel.tsx",
+        "app/web/src/components/contact/ContactPanel.test.tsx",
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/content/ui.ts",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactPanel.test.tsx src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/a11y.spec.ts -g contact",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 panel stacks form before aside without overflow|panel sits beside aside at 1440\""
+      ],
+      "deps": ["C-M1.1"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.3",
+      "milestone": "M1",
+      "title": "C1.3 fieldVariants applied, select chevron, Stagger",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.3 fieldVariants applied, select chevron, Stagger. Implement contact plan task C1.3 exactly as written under '#### C1.3' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/motion/Stagger.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"budget select matches input height and has pointer cursor|invalid field shows brand border|chevron stays still under reduced motion\"",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact"
+      ],
+      "deps": ["C-M1.2"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.4",
+      "milestone": "M1",
+      "title": "C1.4 focus first invalid field, scroll margin, error-in",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.4 focus first invalid field, scroll margin, error-in. Implement contact plan task C1.4 exactly as written under '#### C1.4' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/styles/globals.css",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"first invalid field takes focus below the header\""
+      ],
+      "deps": ["C-M1.3"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.5",
+      "milestone": "M1",
+      "title": "C1.5 busy sending state",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.5 busy sending state. Implement contact plan task C1.5 exactly as written under '#### C1.5' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/components/ui/field.ts",
+        "app/web/src/components/ui/field.test.ts",
+        "app/web/src/styles/globals.css",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/ui/field.test.ts",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sending state is busy and read-only|sending bar is static under reduced motion\""
+      ],
+      "deps": ["C-M1.4"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.6",
+      "milestone": "M1",
+      "title": "C1.6 tiered server-error treatment and status link states",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.6 tiered server-error treatment and status link states. Implement contact plan task C1.6 exactly as written under '#### C1.6' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts",
+        "app/web/src/components/ui/inline-link.ts",
+        "app/web/src/components/ui/inline-link.test.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"server errors are tiered|status mailto link has hover and press states|390 server error callout keeps the mailto in view\""
+      ],
+      "deps": ["C-M1.5"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.7",
+      "milestone": "M1",
+      "title": "C1.7 success receipt with collapse and reset",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.7 success receipt with collapse and reset. Implement contact plan task C1.7 exactly as written under '#### C1.7' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.focus.test.tsx",
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/components/contact/ContactReceipt.test.tsx",
+        "app/web/src/components/contact/ContactReceipt.tsx",
+        "app/web/src/components/contact/SentToast.test.tsx",
+        "app/web/src/components/contact/SentToast.tsx",
+        "app/web/src/components/ui/copy-button.test.tsx",
+        "app/web/src/components/ui/copy-button.tsx",
+        "app/web/src/content/ui.ts",
+        "app/web/src/styles/globals.css",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactReceipt.test.tsx src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"success becomes a receipt|send another restores an empty form|390 receipt fits the panel\""
+      ],
+      "deps": ["C-M1.6"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.8",
+      "milestone": "M1",
+      "title": "C1.8 lab prefill strip",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.8 lab prefill strip. Implement contact plan task C1.8 exactly as written under '#### C1.8' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts",
+        "app/web/tests/e2e/contact-budgets.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"lab prefill strip has one accent pill|fresh lab arrival shows an empty status|390 lab strip wraps and the prefilled message is not clipped\"",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/lab.spec.ts",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts -g \"/contact/#lab= CLS is under budget\""
+      ],
+      "deps": ["C-M1.7"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.9",
+      "milestone": "M1",
+      "title": "C1.9 MESSAGE_MIN export and message hairline",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.9 MESSAGE_MIN export and message hairline. Implement contact plan task C1.9 exactly as written under '#### C1.9' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/lib/contact.ts",
+        "app/web/src/lib/contact.test.ts",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/lib/contact.test.ts src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"message hairline tracks the minimum|message hairline jumps under reduced motion\""
+      ],
+      "deps": ["C-M1.8"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.10",
+      "milestone": "M1",
+      "title": "C1.10 mailto fallback panel",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.10 mailto fallback panel. Implement contact plan task C1.10 exactly as written under '#### C1.10' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/content/ui.ts",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
+        "env -u NEXT_PUBLIC_CONTACT_ENDPOINT NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact.spec.ts tests/e2e/a11y.spec.ts tests/e2e/contact-states.spec.ts -g \"contact|fallback\""
+      ],
+      "deps": ["C-M1.9"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M1.11",
+      "milestone": "M1",
+      "title": "C1.11 phone hero crop",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C1.11 phone hero crop. Implement contact plan task C1.11 exactly as written under '#### C1.11' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/app/contact/page.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/sections/PageHeader.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 hero crop shows orb and trail\""
+      ],
+      "deps": ["C-M1.10"],
+      "token_estimate": 30000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M2.1",
+      "milestone": "M2",
+      "title": "C2.1 ContactBeamScene and PageHeader scene slot",
+      "kind": "edit",
+      "difficulty": "hard",
+      "persona": "frontend-design",
+      "brief": "Inventory: C2.1 ContactBeamScene and PageHeader scene slot. Implement contact plan task C2.1 exactly as written under '#### C2.1' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/app/contact/page.tsx",
+        "app/web/src/components/effects/ContactBeamScene.test.tsx",
+        "app/web/src/components/effects/ContactBeamScene.tsx",
+        "app/web/src/components/effects/SceneRuntime.test.tsx",
+        "app/web/src/components/effects/SceneRuntime.tsx",
+        "app/web/src/components/effects/contactBeamPath.test.ts",
+        "app/web/src/components/effects/contactBeamPath.ts",
+        "app/web/src/components/sections/ContactBeam.tsx",
+        "app/web/src/components/sections/PageHeader.test.tsx",
+        "app/web/src/components/sections/PageHeader.tsx",
+        "app/web/tests/e2e/scene-lazy.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/effects/ContactBeamScene.test.tsx src/components/effects/contactBeamPath.test.ts src/components/sections/PageHeader.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts tests/e2e/a11y.spec.ts tests/e2e/scene-lazy.spec.ts -g contact",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact"
+      ],
+      "deps": ["C-M1.2"],
+      "token_estimate": 60000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M2.2",
+      "milestone": "M2",
+      "title": "C2.2 seam hand-off to the panel edge",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C2.2 seam hand-off to the panel edge. Implement contact plan task C2.2 exactly as written under '#### C2.2' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/styles/globals.css",
+        "app/web/src/components/sections/PageHeader.tsx",
+        "app/web/src/components/contact/ContactPanel.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts",
+        "app/web/src/app/contact/page.tsx"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"panel edge is drawn under reduced motion\"",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact"
+      ],
+      "deps": ["C-M2.1"],
+      "token_estimate": 60000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M2.3",
+      "milestone": "M2",
+      "title": "C2.3 contactSignal store and beam uniforms",
+      "kind": "edit",
+      "difficulty": "hard",
+      "persona": "frontend-design",
+      "brief": "Inventory: C2.3 contactSignal store and beam uniforms. Implement contact plan task C2.3 exactly as written under '#### C2.3' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/components/contact/contactSignal.ts",
+        "app/web/src/components/contact/contactSignal.test.ts",
+        "app/web/src/components/contact/ContactForm.tsx",
+        "app/web/src/components/effects/ContactBeamScene.tsx",
+        "app/web/tests/e2e/contact-signal.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "pnpm -F web test:run src/components/contact/contactSignal.test.ts src/components/contact/ContactForm.test.tsx",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-signal.spec.ts -g \"contact signal reaches sent\""
+      ],
+      "deps": ["C-M2.2"],
+      "token_estimate": 60000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M2.4",
+      "milestone": "M2",
+      "title": "C2.4 scene frame cost and INP with the beam active",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C2.4 scene frame cost and INP with the beam active. Implement contact plan task C2.4 exactly as written under '#### C2.4' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/tests/e2e/scene-frame.spec.ts",
+        "app/web/tests/e2e/contact-budgets.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/scene-frame.spec.ts -g contact",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps tests/e2e/contact-budgets.spec.ts -g \"INP on /contact/ with the beam scene active\""
+      ],
+      "deps": ["C-M2.1"],
+      "token_estimate": 60000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    },
+    {
+      "id": "C-M2.5",
+      "milestone": "M2",
+      "title": "C2.5 sent signature on the panel",
+      "kind": "edit",
+      "difficulty": "medium",
+      "persona": "frontend-design",
+      "brief": "Inventory: C2.5 sent signature on the panel. Implement contact plan task C2.5 exactly as written under '#### C2.5' in docs/plans/2026-10-13-contact-polish-plan.md. Read that plan's Context, Hard rules, How to run checks and Coordination sections first, plus every file the task names. Write the tests the task names before the code. Colours only from the @theme tokens in app/web/src/styles/globals.css; no code comments; every motion effect needs a reduced-motion fallback (use the motion-on: variant). Do not edit app/web/src/components/contact/ContactForm.test.tsx, app/web/tests/e2e/contact.spec.ts, lab.spec.ts, support.ts, budgets.spec.ts, a11y.spec.ts, app.env or app/web/src/content/legal*.ts. Keep ContactForm labels, ids, roles, aria-*, the honeypot, the \"Send message\" text and the status-line markup unchanged. Edit only the listed paths. Do not run git. Shared path: the orchestrator messages live sessions before this lands.",
+      "paths": [
+        "app/web/src/styles/globals.css",
+        "app/web/src/components/contact/ContactPanel.tsx",
+        "app/web/src/components/contact/ContactReceipt.tsx",
+        "app/web/tests/e2e/contact-states.spec.ts"
+      ],
+      "locked_tests": [
+        "app/web/src/components/contact/ContactForm.test.tsx",
+        "app/web/src/components/motion/Reveal.ssr.test.tsx",
+        "app/web/tests/e2e/budgets.spec.ts",
+        "app/web/tests/e2e/a11y.spec.ts"
+      ],
+      "accept": [
+        "pnpm -F web exec tsc --noEmit",
+        "pnpm -F web lint",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sent signature plays once and settles|390 sent signature plays on the panel|sent signature is static under reduced motion\"",
+        "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/motion.spec.ts -g contact"
+      ],
+      "deps": ["C-M2.2"],
+      "token_estimate": 60000,
+      "route": "claude",
+      "status": "committed",
+      "model": null,
+      "checks": "pass"
+    }
+  ]
+}

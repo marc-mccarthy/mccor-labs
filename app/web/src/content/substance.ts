@@ -68,6 +68,16 @@ export const retrievalPipeline: PipelineSample = {
   ],
 }
 
+export const retrievalStageDescriptors: readonly string[] = [
+  'parse and dedupe sources',
+  'split on document structure',
+  'vectorise every chunk',
+  'index with metadata',
+  'dense plus keyword match',
+  'reorder by relevance',
+  'score against a baseline',
+]
+
 export interface IntegrationSample {
   surfaces: readonly string[]
   description: string

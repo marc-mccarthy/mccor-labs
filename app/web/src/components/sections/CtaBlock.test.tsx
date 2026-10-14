@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CtaBlock } from './CtaBlock'
@@ -13,6 +14,28 @@ const mocked = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/env', () => mocked)
+vi.mock('@/components/effects/StagScene', () => ({
+  StagScene: (props: {
+    className?: string
+    fallback: ReactNode
+    instanceId?: string
+    layout?: string
+    assembleOn?: string
+    exitTarget?: unknown
+  }) => (
+    <div
+      data-testid="cta-stag-scene"
+      data-stag-instance={props.instanceId}
+      data-layout={props.layout}
+      data-assemble-on={props.assembleOn}
+      data-has-exit={props.exitTarget === undefined ? 'false' : 'true'}
+      data-scene-status="idle"
+      className={props.className}
+    >
+      {props.fallback}
+    </div>
+  ),
+}))
 
 const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
 
@@ -67,6 +90,13 @@ describe('CtaBlock', () => {
     expect(screen.getByRole('heading', { name: ui.ctaHeading })).toBeInTheDocument()
   })
 
+  it('renders the numbered eyebrow and keeps the h2 name', () => {
+    render(<CtaBlock />)
+    expect(screen.getByText(ui.eyebrows.contact)).toBeInTheDocument()
+    expect(screen.getByText('05')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: ui.ctaHeading })).toBeVisible()
+  })
+
   it('puts a decorative, lazily loaded image behind the card', () => {
     render(<CtaBlock />)
     const image = screen.getByTestId('cta-image')
@@ -93,5 +123,72 @@ describe('CtaBlock', () => {
     const heading = screen.getByRole('heading', { level: 2, name: ui.ctaHeading })
     expect(heading.parentElement).toHaveAttribute('data-reveal')
     expect(heading.parentElement?.parentElement?.closest('[data-reveal]')).toBeNull()
+  })
+
+  it('adds a pointer spotlight to the panel when pointer effects are enabled', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(hover: hover) and (pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    const { container } = render(<CtaBlock />)
+    const glow = container.querySelector('[data-spotlight]')
+    expect(glow).not.toBeNull()
+    expect(glow?.parentElement).toHaveClass('group', 'relative', 'isolate')
+  })
+
+  it('omits the spotlight under reduced motion', () => {
+    const { container } = render(<CtaBlock />)
+    expect(container.querySelector('[data-spotlight]')).toBeNull()
+  })
+
+  it('marks the top edge light decorative', () => {
+    const { container } = render(<CtaBlock />)
+    const edge = container.querySelector('[data-cta-edge]')
+    expect(edge).toHaveAttribute('aria-hidden', 'true')
+    expect(edge).toHaveAttribute('data-signal-sweep')
+  })
+
+  it('keeps the stag attributes and wires its hover and drift hooks', () => {
+    const { container } = render(<CtaBlock />)
+    const stag = screen.getByTestId('cta-stag')
+    expect(stag).toHaveAttribute('width', '585')
+    expect(stag).toHaveAttribute('height', '748')
+    expect(stag).toHaveAttribute('decoding', 'async')
+    expect(stag).toHaveAttribute('data-cta-stag')
+    expect(stag.closest('.group\\/cta')).not.toBeNull()
+    expect(container.querySelectorAll('[data-cta-stag]')).toHaveLength(1)
+  })
+
+  it('keeps the webp as the scene fallback in an aria-hidden xl-only slot under reduced motion', () => {
+    render(<CtaBlock />)
+    const stag = screen.getByTestId('cta-stag')
+    expect(stag.closest('[data-scene-status]')).toHaveAttribute(
+      'data-scene-status',
+      'fallback',
+    )
+    const slot = stag.closest('[aria-hidden="true"]')
+    expect(slot).toHaveClass('hidden', 'xl:block', 'absolute', 'bottom-0')
+    expect(slot?.parentElement).toHaveClass('group/cta')
+    expect(screen.queryByTestId('cta-stag-scene')).toBeNull()
+  })
+
+  it('mounts a centred cta stag scene that assembles on view with the webp fallback', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    render(<CtaBlock />)
+    const scene = await screen.findByTestId('cta-stag-scene')
+    expect(scene).toHaveAttribute('data-stag-instance', 'cta')
+    expect(scene).toHaveAttribute('data-layout', 'centred')
+    expect(scene).toHaveAttribute('data-assemble-on', 'view')
+    expect(scene).toHaveAttribute('data-has-exit', 'false')
+    expect(scene.parentElement).toHaveAttribute('aria-hidden', 'true')
+    expect(scene.parentElement).toHaveClass('hidden', 'xl:block')
+    expect(scene).toContainElement(screen.getByTestId('cta-stag'))
   })
 })

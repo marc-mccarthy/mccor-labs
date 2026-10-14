@@ -13,9 +13,16 @@ interface CopyButtonProps {
   label: string
   copiedLabel: string
   failedLabel: string
+  announce?: boolean
 }
 
-export function CopyButton({ value, label, copiedLabel, failedLabel }: CopyButtonProps) {
+export function CopyButton({
+  value,
+  label,
+  copiedLabel,
+  failedLabel,
+  announce = true,
+}: CopyButtonProps) {
   const [state, setState] = useState<CopyState>('idle')
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -50,15 +57,21 @@ export function CopyButton({ value, label, copiedLabel, failedLabel }: CopyButto
       <Button
         variant="secondary"
         size="sm"
-        aria-label={label}
+        aria-label={announce || state !== 'copied' ? label : copiedLabel}
         onClick={() => void copy()}
       >
         {state === 'copied' ? copiedLabel : label}
       </Button>
-      {state === 'failed' ? <p className="text-sm text-brand">{failedLabel}</p> : null}
-      <span role="status" aria-live="polite" className="sr-only">
-        {state === 'copied' ? copiedLabel : state === 'failed' ? failedLabel : ''}
-      </span>
+      {state === 'failed' ? (
+        <p role={announce ? undefined : 'alert'} className="text-sm text-brand">
+          {failedLabel}
+        </p>
+      ) : null}
+      {announce ? (
+        <span role="status" aria-live="polite" className="sr-only">
+          {state === 'copied' ? copiedLabel : state === 'failed' ? failedLabel : ''}
+        </span>
+      ) : null}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { signedPostJson } from '@/lib/signedPost'
 import {
   CONTACT_TIMEOUT_MS,
   MAILTO_BODY_MAX,
+  MESSAGE_MIN,
   contactMailtoHref,
   submitContact,
   validateContact,
@@ -58,6 +59,13 @@ describe('validateContact', () => {
 
   it('requires a message of at least ten characters', () => {
     expect(validateContact({ ...valid, message: 'too short' }).message).toBeTruthy()
+  })
+
+  it('uses MESSAGE_MIN as the message boundary', () => {
+    const at = 'x'.repeat(MESSAGE_MIN)
+    const under = 'x'.repeat(MESSAGE_MIN - 1)
+    expect(validateContact({ ...valid, message: at }).message).toBeUndefined()
+    expect(validateContact({ ...valid, message: under }).message).toBeTruthy()
   })
 
   it('rejects an over-long message rather than sending it', () => {

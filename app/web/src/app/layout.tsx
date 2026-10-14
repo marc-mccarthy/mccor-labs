@@ -36,10 +36,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="font/woff2"
           crossOrigin="anonymous"
         />
+        <link
+          rel="preload"
+          href="/fonts/geist-mono-variable.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <noscript>
           <style>
             {
-              '[data-reveal]{opacity:1!important;transform:none!important}[data-reveal] [data-word]{transform:none!important}'
+              '[data-reveal]{opacity:1!important;transform:none!important}[data-reveal] [data-word]{transform:none!important}[data-stage-descriptor]{opacity:1!important}'
             }
           </style>
         </noscript>

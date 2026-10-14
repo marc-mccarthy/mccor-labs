@@ -102,6 +102,74 @@ test.describe('process stages by width', () => {
   }
 })
 
+test.describe('process stages under reduced motion', () => {
+  test.use({
+    viewport: { width: 1440, height: 900 },
+    contextOptions: { reducedMotion: 'reduce' },
+  })
+
+  test('/process/ lists the stages in two columns beside a full static rail', async ({
+    page,
+  }) => {
+    await page.goto('/process/')
+    const track = page.locator('[data-testid="process-clip"] ol')
+    const layout = await track.evaluate((node) => ({
+      display: getComputedStyle(node).display,
+      columns: getComputedStyle(node).gridTemplateColumns.split(' ').length,
+      height: node.getBoundingClientRect().height,
+    }))
+    expect(layout.display).toBe('grid')
+    expect(layout.columns).toBe(2)
+    const rail = page.locator('[data-process-rail]')
+    await expect(rail).toBeVisible()
+    const railHeight = await rail.evaluate((node) => node.getBoundingClientRect().height)
+    expect(Math.abs(railHeight - layout.height)).toBeLessThanOrEqual(2)
+    await expect(page.locator('[data-process-counter]')).toBeHidden()
+  })
+})
+
+test.describe('process track when motion is paused', () => {
+  test.use({
+    viewport: { width: 1440, height: 900 },
+    contextOptions: { reducedMotion: 'no-preference' },
+  })
+
+  test('the track still scrubs, the rail is full and no chip pulses', async ({
+    page,
+  }) => {
+    await page.goto('/', { waitUntil: 'load' })
+    await page.getByRole('button', { name: ui.pauseMotion }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'paused')
+    await page.evaluate(() => {
+      const pin = document.querySelector('[data-testid="process-stage"]')?.parentElement
+        ?.parentElement
+      if (!pin) throw new Error('process pin not found')
+      const top = window.scrollY + pin.getBoundingClientRect().top
+      window.scrollTo(0, top + 0.5 * (pin.offsetHeight - window.innerHeight))
+    })
+    const group = page.getByTestId('process-group')
+    await expect
+      .poll(() =>
+        group.evaluate((node) =>
+          parseFloat(node.style.getPropertyValue('--track-shift')),
+        ),
+      )
+      .toBeGreaterThan(0)
+    const widths = await page.locator('[data-process-fill]').evaluate((node) => ({
+      fill: node.getBoundingClientRect().width,
+      rail: node.parentElement?.getBoundingClientRect().width ?? 0,
+    }))
+    expect(Math.abs(widths.fill - widths.rail)).toBeLessThanOrEqual(1)
+    const pulses = await page.evaluate(
+      () =>
+        [...document.querySelectorAll('[data-process-chip]')].flatMap((chip) =>
+          chip.getAnimations(),
+        ).length,
+    )
+    expect(pulses).toBe(0)
+  })
+})
+
 test.describe('about page', () => {
   test('states the team size and lists four people with mailto links @smoke', async ({
     page,

@@ -54,7 +54,7 @@ describe('Hero', () => {
     render(<Hero />)
     const lede = screen.getByText(site.lede)
     expect(lede.tagName).toBe('P')
-    expect(lede).toHaveClass('motion-safe:animate-lede')
+    expect(lede).toHaveClass('motion-on:animate-lede')
     expect(screen.queryByRole('heading', { name: site.lede })).toBeNull()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   })
@@ -62,6 +62,28 @@ describe('Hero', () => {
   it('renders the studio pill above the slogan', () => {
     render(<Hero />)
     expect(screen.getByText('Senior Engineering & AI Studio')).toHaveClass('rounded-full')
+  })
+
+  it('renders an aria-hidden scrim behind the copy that is hidden at lg', () => {
+    const { container } = render(<Hero />)
+    const scrim = container.querySelector('[data-hero-scrim]')
+    expect(scrim).toHaveAttribute('aria-hidden', 'true')
+    expect(scrim).toHaveClass('lg:hidden', '-z-10', 'absolute', 'inset-0')
+    expect(scrim?.parentElement).toHaveClass('relative', 'isolate')
+  })
+
+  it('sets the h1 on the display scale with the slogan as one sentence pair', () => {
+    render(<Hero />)
+    const h1 = screen.getByRole('heading', { level: 1 })
+    expect(h1).toHaveClass('text-display-md', 'lg:text-display-lg', 'text-balance')
+    expect(h1.textContent).toBe(site.slogan)
+  })
+
+  it('gates the badge dot pulse on motion-on', () => {
+    render(<Hero />)
+    const dot = screen.getByText('Senior Engineering & AI Studio').querySelector('span')
+    expect(dot).toHaveClass('motion-on:animate-pulse')
+    expect(dot).not.toHaveClass('animate-pulse')
   })
 
   it('renders the booking call to action', () => {

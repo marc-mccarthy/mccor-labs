@@ -1,17 +1,42 @@
 'use client'
 
+import type { CSSProperties } from 'react'
+import { cn } from '@/lib/cn'
 import { useReducedMotion } from '../motion/useReducedMotion'
 import { useScrollDrawn } from './useScrollDrawn'
 
 interface PipelineDiagramProps {
   stages: readonly string[]
   description: string
+  activeIndex?: number
+  descriptors?: readonly string[]
 }
+
+type StageState = 'pending' | 'passed'
 
 export const STAGE_GAP = 160
 const ROW_HEIGHT = 64
 const NODE_RADIUS = 20
+const TINT_RADIUS = NODE_RADIUS - 1
 export const DIAGRAM_HEIGHT = 56
+export const PACKET_START = 0.3
+export const PACKET_END = 0.65
+export const PACKET_LEAD = 0.08
+
+const PASSED_TINT = 'color-mix(in oklab, var(--color-brand) 20%, transparent)'
+const SCRUB_TRANSITION =
+  'motion-on:transition-[stroke,stroke-dashoffset,opacity] motion-on:duration-(--duration-pointer) motion-on:ease-(--ease-standard)'
+
+export function packetAlong(progress: number): number {
+  const span = (progress - PACKET_START) / (PACKET_END - PACKET_START)
+  const travel = Math.min(1, Math.max(0, span))
+  return -PACKET_LEAD + travel * (1 + 2 * PACKET_LEAD)
+}
+
+export function stageIndexAt(progress: number, count: number): number {
+  const reached = Math.floor(packetAlong(progress) * (count - 1))
+  return Math.min(count - 1, Math.max(-1, reached))
+}
 
 type Place = (index: number) => [number, number]
 
@@ -24,9 +49,48 @@ const vertical: Place = (index) => [
   index * ROW_HEIGHT + ROW_HEIGHT / 2,
 ]
 
-export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
+function scrubEdgeStyle(state: StageState): CSSProperties {
+  return { strokeDashoffset: state === 'passed' ? 0 : 1 }
+}
+
+function scrubNodeStyle(state: StageState): CSSProperties {
+  return {
+    stroke: state === 'passed' ? 'var(--color-brand)' : 'var(--color-border-strong)',
+  }
+}
+
+export function PipelineDiagram({
+  stages,
+  description,
+  activeIndex,
+  descriptors,
+}: PipelineDiagramProps) {
   const reducedMotion = useReducedMotion()
-  const { ref, edgeStyle, nodeStroke } = useScrollDrawn(reducedMotion)
+  const scrubbed = activeIndex !== undefined
+  const { ref, edgeStyle, nodeStroke } = useScrollDrawn(reducedMotion || scrubbed)
+  const reached = reducedMotion ? stages.length - 1 : activeIndex
+  const stateOf = (index: number): StageState | undefined => {
+    if (!scrubbed || reached === undefined) return undefined
+    return index <= reached ? 'passed' : 'pending'
+  }
+
+  const tints = (place: Place) =>
+    stages.map((stage, index) => {
+      const [cx, cy] = place(index)
+      return (
+        <rect
+          key={stage}
+          data-stage-tint=""
+          x={cx - TINT_RADIUS}
+          y={cy - TINT_RADIUS}
+          width={TINT_RADIUS * 2}
+          height={TINT_RADIUS * 2}
+          rx={TINT_RADIUS}
+          className={SCRUB_TRANSITION}
+          style={{ fill: PASSED_TINT, opacity: stateOf(index) === 'passed' ? 1 : 0 }}
+        />
+      )
+    })
 
   const shapes = (place: Place) => (
     <>
@@ -34,6 +98,7 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
         if (index === 0) return null
         const [x1, y1] = place(index - 1)
         const [x2, y2] = place(index)
+        const state = stateOf(index)
         return (
           <path
             key={stage}
@@ -43,12 +108,14 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
             strokeWidth={2}
             pathLength={1}
             strokeDasharray={1}
-            style={edgeStyle(index - 1)}
+            className={state ? SCRUB_TRANSITION : undefined}
+            style={state ? scrubEdgeStyle(state) : edgeStyle(index - 1)}
           />
         )
       })}
       {stages.map((stage, index) => {
         const [cx, cy] = place(index)
+        const state = stateOf(index)
         return (
           <circle
             key={stage}
@@ -57,10 +124,12 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
             r={NODE_RADIUS}
             fill="var(--color-surface)"
             strokeWidth={2}
-            style={nodeStroke(index)}
+            className={state ? SCRUB_TRANSITION : undefined}
+            style={state ? scrubNodeStyle(state) : nodeStroke(index)}
           />
         )
       })}
+      {scrubbed ? tints(place) : null}
     </>
   )
 
@@ -90,11 +159,35 @@ export function PipelineDiagram({ stages, description }: PipelineDiagramProps) {
           gridTemplateColumns: `repeat(${String(stages.length)}, minmax(0, 1fr))`,
         }}
       >
-        {stages.map((stage) => (
-          <li key={stage} className="max-sm:flex max-sm:h-16 max-sm:items-center">
-            {stage}
-          </li>
-        ))}
+        {stages.map((stage, index) => {
+          const state = stateOf(index)
+          const descriptor = descriptors?.[index]
+          return (
+            <li
+              key={stage}
+              data-stage-state={state}
+              className={
+                descriptor
+                  ? 'max-sm:flex max-sm:h-16 max-sm:flex-col max-sm:justify-center'
+                  : 'max-sm:flex max-sm:h-16 max-sm:items-center'
+              }
+            >
+              {stage}
+              {descriptor ? (
+                <span
+                  data-stage-descriptor=""
+                  className={cn(
+                    'block sm:mt-1',
+                    state === 'pending' &&
+                      'opacity-0 motion-reduce:opacity-100 max-sm:opacity-100',
+                  )}
+                >
+                  {descriptor}
+                </span>
+              ) : null}
+            </li>
+          )
+        })}
       </ol>
     </figure>
   )

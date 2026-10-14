@@ -189,7 +189,7 @@
     *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+      transition-duration: 0s !important;
       scroll-behavior: auto !important;
     }
 
@@ -296,8 +296,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-motion='paused'] [class*='animate-[band-signal_'],
-  :root[data-motion='paused'] .animate-pulse {
+  :root[data-motion='paused'] [class*='animate-[band-signal_'] {
     animation: none;
   }
 }
@@ -328,7 +327,8 @@
       display: block;
     }
 
-    :root:not([data-motion='paused']) [data-service-rail] {
+    :root:not([data-motion='paused']) [data-service-rail],
+    :root:not([data-motion='paused']) [data-process-rail] {
       transform: scaleY(0);
       animation: rail-fill linear both;
       animation-timeline: view();
@@ -392,6 +392,135 @@
   }
 }
 
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes cta-stag-drift {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    :root:not([data-motion='paused']) [data-cta-stag] {
+      animation: cta-stag-drift linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes panel-edge-draw {
+      from {
+        transform: scaleX(0.08);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    @keyframes handoff-dim {
+      to {
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes handoff-zoom {
+      to {
+        transform: scale(1.04);
+      }
+    }
+
+    :root:not([data-motion='paused']) [data-panel-edge] {
+      animation: panel-edge-draw linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+
+    [data-handoff-scrim]::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-base);
+      opacity: 0;
+    }
+
+    :root:not([data-motion='paused']) [data-handoff-scrim]::before {
+      animation: handoff-dim linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+
+    :root:not([data-motion='paused']) [data-handoff-zoom] {
+      animation: handoff-zoom linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes panel-transmit {
+    0% {
+      background-size: 25% 100%;
+      background-position: 0% 0;
+      opacity: 0.4;
+    }
+
+    70% {
+      background-size: 25% 100%;
+      background-position: 100% 0;
+    }
+
+    100% {
+      background-size: 100% 100%;
+      background-position: 100% 0;
+      opacity: 1;
+    }
+  }
+
+  @keyframes receipt-tick-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  @keyframes receipt-reference-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-xs));
+    }
+  }
+
+  :root:not([data-motion='paused'])
+    [data-panel-cell]:has(form[data-status='sent'])
+    [data-panel-edge] {
+    background-repeat: no-repeat;
+    transform: none;
+    animation: panel-transmit var(--duration-scene) var(--ease-route) backwards;
+    animation-timeline: auto;
+    animation-range: normal;
+  }
+
+  :root:not([data-motion='paused']) [data-receipt-tick] {
+    transform-origin: left;
+    animation: receipt-tick-draw var(--duration-standard) var(--ease-route)
+      var(--duration-scene) backwards;
+  }
+
+  :root:not([data-motion='paused']) [data-receipt-reference] {
+    animation: receipt-reference-rise var(--duration-standard) var(--ease-route)
+      calc(var(--duration-scene) + var(--stagger-interval)) backwards;
+  }
+}
+
 @keyframes signal-draw {
   from {
     stroke-dashoffset: 1;
@@ -415,5 +544,63 @@
     transform: none;
     transition: transform var(--duration-standard) var(--ease-route)
       calc(var(--i) * var(--stagger-interval));
+  }
+}
+
+[data-process-counter] {
+  counter-reset: active var(--active-index) total var(--stage-count);
+}
+
+[data-process-counter]::before {
+  content: counter(active, decimal-leading-zero) ' / '
+    counter(total, decimal-leading-zero) / '';
+}
+
+@keyframes chip-pulse {
+  50% {
+    transform: scale(1.08);
+    border-color: var(--color-brand);
+  }
+}
+
+[data-card-state='active'] [data-process-chip] {
+  @variant md {
+    @variant motion-on {
+      animation: chip-pulse var(--duration-standard) var(--ease-standard);
+    }
+  }
+}
+
+@keyframes field-error {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-xs) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes send-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes sent-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-md));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

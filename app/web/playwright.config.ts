@@ -21,6 +21,7 @@ export default defineConfig({
       name: 'budgets',
       testMatch: /budgets\.spec\.ts/,
       fullyParallel: false,
+      workers: 1,
       dependencies: ['chromium'],
     },
   ],

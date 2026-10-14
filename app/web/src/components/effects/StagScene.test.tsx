@@ -9,6 +9,8 @@ const spies = vi.hoisted(() => ({
   materialDispose: vi.fn(),
   setAttribute: vi.fn(),
   materialParams: vi.fn(),
+  camera: vi.fn(),
+  render: vi.fn(),
 }))
 
 vi.mock('three', () => ({
@@ -18,7 +20,7 @@ vi.mock('three', () => ({
     forceContextLoss = spies.forceContextLoss
     setPixelRatio = vi.fn()
     setSize = vi.fn()
-    render = vi.fn()
+    render = spies.render
     constructor() {
       spies.rendererCtor()
     }
@@ -29,7 +31,12 @@ vi.mock('three', () => ({
   OrthographicCamera: class {
     left = 0
     right = 0
+    top = 0
+    bottom = 0
     updateProjectionMatrix = vi.fn()
+    constructor() {
+      spies.camera(this)
+    }
   },
   Color: class {
     setStyle() {
@@ -59,6 +66,11 @@ vi.mock('three', () => ({
 
 import { StagScene } from './StagScene'
 import { resetWebGL2Probe } from './SceneRuntime'
+import {
+  MOTION_STORAGE_KEY,
+  MotionPauseProvider,
+  useMotionPaused,
+} from '../motion/MotionPauseProvider'
 
 class StubResizeObserver {
   observe = vi.fn()
@@ -120,6 +132,87 @@ function uniform(name: string): number {
   const params = spies.materialParams.mock.calls.at(-1)?.[0] as
     { uniforms: Record<string, { value: number }> } | undefined
   return params?.uniforms[name]?.value ?? Number.NaN
+}
+
+function stubFrameQueue() {
+  let queue: FrameRequestCallback[] = []
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    queue.push(callback)
+    return queue.length
+  })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let now = 1000
+  return (count: number, step: number) => {
+    act(() => {
+      for (let i = 0; i < count; i += 1) {
+        now += step
+        const due = queue
+        queue = []
+        for (const callback of due) callback(now)
+      }
+    })
+  }
+}
+
+function uniformsAt(index: number): Record<string, { value: number }> {
+  const params = spies.materialParams.mock.calls[index]?.[0] as
+    { uniforms: Record<string, { value: number }> } | undefined
+  if (!params) throw new Error(`no material built at ${String(index)}`)
+  return params.uniforms
+}
+
+function seedCount(): number {
+  return spies.setAttribute.mock.calls.filter(([name]) => name === 'aSeed').length
+}
+
+function stubInstanceRects(tops: Record<string, number>, height: number) {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const id = this.closest('[data-stag-instance]')?.getAttribute('data-stag-instance')
+    const top = id ? (tops[id] ?? 0) : 0
+    return {
+      top,
+      height,
+      left: 0,
+      width: height,
+      right: height,
+      bottom: top + height,
+    } as DOMRect
+  })
+}
+
+const sceneRoot = (container: HTMLElement, id: string) =>
+  container.querySelector(`[data-stag-instance="${id}"] [data-scene-status]`)
+
+const HERO_HEIGHT = 765
+
+function renderWithHero() {
+  const hero = document.createElement('section')
+  Object.defineProperty(hero, 'offsetHeight', { value: HERO_HEIGHT })
+  vi.stubGlobal('scrollY', 0)
+  const result = render(<StagScene fallback={<div />} exitTarget={{ current: hero }} />)
+  const scroll = (y: number) => {
+    act(() => {
+      vi.stubGlobal('scrollY', y)
+      window.dispatchEvent(new Event('scroll'))
+    })
+  }
+  return { ...result, scroll }
+}
+
+function PauseToggle() {
+  const { toggle } = useMotionPaused()
+  return (
+    <button type="button" onClick={toggle}>
+      pause
+    </button>
+  )
+}
+
+function clearPause() {
+  window.localStorage.removeItem(MOTION_STORAGE_KEY)
+  delete document.documentElement.dataset.motion
 }
 
 const status = (container: HTMLElement) =>
@@ -217,5 +310,285 @@ describe('StagScene', () => {
       '1',
     )
     expect(uniform('uPointSize')).toBeCloseTo(basePointSize)
+  })
+
+  it('drives uExit and data-stag-exit from hero scroll and reassembles at the top', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container, scroll } = renderWithHero()
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    const root = container.querySelector('[data-scene-status]')
+    expect(uniform('uExit')).toBe(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0')
+
+    scroll(0.8 * HERO_HEIGHT)
+    expect(uniform('uExit')).toBeGreaterThan(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0.9')
+
+    scroll(0)
+    expect(uniform('uExit')).toBe(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0')
+  })
+
+  it('writes data-stag-exit only when the rounded value changes', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container, scroll } = renderWithHero()
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    const root = container.querySelector('[data-scene-status]')
+    if (!root) throw new Error('scene root missing')
+    const write = vi.spyOn(root, 'setAttribute')
+
+    scroll(0.6 * HERO_HEIGHT)
+    scroll(0.6 * HERO_HEIGHT + 2)
+    scroll(0.6 * HERO_HEIGHT + 4)
+    expect(write.mock.calls.filter(([name]) => name === 'data-stag-exit')).toEqual([
+      ['data-stag-exit', '0.4'],
+    ])
+    expect(uniform('uExit')).toBeGreaterThan(0.4)
+  })
+
+  it('leaves uExit at 0 and sets no data-stag-exit without an exit target', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container } = render(<StagScene fallback={<div />} />)
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    act(() => {
+      vi.stubGlobal('scrollY', HERO_HEIGHT)
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(uniform('uExit')).toBe(0)
+    expect(container.querySelector('[data-stag-exit]')).toBeNull()
+  })
+
+  it('wraps the scene in a hero instance wrapper with the given class by default', () => {
+    mockMatchMedia(false)
+    mockWebGL2(false)
+    const { container } = render(
+      <StagScene className="absolute inset-0" fallback={<div />} />,
+    )
+    const wrapper = container.querySelector('[data-stag-instance]')
+    expect(wrapper).toHaveAttribute('data-stag-instance', 'hero')
+    expect(wrapper).toHaveClass('absolute', 'inset-0')
+    expect(wrapper?.querySelector('[data-scene-status]')).not.toBeNull()
+  })
+
+  it('assembles two instances independently', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const tops: Record<string, number> = { 'view-a': window.innerHeight + 200 }
+    stubInstanceRects(tops, 400)
+    const frames = stubFrameQueue()
+    const { container } = render(
+      <>
+        <StagScene instanceId="mount-a" fallback={<div />} />
+        <StagScene
+          instanceId="view-a"
+          assembleOn="view"
+          layout="centred"
+          fallback={<div />}
+        />
+      </>,
+    )
+    await waitFor(() => {
+      expect(seedCount()).toBe(2)
+    })
+    const mountRoot = sceneRoot(container, 'mount-a')
+    const viewRoot = sceneRoot(container, 'view-a')
+    expect(mountRoot).not.toHaveAttribute('data-stag-assembled')
+    expect(viewRoot).not.toHaveAttribute('data-stag-assembled')
+
+    frames(150, 16)
+    expect(mountRoot).toHaveAttribute('data-stag-assembled', 'true')
+    expect(viewRoot).not.toHaveAttribute('data-stag-assembled')
+    expect([uniformsAt(0), uniformsAt(1)].map((u) => u.uProgress?.value).sort()).toEqual([
+      0, 1,
+    ])
+
+    tops['view-a'] = 0
+    frames(150, 16)
+    expect(viewRoot).toHaveAttribute('data-stag-assembled', 'true')
+    expect(uniformsAt(0).uProgress?.value).toBe(1)
+    expect(uniformsAt(1).uProgress?.value).toBe(1)
+  })
+
+  it('keeps a mount instance assembled for the session and starts a new id scattered', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const frames = stubFrameQueue()
+    const first = render(<StagScene instanceId="mount-b" fallback={<div />} />)
+    await waitFor(() => {
+      expect(seedCount()).toBe(1)
+    })
+    frames(150, 16)
+    expect(sceneRoot(first.container, 'mount-b')).toHaveAttribute(
+      'data-stag-assembled',
+      'true',
+    )
+    first.unmount()
+
+    const again = render(
+      <>
+        <StagScene instanceId="mount-b" fallback={<div />} />
+        <StagScene instanceId="mount-c" fallback={<div />} />
+      </>,
+    )
+    await waitFor(() => {
+      expect(seedCount()).toBe(3)
+    })
+    expect(sceneRoot(again.container, 'mount-b')).toHaveAttribute(
+      'data-stag-assembled',
+      'true',
+    )
+    expect(sceneRoot(again.container, 'mount-c')).not.toHaveAttribute(
+      'data-stag-assembled',
+    )
+    const progress = [uniformsAt(1), uniformsAt(2)].map((u) => u.uProgress?.value).sort()
+    expect(progress).toEqual([0, 1])
+  })
+
+  it('frames the cloud in the middle of the canvas with the centred layout', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400)
+    render(<StagScene instanceId="centred-a" layout="centred" fallback={<div />} />)
+    await waitFor(() => {
+      expect(seedCount()).toBe(1)
+    })
+    const camera = spies.camera.mock.calls.at(-1)?.[0] as {
+      left: number
+      right: number
+      top: number
+      bottom: number
+    }
+    expect((camera.left + camera.right) / 2).toBeCloseTo(0.5)
+    expect((camera.top + camera.bottom) / 2).toBeCloseTo(0.5)
+    expect(1 / (camera.right - camera.left)).toBeCloseTo(0.9)
+    expect(1 / (camera.top - camera.bottom)).toBeLessThan(0.9)
+  })
+
+  it('draws a formed view stag once its assets load while motion is paused', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    stubInstanceRects({ 'paused-a': window.innerHeight + 200 }, 400)
+    stubFrameQueue()
+    window.localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+    try {
+      const { container } = render(
+        <MotionPauseProvider>
+          <StagScene instanceId="paused-a" assembleOn="view" fallback={<div />} />
+        </MotionPauseProvider>,
+      )
+      await waitFor(() => {
+        expect(seedCount()).toBe(1)
+      })
+      expect(sceneRoot(container, 'paused-a')).toHaveAttribute(
+        'data-stag-assembled',
+        'true',
+      )
+      expect(uniformsAt(0).uProgress?.value).toBe(1)
+      expect(spies.render).toHaveBeenCalled()
+    } finally {
+      window.localStorage.removeItem(MOTION_STORAGE_KEY)
+      delete document.documentElement.dataset.motion
+    }
+  })
+
+  it.each(['mount', 'view'] as const)(
+    'draws a formed %s stag once on load when motion was paused before load',
+    async (assembleOn) => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const id = `paused-load-${assembleOn}`
+      stubInstanceRects({ [id]: window.innerHeight + 200 }, 400)
+      stubFrameQueue()
+      window.localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+      try {
+        const { container } = render(
+          <MotionPauseProvider>
+            <StagScene instanceId={id} assembleOn={assembleOn} fallback={<div />} />
+          </MotionPauseProvider>,
+        )
+        await waitFor(() => {
+          expect(spies.render).toHaveBeenCalledTimes(1)
+        })
+        expect(sceneRoot(container, id)).toHaveAttribute('data-stag-assembled', 'true')
+        expect(uniformsAt(0).uProgress?.value).toBe(1)
+        expect(uniformsAt(0).uExit?.value).toBe(0)
+      } finally {
+        clearPause()
+      }
+    },
+  )
+
+  it.each(['mount', 'view'] as const)(
+    'jumps a %s stag to formed and draws once when motion pauses mid-assembly',
+    async (assembleOn) => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const id = `paused-mid-${assembleOn}`
+      stubInstanceRects({ [id]: window.innerHeight - 200 }, 400)
+      const frames = stubFrameQueue()
+      try {
+        const { container, getByRole } = render(
+          <MotionPauseProvider>
+            <PauseToggle />
+            <StagScene instanceId={id} assembleOn={assembleOn} fallback={<div />} />
+          </MotionPauseProvider>,
+        )
+        await waitFor(() => {
+          expect(seedCount()).toBe(1)
+        })
+        frames(5, 16)
+        const progress = uniformsAt(0).uProgress?.value ?? Number.NaN
+        expect(progress).toBeGreaterThan(0)
+        expect(progress).toBeLessThan(1)
+        expect(sceneRoot(container, id)).not.toHaveAttribute('data-stag-assembled')
+        const drawn = spies.render.mock.calls.length
+
+        act(() => {
+          getByRole('button', { name: 'pause' }).click()
+        })
+
+        expect(sceneRoot(container, id)).toHaveAttribute('data-stag-assembled', 'true')
+        expect(uniformsAt(0).uProgress?.value).toBe(1)
+        expect(spies.render).toHaveBeenCalledTimes(drawn + 1)
+      } finally {
+        clearPause()
+      }
+    },
+  )
+
+  it('keeps assembling over frames and draws nothing extra while motion runs', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const frames = stubFrameQueue()
+    const { container } = render(
+      <MotionPauseProvider>
+        <StagScene instanceId="running-a" fallback={<div />} />
+      </MotionPauseProvider>,
+    )
+    await waitFor(() => {
+      expect(seedCount()).toBe(1)
+    })
+    expect(spies.render).not.toHaveBeenCalled()
+    expect(uniformsAt(0).uProgress?.value).toBe(0)
+
+    frames(5, 16)
+    expect(spies.render).toHaveBeenCalledTimes(5)
+    expect(sceneRoot(container, 'running-a')).not.toHaveAttribute('data-stag-assembled')
+
+    frames(150, 16)
+    expect(sceneRoot(container, 'running-a')).toHaveAttribute(
+      'data-stag-assembled',
+      'true',
+    )
   })
 })

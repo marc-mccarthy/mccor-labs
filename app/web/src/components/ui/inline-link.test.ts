@@ -32,6 +32,7 @@ describe('inlineLinkDescendant', () => {
     expect(inlineLinkDescendant).toContain('[&_a:hover]:decoration-2')
     expect(inlineLinkDescendant).toContain('[&_a:hover]:text-accent-hover')
     expect(inlineLinkDescendant).toContain('[&_a:active]:text-text')
+    expect(inlineLinkDescendant).toContain('[&_a:hover:active]:text-text')
   })
 
   it('has no transition utilities', () => {

@@ -72,10 +72,10 @@ describe('Hero', () => {
     expect(scrim?.parentElement).toHaveClass('relative', 'isolate')
   })
 
-  it('sets the h1 on the display scale with the slogan as one sentence pair', () => {
+  it('sets the h1 on the half-size hero scale with the slogan as one sentence pair', () => {
     render(<Hero />)
     const h1 = screen.getByRole('heading', { level: 1 })
-    expect(h1).toHaveClass('text-display-md', 'lg:text-display-lg', 'text-balance')
+    expect(h1).toHaveClass('text-hero', 'lg:text-hero-lg', 'text-balance')
     expect(h1.textContent).toBe(site.slogan)
   })
 

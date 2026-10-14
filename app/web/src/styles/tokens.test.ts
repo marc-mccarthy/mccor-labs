@@ -109,6 +109,8 @@ describe('design tokens', () => {
       '--text-display-sm',
       '--text-display-md',
       '--text-display-lg',
+      '--text-hero',
+      '--text-hero-lg',
       '--space-xs',
       '--space-sm',
       '--space-md',
@@ -151,6 +153,19 @@ describe('design tokens', () => {
       const match = new RegExp(`${name}:\\s*([^;]+);`).exec(css)
       expect(match?.[1], `${name} is not a clamp()`).toMatch(/^clamp\(/)
     }
+  })
+
+  it('sizes the hero slogan at half the display scale', () => {
+    const css = readFileSync(join(import.meta.dirname, 'globals.css'), 'utf8')
+    const clampOf = (name: string) => {
+      const match = new RegExp(`${name}:\\s*clamp\\(([^;]+)\\);`).exec(css)
+      return (match?.[1] ?? '').match(/[\d.]+/g)?.map(Number)
+    }
+    const half = (values: number[] | undefined) => values?.map((value) => value / 2)
+    expect(clampOf('--text-hero')).toHaveLength(4)
+    expect(clampOf('--text-hero-lg')).toHaveLength(4)
+    expect(clampOf('--text-hero')).toEqual(half(clampOf('--text-display-md')))
+    expect(clampOf('--text-hero-lg')).toEqual(half(clampOf('--text-display-lg')))
   })
 })
 

@@ -84,6 +84,7 @@ variables {
   contact_from     = "website@example.com"
   contact_to       = "owner@example.com"
   alert_email      = "alerts@example.com"
+  alarm_topic_arn  = "arn:aws:sns:us-east-1:111111111111:t-alerts"
 }
 
 run "guardrail" {

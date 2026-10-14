@@ -86,3 +86,8 @@ variable "brake_extra_roles" {
     error_message = "brake_extra_roles may only contain the key evals."
   }
 }
+
+variable "alarm_topic_arn" {
+  description = "ARN of the SNS topic every lab_api CloudWatch alarm notifies"
+  type        = string
+}

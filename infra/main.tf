@@ -60,6 +60,7 @@ module "lab_api" {
   contact_from      = "website@${var.domain_name}"
   contact_to        = "${var.admin_mailbox}@${var.domain_name}"
   alert_email       = var.alert_email
+  alarm_topic_arn   = module.mailserver[0].alerts_topic_arn
   brake_extra_roles = { for role in aws_iam_role.evals : "evals" => { name = role.name, arn = role.arn } }
 }
 

@@ -66,7 +66,11 @@ vi.mock('three', () => ({
 
 import { StagScene } from './StagScene'
 import { resetWebGL2Probe } from './SceneRuntime'
-import { MOTION_STORAGE_KEY, MotionPauseProvider } from '../motion/MotionPauseProvider'
+import {
+  MOTION_STORAGE_KEY,
+  MotionPauseProvider,
+  useMotionPaused,
+} from '../motion/MotionPauseProvider'
 
 class StubResizeObserver {
   observe = vi.fn()
@@ -195,6 +199,20 @@ function renderWithHero() {
     })
   }
   return { ...result, scroll }
+}
+
+function PauseToggle() {
+  const { toggle } = useMotionPaused()
+  return (
+    <button type="button" onClick={toggle}>
+      pause
+    </button>
+  )
+}
+
+function clearPause() {
+  window.localStorage.removeItem(MOTION_STORAGE_KEY)
+  delete document.documentElement.dataset.motion
 }
 
 const status = (container: HTMLElement) =>
@@ -481,5 +499,96 @@ describe('StagScene', () => {
       window.localStorage.removeItem(MOTION_STORAGE_KEY)
       delete document.documentElement.dataset.motion
     }
+  })
+
+  it.each(['mount', 'view'] as const)(
+    'draws a formed %s stag once on load when motion was paused before load',
+    async (assembleOn) => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const id = `paused-load-${assembleOn}`
+      stubInstanceRects({ [id]: window.innerHeight + 200 }, 400)
+      stubFrameQueue()
+      window.localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+      try {
+        const { container } = render(
+          <MotionPauseProvider>
+            <StagScene instanceId={id} assembleOn={assembleOn} fallback={<div />} />
+          </MotionPauseProvider>,
+        )
+        await waitFor(() => {
+          expect(spies.render).toHaveBeenCalledTimes(1)
+        })
+        expect(sceneRoot(container, id)).toHaveAttribute('data-stag-assembled', 'true')
+        expect(uniformsAt(0).uProgress?.value).toBe(1)
+        expect(uniformsAt(0).uExit?.value).toBe(0)
+      } finally {
+        clearPause()
+      }
+    },
+  )
+
+  it.each(['mount', 'view'] as const)(
+    'jumps a %s stag to formed and draws once when motion pauses mid-assembly',
+    async (assembleOn) => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const id = `paused-mid-${assembleOn}`
+      stubInstanceRects({ [id]: window.innerHeight - 200 }, 400)
+      const frames = stubFrameQueue()
+      try {
+        const { container, getByRole } = render(
+          <MotionPauseProvider>
+            <PauseToggle />
+            <StagScene instanceId={id} assembleOn={assembleOn} fallback={<div />} />
+          </MotionPauseProvider>,
+        )
+        await waitFor(() => {
+          expect(seedCount()).toBe(1)
+        })
+        frames(5, 16)
+        const progress = uniformsAt(0).uProgress?.value ?? Number.NaN
+        expect(progress).toBeGreaterThan(0)
+        expect(progress).toBeLessThan(1)
+        expect(sceneRoot(container, id)).not.toHaveAttribute('data-stag-assembled')
+        const drawn = spies.render.mock.calls.length
+
+        act(() => {
+          getByRole('button', { name: 'pause' }).click()
+        })
+
+        expect(sceneRoot(container, id)).toHaveAttribute('data-stag-assembled', 'true')
+        expect(uniformsAt(0).uProgress?.value).toBe(1)
+        expect(spies.render).toHaveBeenCalledTimes(drawn + 1)
+      } finally {
+        clearPause()
+      }
+    },
+  )
+
+  it('keeps assembling over frames and draws nothing extra while motion runs', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const frames = stubFrameQueue()
+    const { container } = render(
+      <MotionPauseProvider>
+        <StagScene instanceId="running-a" fallback={<div />} />
+      </MotionPauseProvider>,
+    )
+    await waitFor(() => {
+      expect(seedCount()).toBe(1)
+    })
+    expect(spies.render).not.toHaveBeenCalled()
+    expect(uniformsAt(0).uProgress?.value).toBe(0)
+
+    frames(5, 16)
+    expect(spies.render).toHaveBeenCalledTimes(5)
+    expect(sceneRoot(container, 'running-a')).not.toHaveAttribute('data-stag-assembled')
+
+    frames(150, 16)
+    expect(sceneRoot(container, 'running-a')).toHaveAttribute(
+      'data-stag-assembled',
+      'true',
+    )
   })
 })

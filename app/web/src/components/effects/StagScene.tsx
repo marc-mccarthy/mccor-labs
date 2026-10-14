@@ -1,7 +1,7 @@
 'use client'
 
 import { useMotionValue, type MotionValue } from 'motion/react'
-import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useState, type ReactNode, type RefObject } from 'react'
 import { useLenis } from '../motion/LenisProvider'
 import { useMotionPausedFlag } from '../motion/MotionPauseProvider'
 import { readDurationSeconds } from '../motion/tokens'
@@ -28,7 +28,16 @@ interface StagOptions {
   layout: StagLayout
   assembleOn: StagAssembly
   exit?: MotionValue<number>
-  pausedRef: { readonly current: boolean }
+  pause: PauseSignal
+}
+
+interface PauseSignal {
+  readonly current: boolean
+  subscribe: (listener: () => void) => () => void
+}
+
+interface PauseSource extends PauseSignal {
+  set: (paused: boolean) => void
 }
 
 interface CloudExtents {
@@ -196,7 +205,7 @@ function trackExit(
 
 function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
   const { THREE, canvas, renderer, pixelRatioRef, color, fail, velocityRef } = context
-  const { instanceId, layout, assembleOn, exit, pausedRef } = options
+  const { instanceId, layout, assembleOn, exit, pause } = options
   const root = canvas.parentElement
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
@@ -223,6 +232,7 @@ function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
   let extents: CloudExtents = { midX: 0, midY: 0, width: 2, height: 2 }
   let basePointSize = DEFAULT_POINT_SIZE
   let viewTarget = 0
+  let lastSeconds = 0
 
   const complete = () => {
     assembled = true
@@ -276,6 +286,15 @@ function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
     renderer.render(scene, camera)
   }
 
+  const settle = () => {
+    if (!assembled) complete()
+    draw(lastSeconds)
+  }
+
+  const onPauseChange = () => {
+    if (pause.current && points && !assembled) settle()
+  }
+
   const onPointerMove = (event: PointerEvent) => {
     const rect = canvas.getBoundingClientRect()
     const x = (event.clientX - rect.left) / rect.width
@@ -291,6 +310,7 @@ function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
   const resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(canvas)
   window.addEventListener('pointermove', onPointerMove, { passive: true })
+  const stopPause = pause.subscribe(onPauseChange)
 
   loadAssets()
     .then(({ positions, extents: measured, vertexShader, fragmentShader }) => {
@@ -316,10 +336,7 @@ function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
       points.frustumCulled = false
       scene.add(points)
       resize()
-      if (assembleOn === 'view' && pausedRef.current) {
-        complete()
-        draw(0)
-      }
+      if (pause.current) settle()
     })
     .catch(fail)
 
@@ -327,12 +344,14 @@ function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
     render: (time) => {
       if (!points) return
       const seconds = time / 1000
+      lastSeconds = seconds
       if (!assembled) advance(seconds)
       draw(seconds)
     },
     dispose: () => {
       disposed = true
       stopExit()
+      stopPause()
       root?.removeAttribute(ASSEMBLED_ATTRIBUTE)
       resizeObserver.disconnect()
       window.removeEventListener('pointermove', onPointerMove)
@@ -372,13 +391,34 @@ function useStagExit(target: RefObject<HTMLElement | null> | undefined) {
   return target ? exit : undefined
 }
 
-function usePausedRef(): { readonly current: boolean } {
+function createPauseSource(initial: boolean): PauseSource {
+  const listeners = new Set<() => void>()
+  let current = initial
+  return {
+    get current() {
+      return current
+    },
+    subscribe(listener) {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    set(paused) {
+      if (paused === current) return
+      current = paused
+      for (const listener of listeners) listener()
+    },
+  }
+}
+
+function usePauseSignal(): PauseSignal {
   const paused = useMotionPausedFlag()
-  const pausedRef = useRef(paused)
+  const [source] = useState(() => createPauseSource(paused))
   useEffect(() => {
-    pausedRef.current = paused
-  }, [paused])
-  return pausedRef
+    source.set(paused)
+  }, [paused, source])
+  return source
 }
 
 export function StagScene({
@@ -390,11 +430,11 @@ export function StagScene({
   assembleOn = 'mount',
 }: StagSceneProps) {
   const exit = useStagExit(exitTarget)
-  const pausedRef = usePausedRef()
+  const pause = usePauseSignal()
   const build = useCallback(
     (context: SceneContext) =>
-      buildStag(context, { instanceId, layout, assembleOn, exit, pausedRef }),
-    [assembleOn, exit, instanceId, layout, pausedRef],
+      buildStag(context, { instanceId, layout, assembleOn, exit, pause }),
+    [assembleOn, exit, instanceId, layout, pause],
   )
   return (
     <div data-stag-instance={instanceId} className={className}>

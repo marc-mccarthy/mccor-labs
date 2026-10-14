@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <noscript>
           <style>
             {
-              '[data-reveal]{opacity:1!important;transform:none!important}[data-reveal] [data-word]{transform:none!important}'
+              '[data-reveal]{opacity:1!important;transform:none!important}[data-reveal] [data-word]{transform:none!important}[data-stage-descriptor]{opacity:1!important}'
             }
           </style>
         </noscript>

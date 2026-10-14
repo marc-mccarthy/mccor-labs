@@ -10,6 +10,9 @@ export interface VideoMotionHeroProps {
   posterSrc: string
   videoSrc?: string
   webmSrc?: string
+  introSrc?: string
+  introWebmSrc?: string
+  onIntroChange?: (playing: boolean) => void
   altText?: string
   className?: string
   objectPosition?: string
@@ -22,8 +25,33 @@ interface VideoAttachOptions {
   onScreenRef?: RefObject<Element | null>
 }
 
+export const INTRO_STORAGE_KEY = 'mccor-hero-intro-seen'
+const INTRO_FADE_LEAD_SECONDS = 0.8
+
 function rethrowUnlessAborted(error: unknown) {
   if (!(error instanceof DOMException && error.name === 'AbortError')) throw error
+}
+
+function isStorageBlocked(error: unknown) {
+  return error instanceof DOMException && error.name === 'SecurityError'
+}
+
+function readIntroSeen() {
+  if (typeof window === 'undefined') return true
+  try {
+    return window.sessionStorage.getItem(INTRO_STORAGE_KEY) === '1'
+  } catch (error) {
+    if (isStorageBlocked(error)) return true
+    throw error
+  }
+}
+
+function markIntroSeen() {
+  try {
+    window.sessionStorage.setItem(INTRO_STORAGE_KEY, '1')
+  } catch (error) {
+    if (!isStorageBlocked(error)) throw error
+  }
 }
 
 export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptions) {
@@ -130,6 +158,9 @@ export function VideoMotionHero({
   posterSrc,
   videoSrc,
   webmSrc,
+  introSrc,
+  introWebmSrc,
+  onIntroChange,
   altText = 'McCor Labs hero visual',
   className,
   objectPosition = 'object-right lg:object-[90%_center]',
@@ -144,6 +175,38 @@ export function VideoMotionHero({
     paused,
     togglePaused,
   } = useVideoAttach({ enabled: Boolean(videoSrc ?? webmSrc), onScreenRef: rootRef })
+  const [introPending, setIntroPending] = useState(
+    () => Boolean(introSrc ?? introWebmSrc) && !readIntroSeen(),
+  )
+  const [introStarted, setIntroStarted] = useState(false)
+  const [introFading, setIntroFading] = useState(false)
+  const inIntro = shouldAttachVideo && introPending
+  const introPlaying = inIntro && introStarted && !introFading && !paused
+  const videoVisible = videoLoaded && !introFading
+  const sources = inIntro
+    ? { webm: introWebmSrc, mp4: introSrc }
+    : { webm: webmSrc, mp4: videoSrc }
+
+  useEffect(() => {
+    onIntroChange?.(introPlaying)
+  }, [introPlaying, onIntroChange])
+
+  const startIntro = () => {
+    markIntroSeen()
+    setIntroStarted(true)
+  }
+
+  const finishIntro = () => {
+    setIntroPending(false)
+    setIntroFading(false)
+    setVideoLoaded(false)
+  }
+
+  const fadeOutNearEnd = (video: HTMLVideoElement) => {
+    if (!Number.isFinite(video.duration)) return
+    if (video.duration - video.currentTime <= INTRO_FADE_LEAD_SECONDS)
+      setIntroFading(true)
+  }
 
   return (
     <div
@@ -156,30 +219,53 @@ export function VideoMotionHero({
         className={cn(
           'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
           objectPosition,
-          videoLoaded ? 'opacity-0' : 'opacity-100',
+          videoVisible ? 'opacity-0' : 'opacity-100',
         )}
       />
 
       {shouldAttachVideo && (videoSrc ?? webmSrc) && (
         <video
+          key={inIntro ? 'intro' : 'loop'}
           ref={videoRef}
-          autoPlay
+          autoPlay={!paused}
           muted
-          loop
+          loop={!inIntro}
           playsInline
           preload="none"
           aria-hidden="true"
           onCanPlay={() => {
             setVideoLoaded(true)
           }}
+          onPlay={inIntro ? startIntro : undefined}
+          onTimeUpdate={
+            inIntro
+              ? (event) => {
+                  fadeOutNearEnd(event.currentTarget)
+                }
+              : undefined
+          }
+          onEnded={inIntro ? finishIntro : undefined}
+          onError={inIntro ? finishIntro : undefined}
           className={cn(
             'absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene)',
             objectPosition,
-            videoLoaded ? 'opacity-100' : 'opacity-0',
+            videoVisible ? 'opacity-100' : 'opacity-0',
           )}
         >
-          {webmSrc && <source src={webmSrc} type="video/webm" />}
-          {videoSrc && <source src={videoSrc} type="video/mp4" />}
+          {sources.webm && (
+            <source
+              src={sources.webm}
+              type="video/webm"
+              onError={inIntro && !sources.mp4 ? finishIntro : undefined}
+            />
+          )}
+          {sources.mp4 && (
+            <source
+              src={sources.mp4}
+              type="video/mp4"
+              onError={inIntro ? finishIntro : undefined}
+            />
+          )}
         </video>
       )}
 

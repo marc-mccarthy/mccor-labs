@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { VideoMotionHero } from './VideoMotionHero'
+import { INTRO_STORAGE_KEY, VideoMotionHero } from './VideoMotionHero'
 import {
   MOTION_STORAGE_KEY,
   MotionPauseProvider,
@@ -341,6 +341,177 @@ describe('VideoMotionHero', () => {
       pause.mockClear()
       setReduced(true)
       expect(pause).toHaveBeenCalled()
+    })
+  })
+
+  describe('intro clip', () => {
+    afterEach(() => {
+      sessionStorage.clear()
+    })
+
+    function renderIntroHero(onIntroChange?: (playing: boolean) => void) {
+      return render(
+        <VideoMotionHero
+          posterSrc="/poster.webp"
+          webmSrc="/loop.webm"
+          videoSrc="/loop.mp4"
+          introWebmSrc="/intro.webm"
+          introSrc="/intro.mp4"
+          onIntroChange={onIntroChange}
+        />,
+      )
+    }
+
+    function attach() {
+      act(() => {
+        vi.runAllTimers()
+      })
+    }
+
+    function sourceOf(container: HTMLElement) {
+      return container
+        .querySelector('video source[type="video/webm"]')
+        ?.getAttribute('src')
+    }
+
+    function setPlayback(video: HTMLVideoElement, currentTime: number, duration: number) {
+      Object.defineProperty(video, 'duration', { configurable: true, value: duration })
+      Object.defineProperty(video, 'currentTime', {
+        configurable: true,
+        value: currentTime,
+      })
+    }
+
+    it('plays the intro once without looping on a first visit', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      const video = container.querySelector('video')!
+      expect(sourceOf(container)).toBe('/intro.webm')
+      expect(video.querySelector('source[type="video/mp4"]')).toHaveAttribute(
+        'src',
+        '/intro.mp4',
+      )
+      expect(video.loop).toBe(false)
+    })
+
+    it('switches to the looping video when the intro ends', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      fireEvent.ended(container.querySelector('video')!)
+      expect(sourceOf(container)).toBe('/loop.webm')
+      expect(container.querySelector('video')!.loop).toBe(true)
+    })
+
+    it('marks the intro as seen once it starts playing', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      expect(sessionStorage.getItem(INTRO_STORAGE_KEY)).toBeNull()
+      fireEvent.play(container.querySelector('video')!)
+      expect(sessionStorage.getItem(INTRO_STORAGE_KEY)).toBe('1')
+    })
+
+    it('goes straight to the loop when the intro was already seen this session', () => {
+      mockMatchMedia(false)
+      sessionStorage.setItem(INTRO_STORAGE_KEY, '1')
+      const { container } = renderIntroHero()
+      attach()
+      expect(sourceOf(container)).toBe('/loop.webm')
+      expect(container.querySelector('video')!.loop).toBe(true)
+    })
+
+    it('falls back to the loop when the intro fails to load', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      fireEvent.error(container.querySelector('video source[type="video/mp4"]')!)
+      expect(sourceOf(container)).toBe('/loop.webm')
+    })
+
+    it('fades the intro out to the poster just before it ends', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      const video = container.querySelector('video')!
+      fireEvent.canPlay(video)
+      expect(video).toHaveClass('opacity-100')
+      setPlayback(video, 3, 5)
+      fireEvent.timeUpdate(video)
+      expect(video).toHaveClass('opacity-100')
+      setPlayback(video, 4.5, 5)
+      fireEvent.timeUpdate(video)
+      expect(video).toHaveClass('opacity-0')
+      expect(container.querySelector('img')).toHaveClass('opacity-100')
+    })
+
+    it('reports the intro as playing until it starts fading out', () => {
+      mockMatchMedia(false)
+      const onIntroChange = vi.fn<(playing: boolean) => void>()
+      const { container } = renderIntroHero(onIntroChange)
+      attach()
+      const video = container.querySelector('video')!
+      expect(onIntroChange).toHaveBeenLastCalledWith(false)
+      fireEvent.play(video)
+      expect(onIntroChange).toHaveBeenLastCalledWith(true)
+      setPlayback(video, 4.5, 5)
+      fireEvent.timeUpdate(video)
+      expect(onIntroChange).toHaveBeenLastCalledWith(false)
+    })
+
+    it('does not report the intro as playing while it is paused', () => {
+      mockMatchMedia(false)
+      vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+      const onIntroChange = vi.fn<(playing: boolean) => void>()
+      const { container } = renderIntroHero(onIntroChange)
+      attach()
+      fireEvent.play(container.querySelector('video')!)
+      expect(onIntroChange).toHaveBeenLastCalledWith(true)
+      fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
+      expect(onIntroChange).toHaveBeenLastCalledWith(false)
+    })
+
+    it('falls back to the loop when the intro fails to decode', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      fireEvent.error(container.querySelector('video')!)
+      expect(sourceOf(container)).toBe('/loop.webm')
+    })
+
+    it('falls back to the loop when a webm-only intro fails to load', () => {
+      mockMatchMedia(false)
+      const { container } = render(
+        <VideoMotionHero
+          posterSrc="/poster.webp"
+          webmSrc="/loop.webm"
+          videoSrc="/loop.mp4"
+          introWebmSrc="/intro.webm"
+        />,
+      )
+      attach()
+      fireEvent.error(container.querySelector('video source[type="video/webm"]')!)
+      expect(sourceOf(container)).toBe('/loop.webm')
+    })
+
+    it('keeps the loop from autoplaying after a fallback while the video is paused', () => {
+      mockMatchMedia(false)
+      const { container } = renderIntroHero()
+      attach()
+      fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
+      fireEvent.error(container.querySelector('video')!)
+      expect(sourceOf(container)).toBe('/loop.webm')
+      expect(container.querySelector('video')!.autoplay).toBe(false)
+    })
+
+    it('never plays the intro under reduced motion', () => {
+      mockMatchMedia(true)
+      const onIntroChange = vi.fn<(playing: boolean) => void>()
+      const { container } = renderIntroHero(onIntroChange)
+      attach()
+      expect(container.querySelector('video')).toBeNull()
+      expect(onIntroChange).not.toHaveBeenCalledWith(true)
     })
   })
 })

@@ -266,8 +266,8 @@ run "brake" {
   }
 
   assert {
-    condition     = length(local.lab_brake_deny_policy.Statement) == 2 && local.lab_brake_deny_policy.Statement[0].Effect == "Deny" && local.lab_brake_deny_policy.Statement[0].Action == ["bedrock:*"] && local.lab_brake_deny_policy.Statement[1].Effect == "Deny" && local.lab_brake_deny_policy.Statement[1].Action == ["dynamodb:PutItem", "dynamodb:Scan", "ses:SendEmail"] && local.lab_brake_deny_policy.Statement[1].Resource == ["*"]
-    error_message = "The deny policy must be a Deny on bedrock:* and a Deny on dynamodb:PutItem, dynamodb:Scan and ses:SendEmail."
+    condition     = length(local.lab_brake_deny_policy.Statement) == 2 && local.lab_brake_deny_policy.Statement[0].Effect == "Deny" && local.lab_brake_deny_policy.Statement[0].Action == ["bedrock:*"] && local.lab_brake_deny_policy.Statement[1].Effect == "Deny" && local.lab_brake_deny_policy.Statement[1].Action == ["dynamodb:PutItem", "dynamodb:Query", "dynamodb:Scan", "ses:SendEmail"] && local.lab_brake_deny_policy.Statement[1].Resource == ["*"]
+    error_message = "The deny policy must be a Deny on bedrock:* and a Deny on dynamodb:PutItem, dynamodb:Query, dynamodb:Scan and ses:SendEmail."
   }
 
   assert {

@@ -18,7 +18,7 @@ locals {
       },
       {
         Effect   = "Deny"
-        Action   = ["dynamodb:PutItem", "dynamodb:Scan", "ses:SendEmail"]
+        Action   = ["dynamodb:PutItem", "dynamodb:Query", "dynamodb:Scan", "ses:SendEmail"]
         Resource = ["*"]
       },
     ]

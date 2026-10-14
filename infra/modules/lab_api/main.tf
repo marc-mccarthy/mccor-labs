@@ -17,6 +17,32 @@ resource "aws_dynamodb_table" "lab" {
     type = "S"
   }
 
+  attribute {
+    name = "kind"
+    type = "S"
+  }
+
+  attribute {
+    name = "createdAt"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name               = "marks"
+    projection_type    = "INCLUDE"
+    non_key_attributes = ["ruleId", "verdictId", "reason", "rubricVersion"]
+
+    key_schema {
+      attribute_name = "kind"
+      key_type       = "HASH"
+    }
+
+    key_schema {
+      attribute_name = "createdAt"
+      key_type       = "RANGE"
+    }
+  }
+
   ttl {
     attribute_name = "expiresAt"
     enabled        = true

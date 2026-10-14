@@ -10,7 +10,7 @@ export default function NotFound() {
     <Section>
       <Container>
         <p className="font-mono text-sm tracking-widest text-brand uppercase">
-          404 · signal lost
+          404 · Signal Lost
         </p>
         <svg
           viewBox="0 0 240 48"
@@ -40,14 +40,14 @@ export default function NotFound() {
           />
         </svg>
         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-text sm:text-5xl">
-          That page does not exist
+          That Page Does Not Exist
         </h1>
         <p className="mt-4 max-w-xl text-lg text-muted">
           The link may be out of date. Everything else is still where you left it.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <Button asChild>
-            <Link href="/">Back to the home page</Link>
+            <Link href="/">Back to the Home Page</Link>
           </Button>
           <BookingCta />
         </div>

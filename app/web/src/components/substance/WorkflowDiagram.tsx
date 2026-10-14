@@ -20,8 +20,8 @@ const GATE_SIZE = 24
 const DIAGRAM_HEIGHT = 56
 
 const GATE_LABEL: Record<'human' | 'cost', string> = {
-  human: 'Human approval gate',
-  cost: 'Cost gate',
+  human: 'Human Approval Gate',
+  cost: 'Cost Gate',
 }
 
 const GATE_STROKE: Record<'human' | 'cost', string> = {

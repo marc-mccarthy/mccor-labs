@@ -4,7 +4,7 @@ export const team: readonly TeamMember[] = [
   {
     slug: 'marc-m',
     name: 'Marc M.',
-    role: 'Founder · Full-stack and AI Engineer',
+    role: 'Founder · Full-Stack and AI Engineer',
     email: 'marcm@mccorlabs.com',
     mediaSlot: 'marcm',
     bio: 'Marc founded the firm and still builds most of what it ships, with AI at the center of the work. By day he works in AI for a corporate employer, and his work runs in production: MCP servers that connect language models to live systems for a Medicare company, and, as a volunteer, AI pipelines and LLM-driven analytics over large databases for a sports franchise. Underneath it is four years of full-stack engineering, from websites built from scratch to APIs, data models and deployment. He previously taught software engineering at a local academy, and leads the firm’s teaching work as well. Away from the keyboard he is a devoted dad of five kids, six and under, and the neighborhood dad whose driveway every kid on the block seems to end up in. He is a heavy lifter, and has recently started training in mixed martial arts. You will also find him learning to cook, at a bonfire swapping stories with friends, or three episodes into a TV series he knows is terrible but cannot give up on.',

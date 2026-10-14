@@ -92,7 +92,7 @@
           "text": "Form exposes data-status and data-error; the status p, labels, roles and Send message text are unchanged",
           "validations": [
             "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact form exposes status\""
           ]
         },
@@ -101,7 +101,7 @@
           "text": "Panel shell frames both states with no card in a card; aside omits the booking row when bookingUrl is null or the lab strip shows and omits email and booking rows in the fallback; panel stacks before aside at 390 without overflow; h1 stays Contact",
           "validations": [
             "pnpm -F web test:run src/components/contact/ContactPanel.test.tsx src/components/contact/ContactForm.test.tsx",
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/a11y.spec.ts -g contact",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 panel stacks form before aside without overflow|panel sits beside aside at 1440\""
@@ -121,7 +121,7 @@
           "text": "Empty submit focuses the first invalid field below the sticky header with Lenis active",
           "validations": [
             "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"first invalid field takes focus below the header\""
           ]
         },
@@ -130,7 +130,7 @@
           "text": "Sending sets aria-busy, read-only fields and a full-opacity submit; the sweep runs only under no-preference and the bar is static under reduce; no animation remains after the send",
           "validations": [
             "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/ui/field.test.ts",
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sending state is busy and read-only|sending bar is static under reduced motion\""
           ]
         },
@@ -147,7 +147,7 @@
           "text": "Success collapses the fields into a receipt with text-colour status, the mono reference and copy action, focus on the receipt heading; reset restores an empty form; receipt fits at 390",
           "validations": [
             "pnpm -F web test:run src/components/contact/ContactReceipt.test.tsx src/components/contact/ContactForm.test.tsx",
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"success becomes a receipt|send another restores an empty form|390 receipt fits the panel\""
           ]
         },
@@ -275,7 +275,7 @@
           "id": "S26",
           "text": "Live-form build keeps Send message in SSR HTML and the full e2e suite passes",
           "validations": [
-            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+            "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
             "pnpm -F web test:e2e"
           ]
         },
@@ -588,7 +588,7 @@
         "pnpm -F web exec tsc --noEmit",
         "pnpm -F web lint",
         "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
-        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"contact form exposes status\""
       ],
       "deps": [],
@@ -624,7 +624,7 @@
         "pnpm -F web exec tsc --noEmit",
         "pnpm -F web lint",
         "pnpm -F web test:run src/components/contact/ContactPanel.test.tsx src/components/contact/ContactForm.test.tsx",
-        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/a11y.spec.ts -g contact",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"390 panel stacks form before aside without overflow|panel sits beside aside at 1440\""
@@ -691,7 +691,7 @@
         "pnpm -F web exec tsc --noEmit",
         "pnpm -F web lint",
         "pnpm -F web test:run src/components/contact/ContactForm.test.tsx",
-        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"first invalid field takes focus below the header\""
       ],
       "deps": ["C-M1.3"],
@@ -726,7 +726,7 @@
         "pnpm -F web exec tsc --noEmit",
         "pnpm -F web lint",
         "pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/ui/field.test.ts",
-        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"sending state is busy and read-only|sending bar is static under reduced motion\""
       ],
       "deps": ["C-M1.4"],
@@ -800,7 +800,7 @@
         "pnpm -F web exec tsc --noEmit",
         "pnpm -F web lint",
         "pnpm -F web test:run src/components/contact/ContactReceipt.test.tsx src/components/contact/ContactForm.test.tsx",
-        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send message' app/web/out/contact/index.html",
+        "NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw && grep -q 'Send Message' app/web/out/contact/index.html",
         "pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g \"success becomes a receipt|send another restores an empty form|390 receipt fits the panel\""
       ],
       "deps": ["C-M1.6"],

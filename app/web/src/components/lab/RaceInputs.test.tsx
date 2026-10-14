@@ -36,7 +36,7 @@ describe('RaceInputs', () => {
     render(<RaceInputs examples={make(3)} onChange={vi.fn()} />)
     const fields = [
       ...screen.getAllByLabelText(/^Example \d$/),
-      ...screen.getAllByLabelText(/^Right answer for example \d$/),
+      ...screen.getAllByLabelText(/^Right Answer for Example \d$/),
     ]
     expect(fields).toHaveLength(6)
     for (const field of fields) {
@@ -79,9 +79,9 @@ describe('RaceInputs', () => {
     const { rerender } = render(
       <RaceInputs examples={make(MIN_EXAMPLES)} onChange={vi.fn()} />,
     )
-    expect(screen.queryByRole('button', { name: /^Remove example/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Remove Example/ })).toBeNull()
     rerender(<RaceInputs examples={make(3)} onChange={vi.fn()} />)
-    expect(screen.getAllByRole('button', { name: /^Remove example/ })).toHaveLength(3)
+    expect(screen.getAllByRole('button', { name: /^Remove Example/ })).toHaveLength(3)
   })
 
   it('removes the chosen example', async () => {

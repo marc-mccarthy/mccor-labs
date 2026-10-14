@@ -57,7 +57,7 @@ Ruling: style the pinned status `p` and its mailto anchor only from ancestors (f
   - `tests/e2e/support.ts:6` `builtWithEndpoint()` reports which build is in `out/`.
 - Chromium project (Desktop Chrome, 1280x720 by default, `playwright.config.ts:17`): `pnpm -F web exec playwright test -c playwright.config.ts --project=chromium <spec>`.
 - Budgets project (serial, matches any file name ending `budgets.spec.ts`): `pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps <spec>`.
-- SSR text check after a live-form build: `grep -q 'Send message' app/web/out/contact/index.html`.
+- SSR text check after a live-form build: `grep -q 'Send Message' app/web/out/contact/index.html`.
 - Visual check: `pnpm -F web dev` in the background, then open http://localhost:3000/contact/ at 1440x900 and 390x844, normal and reduced motion. The dev server is also the only place to see the null-booking state.
 - Every e2e case below has an exact title, so `-g "<title>"` runs it alone. Cases at phone width live in a `test.describe('at 390', ...)` with `test.use({ viewport: { width: 390, height: 844 } })`, and their titles start with `390 `.
 
@@ -326,7 +326,7 @@ Ruling: the INP case at M0 types without a scene; the beam variant is added by C
 - Files: `src/components/contact/ContactForm.tsx`, `tests/e2e/contact-states.spec.ts` (case below).
 - Tokens: none.
 - Reduced motion: attributes only.
-- Validation: `pnpm -F web test:run src/components/contact/ContactForm.test.tsx` (unmodified, passes); live-form build, `grep -q 'Send message' app/web/out/contact/index.html`; e2e "contact form exposes status" (success mock gives `data-status=sent`; server mock gives `data-status=error` and `data-error=server`).
+- Validation: `pnpm -F web test:run src/components/contact/ContactForm.test.tsx` (unmodified, passes); live-form build, `grep -q 'Send Message' app/web/out/contact/index.html`; e2e "contact form exposes status" (success mock gives `data-status=sent`; server mock gives `data-status=error` and `data-error=server`).
 - Coordination: yes (`components/contact/*`).
 - Reuse: page-specific.
 
@@ -350,7 +350,7 @@ Ruling: the INP case at M0 types without a scene; the beam variant is added by C
 - Reduced motion: Spotlight renders null; GlowField is static; the edge is static; layout identical.
 - Validation:
   - `pnpm -F web test:run src/components/contact/ContactPanel.test.tsx src/components/contact/ContactForm.test.tsx`. Panel cases, with `env.bookingUrl` mocked: (a) live, booking URL set: one mailto link with the address and one "Book a call" link in the aside; (b) live, booking null: the aside has no booking row and exactly one mailto link; (c) fallback, either booking value: the aside has no email and no booking row.
-  - Live-form build, `grep -q 'Send message' app/web/out/contact/index.html`.
+  - Live-form build, `grep -q 'Send Message' app/web/out/contact/index.html`.
   - `pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/routes.spec.ts tests/e2e/a11y.spec.ts -g contact`.
   - `pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps -g contact`.
   - e2e "390 panel stacks form before aside without overflow": at 390x844, the panel's bounding box bottom is above the aside's top, both span the container width within 1 px, and `noOverflow` holds after scrolling to the footer.
@@ -396,7 +396,7 @@ Ruling: no required-field marker is added; required fields stay unmarked and opt
 - Files: `src/components/contact/ContactForm.tsx`, `src/styles/globals.css`, `tests/e2e/contact-states.spec.ts` (case below).
 - Tokens: `--duration-pointer`, `--ease-pointer`, `--color-brand`, `--space-xs`.
 - Reduced motion: focus move and scroll margin apply; errors appear without animation.
-- Validation: e2e "first invalid field takes focus below the header" in a no-preference context with Lenis active: click "Send message" empty, `expect(page.locator('#name')).toBeFocused()`, `#name` box top is greater than the header height (64 px). Also `pnpm -F web test:run src/components/contact/ContactForm.test.tsx`, and after a live-form build `grep -q 'Send message' app/web/out/contact/index.html`.
+- Validation: e2e "first invalid field takes focus below the header" in a no-preference context with Lenis active: click "Send message" empty, `expect(page.locator('#name')).toBeFocused()`, `#name` box top is greater than the header height (64 px). Also `pnpm -F web test:run src/components/contact/ContactForm.test.tsx`, and after a live-form build `grep -q 'Send Message' app/web/out/contact/index.html`.
 - Coordination: yes (`components/contact/*`, `globals.css`).
 - Reuse: page-specific.
 
@@ -421,7 +421,7 @@ Ruling: the Lenis `scrollTo` fallback is added only if the e2e case fails with L
   - e2e "sending state is busy and read-only" (held responder, no-preference): form `aria-busy="true"`; `#name` `toHaveJSProperty('readOnly', true)`; submit computed opacity `'1'`; after the responder resolves, `document.getAnimations().length === 0`.
   - e2e "sending bar is static under reduced motion" (held responder, reduce): the bar's computed `transform` is `'none'`, its width equals the track width, and `document.getAnimations().length === 0` while sending.
   - `pnpm -F web test:run src/components/contact/ContactForm.test.tsx src/components/ui/field.test.ts`.
-  - After a live-form build, `grep -q 'Send message' app/web/out/contact/index.html`.
+  - After a live-form build, `grep -q 'Send Message' app/web/out/contact/index.html`.
 - Depends on: C1.1; L-M0.7 for press and cursor.
 - Coordination: yes.
 - Reuse: page-specific.
@@ -477,7 +477,7 @@ Ruling: no `::before` "Wait" text and no aria-hidden eyebrow (cost if wrong: wai
   - e2e "success becomes a receipt": mock `{reference:'MC-7Q4K'}`; status `p` text equals `` `${ui.formSuccess} ${ui.formReference} MC-7Q4K.` ``; status `p` computed `color` equals `tokenColor('--color-text')`; receipt visible; `#name` not visible; receipt heading focused; axe clean in both motion modes.
   - e2e "send another restores an empty form": `#name` focused and empty.
   - e2e "390 receipt fits the panel": at 390x844 after the success mock, `[data-receipt-reference]` box right edge is inside the panel, the copy and reset buttons are visible, and `noOverflow` holds.
-  - After a live-form build, `grep -q 'Send message' app/web/out/contact/index.html`.
+  - After a live-form build, `grep -q 'Send Message' app/web/out/contact/index.html`.
 - Depends on: C1.1, C1.6, C0.6.
 - Coordination: yes. This is a behaviour change to the backend session's form (collapse after send); announce it explicitly.
 - Reuse: page-specific.
@@ -756,7 +756,7 @@ Run from the repo root after each milestone, and in full for M3. Every e2e step 
 1. Types: `pnpm -F web exec tsc --noEmit`.
 2. Lint: `pnpm -F web lint`.
 3. Unit: `pnpm -F web test:run`. `src/components/contact/ContactForm.test.tsx` passes unmodified.
-4. Live-form build: `NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw`, then `grep -q 'Send message' app/web/out/contact/index.html`, then `pnpm -F web test:e2e`.
+4. Live-form build: `NEXT_PUBLIC_BOOKING_URL=${NEXT_PUBLIC_BOOKING_URL:-https://booking.invalid/call} NEXT_PUBLIC_CONTACT_ENDPOINT=/api/contact pnpm build:raw`, then `grep -q 'Send Message' app/web/out/contact/index.html`, then `pnpm -F web test:e2e`.
 5. Budgets: `pnpm -F web exec playwright test -c playwright.config.ts --project=budgets --no-deps` (runs `budgets.spec.ts` and `contact-budgets.spec.ts`).
 6. Accessibility, both widths: `pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/a11y.spec.ts tests/e2e/contact-states.spec.ts`. The `contact state ... passes axe` matrix covers 1440 and 390 in both motion modes.
 7. Phone width: `pnpm -F web exec playwright test -c playwright.config.ts --project=chromium tests/e2e/contact-states.spec.ts -g "390 "` runs every `390 ` case (panel stacking, error callout, receipt, lab strip, mobile menu, field reveal, hero crop, sent signature), each with `noOverflow`.

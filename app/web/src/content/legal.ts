@@ -6,7 +6,7 @@ export const privacy: LegalDocument = {
   updated: 'TODO(owner): date of publication',
   sections: [
     {
-      heading: 'Who we are',
+      heading: 'Who We Are',
       blocks: [
         {
           kind: 'p',
@@ -23,7 +23,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'The short version',
+      heading: 'The Short Version',
       blocks: [
         {
           kind: 'p',
@@ -36,9 +36,9 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'What we collect, and when',
+      heading: 'What We Collect, and When',
       blocks: [
-        { kind: 'h3', text: 'When you use the contact form' },
+        { kind: 'h3', text: 'When You Use the Contact Form' },
         { kind: 'p', text: 'The form asks for:' },
         {
           kind: 'ul',
@@ -74,12 +74,12 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'The form includes a hidden field that automated bots fill in and people do not. If it is filled in, we discard the submission. It collects nothing about you.',
         },
-        { kind: 'h3', text: 'When you email us directly' },
+        { kind: 'h3', text: 'When You Email Us Directly' },
         {
           kind: 'p',
           text: 'We receive whatever you send, including your email address and anything in your signature or attachments. Same use: replying to you.',
         },
-        { kind: 'h3', text: 'When you use the live lab' },
+        { kind: 'h3', text: 'When You Use the Live Lab' },
         {
           kind: 'p',
           text: 'The lab’s builder runs in your browser. Step names and answers stay in your browser’s memory and are gone when you close the tab.',
@@ -96,7 +96,7 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'Our server writes a short technical log for each run: the time, whether it succeeded, how long it took and how many tokens it used. It never includes what you typed. These logs are deleted after 3 days.',
         },
-        { kind: 'h3', text: 'When you mark a verdict as wrong' },
+        { kind: 'h3', text: 'When You Mark a Verdict as Wrong' },
         {
           kind: 'p',
           text: 'If you press "Wrong?" on a verdict in our lab and send it, we store four things: which of the six verdicts it was, which rule in our rubric gave that verdict, the version of our rubric, and which of three fixed reasons you picked. We store nothing you typed, nothing about your steps, and nothing that identifies you or your device. We also keep a count of how many marks arrive each day, so we can stop accepting them after 500 in a day.',
@@ -105,7 +105,7 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'Once a week, an automated email tells us how many marks each rule and verdict received for each reason. We use these counts to improve the rubric.',
         },
-        { kind: 'h3', text: 'When you simply read the site' },
+        { kind: 'h3', text: 'When You Simply Read the Site' },
         {
           kind: 'p',
           text: 'Nothing is collected in your browser. Specifically:',
@@ -128,7 +128,7 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'The site does store a small amount of information in your own browser to remember your preferences. This never leaves your device, is never sent to us, and you can clear it at any time through your browser settings.',
         },
-        { kind: 'h3', text: 'Server logs' },
+        { kind: 'h3', text: 'Server Logs' },
         {
           kind: 'p',
           text: 'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.',
@@ -136,7 +136,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'Who else sees your information',
+      heading: 'Who Else Sees Your Information',
       blocks: [
         { kind: 'p', text: 'We keep this list short on purpose.' },
         {
@@ -161,7 +161,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'How long we keep it',
+      heading: 'How Long We Keep It',
       blocks: [
         {
           kind: 'p',
@@ -182,7 +182,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'How it is protected',
+      heading: 'How It Is Protected',
       blocks: [
         {
           kind: 'ul',
@@ -200,7 +200,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'Your rights',
+      heading: 'Your Rights',
       blocks: [
         { kind: 'p', text: 'Wherever you are, you can ask us to:' },
         {
@@ -241,7 +241,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'International visitors',
+      heading: 'International Visitors',
       blocks: [
         {
           kind: 'p',
@@ -250,7 +250,7 @@ export const privacy: LegalDocument = {
       ],
     },
     {
-      heading: 'Changes to this policy',
+      heading: 'Changes to This Policy',
       blocks: [
         {
           kind: 'p',
@@ -276,7 +276,7 @@ export const terms: LegalDocument = {
   updated: 'TODO(owner): date of publication',
   sections: [
     {
-      heading: 'About these terms',
+      heading: 'About These Terms',
       blocks: [
         {
           kind: 'p',
@@ -285,7 +285,7 @@ export const terms: LegalDocument = {
       ],
     },
     {
-      heading: 'Using this site',
+      heading: 'Using This Site',
       blocks: [
         {
           kind: 'p',
@@ -294,7 +294,7 @@ export const terms: LegalDocument = {
       ],
     },
     {
-      heading: 'Information on this site',
+      heading: 'Information on This Site',
       blocks: [
         {
           kind: 'p',
@@ -312,7 +312,7 @@ export const terms: LegalDocument = {
       ],
     },
     {
-      heading: 'Your information',
+      heading: 'Your Information',
       blocks: [
         {
           kind: 'p',
@@ -330,7 +330,7 @@ export const terms: LegalDocument = {
       ],
     },
     {
-      heading: 'Governing law',
+      heading: 'Governing Law',
       blocks: [
         {
           kind: 'p',

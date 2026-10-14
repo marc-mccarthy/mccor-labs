@@ -73,8 +73,8 @@ describe('WorkflowDiagram', () => {
     const { container } = render(
       <WorkflowDiagram steps={STEPS} description={DESCRIPTION} />,
     )
-    expect(screen.getByText('Human approval gate')).toBeInTheDocument()
-    expect(screen.getByText('Cost gate')).toBeInTheDocument()
+    expect(screen.getByText('Human Approval Gate')).toBeInTheDocument()
+    expect(screen.getByText('Cost Gate')).toBeInTheDocument()
     const gateRects = container.querySelectorAll('svg[role="img"] rect')
     expect(gateRects).toHaveLength(2)
     const strokes = Array.from(gateRects).map((rect) => rect.getAttribute('stroke'))

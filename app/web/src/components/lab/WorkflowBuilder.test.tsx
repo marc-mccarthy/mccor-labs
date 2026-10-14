@@ -187,8 +187,8 @@ describe('WorkflowBuilder move, remove and undo', () => {
 
   it('keeps focus on the same button of the moved step', async () => {
     await threeSteps()
-    await userEvent.click(screen.getByRole('button', { name: 'Move Step 2, Two up' }))
-    expect(screen.getByRole('button', { name: 'Move Step 1, Two up' })).toHaveFocus()
+    await userEvent.click(screen.getByRole('button', { name: 'Move Step 2, Two Up' }))
+    expect(screen.getByRole('button', { name: 'Move Step 1, Two Up' })).toHaveFocus()
     expect(status()).toHaveTextContent('Moved up. Now Step 1, Two.')
   })
 
@@ -329,11 +329,11 @@ describe('WorkflowBuilder move, remove and undo', () => {
 
   it('loads a preset, announces it and keeps focus on the preset button', async () => {
     render(<WorkflowBuilder snippets={snippets} />)
-    const load = screen.getByRole('button', { name: 'Load Invoice intake' })
+    const load = screen.getByRole('button', { name: 'Load Invoice Intake' })
     await userEvent.click(load)
     expect(screen.getAllByTestId(/^step-\d+$/)).toHaveLength(4)
     expect(nameField(1)).toHaveValue("Read the supplier's invoice PDF")
-    expect(status()).toHaveTextContent('Loaded the Invoice intake example with 4 steps.')
+    expect(status()).toHaveTextContent('Loaded the Invoice Intake example with 4 steps.')
     expect(load).toHaveFocus()
   })
 
@@ -388,7 +388,7 @@ describe('WorkflowBuilder live lab', () => {
   it('passes the classified verdict and frequency of a step to the live lab', async () => {
     mocks.env.labLive = true
     render(<WorkflowBuilder snippets={snippets} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice intake' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice Intake' }))
     const first = presets[0]?.steps[0]
     if (first === undefined) throw new Error('no preset step')
     const picker = screen.getByLabelText(labLive.stepPicker)
@@ -406,7 +406,7 @@ describe('WorkflowBuilder live lab', () => {
   it('keeps the live lab on the same step when that step is moved', async () => {
     mocks.env.labLive = true
     render(<WorkflowBuilder snippets={snippets} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice intake' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice Intake' }))
     const second = presets[0]?.steps[1]
     if (second === undefined) throw new Error('no preset step')
     const picker = screen.getByLabelText(labLive.stepPicker)
@@ -416,7 +416,7 @@ describe('WorkflowBuilder live lab', () => {
     )
     expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(second.name)
     await userEvent.click(
-      screen.getByRole('button', { name: `Move Step 2, ${second.name} up` }),
+      screen.getByRole('button', { name: `Move Step 2, ${second.name} Up` }),
     )
     expect(screen.getByLabelText(labLive.argueInputLabel)).toHaveValue(second.name)
     expect(within(picker).getByRole('option', { selected: true })).toHaveTextContent(

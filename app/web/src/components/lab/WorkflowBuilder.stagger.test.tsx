@@ -46,7 +46,7 @@ describe('WorkflowBuilder reveal order', () => {
 
   it('staggers a preset load by step index, capped at 3', async () => {
     render(<WorkflowBuilder snippets={snippets} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice intake' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Load Invoice Intake' }))
     const loaded = delays()
     expect(loaded).toHaveLength(4)
     loaded.forEach((delay, index) => {

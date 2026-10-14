@@ -99,7 +99,7 @@ describe('RunSummary', () => {
     expect(screen.queryByText(evalsCopy.staged)).not.toBeInTheDocument()
     expect(screen.getByText('2 of 2 cases passed')).toBeInTheDocument()
     expect(screen.getByText('10 of 10 rubric tests passed')).toBeInTheDocument()
-    expect(screen.getByText('Rubric version 2.0.0')).toBeInTheDocument()
+    expect(screen.getByText('Rubric Version 2.0.0')).toBeInTheDocument()
     expect(screen.getByText('Model model-1')).toBeInTheDocument()
     expect(screen.getByText('2026-10-09')).toBeInTheDocument()
     expect(screen.queryByText(evalsCopy.failedCases)).not.toBeInTheDocument()

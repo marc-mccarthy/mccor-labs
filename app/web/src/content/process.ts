@@ -10,14 +10,14 @@ export const process: readonly ProcessStage[] = [
   },
   {
     index: 2,
-    title: 'Fixed-scope proof of concept',
+    title: 'Fixed-Scope Proof of Concept',
     summary:
       'A bounded build against a fixed price, so you see working software and real cost before committing to the full engagement.',
     duration: '2–4 weeks',
   },
   {
     index: 3,
-    title: 'Go / no-go',
+    title: 'Go / No-Go',
     summary:
       'A real decision point. We tell you plainly whether the proof of concept earned the rest of the build, and you decide whether to continue.',
     duration: '1 meeting',

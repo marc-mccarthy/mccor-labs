@@ -8,7 +8,7 @@ import { MESSAGE_MIN } from '@/lib/contact'
 import { signedPostJson } from '@/lib/signedPost'
 
 import { ContactForm } from './ContactForm'
-import { contactCharge, contactSignal } from './contactSignal'
+import { contactCharge, contactSignal, messageFill } from './contactSignal'
 
 vi.mock('@/lib/signedPost', () => ({ signedPostJson: vi.fn() }))
 
@@ -44,6 +44,25 @@ describe('contactCharge', () => {
       1 / 3,
       10,
     )
+  })
+
+  it('gives no credit to a name over the limit', () => {
+    expect(contactCharge({ ...FULL, name: 'x'.repeat(101) })).toBeCloseTo(2 / 3, 10)
+    expect(contactCharge({ ...FULL, name: 'x'.repeat(100) })).toBe(1)
+  })
+
+  it('gives no credit to a message over the limit', () => {
+    expect(contactCharge({ ...FULL, message: 'x'.repeat(5001) })).toBeCloseTo(2 / 3, 10)
+    expect(contactCharge({ ...FULL, message: 'x'.repeat(5000) })).toBe(1)
+  })
+})
+
+describe('messageFill', () => {
+  it('is proportional below the minimum, full in range, zero beyond the max', () => {
+    expect(messageFill('')).toBe(0)
+    expect(messageFill('x'.repeat(MESSAGE_MIN / 2))).toBe(0.5)
+    expect(messageFill('x'.repeat(MESSAGE_MIN))).toBe(1)
+    expect(messageFill('x'.repeat(5001))).toBe(0)
   })
 })
 
@@ -148,6 +167,25 @@ describe('ContactForm drives the signal', () => {
     await vi.waitFor(() => {
       expect(contactSignal.getSnapshot().phase).toBe('error')
     })
+  })
+
+  it('ignores a send that settles after unmount', async () => {
+    let answer: (response: Response) => void = () => undefined
+    vi.mocked(signedPostJson).mockReturnValue(
+      new Promise<Response>((resolve) => {
+        answer = resolve
+      }),
+    )
+    const view = render(createElement(ContactForm, { endpoint: '/api/contact' }))
+    await fill()
+    await userEvent.click(screen.getByRole('button', { name: ui.formSubmit }))
+    await vi.waitFor(() => {
+      expect(contactSignal.getSnapshot().phase).toBe('sending')
+    })
+    view.unmount()
+    answer(new Response(JSON.stringify({ reference: 'MC-7Q4K' }), { status: 200 }))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(contactSignal.getSnapshot()).toEqual({ charge: 0, phase: 'idle' })
   })
 
   it('writes idle when validation stops the submit', async () => {

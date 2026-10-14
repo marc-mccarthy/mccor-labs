@@ -13,7 +13,6 @@ import { ui } from '@/content/ui'
 import { inlineLink, inlineLinkDescendant } from '@/components/ui/inline-link'
 import { cn } from '@/lib/cn'
 import {
-  MESSAGE_MIN,
   contactMailtoHref,
   submitContact,
   validateContact,
@@ -23,7 +22,12 @@ import {
 import { labMailtoHref } from '@/lib/labResult'
 
 import { ContactReceipt } from './ContactReceipt'
-import { contactCharge, contactSignal, type ContactPhase } from './contactSignal'
+import {
+  contactCharge,
+  contactSignal,
+  messageFill,
+  type ContactPhase,
+} from './contactSignal'
 import { SentToast } from './SentToast'
 import { useLabPrefill } from './useLabPrefill'
 
@@ -31,7 +35,7 @@ function syncMessageFill(form: HTMLFormElement | null) {
   const field = form?.querySelector<HTMLElement>('[data-message-field]')
   const textarea = form?.querySelector<HTMLTextAreaElement>('#message')
   if (!field || !textarea) return
-  const fill = Math.min(1, textarea.value.trim().length / MESSAGE_MIN)
+  const fill = messageFill(textarea.value)
   field.style.setProperty('--fill', String(fill))
   if (fill === 1) field.dataset.met = 'true'
   else delete field.dataset.met
@@ -103,13 +107,21 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const sending = status === 'sending'
   const formRef = useRef<HTMLFormElement>(null)
   const openedAt = useRef(0)
+  const mounted = useRef(false)
   const prefill = useLabPrefill()
 
   useEffect(() => {
     openedAt.current = Date.now()
   }, [])
 
-  useEffect(() => contactSignal.reset, [])
+  useEffect(() => {
+    mounted.current = true
+    contactSignal.reset()
+    return () => {
+      mounted.current = false
+      contactSignal.reset()
+    }
+  }, [])
 
   useEffect(() => {
     if (validationRun === 0) return
@@ -190,6 +202,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     setErrorKind(null)
     setReference(null)
     const result = await submitContact(request, endpoint)
+    if (!mounted.current) return
 
     if (result.ok) {
       setStatus('sent')

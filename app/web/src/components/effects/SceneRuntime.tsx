@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { useLenis } from '../motion/LenisProvider'
 import { useMotionPausedFlag } from '../motion/MotionPauseProvider'
@@ -40,6 +40,19 @@ const PREWARM_MARGIN = '25% 0px'
 const VELOCITY_RANGE = 60
 const VELOCITY_EASE = 0.1
 const VELOCITY_REST = 0.001
+const STATS_CAPACITY = 600
+
+export interface SceneSamples {
+  render: number[]
+  gap: number[]
+  count: number
+}
+
+declare global {
+  interface Window {
+    __sceneStats?: Record<string, SceneSamples>
+  }
+}
 
 interface LoopControl {
   hold: () => void
@@ -69,6 +82,19 @@ function createSlowFrameDetector(): (delta: number) => boolean {
     sum = 0
     return true
   }
+}
+
+function recordSample(
+  stats: Record<string, SceneSamples>,
+  key: string,
+  renderMs: number,
+  gapMs: number,
+): void {
+  const samples = (stats[key] ??= { render: [], gap: [], count: 0 })
+  const slot = samples.count % STATS_CAPACITY
+  samples.render[slot] = renderMs
+  samples.gap[slot] = gapMs
+  samples.count += 1
 }
 
 let threeModulePromise: Promise<typeof import('three')> | null = null
@@ -130,6 +156,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
   const lenisRef = useRef(lenis)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const sceneKey = useId()
   const buildRef = useRef(build)
   const [status, setStatus] = useState<SceneStatus>('idle')
   const [canvasKey, setCanvasKey] = useState(0)
@@ -186,8 +213,10 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     }
 
     const loop = (time: number) => {
+      let gap = 0
       if (lastTime !== null) {
         const delta = time - lastTime
+        gap = delta
         sceneTime += delta
         if (isSlow(delta)) stepPixelRatioDown()
       }
@@ -196,7 +225,14 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
         velocityRef.current,
         lenisRef.current?.velocity ?? 0,
       )
-      handle?.render(sceneTime)
+      const stats = window.__sceneStats
+      if (stats && handle) {
+        const startedAt = performance.now()
+        handle.render(sceneTime)
+        recordSample(stats, sceneKey, performance.now() - startedAt, gap)
+      } else {
+        handle?.render(sceneTime)
+      }
       frameId = requestAnimationFrame(loop)
     }
     const resume = () => {
@@ -339,7 +375,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       teardown()
       setCanvasKey((key) => key + 1)
     }
-  }, [reducedMotion])
+  }, [reducedMotion, sceneKey])
 
   useEffect(() => {
     pausedRef.current = paused
@@ -354,6 +390,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     <div
       ref={rootRef}
       className={className}
+      data-scene-key={sceneKey}
       data-scene-status={status}
       data-scene-paused={paused ? '' : undefined}
       data-scene-tier={tier}

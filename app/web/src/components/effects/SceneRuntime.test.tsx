@@ -553,6 +553,54 @@ describe('SceneRuntime', () => {
       })
     })
 
+    describe('frame stats', () => {
+      function samplesFor(root: Element | null) {
+        const samples = window.__sceneStats?.[root?.getAttribute('data-scene-key') ?? '']
+        if (!samples) throw new Error('no samples recorded')
+        return samples
+      }
+
+      afterEach(() => {
+        delete window.__sceneStats
+      })
+
+      it('records nothing without the flag', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        const { frames } = stubFrames()
+        await renderActive()
+        frames(5, 16)
+        expect(window.__sceneStats).toBeUndefined()
+      })
+
+      it('records render duration with the flag', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        window.__sceneStats = {}
+        const { frames } = stubFrames()
+        const root = await renderActive()
+        frames(5, 16)
+        const samples = samplesFor(root)
+        expect(samples.count).toBe(5)
+        expect(samples.render).toHaveLength(5)
+        expect(samples.render.every((value) => value >= 0)).toBe(true)
+        expect(samples.gap.slice(1)).toEqual([16, 16, 16, 16])
+      })
+
+      it('keeps at most 600 samples per scene', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        window.__sceneStats = {}
+        const { frames } = stubFrames()
+        const root = await renderActive()
+        frames(700, 16)
+        const samples = samplesFor(root)
+        expect(samples.count).toBe(700)
+        expect(samples.render).toHaveLength(600)
+        expect(samples.gap).toHaveLength(600)
+      })
+    })
+
     describe('motion pause', () => {
       afterEach(() => {
         localStorage.clear()

@@ -436,8 +436,39 @@ test.describe('live form', () => {
     expect(await color('email')).not.toBe(accent)
   })
 
+  test('message hairline tracks the minimum', async ({ page }) => {
+    await open(page)
+    const field = page.locator('[data-message-field]')
+    await page.locator('#message').fill('hello')
+    await expect
+      .poll(() => field.evaluate((node) => node.style.getPropertyValue('--fill')))
+      .toBe('0.5')
+    await expect(field).not.toHaveAttribute('data-met', 'true')
+    await page.locator('#message').fill('hello world')
+    await expect(field).toHaveAttribute('data-met', 'true')
+    const accent = await tokenColor(page, '--color-accent')
+    await expect
+      .poll(() =>
+        page
+          .locator('[data-message-bar]')
+          .evaluate((node) => getComputedStyle(node).backgroundColor),
+      )
+      .toBe(accent)
+  })
+
   test.describe('reduced motion', () => {
     test.use({ contextOptions: { reducedMotion: 'reduce' } })
+
+    test('message hairline jumps under reduced motion', async ({ page }) => {
+      await open(page)
+      await page.locator('#message').fill('hello')
+      const bar = page.locator('[data-message-bar]')
+      const duration = await bar.evaluate(
+        (node) => getComputedStyle(node).transitionDuration,
+      )
+      expect(duration).toBe('0s')
+      expect(await liveAnimations(page)).toEqual([])
+    })
 
     test('sending bar is static under reduced motion', async ({ page }) => {
       await open(page)

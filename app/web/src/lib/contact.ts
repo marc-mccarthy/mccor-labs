@@ -24,6 +24,8 @@ export type ContactErrors = Partial<
 
 export const CONTACT_TIMEOUT_MS = 15000
 
+export const MESSAGE_MIN = 10
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateContact(request: ContactRequest): ContactErrors {
@@ -41,7 +43,7 @@ export function validateContact(request: ContactRequest): ContactErrors {
     errors.company = ui.contactErrorCompanyLength
   }
 
-  if (message.length < 10) errors.message = ui.contactErrorMessage
+  if (message.length < MESSAGE_MIN) errors.message = ui.contactErrorMessage
   else if (message.length > 5000) errors.message = ui.contactErrorMessageLength
 
   return errors

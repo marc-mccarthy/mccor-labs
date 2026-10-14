@@ -12,6 +12,7 @@ import { ui } from '@/content/ui'
 import { inlineLinkDescendant } from '@/components/ui/inline-link'
 import { cn } from '@/lib/cn'
 import {
+  MESSAGE_MIN,
   contactMailtoHref,
   submitContact,
   validateContact,
@@ -23,6 +24,16 @@ import { labMailtoHref } from '@/lib/labResult'
 import { ContactReceipt } from './ContactReceipt'
 import { SentToast } from './SentToast'
 import { useLabPrefill } from './useLabPrefill'
+
+function syncMessageFill(form: HTMLFormElement | null) {
+  const field = form?.querySelector<HTMLElement>('[data-message-field]')
+  const textarea = form?.querySelector<HTMLTextAreaElement>('#message')
+  if (!field || !textarea) return
+  const fill = Math.min(1, textarea.value.trim().length / MESSAGE_MIN)
+  field.style.setProperty('--fill', String(fill))
+  if (fill === 1) field.dataset.met = 'true'
+  else delete field.dataset.met
+}
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
 
@@ -86,6 +97,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     if (validationRun === 0) return
     formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
   }, [validationRun])
+
+  useEffect(() => {
+    syncMessageFill(formRef.current)
+  }, [prefill])
 
   if (endpoint === null) {
     return (
@@ -173,6 +188,9 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         void onSubmit(event)
       }}
       noValidate
+      onInput={(event) => {
+        syncMessageFill(event.currentTarget)
+      }}
       data-status={status}
       data-error={errorKind ?? undefined}
       aria-busy={sending}
@@ -287,7 +305,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                 </svg>
               </div>
             </div>
-            <div className="group/field">
+            <div className="group/field" data-message-field="">
               <label htmlFor="message" className={LABEL}>
                 {ui.contactLabelMessage}
               </label>
@@ -312,6 +330,16 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                   {errors.message}
                 </p>
               )}
+              <span
+                aria-hidden="true"
+                data-message-track=""
+                className="mt-1 block h-0.5 overflow-hidden rounded-full bg-border"
+              >
+                <span
+                  data-message-bar=""
+                  className="block h-full origin-left scale-x-[var(--fill,0)] bg-border-strong group-data-[met=true]/field:bg-accent motion-on:transition-[transform,background-color] motion-on:duration-(--duration-pointer) motion-on:ease-(--ease-pointer)"
+                />
+              </span>
             </div>
           </Stagger>
 

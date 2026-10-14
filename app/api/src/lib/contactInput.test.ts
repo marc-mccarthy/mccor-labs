@@ -53,6 +53,7 @@ describe('checkContact', () => {
     ['a formatted phone', { ...valid, phone: '+1 202 555 0123' }],
     ['a phone with an area code starting with 1', { ...valid, phone: '+11025550123' }],
     ['a phone with an exchange starting with 1', { ...valid, phone: '+12021550123' }],
+    ['a phone with too many digits', { ...valid, phone: '+120255501234' }],
     ['a non-string phone', { ...valid, phone: 2025550123 }],
     ['a missing phone', { ...valid, phone: undefined }],
     ['a company over 100 characters', { ...valid, company: 'x'.repeat(101) }],

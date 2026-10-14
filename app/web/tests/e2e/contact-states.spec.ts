@@ -277,6 +277,26 @@ test.describe('live form', () => {
   test.describe('at 390', () => {
     test.use({ viewport: { width: 390, height: 844 } })
     axeMatrix(390)
+
+    test.describe('with motion', () => {
+      test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+      test('390 contact field revealed on keyboard focus', async ({ page }) => {
+        await open(page)
+        for (let step = 0; step < 40; step += 1) {
+          await page.keyboard.press('Tab')
+          const id = await page.evaluate(() => document.activeElement?.id)
+          if (id === 'message') break
+        }
+        await expect(page.locator('#message')).toBeFocused()
+        const opacity = await page
+          .locator('#message')
+          .evaluate(
+            (node) => getComputedStyle(node.closest('[data-reveal]') ?? node).opacity,
+          )
+        expect(opacity).toBe('1')
+      })
+    })
   })
 
   test('contact validation errors use the brand token', async ({ page }) => {

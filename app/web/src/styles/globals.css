@@ -398,6 +398,12 @@
   }
 }
 
+[data-reveal]:focus-within {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+}
+
 [data-reveal='armed'] [data-word] {
   @variant motion-on {
     transform: translateY(100%);

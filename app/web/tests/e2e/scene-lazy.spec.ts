@@ -31,22 +31,22 @@ test('below-fold scenes stay idle and create no WebGL context until scrolled to'
     }))
 
   await page.goto('/', { waitUntil: 'load' })
-  await expect(page.locator('[data-scene-status]')).toHaveCount(3)
+  await expect(page.locator('[data-scene-status]')).toHaveCount(4)
   await expect(page.locator('[data-scene-status="active"]')).toHaveCount(1, {
     timeout: 15_000,
   })
   await page.waitForTimeout(1000)
   const atLoad = await snapshot()
-  expect(atLoad.statuses).toEqual(['active', 'idle', 'idle'])
+  expect(atLoad.statuses).toEqual(['active', 'idle', 'idle', 'idle'])
   expect(atLoad.contexts).toBe(2)
 
   for (let i = 0; i < 10; i += 1) {
     await page.mouse.wheel(0, 700)
     await page.waitForTimeout(400)
   }
-  await expect(page.locator('[data-scene-status="active"]')).toHaveCount(3, {
+  await expect(page.locator('[data-scene-status="active"]')).toHaveCount(4, {
     timeout: 15_000,
   })
   const afterScroll = await snapshot()
-  expect(afterScroll.contexts).toBe(4)
+  expect(afterScroll.contexts).toBe(5)
 })

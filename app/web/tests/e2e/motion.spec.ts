@@ -77,7 +77,7 @@ for (const path of ROUTES) {
   })
 }
 
-test('the home page shows all three scene fallbacks without fetching three or a scene', async ({
+test('the home page shows all four scene fallbacks without fetching three or a scene', async ({
   page,
 }) => {
   const threeRequests = trackThreeRequests(page)
@@ -87,7 +87,7 @@ test('the home page shows all three scene fallbacks without fetching three or a 
   const statuses = await page
     .locator('[data-scene-status]')
     .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('data-scene-status')))
-  expect(statuses).toEqual(['fallback', 'fallback', 'fallback'])
+  expect(statuses).toEqual(['fallback', 'fallback', 'fallback', 'fallback'])
   expect(await threeRequests()).toEqual([])
   expect(await sceneRequests()).toEqual([])
 })

@@ -1,24 +1,49 @@
 'use client'
 
 import { useMotionValue, type MotionValue } from 'motion/react'
-import { useCallback, useEffect, type ReactNode, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import { useLenis } from '../motion/LenisProvider'
+import { useMotionPausedFlag } from '../motion/MotionPauseProvider'
 import { readDurationSeconds } from '../motion/tokens'
 import { useReducedMotion } from '../motion/useReducedMotion'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
 import { buildScatterPositions, buildSeeds } from './stagAttributes'
 import { roundStagExit, stagExitAmount } from './stagExit'
 
+export type StagLayout = 'poster' | 'centred'
+
+export type StagAssembly = 'mount' | 'view'
+
 export interface StagSceneProps {
   className?: string
   fallback: ReactNode
   exitTarget?: RefObject<HTMLElement | null>
+  instanceId?: string
+  layout?: StagLayout
+  assembleOn?: StagAssembly
+}
+
+interface StagOptions {
+  instanceId: string
+  layout: StagLayout
+  assembleOn: StagAssembly
+  exit?: MotionValue<number>
+  pausedRef: { readonly current: boolean }
 }
 
 interface CloudExtents {
   midX: number
   midY: number
+  width: number
   height: number
+}
+
+interface Framing {
+  left: number
+  right: number
+  top: number
+  bottom: number
+  stagPixels: number
 }
 
 interface StagAssets {
@@ -46,8 +71,13 @@ const FALLBACK_ASSEMBLE_SECONDS = 1.6
 const POINTER_EASE = 0.08
 const VELOCITY_STRETCH = 0.08
 const EXIT_ATTRIBUTE = 'data-stag-exit'
+const ASSEMBLED_ATTRIBUTE = 'data-stag-assembled'
+const CENTRED_FILL = 0.9
+const VIEW_SPAN = 1.5
+const VIEW_EASE = 0.1
+const VIEW_SETTLE = 0.001
 
-let assembled = false
+const assembledInstances = new Set<string>()
 
 async function fetchAsset(path: string): Promise<Response> {
   const response = await fetch(`${ASSET_ROOT}/${path}`)
@@ -82,7 +112,57 @@ function measure(positions: Float32Array): CloudExtents {
       maxY = Math.max(maxY, value)
     }
   })
-  return { midX: (minX + maxX) / 2, midY: (minY + maxY) / 2, height: maxY - minY }
+  return {
+    midX: (minX + maxX) / 2,
+    midY: (minY + maxY) / 2,
+    width: maxX - minX,
+    height: maxY - minY,
+  }
+}
+
+function posterFraming(width: number, height: number, extents: CloudExtents): Framing {
+  const scale = Math.max(width / POSTER_WIDTH, height / POSTER_HEIGHT)
+  const objectX =
+    window.innerWidth >= LG_BREAKPOINT ? POSTER_OBJECT_X_LG : POSTER_OBJECT_X
+  const stagX = (width - POSTER_WIDTH * scale) * objectX + POSTER_STAG_CENTER_X * scale
+  const stagY = (height - POSTER_HEIGHT * scale) / 2 + POSTER_STAG_CENTER_Y * scale
+  const stagPixels = POSTER_STAG_HEIGHT * scale
+  const unitsPerPixel = extents.height / stagPixels
+  return {
+    left: extents.midX - stagX * unitsPerPixel,
+    right: extents.midX + (width - stagX) * unitsPerPixel,
+    top: extents.midY + stagY * unitsPerPixel,
+    bottom: extents.midY - (height - stagY) * unitsPerPixel,
+    stagPixels,
+  }
+}
+
+function centredFraming(width: number, height: number, extents: CloudExtents): Framing {
+  const unitsPerPixel = Math.max(
+    extents.height / (height * CENTRED_FILL),
+    extents.width / (width * CENTRED_FILL),
+  )
+  const halfWidth = (width / 2) * unitsPerPixel
+  const halfHeight = (height / 2) * unitsPerPixel
+  return {
+    left: extents.midX - halfWidth,
+    right: extents.midX + halfWidth,
+    top: extents.midY + halfHeight,
+    bottom: extents.midY - halfHeight,
+    stagPixels: extents.height / unitsPerPixel,
+  }
+}
+
+const FRAMINGS: Record<StagLayout, typeof posterFraming> = {
+  poster: posterFraming,
+  centred: centredFraming,
+}
+
+function viewAmount(element: HTMLElement): number | null {
+  const rect = element.getBoundingClientRect()
+  if (rect.height === 0) return null
+  const amount = (window.innerHeight - rect.top) / (rect.height * VIEW_SPAN)
+  return Math.min(1, Math.max(0, amount))
 }
 
 function assembleSeconds(): number {
@@ -114,10 +194,13 @@ function trackExit(
   }
 }
 
-function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHandle {
+function buildStag(context: SceneContext, options: StagOptions): SceneHandle {
   const { THREE, canvas, renderer, pixelRatioRef, color, fail, velocityRef } = context
+  const { instanceId, layout, assembleOn, exit, pausedRef } = options
+  const root = canvas.parentElement
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
+  let assembled = assembledInstances.has(instanceId)
   const uniforms = {
     uTime: { value: 0 },
     uProgress: { value: assembled ? 1 : 0 },
@@ -137,29 +220,60 @@ function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHand
   let disposed = false
   let startSeconds: number | null = null
   let pointerInside = false
-  let extents: CloudExtents = { midX: 0, midY: 0, height: 2 }
+  let extents: CloudExtents = { midX: 0, midY: 0, width: 2, height: 2 }
   let basePointSize = DEFAULT_POINT_SIZE
+  let viewTarget = 0
+
+  const complete = () => {
+    assembled = true
+    uniforms.uProgress.value = 1
+    assembledInstances.add(instanceId)
+    root?.setAttribute(ASSEMBLED_ATTRIBUTE, 'true')
+  }
+
+  const advanceOnMount = (seconds: number) => {
+    startSeconds ??= seconds
+    uniforms.uProgress.value = Math.min(1, (seconds - startSeconds) / assembleDuration)
+    if (uniforms.uProgress.value >= 1) complete()
+  }
+
+  const advanceOnView = () => {
+    const amount = root ? viewAmount(root) : null
+    if (amount !== null) viewTarget = Math.max(viewTarget, amount)
+    const current = uniforms.uProgress.value
+    const next = current + (viewTarget - current) * VIEW_EASE
+    if (1 - next < VIEW_SETTLE) complete()
+    else uniforms.uProgress.value = next
+  }
+
+  const advance = assembleOn === 'view' ? advanceOnView : advanceOnMount
 
   const resize = () => {
     const { clientWidth: width, clientHeight: height } = canvas
     if (width === 0 || height === 0) return
     renderer.setSize(width, height, false)
-    const scale = Math.max(width / POSTER_WIDTH, height / POSTER_HEIGHT)
-    const objectX =
-      window.innerWidth >= LG_BREAKPOINT ? POSTER_OBJECT_X_LG : POSTER_OBJECT_X
-    const stagX = (width - POSTER_WIDTH * scale) * objectX + POSTER_STAG_CENTER_X * scale
-    const stagY = (height - POSTER_HEIGHT * scale) / 2 + POSTER_STAG_CENTER_Y * scale
-    const stagPixels = POSTER_STAG_HEIGHT * scale
-    const unitsPerPixel = extents.height / stagPixels
-    camera.left = extents.midX - stagX * unitsPerPixel
-    camera.right = extents.midX + (width - stagX) * unitsPerPixel
-    camera.top = extents.midY + stagY * unitsPerPixel
-    camera.bottom = extents.midY - (height - stagY) * unitsPerPixel
+    const framing = FRAMINGS[layout](width, height, extents)
+    camera.left = framing.left
+    camera.right = framing.right
+    camera.top = framing.top
+    camera.bottom = framing.bottom
     camera.updateProjectionMatrix()
     basePointSize = Math.min(
       MAX_POINT_SIZE,
-      Math.max(MIN_POINT_SIZE, stagPixels / POINT_SIZE_DIVISOR),
+      Math.max(MIN_POINT_SIZE, framing.stagPixels / POINT_SIZE_DIVISOR),
     )
+  }
+
+  const draw = (seconds: number) => {
+    if (!points) return
+    uniforms.uTime.value = seconds
+    uniforms.uPointSize.value = basePointSize * pixelRatioRef.current
+    uniforms.uPointerForce.value +=
+      ((pointerInside ? 1 : 0) - uniforms.uPointerForce.value) * POINTER_EASE
+    const stretch = 1 + Math.abs(velocityRef.current) * VELOCITY_STRETCH
+    points.scale.y = stretch
+    points.position.y = extents.midY * (1 - stretch)
+    renderer.render(scene, camera)
   }
 
   const onPointerMove = (event: PointerEvent) => {
@@ -172,7 +286,8 @@ function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHand
     uniforms.uPointer.value.set(worldX, worldY)
   }
 
-  const stopExit = trackExit(exit, uniforms.uExit, canvas.parentElement)
+  if (assembled) root?.setAttribute(ASSEMBLED_ATTRIBUTE, 'true')
+  const stopExit = trackExit(exit, uniforms.uExit, root)
   const resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(canvas)
   window.addEventListener('pointermove', onPointerMove, { passive: true })
@@ -201,6 +316,10 @@ function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHand
       points.frustumCulled = false
       scene.add(points)
       resize()
+      if (assembleOn === 'view' && pausedRef.current) {
+        complete()
+        draw(0)
+      }
     })
     .catch(fail)
 
@@ -208,26 +327,13 @@ function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHand
     render: (time) => {
       if (!points) return
       const seconds = time / 1000
-      startSeconds ??= seconds
-      uniforms.uTime.value = seconds
-      uniforms.uPointSize.value = basePointSize * pixelRatioRef.current
-      if (!assembled) {
-        uniforms.uProgress.value = Math.min(
-          1,
-          (seconds - startSeconds) / assembleDuration,
-        )
-        assembled = uniforms.uProgress.value >= 1
-      }
-      uniforms.uPointerForce.value +=
-        ((pointerInside ? 1 : 0) - uniforms.uPointerForce.value) * POINTER_EASE
-      const stretch = 1 + Math.abs(velocityRef.current) * VELOCITY_STRETCH
-      points.scale.y = stretch
-      points.position.y = extents.midY * (1 - stretch)
-      renderer.render(scene, camera)
+      if (!assembled) advance(seconds)
+      draw(seconds)
     },
     dispose: () => {
       disposed = true
       stopExit()
+      root?.removeAttribute(ASSEMBLED_ATTRIBUTE)
       resizeObserver.disconnect()
       window.removeEventListener('pointermove', onPointerMove)
       geometry?.dispose()
@@ -266,8 +372,33 @@ function useStagExit(target: RefObject<HTMLElement | null> | undefined) {
   return target ? exit : undefined
 }
 
-export function StagScene({ className, fallback, exitTarget }: StagSceneProps) {
+function usePausedRef(): { readonly current: boolean } {
+  const paused = useMotionPausedFlag()
+  const pausedRef = useRef(paused)
+  useEffect(() => {
+    pausedRef.current = paused
+  }, [paused])
+  return pausedRef
+}
+
+export function StagScene({
+  className,
+  fallback,
+  exitTarget,
+  instanceId = 'hero',
+  layout = 'poster',
+  assembleOn = 'mount',
+}: StagSceneProps) {
   const exit = useStagExit(exitTarget)
-  const build = useCallback((context: SceneContext) => buildStag(context, exit), [exit])
-  return <SceneRuntime className={className} fallback={fallback} build={build} />
+  const pausedRef = usePausedRef()
+  const build = useCallback(
+    (context: SceneContext) =>
+      buildStag(context, { instanceId, layout, assembleOn, exit, pausedRef }),
+    [assembleOn, exit, instanceId, layout, pausedRef],
+  )
+  return (
+    <div data-stag-instance={instanceId} className={className}>
+      <SceneRuntime className="absolute inset-0" fallback={fallback} build={build} />
+    </div>
+  )
 }

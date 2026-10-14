@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CtaBlock } from './CtaBlock'
@@ -13,6 +14,28 @@ const mocked = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/env', () => mocked)
+vi.mock('@/components/effects/StagScene', () => ({
+  StagScene: (props: {
+    className?: string
+    fallback: ReactNode
+    instanceId?: string
+    layout?: string
+    assembleOn?: string
+    exitTarget?: unknown
+  }) => (
+    <div
+      data-testid="cta-stag-scene"
+      data-stag-instance={props.instanceId}
+      data-layout={props.layout}
+      data-assemble-on={props.assembleOn}
+      data-has-exit={props.exitTarget === undefined ? 'false' : 'true'}
+      data-scene-status="idle"
+      className={props.className}
+    >
+      {props.fallback}
+    </div>
+  ),
+}))
 
 const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
 
@@ -134,7 +157,38 @@ describe('CtaBlock', () => {
     expect(stag).toHaveAttribute('height', '748')
     expect(stag).toHaveAttribute('decoding', 'async')
     expect(stag).toHaveAttribute('data-cta-stag')
-    expect(stag.parentElement).toHaveClass('group/cta')
+    expect(stag.closest('.group\\/cta')).not.toBeNull()
     expect(container.querySelectorAll('[data-cta-stag]')).toHaveLength(1)
+  })
+
+  it('keeps the webp as the scene fallback in an aria-hidden xl-only slot under reduced motion', () => {
+    render(<CtaBlock />)
+    const stag = screen.getByTestId('cta-stag')
+    expect(stag.closest('[data-scene-status]')).toHaveAttribute(
+      'data-scene-status',
+      'fallback',
+    )
+    const slot = stag.closest('[aria-hidden="true"]')
+    expect(slot).toHaveClass('hidden', 'xl:block', 'absolute', 'bottom-0')
+    expect(slot?.parentElement).toHaveClass('group/cta')
+    expect(screen.queryByTestId('cta-stag-scene')).toBeNull()
+  })
+
+  it('mounts a centred cta stag scene that assembles on view with the webp fallback', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    render(<CtaBlock />)
+    const scene = await screen.findByTestId('cta-stag-scene')
+    expect(scene).toHaveAttribute('data-stag-instance', 'cta')
+    expect(scene).toHaveAttribute('data-layout', 'centred')
+    expect(scene).toHaveAttribute('data-assemble-on', 'view')
+    expect(scene).toHaveAttribute('data-has-exit', 'false')
+    expect(scene.parentElement).toHaveAttribute('aria-hidden', 'true')
+    expect(scene.parentElement).toHaveClass('hidden', 'xl:block')
+    expect(scene).toContainElement(screen.getByTestId('cta-stag'))
   })
 })

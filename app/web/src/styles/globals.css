@@ -296,8 +296,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :root[data-motion='paused'] [class*='animate-[band-signal_'],
-  :root[data-motion='paused'] .animate-pulse {
+  :root[data-motion='paused'] [class*='animate-[band-signal_'] {
     animation: none;
   }
 }

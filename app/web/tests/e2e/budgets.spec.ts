@@ -193,6 +193,17 @@ test.describe('hard gates', () => {
     page,
   }) => {
     await observeWorstInteraction(page)
+    await page.addInitScript(() => {
+      document.addEventListener(
+        'click',
+        (event) => {
+          if (event.target instanceof Element && event.target.closest('a[href]')) {
+            event.preventDefault()
+          }
+        },
+        true,
+      )
+    })
     await page.goto('/')
     await expect(page.locator('[data-scene-status="active"]').first()).toBeAttached({
       timeout: 15_000,
@@ -203,6 +214,7 @@ test.describe('hard gates', () => {
       await page.keyboard.press('PageDown')
       await page.waitForTimeout(120)
     }
+    await expect(page).toHaveURL('/')
     const { worst, active } = await page.evaluate(() => ({
       worst: (window as unknown as { worst: number }).worst,
       active: document.querySelectorAll('[data-scene-status="active"]').length,

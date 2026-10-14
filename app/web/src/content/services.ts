@@ -20,7 +20,7 @@ export const services: readonly Service[] = [
     capabilities: [
       {
         slug: 'static-build',
-        title: 'This site’s own build',
+        title: 'This Site’s Own Build',
         summary:
           'An excerpt of the production build for this site: settings resolved from 1Password at build time rather than committed, and every route prerendered as static HTML.',
         substance: { kind: 'terminal', ref: 'static-export-build' },
@@ -47,7 +47,7 @@ export const services: readonly Service[] = [
   },
   {
     slug: 'ai-engineering',
-    title: 'AI integration',
+    title: 'AI Integration',
     summary:
       'MCP servers, LLM features and analytics over data you already have — built to be evaluated, not just demoed.',
     detail:
@@ -63,28 +63,28 @@ export const services: readonly Service[] = [
     capabilities: [
       {
         slug: 'ai-integration',
-        title: 'Named integration surfaces',
+        title: 'Named Integration Surfaces',
         summary:
           'LLM features and MCP servers connected to named integration surfaces in your systems, not a standalone demo.',
         substance: { kind: 'diagram', ref: 'integration-surfaces' },
       },
       {
         slug: 'workflow-automation',
-        title: 'Workflow automation',
+        title: 'Workflow Automation',
         summary:
           'Multi-step agent workflows with approval gates and cost ceilings, so an agent never acts past where a human should sign off.',
         substance: { kind: 'diagram', ref: 'workflow-approval-gate' },
       },
       {
         slug: 'retrieval-pipelines',
-        title: 'Retrieval pipelines',
+        title: 'Retrieval Pipelines',
         summary:
           'Ingestion, chunking, embedding, hybrid retrieval and reranking as named, measured pipeline steps.',
         substance: { kind: 'diagram', ref: 'retrieval-pipeline' },
       },
       {
         slug: 'mcp-servers',
-        title: 'MCP servers',
+        title: 'MCP Servers',
         summary:
           'MCP servers built on Streamable HTTP, shipped into production rather than prototyped.',
         substance: { kind: 'code', ref: 'mcp-server-transport' },
@@ -100,7 +100,7 @@ export const services: readonly Service[] = [
   },
   {
     slug: 'consulting',
-    title: 'Developer consulting',
+    title: 'Developer Consulting',
     summary:
       'A second opinion for development teams — architecture review, code review, and help getting unstuck.',
     detail:
@@ -115,7 +115,7 @@ export const services: readonly Service[] = [
   },
   {
     slug: 'teaching',
-    title: 'Hands-on teaching',
+    title: 'Hands-On Teaching',
     summary:
       'Practical training for development teams, taught on your codebase rather than a toy example.',
     detail:

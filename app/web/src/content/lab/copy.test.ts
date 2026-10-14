@@ -55,19 +55,19 @@ describe('lab copy', () => {
 
   it('uses the verdict labels and glosses the spec fixes', () => {
     expect(verdictCopy).toEqual({
-      'plain-code': { label: 'A simple program', gloss: 'Fixed steps, no judgment' },
-      rules: { label: 'A checklist your team can edit', gloss: 'If this, then that' },
+      'plain-code': { label: 'A Simple Program', gloss: 'Fixed steps, no judgment' },
+      rules: { label: 'A Checklist Your Team Can Edit', gloss: 'If this, then that' },
       'classic-ml': {
-        label: 'A model trained on your past cases',
+        label: 'A Model Trained on Your Past Cases',
         gloss: 'Predicts from history',
       },
-      'language-model': { label: 'An AI language model', gloss: 'Reads and writes text' },
+      'language-model': { label: 'An AI Language Model', gloss: 'Reads and writes text' },
       'do-not-automate': {
-        label: 'Keep a person on it',
+        label: 'Keep a Person on It',
         gloss: 'The judgment is the job',
       },
       unclear: {
-        label: 'Worth a conversation',
+        label: 'Worth a Conversation',
         gloss: 'Answer the not-sure questions to sharpen this',
       },
     })

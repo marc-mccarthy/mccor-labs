@@ -103,7 +103,7 @@ describe('CostLine', () => {
       />,
     )
     expect(container.textContent).not.toContain('about under')
-    expect(container).toHaveTextContent('Cost of this run 0 USD')
+    expect(container).toHaveTextContent('Cost of This Run 0 USD')
     expect(screen.getByText(/^If this runs once a day,/)).toHaveTextContent(
       'about 0 USD a month for the model',
     )

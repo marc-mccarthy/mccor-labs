@@ -119,7 +119,7 @@ describe('CapabilityBlock', () => {
     const { CapabilityBlock: Real } = await actual()
     const capability = ai.capabilities!.find((c) => c.slug === 'ai-integration')!
     const { container } = render(await Real({ capability }))
-    for (const surface of ['CRM', 'Ticketing', 'Data warehouse', 'Records DB']) {
+    for (const surface of ['CRM', 'Ticketing', 'Data Warehouse', 'Records DB']) {
       expect(screen.getByText(surface)).toBeInTheDocument()
     }
     expect(container.querySelectorAll('svg rect')).toHaveLength(1)

@@ -64,7 +64,7 @@ describe('ServicesPreview', () => {
   it('distinguishes the AI entry from the others', () => {
     mockMatchMedia(false)
     render(<ServicesPreview />)
-    const ai = screen.getByText('AI integration').closest('[data-service]')
+    const ai = screen.getByText('AI Integration').closest('[data-service]')
     const other = screen.getByText('Websites').closest('[data-service]')
     expect(ai).toHaveAttribute('data-featured', 'true')
     expect(other).not.toHaveAttribute('data-featured')

@@ -33,10 +33,10 @@ describe('CodeBlock', () => {
       await CodeBlock({
         code: 'const x = 1',
         lang: 'typescript',
-        scrollLabel: 'Rule R1 as code',
+        scrollLabel: 'Rule R1 as Code',
       }),
     )
-    const region = screen.getByRole('region', { name: 'Rule R1 as code' })
+    const region = screen.getByRole('region', { name: 'Rule R1 as Code' })
     expect(region).toHaveAttribute('tabindex', '0')
   })
 

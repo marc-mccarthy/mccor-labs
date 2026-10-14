@@ -105,7 +105,7 @@ describe('EvalsPage', () => {
     for (const paragraph of evalsCopy.method) {
       expect(within(method).getByText(paragraph)).toBeInTheDocument()
     }
-    const version = within(method).getByText(`Rubric version ${RUBRIC_VERSION}`)
+    const version = within(method).getByText(`Rubric Version ${RUBRIC_VERSION}`)
     expect(version).toHaveClass('font-mono')
   })
 

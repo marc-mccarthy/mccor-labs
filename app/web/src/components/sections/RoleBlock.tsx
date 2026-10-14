@@ -20,7 +20,7 @@ export function RoleBlock({ role }: { role: Role }) {
               <p className="max-w-2xl text-lg text-muted">{role.summary}</p>
               <div className="grid gap-8 sm:grid-cols-2">
                 <div>
-                  <h3 className="text-xl font-semibold text-text">You will</h3>
+                  <h3 className="text-xl font-semibold text-text">You Will</h3>
                   <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-muted">
                     {role.youWillDo.map((item) => (
                       <li key={item}>{item}</li>
@@ -28,7 +28,7 @@ export function RoleBlock({ role }: { role: Role }) {
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-text">We are looking for</h3>
+                  <h3 className="text-xl font-semibold text-text">We Are Looking For</h3>
                   <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-muted">
                     {role.weAreLookingFor.map((item) => (
                       <li key={item}>{item}</li>

@@ -96,7 +96,7 @@ describe('StepCard', () => {
   it('names the move and remove buttons with the step number and name', async () => {
     const props = setup()
     await userEvent.click(
-      screen.getByRole('button', { name: 'Move Step 2, Send invoices up' }),
+      screen.getByRole('button', { name: 'Move Step 2, Send invoices Up' }),
     )
     await userEvent.click(
       screen.getByRole('button', { name: 'Remove Step 2, Send invoices' }),
@@ -107,7 +107,7 @@ describe('StepCard', () => {
 
   it('keeps edge moves focusable but inert', async () => {
     const props = setup({ position: 1, total: 1 })
-    const up = screen.getByRole('button', { name: /Move Step 1, Send invoices up/ })
+    const up = screen.getByRole('button', { name: /Move Step 1, Send invoices Up/ })
     expect(up).toHaveAttribute('aria-disabled', 'true')
     await userEvent.click(up)
     expect(props.onMove).not.toHaveBeenCalled()
@@ -123,7 +123,7 @@ describe('StepCard accordion', () => {
   it('summarises a collapsed step with its name, verdict and answered count', () => {
     setup({
       open: false,
-      verdictLabel: 'A simple program',
+      verdictLabel: 'A Simple Program',
       step: {
         id: 'step-2',
         name: 'Send invoices',
@@ -131,7 +131,7 @@ describe('StepCard accordion', () => {
       },
     })
     const toggle = screen.getByRole('button', {
-      name: /Step 2, Send invoices\. A simple program\. 2 of 5 answered/,
+      name: /Step 2, Send invoices\. A Simple Program\. 2 of 5 answered/,
     })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(toggle).toHaveAttribute('aria-controls', 'step-2-body')

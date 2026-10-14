@@ -176,9 +176,9 @@ describe('lab result fragment', () => {
   it('formats one readable line per step and ends with the ask line', () => {
     expect(formatLabResult(toLabResult(steps, false)).split('\n')).toEqual([
       'Results from Should This Be AI? (the wrong-tool test)',
-      `Step 1: A checklist your team can edit + human sign-off (rule R8, rubric ${RUBRIC_VERSION})`,
+      `Step 1: A Checklist Your Team Can Edit + human sign-off (rule R8, rubric ${RUBRIC_VERSION})`,
       `Step 2: not answered yet (rule R1, rubric ${RUBRIC_VERSION})`,
-      `Step 3: Worth a conversation (rule R1, rubric ${RUBRIC_VERSION})`,
+      `Step 3: Worth a Conversation (rule R1, rubric ${RUBRIC_VERSION})`,
       sendCopy.ask,
     ])
     expect(sendCopy.ask).toBe('What I would like help with: ')

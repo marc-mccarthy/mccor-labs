@@ -30,7 +30,7 @@ describe('privacy document', () => {
   })
 
   it('opens the short version with the live lab sentence', () => {
-    const first = section('The short version').blocks[0]
+    const first = section('The Short Version').blocks[0]
     expect(first).toMatchObject({ kind: 'p' })
     expect(first?.kind === 'p' ? first.text : '').toContain(
       'the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us',
@@ -38,15 +38,15 @@ describe('privacy document', () => {
   })
 
   it('has a live lab subsection with four paragraphs, verdict marks subsection with two paragraphs, before the reading subsection', () => {
-    const blocks = section('What we collect, and when').blocks
+    const blocks = section('What We Collect, and When').blocks
     const labStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you use the live lab',
+      (block) => block.kind === 'h3' && block.text === 'When You Use the Live Lab',
     )
     const marksStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you mark a verdict as wrong',
+      (block) => block.kind === 'h3' && block.text === 'When You Mark a Verdict as Wrong',
     )
     const readStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you simply read the site',
+      (block) => block.kind === 'h3' && block.text === 'When You Simply Read the Site',
     )
     expect(labStart).toBeGreaterThan(-1)
     expect(marksStart).toBe(labStart + 5)
@@ -77,12 +77,12 @@ describe('privacy document', () => {
   })
 
   it('places the contact form text under the contact form subsection', () => {
-    const blocks = section('What we collect, and when').blocks
+    const blocks = section('What We Collect, and When').blocks
     const formStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you use the contact form',
+      (block) => block.kind === 'h3' && block.text === 'When You Use the Contact Form',
     )
     const mailStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you email us directly',
+      (block) => block.kind === 'h3' && block.text === 'When You Email Us Directly',
     )
     const formText = blocks
       .slice(formStart, mailStart)
@@ -93,7 +93,7 @@ describe('privacy document', () => {
   })
 
   it('lists the live lab text among what AWS receives', () => {
-    const list = section('Who else sees your information').blocks.find(
+    const list = section('Who Else Sees Your Information').blocks.find(
       (block) => block.kind === 'ul',
     )
     const aws = list?.kind === 'ul' ? list.items[0] : ''
@@ -111,7 +111,7 @@ describe('privacy document', () => {
   })
 
   it('states the contact retention period with no placeholder', () => {
-    const text = section('How long we keep it')
+    const text = section('How Long We Keep It')
       .blocks.flatMap((block) => (block.kind === 'ul' ? block.items : [block.text]))
       .join('\n')
     expect(text).toContain(
@@ -127,12 +127,12 @@ describe('privacy document', () => {
     expect(text).toContain('three fixed reasons')
     expect(text).toContain('90 days')
     expect(text).toContain('7 days')
-    const blocks = section('What we collect, and when').blocks
+    const blocks = section('What We Collect, and When').blocks
     const marksStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you mark a verdict as wrong',
+      (block) => block.kind === 'h3' && block.text === 'When You Mark a Verdict as Wrong',
     )
     const readStart = blocks.findIndex(
-      (block) => block.kind === 'h3' && block.text === 'When you simply read the site',
+      (block) => block.kind === 'h3' && block.text === 'When You Simply Read the Site',
     )
     const marksText = blocks
       .slice(marksStart, readStart)

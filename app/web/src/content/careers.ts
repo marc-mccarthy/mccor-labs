@@ -4,7 +4,7 @@ export const roles: readonly Role[] = [
   {
     slug: 'software-engineer-i',
     title: 'Software Engineer I',
-    level: 'Early career',
+    level: 'Early Career',
     summary:
       'Your first or second engineering job, on real client work, with people who will actually review your code.',
     youWillDo: [
@@ -25,7 +25,7 @@ export const roles: readonly Role[] = [
   {
     slug: 'software-engineer-ii',
     title: 'Software Engineer II',
-    level: 'Mid-level',
+    level: 'Mid-Level',
     summary:
       'You have shipped things, broken things, and fixed them. Now own projects rather than tickets.',
     youWillDo: [
@@ -45,8 +45,8 @@ export const roles: readonly Role[] = [
   },
   {
     slug: 'ai-engineer',
-    title: 'AI-forward engineer',
-    level: 'Mid to senior',
+    title: 'AI-Forward Engineer',
+    level: 'Mid to Senior',
     summary:
       'Build AI features that can be evaluated, for clients who need them to be right rather than impressive.',
     youWillDo: [
@@ -66,7 +66,7 @@ export const roles: readonly Role[] = [
   },
   {
     slug: 'marketing-specialist',
-    title: 'Marketing specialist',
+    title: 'Marketing Specialist',
     level: 'Open',
     summary:
       'We are four engineers who would rather build than sell. Own how this firm is found and understood.',

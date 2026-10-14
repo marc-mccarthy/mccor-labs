@@ -11,9 +11,9 @@ describe('NotFound', () => {
   it('keeps its message and home button', () => {
     render(<NotFound />)
     expect(
-      screen.getByRole('heading', { level: 1, name: 'That page does not exist' }),
+      screen.getByRole('heading', { level: 1, name: 'That Page Does Not Exist' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Back to the home page' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Back to the Home Page' })).toHaveAttribute(
       'href',
       '/',
     )
@@ -21,7 +21,7 @@ describe('NotFound', () => {
 
   it('shows the mono signal-lost eyebrow', () => {
     render(<NotFound />)
-    expect(screen.getByText('404 · signal lost')).toHaveClass('font-mono')
+    expect(screen.getByText('404 · Signal Lost')).toHaveClass('font-mono')
   })
 
   it('draws a fixed-size three-node graphic whose crimson edge is motion-safe and stops short', () => {

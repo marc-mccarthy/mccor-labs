@@ -61,21 +61,21 @@ export const retrievalPipeline: PipelineSample = {
     'Ingestion',
     'Chunking',
     'Embedding',
-    'Vector store',
-    'Hybrid retrieval',
+    'Vector Store',
+    'Hybrid Retrieval',
     'Reranking',
     'Evaluation',
   ],
 }
 
 export const retrievalStageDescriptors: readonly string[] = [
-  'parse and dedupe sources',
-  'split on document structure',
-  'vectorise every chunk',
-  'index with metadata',
-  'dense plus keyword match',
-  'reorder by relevance',
-  'score against a baseline',
+  'Parse and dedupe sources',
+  'Split on document structure',
+  'Vectorise every chunk',
+  'Index with metadata',
+  'Dense plus keyword match',
+  'Reorder by relevance',
+  'Score against a baseline',
 ]
 
 export interface IntegrationSample {
@@ -86,7 +86,7 @@ export interface IntegrationSample {
 export const integrationSurfaces: IntegrationSample = {
   description:
     'An LLM feature reaching four named systems, CRM, ticketing, data warehouse and records database, only through one explicit permission boundary.',
-  surfaces: ['CRM', 'Ticketing', 'Data warehouse', 'Records DB'],
+  surfaces: ['CRM', 'Ticketing', 'Data Warehouse', 'Records DB'],
 }
 
 export interface TerminalSampleLine {
@@ -110,6 +110,6 @@ export const terminalSamples: Readonly<Record<string, readonly TerminalSampleLin
 }
 
 export const toolsWeBuildWith = {
-  heading: 'Tools we build with',
+  heading: 'Tools We Build With',
   tools: ['AWS', 'Postgres', 'Next.js', 'Anthropic', 'OpenAI', 'Terraform'],
 } as const

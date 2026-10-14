@@ -17,7 +17,7 @@ describe('LabPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: labPageCopy.title }),
     ).toBeInTheDocument()
-    expect(screen.getByText(`Rubric version ${RUBRIC_VERSION}`)).toBeInTheDocument()
+    expect(screen.getByText(`Rubric Version ${RUBRIC_VERSION}`)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: labPageCopy.evalsLink })).toHaveAttribute(
       'href',
       '/lab/evals/',
@@ -31,7 +31,7 @@ describe('LabPage', () => {
     expect(metadata.title).toBe(labPageCopy.title)
     await userEvent.click(screen.getByRole('button', { name: /^Why\?/ }))
     await userEvent.click(screen.getByRole('button', { name: whyCopy.showCode }))
-    expect(screen.getByRole('region', { name: 'Rule R1 as code' })).toBeVisible()
+    expect(screen.getByRole('region', { name: 'Rule R1 as Code' })).toBeVisible()
     expect(screen.getByText('rules/R1.ts')).toBeInTheDocument()
   }, 20_000)
 })

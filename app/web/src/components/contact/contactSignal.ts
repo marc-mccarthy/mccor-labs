@@ -10,6 +10,7 @@ export interface ContactSignal {
 export interface ContactFields {
   name: string
   email: string
+  phone: string
   message: string
 }
 
@@ -20,7 +21,7 @@ declare global {
 }
 
 const INITIAL: ContactSignal = { charge: 0, phase: 'idle' }
-const PARTS = 3
+const PARTS = 4
 
 const listeners = new Set<() => void>()
 let snapshot = INITIAL
@@ -32,14 +33,18 @@ function fieldErrors(fields: ContactFields) {
 export function messageFill(text: string): number {
   const length = text.trim().length
   if (length < MESSAGE_MIN) return length / MESSAGE_MIN
-  return fieldErrors({ name: '', email: '', message: text }).message === undefined ? 1 : 0
+  return fieldErrors({ name: '', email: '', phone: '', message: text }).message ===
+    undefined
+    ? 1
+    : 0
 }
 
 export function contactCharge(fields: ContactFields): number {
   const errors = fieldErrors(fields)
   const name = errors.name === undefined ? 1 : 0
   const email = errors.email === undefined ? 1 : 0
-  return (name + email + messageFill(fields.message)) / PARTS
+  const phone = errors.phone === undefined ? 1 : 0
+  return (name + email + phone + messageFill(fields.message)) / PARTS
 }
 
 function publish(next: ContactSignal) {

@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState, type SubmitEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type InputEvent,
+  type SubmitEvent,
+} from 'react'
 
 import { BookingCta } from '@/components/layout/BookingCta'
 import { Stagger } from '@/components/motion/Stagger'
@@ -18,8 +25,10 @@ import {
   validateContact,
   type ContactError,
   type ContactErrors,
+  type ContactRequest,
 } from '@/lib/contact'
 import { labMailtoHref } from '@/lib/labResult'
+import { formatUsPhone, phoneDigits } from '@/lib/phone'
 
 import { ContactReceipt } from './ContactReceipt'
 import {
@@ -52,9 +61,96 @@ function syncProgress(form: HTMLFormElement | null) {
     contactCharge({
       name: fieldValue(form, 'name'),
       email: fieldValue(form, 'email'),
+      phone: fieldValue(form, 'phone'),
       message: fieldValue(form, 'message'),
     }),
   )
+}
+
+function readRequest(form: HTMLFormElement, openedAt: number): ContactRequest {
+  const data = new FormData(form)
+  const field = (key: string) => {
+    const value = data.get(key)
+    return typeof value === 'string' ? value : ''
+  }
+  return {
+    name: field('name'),
+    email: field('email'),
+    phone: field('phone'),
+    company: field('company'),
+    message: field('message'),
+    budget: field('budget'),
+    honeypot: field('honeypot'),
+    elapsedMs: Date.now() - openedAt,
+  }
+}
+
+const VALIDATED_FIELDS = ['name', 'email', 'phone', 'message'] as const
+
+type ValidatedField = (typeof VALIDATED_FIELDS)[number]
+
+function validatedField(target: EventTarget): ValidatedField | null {
+  if (!(target instanceof HTMLElement)) return null
+  return VALIDATED_FIELDS.find((field) => field === target.id) ?? null
+}
+
+function withFieldError(
+  errors: ContactErrors,
+  field: ValidatedField,
+  error: string | undefined,
+): ContactErrors {
+  if (errors[field] === error) return errors
+  if (error !== undefined) return { ...errors, [field]: error }
+  return Object.fromEntries(Object.entries(errors).filter(([key]) => key !== field))
+}
+
+function isSubmitButton(target: EventTarget | null): boolean {
+  return target instanceof HTMLButtonElement && target.type === 'submit'
+}
+
+function digitsIn(text: string): string {
+  return text.replace(/\D/g, '')
+}
+
+function dropNeighbourDigit(digits: string, before: number, inputType: string) {
+  if (inputType === 'deleteContentBackward' && before > 0) {
+    return {
+      digits: digits.slice(0, before - 1) + digits.slice(before),
+      before: before - 1,
+    }
+  }
+  if (inputType === 'deleteContentForward') {
+    return { digits: digits.slice(0, before) + digits.slice(before + 1), before }
+  }
+  return { digits, before }
+}
+
+function caretAfterDigits(formatted: string, count: number): number {
+  if (count === 0) return 0
+  let seen = 0
+  for (let index = 0; index < formatted.length; index += 1) {
+    if (/\d/.test(formatted.charAt(index))) seen += 1
+    if (seen === count) return index + 1
+  }
+  return formatted.length
+}
+
+function formatPhoneInput(input: HTMLInputElement, inputType: string, previous: string) {
+  const caret = input.selectionStart ?? input.value.length
+  const typed = digitsIn(input.value)
+  const typedBefore = digitsIn(input.value.slice(0, caret)).length
+  const { digits, before } =
+    typed === digitsIn(previous)
+      ? dropNeighbourDigit(typed, typedBefore, inputType)
+      : { digits: typed, before: typedBefore }
+  const formatted = formatUsPhone(digits)
+  if (formatted === input.value) return
+  const dropped = digits.startsWith('1') ? 1 : 0
+  const count = Math.min(Math.max(before - dropped, 0), phoneDigits(digits).length)
+  input.value = formatted
+  if (input.ownerDocument.activeElement !== input) return
+  const position = caretAfterDigits(formatted, count)
+  input.setSelectionRange(position, position)
 }
 
 const LABEL =
@@ -108,6 +204,9 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const formRef = useRef<HTMLFormElement>(null)
   const openedAt = useRef(0)
   const mounted = useRef(false)
+  const dirty = useRef(new Set<ValidatedField>())
+  const phoneValue = useRef('')
+  const pressingSubmit = useRef(false)
   const prefill = useLabPrefill()
 
   useEffect(() => {
@@ -171,20 +270,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (status === 'sending' || status === 'sent') return
-    const data = new FormData(event.currentTarget)
-    const field = (key: string) => {
-      const value = data.get(key)
-      return typeof value === 'string' ? value : ''
-    }
-    const request = {
-      name: field('name'),
-      email: field('email'),
-      company: field('company'),
-      message: field('message'),
-      budget: field('budget'),
-      honeypot: field('honeypot'),
-      elapsedMs: Date.now() - openedAt.current,
-    }
+    const request = readRequest(event.currentTarget, openedAt.current)
 
     const found = validateContact(request)
     setErrors(found)
@@ -226,6 +312,43 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     )
   }
 
+  function fieldError(form: HTMLFormElement, field: ValidatedField) {
+    return validateContact(readRequest(form, openedAt.current))[field]
+  }
+
+  function onFieldInput(event: InputEvent<HTMLFormElement>) {
+    const field = validatedField(event.target)
+    if (field === null) return
+    dirty.current.add(field)
+    if (errors[field] === undefined) return
+    if (fieldError(event.currentTarget, field) !== undefined) return
+    setErrors((current) => withFieldError(current, field, undefined))
+  }
+
+  function onFieldBlur(event: FocusEvent<HTMLFormElement>) {
+    const field = validatedField(event.target)
+    if (field === null || !dirty.current.has(field)) return
+    if (pressingSubmit.current || isSubmitButton(event.relatedTarget)) return
+    const error = fieldError(event.currentTarget, field)
+    setErrors((current) => withFieldError(current, field, error))
+  }
+
+  function onSubmitPointerDown() {
+    pressingSubmit.current = true
+    const release = () => {
+      pressingSubmit.current = false
+      window.removeEventListener('pointerup', release)
+      window.removeEventListener('pointercancel', release)
+    }
+    window.addEventListener('pointerup', release)
+    window.addEventListener('pointercancel', release)
+  }
+
+  function onPhoneInput(event: InputEvent<HTMLInputElement>) {
+    formatPhoneInput(event.currentTarget, event.nativeEvent.inputType, phoneValue.current)
+    phoneValue.current = event.currentTarget.value
+  }
+
   return (
     <form
       ref={formRef}
@@ -235,7 +358,9 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       noValidate
       onInput={(event) => {
         syncProgress(event.currentTarget)
+        onFieldInput(event)
       }}
+      onBlur={onFieldBlur}
       data-status={status}
       data-error={errorKind ?? undefined}
       aria-busy={sending}
@@ -265,6 +390,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                 id="name"
                 name="name"
                 autoComplete="name"
+                required
+                placeholder={ui.contactPlaceholderName}
                 readOnly={sending}
                 className={fieldVariants({ kind: 'input' })}
                 aria-invalid={errors.name !== undefined}
@@ -288,6 +415,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                 name="email"
                 type="email"
                 autoComplete="email"
+                required
+                placeholder={ui.contactPlaceholderEmail}
                 readOnly={sending}
                 className={fieldVariants({ kind: 'input' })}
                 aria-invalid={errors.email !== undefined}
@@ -303,6 +432,37 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
               )}
             </div>
             <div className="group/field">
+              <label htmlFor="phone" className={LABEL}>
+                {ui.contactLabelPhone}
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required
+                placeholder={ui.contactPlaceholderPhone}
+                readOnly={sending}
+                onInput={onPhoneInput}
+                className={fieldVariants({ kind: 'input' })}
+                aria-invalid={errors.phone !== undefined}
+                aria-describedby={
+                  errors.phone === undefined ? 'phone-hint' : 'phone-hint phone-error'
+                }
+              />
+              <p id="phone-hint" className="mt-1 text-sm text-muted">
+                {ui.contactPhoneHint}
+              </p>
+              {errors.phone !== undefined && (
+                <p
+                  id="phone-error"
+                  className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+                >
+                  {errors.phone}
+                </p>
+              )}
+            </div>
+            <div className="group/field">
               <label htmlFor="company" className={LABEL}>
                 {ui.contactLabelCompany}{' '}
                 <span className="text-muted">{ui.contactOptional}</span>
@@ -312,6 +472,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                 name="company"
                 autoComplete="organization"
                 maxLength={100}
+                placeholder={ui.contactPlaceholderCompany}
                 readOnly={sending}
                 className={fieldVariants({ kind: 'input' })}
               />
@@ -360,6 +521,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
                 rows={6}
                 key={prefill ?? 'empty'}
                 defaultValue={prefill ?? undefined}
+                required
+                placeholder={ui.contactPlaceholderMessage}
                 readOnly={sending}
                 className={fieldVariants({ kind: 'textarea' })}
                 aria-invalid={errors.message !== undefined}
@@ -410,6 +573,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
           >
             <Button
               type="submit"
+              onPointerDown={onSubmitPointerDown}
               aria-disabled={sending || status === 'sent'}
               className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group-data-[status=sending]/form:aria-disabled:cursor-progress group-data-[status=sending]/form:aria-disabled:opacity-100"
             >

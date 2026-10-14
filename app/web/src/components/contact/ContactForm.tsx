@@ -9,6 +9,7 @@ import { fieldVariants } from '@/components/ui/field'
 import { contactLabCopy } from '@/content/lab/copy'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
+import { inlineLinkDescendant } from '@/components/ui/inline-link'
 import { cn } from '@/lib/cn'
 import {
   contactMailtoHref,
@@ -25,6 +26,15 @@ type Status = 'idle' | 'sending' | 'sent' | 'error'
 
 const LABEL =
   'mb-1 block text-sm text-text motion-on:transition-colors motion-on:duration-(--duration-pointer) group-focus-within/field:text-accent'
+
+const STATUS_WRAP = cn(
+  inlineLinkDescendant,
+  String.raw`group-data-[error=daily\_cap]/form:rounded-r-lg group-data-[error=daily\_cap]/form:border-l-2 group-data-[error=daily\_cap]/form:border-brand group-data-[error=daily\_cap]/form:bg-brand/5 group-data-[error=daily\_cap]/form:py-3 group-data-[error=daily\_cap]/form:pl-4 group-data-[error=daily\_cap]/form:[&>p]:text-text`,
+  'group-data-[error=server]/form:rounded-r-lg group-data-[error=server]/form:border-l-2 group-data-[error=server]/form:border-brand group-data-[error=server]/form:bg-brand/5 group-data-[error=server]/form:py-3 group-data-[error=server]/form:pl-4 group-data-[error=server]/form:[&>p]:text-text',
+  String.raw`group-data-[error=rate\_limit]/form:border-l-2 group-data-[error=rate\_limit]/form:border-border-strong group-data-[error=rate\_limit]/form:pl-4`,
+  String.raw`group-data-[error=too\_fast]/form:border-l-2 group-data-[error=too\_fast]/form:border-border-strong group-data-[error=too\_fast]/form:pl-4`,
+  'group-data-[error=validation]/form:[&>p]:text-brand',
+)
 
 function errorMessage(error: ContactError): string {
   if (error === 'daily_cap') return ui.formErrorDailyCap
@@ -330,9 +340,11 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         )}
       </div>
 
-      <p role="status" aria-live="polite" className="text-sm text-muted">
-        <StatusText text={message} href={mailtoHref} />
-      </p>
+      <div data-status-wrap="" className={STATUS_WRAP}>
+        <p role="status" aria-live="polite" className="text-sm text-muted">
+          <StatusText text={message} href={mailtoHref} />
+        </p>
+      </div>
     </form>
   )
 }

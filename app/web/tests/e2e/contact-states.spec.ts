@@ -486,6 +486,102 @@ test.describe('live form', () => {
     await expect.poll(() => sweepCount(page)).toBe(0)
   })
 
+  test('server errors are tiered', async ({ page }) => {
+    const tiers = [
+      {
+        reply: reply(429, { reason: 'daily_cap' }),
+        text: ui.formErrorDailyCap,
+        rule: '--color-brand',
+        ink: '--color-text',
+      },
+      {
+        reply: reply(500, {}),
+        text: ui.formErrorServer,
+        rule: '--color-brand',
+        ink: '--color-text',
+      },
+      {
+        reply: reply(429, {}),
+        text: ui.formErrorRateLimit,
+        rule: '--color-border-strong',
+        ink: '--color-muted',
+      },
+      {
+        reply: reply(400, { reason: 'too_fast' }),
+        text: ui.formErrorTooFast,
+        rule: '--color-border-strong',
+        ink: '--color-muted',
+      },
+      {
+        reply: reply(400, {}),
+        text: ui.formErrorValidation,
+        rule: null,
+        ink: '--color-brand',
+      },
+    ]
+    await open(page)
+    for (const tier of tiers) {
+      mock.responder = tier.reply
+      await page.locator('#name').fill('Ada Lovelace')
+      await page.locator('#email').fill('ada@example.com')
+      await page
+        .locator('#message')
+        .fill(`Message long enough to pass validation ${tier.text.slice(0, 8)}.`)
+      await submit(page)
+      const status = page.locator('form').getByRole('status')
+      await expect(status).toHaveText(tier.text)
+      const ink = await tokenColor(page, tier.ink)
+      await expect
+        .poll(() => status.evaluate((node) => getComputedStyle(node).color))
+        .toBe(ink)
+      const wrap = page.locator('[data-status-wrap]')
+      if (tier.rule !== null) {
+        const rule = await tokenColor(page, tier.rule)
+        await expect
+          .poll(() => wrap.evaluate((node) => getComputedStyle(node).borderLeftColor))
+          .toBe(rule)
+      }
+      await expectNoViolations(page)
+    }
+  })
+
+  test('status mailto link has hover and press states', async ({ page }) => {
+    await open(page)
+    await submitWith(page, reply(500, {}))
+    const link = page.locator('[data-status-wrap] a')
+    await expect(link).toBeVisible()
+    await link.hover()
+    const hover = await tokenColor(page, '--color-accent-hover')
+    await expect
+      .poll(() => link.evaluate((node) => getComputedStyle(node).color))
+      .toBe(hover)
+    await expect
+      .poll(() => link.evaluate((node) => getComputedStyle(node).textDecorationThickness))
+      .toBe('2px')
+    await page.mouse.down()
+    const press = await tokenColor(page, '--color-text')
+    await expect
+      .poll(() => link.evaluate((node) => getComputedStyle(node).color))
+      .toBe(press)
+    await page.mouse.up()
+  })
+
+  test.describe('server error at 390', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('390 server error callout keeps the mailto in view', async ({ page }) => {
+      await open(page)
+      await submitWith(page, reply(500, {}))
+      const link = page.locator('[data-status-wrap] a')
+      await expect(link).toBeVisible()
+      const box = await link.boundingBox()
+      expect(box).not.toBeNull()
+      expect(box?.x).toBeGreaterThanOrEqual(0)
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390)
+      await noOverflow(page)
+    })
+  })
+
   test.describe('invalid focus with motion', () => {
     test.use({
       viewport: { width: 1440, height: 500 },

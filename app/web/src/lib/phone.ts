@@ -1,4 +1,4 @@
-const NATIONAL_LENGTH = 10
+export const NATIONAL_LENGTH = 10
 
 const NANP = /^[2-9]\d{2}[2-9]\d{6}$/
 
@@ -11,8 +11,8 @@ export function phoneDigits(raw: string): string {
   return nationalDigits(raw).slice(0, NATIONAL_LENGTH)
 }
 
-export function formatUsPhone(raw: string): string {
-  const digits = phoneDigits(raw)
+export function formatPhoneDigits(national: string): string {
+  const digits = national.slice(0, NATIONAL_LENGTH)
   if (digits.length <= 3) return digits
   const area = `(${digits.slice(0, 3)}) `
   if (digits.length <= 6) return `${area}${digits.slice(3)}`

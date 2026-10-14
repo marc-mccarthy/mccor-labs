@@ -295,12 +295,56 @@ describe('ContactForm phone formatting', () => {
 
   it('keeps the caret after the edited digit in the middle', async () => {
     const phone = phoneInput()
-    await userEvent.type(phone, '2025550123')
+    await userEvent.type(phone, '202555012')
     await userEvent.type(phone, '9', { initialSelectionStart: 2, initialSelectionEnd: 2 })
     expect(phone).toHaveValue('(290) 255-5012')
     expect(phone.selectionStart).toBe(3)
     await userEvent.keyboard('{Backspace}')
     expect(phone).toHaveValue('(202) 555-012')
+    expect(phone.selectionStart).toBe(2)
+  })
+
+  it('keeps a real leading 1 when the first digit is deleted', async () => {
+    const phone = phoneInput()
+    await userEvent.type(phone, '2125550123')
+    await userEvent.type(phone, '{Backspace}', {
+      initialSelectionStart: 2,
+      initialSelectionEnd: 2,
+    })
+    expect(phone).toHaveValue('(125) 550-123')
+    expect(phone.selectionStart).toBe(0)
+  })
+
+  it('drops a typed country code from an empty field', async () => {
+    const phone = phoneInput()
+    await userEvent.type(phone, '12025550123')
+    expect(phone).toHaveValue('(202) 555-0123')
+  })
+
+  it('drops the country code when pasting over a selected number', async () => {
+    const phone = phoneInput()
+    await userEvent.type(phone, '3125550199')
+    phone.setSelectionRange(0, phone.value.length)
+    await userEvent.paste('1-202-555-0123')
+    expect(phone).toHaveValue('(202) 555-0123')
+  })
+
+  it('drops the country code from an autofill that replaces a number', () => {
+    const phone = phoneInput()
+    fireEvent.input(phone, { target: { value: '312' } })
+    fireEvent.input(phone, { target: { value: '+12025550123' } })
+    expect(phone).toHaveValue('(202) 555-0123')
+  })
+
+  it('ignores digits added to a full number', async () => {
+    const phone = phoneInput()
+    await userEvent.click(phone)
+    await userEvent.paste('11234567890')
+    expect(phone).toHaveValue('(123) 456-7890')
+    await userEvent.type(phone, '0')
+    expect(phone).toHaveValue('(123) 456-7890')
+    await userEvent.type(phone, '5', { initialSelectionStart: 2, initialSelectionEnd: 2 })
+    expect(phone).toHaveValue('(123) 456-7890')
     expect(phone.selectionStart).toBe(2)
   })
 })
@@ -360,6 +404,20 @@ describe('ContactForm blur validation', () => {
     expect(phone).toHaveAttribute('aria-invalid', 'false')
   })
 
+  it('updates a shown error as the field changes', async () => {
+    await userEvent.click(screen.getByRole('button', { name: ui.formSubmit }))
+    expect(screen.getByText(ui.contactErrorPhone)).toBeInTheDocument()
+    const phone = phoneInput()
+    await userEvent.type(phone, '2')
+    expect(screen.queryByText(ui.contactErrorPhone)).toBeNull()
+    expect(screen.getByText(ui.contactErrorPhoneInvalid)).toBeInTheDocument()
+    expect(phone).toHaveAttribute('aria-describedby', 'phone-hint phone-error')
+    await userEvent.type(phone, '025550123')
+    expect(screen.queryByText(ui.contactErrorPhoneInvalid)).toBeNull()
+    await userEvent.type(screen.getByLabelText(/company/i), 'Acme')
+    expect(screen.queryByText(ui.contactErrorCompanyLength)).toBeNull()
+  })
+
   it('lets a click on Send through from a dirty field and validates every field', async () => {
     const phone = phoneInput()
     await userEvent.type(phone, '20255')
@@ -396,6 +454,31 @@ describe('ContactForm blur validation', () => {
     expect(screen.getByText(ui.contactErrorPhone)).toBeInTheDocument()
     expect(screen.getByText(ui.contactErrorMessage)).toBeInTheDocument()
     expect(signedPostJson).not.toHaveBeenCalled()
+  })
+
+  it('skips blur validation when a touch press blurs after pointerup', () => {
+    const message = screen.getByLabelText(/message/i)
+    const send = screen.getByRole('button', { name: ui.formSubmit })
+    fireEvent.input(message, { target: { value: 'Too short' } })
+    fireEvent.pointerDown(send)
+    fireEvent.pointerUp(send)
+    fireEvent.blur(message, { relatedTarget: null })
+    expect(screen.queryByText(ui.contactErrorMessage)).toBeNull()
+    fireEvent.click(send)
+    expect(screen.getByText(ui.contactErrorName)).toBeInTheDocument()
+    expect(screen.getByText(ui.contactErrorEmail)).toBeInTheDocument()
+    expect(screen.getByText(ui.contactErrorPhone)).toBeInTheDocument()
+    expect(screen.getByText(ui.contactErrorMessage)).toBeInTheDocument()
+    expect(signedPostJson).not.toHaveBeenCalled()
+  })
+
+  it('validates on blur again after the Send click', () => {
+    const message = screen.getByLabelText(/message/i)
+    fireEvent.input(message, { target: { value: 'Too short' } })
+    fireEvent.pointerDown(screen.getByRole('button', { name: ui.formSubmit }))
+    fireEvent.click(document.body)
+    fireEvent.blur(message, { relatedTarget: null })
+    expect(screen.getByText(ui.contactErrorMessage)).toBeInTheDocument()
   })
 
   it('validates on blur again once the Send press is released', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatUsPhone, isValidUsPhone, phoneDigits, toE164 } from './phone'
+import { formatPhoneDigits, isValidUsPhone, phoneDigits, toE164 } from './phone'
 
 const CASES: readonly (readonly [string, string, boolean])[] = [
   ['valid E.164', '+12025550123', true],
@@ -43,27 +43,21 @@ describe('phoneDigits', () => {
   })
 })
 
-describe('formatUsPhone', () => {
+describe('formatPhoneDigits', () => {
   it.each([
     ['', ''],
-    ['2', '2'],
     ['202', '202'],
     ['2025', '(202) 5'],
-    ['202555', '(202) 555'],
-    ['2025550', '(202) 555-0'],
-    ['2025550123', '(202) 555-0123'],
-    ['+12025550123', '(202) 555-0123'],
-    ['(202) 5', '(202) 5'],
-    ['(202) ', '202'],
-    ['(202) 555-', '(202) 555'],
-    ['202555012399', '(202) 555-0123'],
-  ])('formats %j as %j', (raw, formatted) => {
-    expect(formatUsPhone(raw)).toBe(formatted)
+    ['1255501', '(125) 550-1'],
+    ['1234567890', '(123) 456-7890'],
+    ['12345678901', '(123) 456-7890'],
+  ])('formats %j as %j without dropping a leading 1', (digits, formatted) => {
+    expect(formatPhoneDigits(digits)).toBe(formatted)
   })
 
   it('never emits a trailing separator', () => {
     for (let length = 0; length <= 10; length++) {
-      expect(formatUsPhone('2025550123'.slice(0, length))).toMatch(/\d$|^$/)
+      expect(formatPhoneDigits('2025550123'.slice(0, length))).toMatch(/\d$|^$/)
     }
   })
 })

@@ -15,14 +15,14 @@ Form is not live yet (P0-T21/T23-T25 pending). Reviewed by three ui-ux-pro-max r
 ## Shared phone rules
 
 - Example number everywhere a valid one is needed: `(202) 555-0123` / `+12025550123`. `5551234567` is format-only and invalid (exchange starts with 1).
-- Digits: strip non-digits; drop one leading `1` whenever it is the first digit; cap at 10.
+- Digits for validation/E.164: strip non-digits; drop one leading `1`; cap at 10. The input handler uses a stricter country-code rule (T4 ST2).
 - Valid: 10 digits, area code and exchange start 2-9. API wire format E.164 only: `^\+1[2-9]\d{2}[2-9]\d{6}$`.
 
 ## Tasks
 
 T1 Phone lib — new `app/web/src/lib/phone.ts` + `phone.test.ts`
 ST1 `phoneDigits(raw)` per shared rules.
-ST2 `formatUsPhone(raw)` progressive, no trailing separator: `202` → `202`, `2025` → `(202) 5`, `2025550` → `(202) 555-0`, full → `(202) 555-0123`.
+ST2 `formatPhoneDigits(national)` progressive, never drops a leading 1, no trailing separator: `202` → `202`, `2025` → `(202) 5`, `2025550` → `(202) 555-0`, full → `(202) 555-0123`.
 ST3 `isValidUsPhone(raw)` accepts formatted, bare, and E.164 input.
 ST4 `toE164(raw)` → `+1XXXXXXXXXX`.
 ST5 Shared case table (mirrored in API tests): valid E.164; `2025550123`; `+1 202 555 0123`; `+1 (202) 555-0123`; `1-202-555-0123`; `+11025550123` invalid; `+12021550123` invalid; short; letters; empty.
@@ -39,7 +39,7 @@ ST3 Add new keys to `ui.test.ts` assertNoClaims `it.each`.
 
 T4 Form UI — `app/web/src/components/contact/ContactForm.tsx`, tests
 ST1 Phone field after Email: `type="tel"`, `autoComplete="tel"`, `id/name="phone"`, NO `maxLength`, same `fieldVariants`/`LABEL`/error `<p id="phone-error">` with the `field-error` animation class copied verbatim. Visible hint `<p id="phone-hint">` (text-muted, size of optional marker); `aria-describedby="phone-hint"` plus `phone-error` when present.
-ST2 Formatting: input stays uncontrolled. Phone's own `onInput`: compute digits before caret, set `el.value = formatUsPhone(...)`, `setSelectionRange` after the same digit count. If digits unchanged and `inputType` is `deleteContentBackward`/`deleteContentForward`, remove the neighbouring digit. Inserts never depend on `inputType` (Gboard composition). Unchanged digits otherwise → no rewrite.
+ST2 Formatting: input stays uncontrolled. Phone's own `onInput`: compute digits before caret, set `el.value = formatPhoneDigits(...)`, `setSelectionRange` after the same digit count. A leading 1 is stripped as country code only when there are exactly 11 digits or the field was empty; a full 10-digit field ignores inserts. If digits unchanged and `inputType` is `deleteContentBackward`/`deleteContentForward`, remove the neighbouring digit. Inserts never depend on `inputType` (Gboard composition). Unchanged digits otherwise → no rewrite.
 ST3 Placeholders on name, email, phone, company, message. Color already `placeholder:text-muted` (field.ts:4, ~7:1); manual contrast check only.
 ST4 Native `required` on name, email, phone, message (form keeps `noValidate`).
 ST5 Extract `readRequest(form)` from the FormData block (:174-187), add phone; reuse on submit and blur.

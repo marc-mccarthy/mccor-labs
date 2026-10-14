@@ -28,7 +28,7 @@ import {
   type ContactRequest,
 } from '@/lib/contact'
 import { labMailtoHref } from '@/lib/labResult'
-import { formatUsPhone, phoneDigits } from '@/lib/phone'
+import { formatPhoneDigits, NATIONAL_LENGTH } from '@/lib/phone'
 
 import { ContactReceipt } from './ContactReceipt'
 import {
@@ -135,18 +135,46 @@ function caretAfterDigits(formatted: string, count: number): number {
   return formatted.length
 }
 
+function isInsertion(typed: string, before: number, previous: string): boolean {
+  const added = typed.length - previous.length
+  if (added <= 0 || before < added) return false
+  return typed.slice(0, before - added) + typed.slice(before) === previous
+}
+
+function hasCountryCode(typed: string, previous: string): boolean {
+  return (
+    typed.startsWith('1') && (typed.length === NATIONAL_LENGTH + 1 || previous === '')
+  )
+}
+
+function nextPhoneDigits(
+  typed: string,
+  before: number,
+  previous: string,
+  inputType: string,
+) {
+  if (typed === previous) return dropNeighbourDigit(typed, before, inputType)
+  if (previous.length >= NATIONAL_LENGTH && isInsertion(typed, before, previous)) {
+    return { digits: previous, before: before - (typed.length - previous.length) }
+  }
+  if (hasCountryCode(typed, previous)) {
+    return { digits: typed.slice(1), before: Math.max(before - 1, 0) }
+  }
+  return { digits: typed, before }
+}
+
 function formatPhoneInput(input: HTMLInputElement, inputType: string, previous: string) {
   const caret = input.selectionStart ?? input.value.length
-  const typed = digitsIn(input.value)
-  const typedBefore = digitsIn(input.value.slice(0, caret)).length
-  const { digits, before } =
-    typed === digitsIn(previous)
-      ? dropNeighbourDigit(typed, typedBefore, inputType)
-      : { digits: typed, before: typedBefore }
-  const formatted = formatUsPhone(digits)
+  const { digits, before } = nextPhoneDigits(
+    digitsIn(input.value),
+    digitsIn(input.value.slice(0, caret)).length,
+    digitsIn(previous),
+    inputType,
+  )
+  const national = digits.slice(0, NATIONAL_LENGTH)
+  const formatted = formatPhoneDigits(national)
   if (formatted === input.value) return
-  const dropped = digits.startsWith('1') ? 1 : 0
-  const count = Math.min(Math.max(before - dropped, 0), phoneDigits(digits).length)
+  const count = Math.min(before, national.length)
   input.value = formatted
   if (input.ownerDocument.activeElement !== input) return
   const position = caretAfterDigits(formatted, count)
@@ -269,6 +297,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    pressingSubmit.current = false
     if (status === 'sending' || status === 'sent') return
     const request = readRequest(event.currentTarget, openedAt.current)
 
@@ -321,8 +350,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     if (field === null) return
     dirty.current.add(field)
     if (errors[field] === undefined) return
-    if (fieldError(event.currentTarget, field) !== undefined) return
-    setErrors((current) => withFieldError(current, field, undefined))
+    const error = fieldError(event.currentTarget, field)
+    setErrors((current) =>
+      current[field] === undefined ? current : withFieldError(current, field, error),
+    )
   }
 
   function onFieldBlur(event: FocusEvent<HTMLFormElement>) {
@@ -337,11 +368,11 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     pressingSubmit.current = true
     const release = () => {
       pressingSubmit.current = false
-      window.removeEventListener('pointerup', release)
-      window.removeEventListener('pointercancel', release)
+      window.removeEventListener('click', release, true)
+      window.removeEventListener('pointercancel', release, true)
     }
-    window.addEventListener('pointerup', release)
-    window.addEventListener('pointercancel', release)
+    window.addEventListener('click', release, true)
+    window.addEventListener('pointercancel', release, true)
   }
 
   function onPhoneInput(event: InputEvent<HTMLInputElement>) {

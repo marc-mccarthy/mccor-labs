@@ -731,6 +731,7 @@ test.describe('live form', () => {
         await expect(
           page.getByRole('button', { name: /send another|reset/i }),
         ).toHaveCount(0)
+        await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
         await expectNoViolations(page)
         await expect(page.getByText(ui.contactToastSent)).toBeHidden({ timeout: 8000 })
       })

@@ -471,6 +471,14 @@ test.describe('live form', () => {
       expect(await liveAnimations(page)).toEqual([])
     })
 
+    test('panel edge is drawn under reduced motion', async ({ page }) => {
+      await open(page)
+      const edge = page.locator('[data-panel-edge]')
+      const transform = await edge.evaluate((node) => getComputedStyle(node).transform)
+      expect(transform).toBe('none')
+      expect(await liveAnimations(page)).toEqual([])
+    })
+
     test('sending bar is static under reduced motion', async ({ page }) => {
       await open(page)
       const pending = gated()

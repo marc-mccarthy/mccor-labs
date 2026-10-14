@@ -23,6 +23,7 @@ export default function ContactPage() {
         image="/media/brand/cta-terminus.webp"
         imageClassName="max-sm:object-[70%_50%]"
         scene={<ContactBeam />}
+        handoff
       />
       <ContactPanel endpoint={env.contactEndpoint}>
         <ContactForm endpoint={env.contactEndpoint} />

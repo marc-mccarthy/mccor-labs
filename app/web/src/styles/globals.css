@@ -414,6 +414,58 @@
   }
 }
 
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes panel-edge-draw {
+      from {
+        transform: scaleX(0.08);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    @keyframes handoff-dim {
+      to {
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes handoff-zoom {
+      to {
+        transform: scale(1.04);
+      }
+    }
+
+    :root:not([data-motion='paused']) [data-panel-edge] {
+      animation: panel-edge-draw linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+
+    [data-handoff-scrim]::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-base);
+      opacity: 0;
+    }
+
+    :root:not([data-motion='paused']) [data-handoff-scrim]::before {
+      animation: handoff-dim linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+
+    :root:not([data-motion='paused']) [data-handoff-zoom] {
+      animation: handoff-zoom linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 40vh;
+    }
+  }
+}
+
 @keyframes signal-draw {
   from {
     stroke-dashoffset: 1;

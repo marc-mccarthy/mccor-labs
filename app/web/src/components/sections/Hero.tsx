@@ -60,7 +60,7 @@ export function Hero() {
                 Senior Engineering & AI Studio
               </Badge>
 
-              <h1 className="text-display-md leading-tight font-bold text-balance text-text drop-shadow-md lg:text-display-lg">
+              <h1 className="text-hero leading-tight font-bold text-balance text-text drop-shadow-md lg:text-hero-lg">
                 {sloganSentences.map((sentence, index) => (
                   <Fragment key={sentence}>
                     {index > 0 && ' '}

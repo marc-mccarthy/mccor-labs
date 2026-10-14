@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { signedPostJson } from '@/lib/signedPost'
 import {
+  CONTACT_TIMEOUT_MS,
   MAILTO_BODY_MAX,
   contactMailtoHref,
   submitContact,
@@ -162,6 +163,31 @@ describe('submitContact', () => {
       ok: false,
       error: 'validation',
     })
+  })
+})
+
+describe('submitContact timeout', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('gives up on a hung request after the timeout and reports a server error', async () => {
+    vi.useFakeTimers()
+    vi.mocked(signedPostJson).mockImplementation(
+      () => new Promise<Response>(() => undefined),
+    )
+    const pending = submitContact(valid, 'https://api.test/contact')
+    await vi.advanceTimersByTimeAsync(CONTACT_TIMEOUT_MS)
+    expect(await pending).toEqual({ ok: false, error: 'server' })
+  })
+
+  it('leaves no pending timer after a fast response', async () => {
+    vi.useFakeTimers()
+    vi.mocked(signedPostJson).mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    )
+    await submitContact(valid, 'https://api.test/contact')
+    expect(vi.getTimerCount()).toBe(0)
   })
 })
 

@@ -22,6 +22,8 @@ export type ContactErrors = Partial<
   Record<'name' | 'email' | 'company' | 'message', string>
 >
 
+export const CONTACT_TIMEOUT_MS = 15000
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateContact(request: ContactRequest): ContactErrors {
@@ -55,6 +57,23 @@ async function readJson(response: Response): Promise<Record<string, unknown> | n
   }
 }
 
+async function postWithin(
+  endpoint: string,
+  request: ContactRequest,
+): Promise<Response | 'timeout'> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timer = setTimeout(() => {
+      resolve('timeout')
+    }, CONTACT_TIMEOUT_MS)
+  })
+  try {
+    return await Promise.race([signedPostJson(endpoint, request), timeout])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function submitContact(
   request: ContactRequest,
   endpoint: string | null,
@@ -65,7 +84,8 @@ export async function submitContact(
   }
 
   try {
-    const response = await signedPostJson(endpoint, request)
+    const response = await postWithin(endpoint, request)
+    if (response === 'timeout') return { ok: false, error: 'server' }
     const data = await readJson(response)
 
     if (response.ok) {

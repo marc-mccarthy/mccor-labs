@@ -1,0 +1,3877 @@
+{
+  "url": "http://localhost:3000/",
+  "capturedAt": "2026-10-13T15:06:46.760Z",
+  "runs": [
+    {
+      "run": "desktop-normal",
+      "sections": [
+        {
+          "index": 0,
+          "tag": "section",
+          "id": null,
+          "cls": "relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(1)",
+          "heading": "Swift by Instinct. Engineered to the Core.",
+          "top": 65,
+          "height": 765,
+          "canvases": 1,
+          "videos": 1,
+          "images": 2,
+          "screenshot": "shots/desktop-normal-section-00.png"
+        },
+        {
+          "index": 1,
+          "tag": "section",
+          "id": null,
+          "cls": "border-y border-border py-8 sm:py-12",
+          "selector": "main > :nth-child(1) > :nth-child(2)",
+          "heading": "Delivered",
+          "top": 830,
+          "height": 190,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-normal-section-01.png"
+        },
+        {
+          "index": 2,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(3)",
+          "heading": "What we build",
+          "top": 1020,
+          "height": 569,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-normal-section-02.png"
+        },
+        {
+          "index": 3,
+          "tag": "section",
+          "id": null,
+          "cls": "py-0 sm:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(4)",
+          "heading": "Built to be evaluated, not just demoed.",
+          "top": 1589,
+          "height": 1350,
+          "canvases": 1,
+          "videos": 1,
+          "images": 2,
+          "screenshot": "shots/desktop-normal-section-03.png"
+        },
+        {
+          "index": 4,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(5)",
+          "heading": "How retrieval is built",
+          "top": 2939,
+          "height": 348,
+          "canvases": 1,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/desktop-normal-section-04.png"
+        },
+        {
+          "index": 5,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(6)",
+          "heading": "How an engagement runs",
+          "top": 3029,
+          "height": 1800,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-normal-section-05.png"
+        },
+        {
+          "index": 6,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(7)",
+          "heading": "Have something to build?",
+          "top": 4571,
+          "height": 491,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/desktop-normal-section-06.png"
+        }
+      ]
+    },
+    {
+      "run": "desktop-reduced",
+      "sections": [
+        {
+          "index": 0,
+          "tag": "section",
+          "id": null,
+          "cls": "relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(1)",
+          "heading": "Swift by Instinct. Engineered to the Core.",
+          "top": 65,
+          "height": 765,
+          "canvases": 1,
+          "videos": 0,
+          "images": 1,
+          "screenshot": "shots/desktop-reduced-section-00.png"
+        },
+        {
+          "index": 1,
+          "tag": "section",
+          "id": null,
+          "cls": "border-y border-border py-8 sm:py-12",
+          "selector": "main > :nth-child(1) > :nth-child(2)",
+          "heading": "Delivered",
+          "top": 830,
+          "height": 190,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-reduced-section-01.png"
+        },
+        {
+          "index": 2,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(3)",
+          "heading": "What we build",
+          "top": 1020,
+          "height": 569,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-reduced-section-02.png"
+        },
+        {
+          "index": 3,
+          "tag": "section",
+          "id": null,
+          "cls": "py-0 sm:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(4)",
+          "heading": "Built to be evaluated, not just demoed.",
+          "top": 1589,
+          "height": 900,
+          "canvases": 0,
+          "videos": 0,
+          "images": 1,
+          "screenshot": "shots/desktop-reduced-section-03.png"
+        },
+        {
+          "index": 4,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(5)",
+          "heading": "How retrieval is built",
+          "top": 2489,
+          "height": 348,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/desktop-reduced-section-04.png"
+        },
+        {
+          "index": 5,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(6)",
+          "heading": "How an engagement runs",
+          "top": 2837,
+          "height": 1355,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/desktop-reduced-section-05.png"
+        },
+        {
+          "index": 6,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(7)",
+          "heading": "Have something to build?",
+          "top": 4192,
+          "height": 491,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/desktop-reduced-section-06.png"
+        }
+      ]
+    },
+    {
+      "run": "mobile-normal",
+      "sections": [
+        {
+          "index": 0,
+          "tag": "section",
+          "id": null,
+          "cls": "relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(1)",
+          "heading": "Swift by Instinct. Engineered to the Core.",
+          "top": 65,
+          "height": 717,
+          "canvases": 1,
+          "videos": 1,
+          "images": 2,
+          "screenshot": "shots/mobile-normal-section-00.png"
+        },
+        {
+          "index": 1,
+          "tag": "section",
+          "id": null,
+          "cls": "border-y border-border py-8 sm:py-12",
+          "selector": "main > :nth-child(1) > :nth-child(2)",
+          "heading": "Delivered",
+          "top": 782,
+          "height": 258,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-normal-section-01.png"
+        },
+        {
+          "index": 2,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(3)",
+          "heading": "What we build",
+          "top": 1040,
+          "height": 981,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-normal-section-02.png"
+        },
+        {
+          "index": 3,
+          "tag": "section",
+          "id": null,
+          "cls": "py-0 sm:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(4)",
+          "heading": "Built to be evaluated, not just demoed.",
+          "top": 2022,
+          "height": 1266,
+          "canvases": 1,
+          "videos": 0,
+          "images": 1,
+          "screenshot": "shots/mobile-normal-section-03.png"
+        },
+        {
+          "index": 4,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(5)",
+          "heading": "How retrieval is built",
+          "top": 3288,
+          "height": 643,
+          "canvases": 1,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/mobile-normal-section-04.png"
+        },
+        {
+          "index": 5,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(6)",
+          "heading": "How an engagement runs",
+          "top": 3931,
+          "height": 1361,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-normal-section-05.png"
+        },
+        {
+          "index": 6,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(7)",
+          "heading": "Have something to build?",
+          "top": 5292,
+          "height": 477,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/mobile-normal-section-06.png"
+        }
+      ]
+    },
+    {
+      "run": "mobile-reduced",
+      "sections": [
+        {
+          "index": 0,
+          "tag": "section",
+          "id": null,
+          "cls": "relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(1)",
+          "heading": "Swift by Instinct. Engineered to the Core.",
+          "top": 65,
+          "height": 717,
+          "canvases": 1,
+          "videos": 0,
+          "images": 1,
+          "screenshot": "shots/mobile-reduced-section-00.png"
+        },
+        {
+          "index": 1,
+          "tag": "section",
+          "id": null,
+          "cls": "border-y border-border py-8 sm:py-12",
+          "selector": "main > :nth-child(1) > :nth-child(2)",
+          "heading": "Delivered",
+          "top": 782,
+          "height": 258,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-reduced-section-01.png"
+        },
+        {
+          "index": 2,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(3)",
+          "heading": "What we build",
+          "top": 1040,
+          "height": 981,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-reduced-section-02.png"
+        },
+        {
+          "index": 3,
+          "tag": "section",
+          "id": null,
+          "cls": "py-0 sm:py-0",
+          "selector": "main > :nth-child(1) > :nth-child(4)",
+          "heading": "Built to be evaluated, not just demoed.",
+          "top": 2022,
+          "height": 844,
+          "canvases": 0,
+          "videos": 0,
+          "images": 1,
+          "screenshot": "shots/mobile-reduced-section-03.png"
+        },
+        {
+          "index": 4,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(5)",
+          "heading": "How retrieval is built",
+          "top": 2866,
+          "height": 643,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/mobile-reduced-section-04.png"
+        },
+        {
+          "index": 5,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24",
+          "selector": "main > :nth-child(1) > :nth-child(6)",
+          "heading": "How an engagement runs",
+          "top": 3509,
+          "height": 1361,
+          "canvases": 0,
+          "videos": 0,
+          "images": 0,
+          "screenshot": "shots/mobile-reduced-section-05.png"
+        },
+        {
+          "index": 6,
+          "tag": "section",
+          "id": null,
+          "cls": "py-16 sm:py-24 relative overflow-hidden",
+          "selector": "main > :nth-child(1) > :nth-child(7)",
+          "heading": "Have something to build?",
+          "top": 4870,
+          "height": 477,
+          "canvases": 0,
+          "videos": 0,
+          "images": 2,
+          "screenshot": "shots/mobile-reduced-section-06.png"
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "index": 0,
+      "tag": "section",
+      "id": null,
+      "cls": "relative overflow-hidden",
+      "selector": "main > :nth-child(1) > :nth-child(1)",
+      "heading": "Swift by Instinct. Engineered to the Core.",
+      "top": 65,
+      "height": 765,
+      "canvases": 1,
+      "videos": 1,
+      "images": 2,
+      "screenshot": "shots/desktop-normal-section-00.png",
+      "observations": "Hero. Strongest area: video plus canvas over monolith and particle deer, clear H1, single orange CTA. Pill eyebrow and copy are left-aligned at ~170px gutter. Image and canvas animate on scroll (parallax). Mobile: deer sits directly behind eyebrow and body copy, reducing legibility of the grey paragraph. Pause button has cursor default."
+    },
+    {
+      "index": 1,
+      "tag": "section",
+      "id": null,
+      "cls": "border-y border-border py-8 sm:py-12",
+      "selector": "main > :nth-child(1) > :nth-child(2)",
+      "heading": "Delivered",
+      "top": 830,
+      "height": 190,
+      "canvases": 0,
+      "videos": 0,
+      "images": 0,
+      "screenshot": "shots/desktop-normal-section-01.png",
+      "observations": "Delivered strip. Mono text, two items, 190px tall. Reads as a flat, plain text band with weak hierarchy; no logos, numbers or dividers. Generic."
+    },
+    {
+      "index": 2,
+      "tag": "section",
+      "id": null,
+      "cls": "py-16 sm:py-24",
+      "selector": "main > :nth-child(1) > :nth-child(3)",
+      "heading": "What we build",
+      "top": 1020,
+      "height": 569,
+      "canvases": 0,
+      "videos": 0,
+      "images": 0,
+      "screenshot": "shots/desktop-normal-section-02.png",
+      "observations": "What we build. Five uniform cards in a 3+2 grid with an empty sixth cell. AI integration card has a permanent red border as highlight. Cards themselves have no hover; only the h3 link gets a focus outline, no hover change. Static, generic SaaS card grid."
+    },
+    {
+      "index": 3,
+      "tag": "section",
+      "id": null,
+      "cls": "py-0 sm:py-0",
+      "selector": "main > :nth-child(1) > :nth-child(4)",
+      "heading": "Built to be evaluated, not just demoed.",
+      "top": 1589,
+      "height": 1350,
+      "canvases": 1,
+      "videos": 1,
+      "images": 2,
+      "screenshot": "shots/desktop-normal-section-03.png",
+      "observations": "Evaluated band. Full-bleed network video/canvas with large H2, strong signature visual. Section is 1350px tall on desktop; section screenshot shows ~450px of empty dark space below the visual (pin/scroll runway). In full-page capture it leaves a large void. No CTA or proof inside."
+    },
+    {
+      "index": 4,
+      "tag": "section",
+      "id": null,
+      "cls": "py-16 sm:py-24",
+      "selector": "main > :nth-child(1) > :nth-child(5)",
+      "heading": "How retrieval is built",
+      "top": 2939,
+      "height": 348,
+      "canvases": 1,
+      "videos": 0,
+      "images": 2,
+      "screenshot": "shots/desktop-normal-section-04.png",
+      "observations": "How retrieval is built. Seven-node horizontal pipeline with particle canvas along the line. Nodes are empty circles with tiny mono labels; reads thin at 1440 with no stage descriptions. Mobile turns into vertical list. Mid-strength."
+    },
+    {
+      "index": 5,
+      "tag": "section",
+      "id": null,
+      "cls": "py-16 sm:py-24 motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0",
+      "selector": "main > :nth-child(1) > :nth-child(6)",
+      "heading": "How an engagement runs",
+      "top": 3029,
+      "height": 1800,
+      "canvases": 0,
+      "videos": 0,
+      "images": 0,
+      "screenshot": "shots/desktop-normal-section-05.png",
+      "observations": "How an engagement runs. Desktop motion: horizontal pinned track of wide cards (1800px section); at rest only 2.5 cards visible, card 3 clipped at right edge, large empty area under cards and big dark gap before CTA in screenshots. Reduced motion: clean vertical stack of five full-width cards, but cards are mostly empty with one-line copy. Mobile: vertical stack."
+    },
+    {
+      "index": 6,
+      "tag": "section",
+      "id": null,
+      "cls": "py-16 sm:py-24 relative overflow-hidden",
+      "selector": "main > :nth-child(1) > :nth-child(7)",
+      "heading": "Have something to build?",
+      "top": 4571,
+      "height": 491,
+      "canvases": 0,
+      "videos": 0,
+      "images": 2,
+      "screenshot": "shots/desktop-normal-section-06.png",
+      "observations": "Final CTA. Glass card over network image with low-poly red deer; good closure. Orange CTA repeated. Deer art style differs from hero particle deer."
+    }
+  ],
+  "interactive": [
+    {
+      "i": 0,
+      "role": "link",
+      "name": "Skip to content",
+      "tag": "a",
+      "href": "#main",
+      "selector": "a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": -1,
+        "y": -1,
+        "w": 32,
+        "h": 16
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(8, 8, 10)",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)"
+      },
+      "error": "TimeoutError: locator.hover: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-audit-i=\"0\"]')\u001b[22m\n\u001b[2m    - locator resolved to <a href=\"#main\" data-audit-i=\"0\" class=\"sr-only rou"
+    },
+    {
+      "i": 1,
+      "role": "link",
+      "name": "McCor Labs home",
+      "tag": "a",
+      "href": "/",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 168,
+        "y": 4376,
+        "w": 129,
+        "h": 46
+      },
+      "rest": {
+        "transition": "opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-001-rest.png",
+        "hover": "shots/int-001-hover.png",
+        "focus": "shots/int-001-focus.png",
+        "press": "shots/int-001-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["opacity"],
+      "focusChanges": ["outline"],
+      "pressChanges": ["opacity"],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "0.9",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "0.900201",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 2,
+      "role": "link",
+      "name": "Services",
+      "tag": "a",
+      "href": "/services/",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 580,
+        "y": 4389,
+        "w": 55,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-002-rest.png",
+        "hover": "shots/int-002-hover.png",
+        "focus": "shots/int-002-focus.png",
+        "press": "shots/int-002-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 3,
+      "role": "link",
+      "name": "Process",
+      "tag": "a",
+      "href": "/process/",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(2)",
+      "visible": true,
+      "box": {
+        "x": 659,
+        "y": 4389,
+        "w": 52,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-003-rest.png",
+        "hover": "shots/int-003-hover.png",
+        "focus": "shots/int-003-focus.png",
+        "press": "shots/int-003-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": ["color", "borderColor", "outline"],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(244, 244, 246)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(244, 244, 246)",
+        "outline": "none 3px rgb(244, 244, 246)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 4,
+      "role": "link",
+      "name": "About",
+      "tag": "a",
+      "href": "/about/",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(3)",
+      "visible": true,
+      "box": {
+        "x": 735,
+        "y": 4389,
+        "w": 39,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-004-rest.png",
+        "hover": "shots/int-004-hover.png",
+        "focus": "shots/int-004-focus.png",
+        "press": "shots/int-004-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 5,
+      "role": "link",
+      "name": "Contact",
+      "tag": "a",
+      "href": "/contact/",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(4)",
+      "visible": true,
+      "box": {
+        "x": 798,
+        "y": 4389,
+        "w": 51,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-005-rest.png",
+        "hover": "shots/int-005-hover.png",
+        "focus": "shots/int-005-focus.png",
+        "press": "shots/int-005-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 6,
+      "role": "link",
+      "name": "Email us directly",
+      "tag": "a",
+      "href": "mailto:marcm@mccorlabs.com",
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > span:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 1132,
+        "y": 4381,
+        "w": 140,
+        "h": 36
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(8, 8, 10)",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)"
+      },
+      "shots": {
+        "rest": "shots/int-006-rest.png",
+        "hover": "shots/int-006-hover.png",
+        "focus": "shots/int-006-focus.png",
+        "press": "shots/int-006-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["background"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 7,
+      "role": "button",
+      "name": "Open menu",
+      "tag": "button",
+      "href": null,
+      "selector": "header:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "default",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 8,
+      "role": "link",
+      "name": "Services",
+      "tag": "a",
+      "href": "/services/",
+      "selector": "nav#mobile-nav > div:nth-of-type(1) > div:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 9,
+      "role": "link",
+      "name": "Process",
+      "tag": "a",
+      "href": "/process/",
+      "selector": "nav#mobile-nav > div:nth-of-type(1) > div:nth-of-type(2) > a:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 10,
+      "role": "link",
+      "name": "About",
+      "tag": "a",
+      "href": "/about/",
+      "selector": "nav#mobile-nav > div:nth-of-type(1) > div:nth-of-type(3) > a:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 11,
+      "role": "link",
+      "name": "Contact",
+      "tag": "a",
+      "href": "/contact/",
+      "selector": "nav#mobile-nav > div:nth-of-type(1) > div:nth-of-type(4) > a:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 12,
+      "role": "link",
+      "name": "Email us directly",
+      "tag": "a",
+      "href": "mailto:marcm@mccorlabs.com",
+      "selector": "nav#mobile-nav > div:nth-of-type(1) > div:nth-of-type(5) > span:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": false,
+      "box": {
+        "x": 0,
+        "y": 4367,
+        "w": 0,
+        "h": 0
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(8, 8, 10)",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)"
+      },
+      "note": "not visible at rest"
+    },
+    {
+      "i": 13,
+      "role": "button",
+      "name": "Pause background video",
+      "tag": "button",
+      "href": null,
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 1380,
+        "y": 905,
+        "w": 44,
+        "h": 44
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "default",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)"
+      },
+      "shots": {
+        "rest": "shots/int-013-rest.png",
+        "hover": "shots/int-013-hover.png",
+        "focus": "shots/int-013-focus.png",
+        "press": "shots/int-013-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["descendants", "color", "outline"],
+      "focusChanges": ["descendants", "color", "outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "none 3px rgb(255, 122, 0)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "none 3px rgb(255, 122, 0)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 14,
+      "role": "link",
+      "name": "Email us directly",
+      "tag": "a",
+      "href": "mailto:marcm@mccorlabs.com",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > span:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 168,
+        "y": 881,
+        "w": 185,
+        "h": 52
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(8, 8, 10)",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)"
+      },
+      "shots": {
+        "rest": "shots/int-014-rest.png",
+        "hover": "shots/int-014-hover.png",
+        "focus": "shots/int-014-focus.png",
+        "press": "shots/int-014-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["background"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 15,
+      "role": "link",
+      "name": "Websites",
+      "tag": "a",
+      "href": "/services/#websites",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > h3:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 193,
+        "y": 1220,
+        "w": 85,
+        "h": 23
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-015-rest.png",
+        "hover": "shots/int-015-hover.png",
+        "focus": "shots/int-015-focus.png",
+        "press": "shots/int-015-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": [],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": true,
+      "noVisibleFocus": false,
+      "noVisiblePress": true
+    },
+    {
+      "i": 16,
+      "role": "link",
+      "name": "Applications",
+      "tag": "a",
+      "href": "/services/#applications",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > h3:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 569,
+        "y": 1220,
+        "w": 115,
+        "h": 23
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-016-rest.png",
+        "hover": "shots/int-016-hover.png",
+        "focus": "shots/int-016-focus.png",
+        "press": "shots/int-016-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": [],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": true,
+      "noVisibleFocus": false,
+      "noVisiblePress": true
+    },
+    {
+      "i": 17,
+      "role": "link",
+      "name": "AI integration",
+      "tag": "a",
+      "href": "/services/#ai-engineering",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(3) > div:nth-of-type(1) > h3:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 945,
+        "y": 1220,
+        "w": 123,
+        "h": 23
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-017-rest.png",
+        "hover": "shots/int-017-hover.png",
+        "focus": "shots/int-017-focus.png",
+        "press": "shots/int-017-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": [],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": true,
+      "noVisibleFocus": false,
+      "noVisiblePress": true
+    },
+    {
+      "i": 18,
+      "role": "link",
+      "name": "Developer consulting",
+      "tag": "a",
+      "href": "/services/#consulting",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(1) > h3:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 193,
+        "y": 1382,
+        "w": 194,
+        "h": 23
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-018-rest.png",
+        "hover": "shots/int-018-hover.png",
+        "focus": "shots/int-018-focus.png",
+        "press": "shots/int-018-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": [],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": true,
+      "noVisibleFocus": false,
+      "noVisiblePress": true
+    },
+    {
+      "i": 19,
+      "role": "link",
+      "name": "Hands-on teaching",
+      "tag": "a",
+      "href": "/services/#teaching",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(5) > div:nth-of-type(1) > h3:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 569,
+        "y": 1382,
+        "w": 176,
+        "h": 23
+      },
+      "rest": {
+        "transition": "all",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(245, 245, 247)",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)"
+      },
+      "shots": {
+        "rest": "shots/int-019-rest.png",
+        "hover": "shots/int-019-hover.png",
+        "focus": "shots/int-019-focus.png",
+        "press": "shots/int-019-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": [],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": true,
+      "noVisibleFocus": false,
+      "noVisiblePress": true
+    },
+    {
+      "i": 20,
+      "role": "button",
+      "name": "Pause background video",
+      "tag": "button",
+      "href": null,
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(4) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > button:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 1380,
+        "y": 2879,
+        "w": 44,
+        "h": 44
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "default",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)"
+      },
+      "shots": {
+        "rest": "shots/int-020-rest.png",
+        "hover": "shots/int-020-hover.png",
+        "focus": "shots/int-020-focus.png",
+        "press": "shots/int-020-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["descendants", "color", "outline"],
+      "focusChanges": ["descendants", "color", "outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "none 3px rgb(255, 122, 0)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(255, 122, 0)",
+        "background": "oklab(0.135448 0.0012712 -0.00447935 / 0.6)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(32, 32, 40)",
+        "outline": "none 3px rgb(255, 122, 0)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 21,
+      "role": "link",
+      "name": "Email us directly",
+      "tag": "a",
+      "href": "mailto:marcm@mccorlabs.com",
+      "selector": "main#main > div:nth-of-type(1) > section:nth-of-type(7) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 217,
+        "y": 4865,
+        "w": 185,
+        "h": 52
+      },
+      "rest": {
+        "transition": "color 0.12s cubic-bezier(0, 0, 0.2, 1), background-color 0.12s cubic-bezier(0, 0, 0.2, 1), border-color 0.12s cubic-bezier(0, 0, 0.2, 1), outline-color 0.12s cubic-bezier(0, 0, 0.2, 1), text-decoration-color 0.12s cubic-bezier(0, 0, 0.2, 1), fill 0.12s cubic-bezier(0, 0, 0.2, 1), stroke 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-from 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-via 0.12s cubic-bezier(0, 0, 0.2, 1), --tw-gradient-to 0.12s cubic-bezier(0, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(8, 8, 10)",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)"
+      },
+      "shots": {
+        "rest": "shots/int-021-rest.png",
+        "hover": "shots/int-021-hover.png",
+        "focus": "shots/int-021-focus.png",
+        "press": "shots/int-021-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["background"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 122, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(8, 8, 10)",
+        "background": "rgb(255, 143, 36)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(8, 8, 10)",
+        "outline": "none 3px rgb(8, 8, 10)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 22,
+      "role": "link",
+      "name": "Services",
+      "tag": "a",
+      "href": "/services/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(1)",
+      "visible": true,
+      "box": {
+        "x": 991,
+        "y": 5207,
+        "w": 55,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-022-rest.png",
+        "hover": "shots/int-022-hover.png",
+        "focus": "shots/int-022-focus.png",
+        "press": "shots/int-022-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 23,
+      "role": "link",
+      "name": "Process",
+      "tag": "a",
+      "href": "/process/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(2)",
+      "visible": true,
+      "box": {
+        "x": 1152,
+        "y": 5207,
+        "w": 52,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-023-rest.png",
+        "hover": "shots/int-023-hover.png",
+        "focus": "shots/int-023-focus.png",
+        "press": "shots/int-023-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 24,
+      "role": "link",
+      "name": "About",
+      "tag": "a",
+      "href": "/about/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(3)",
+      "visible": true,
+      "box": {
+        "x": 991,
+        "y": 5235,
+        "w": 39,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-024-rest.png",
+        "hover": "shots/int-024-hover.png",
+        "focus": "shots/int-024-focus.png",
+        "press": "shots/int-024-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 25,
+      "role": "link",
+      "name": "Contact",
+      "tag": "a",
+      "href": "/contact/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(4)",
+      "visible": true,
+      "box": {
+        "x": 1152,
+        "y": 5235,
+        "w": 51,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-025-rest.png",
+        "hover": "shots/int-025-hover.png",
+        "focus": "shots/int-025-focus.png",
+        "press": "shots/int-025-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 26,
+      "role": "link",
+      "name": "Should This Be AI?",
+      "tag": "a",
+      "href": "/lab/should-this-be-ai/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(5)",
+      "visible": true,
+      "box": {
+        "x": 991,
+        "y": 5263,
+        "w": 120,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-026-rest.png",
+        "hover": "shots/int-026-hover.png",
+        "focus": "shots/int-026-focus.png",
+        "press": "shots/int-026-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 27,
+      "role": "link",
+      "name": "Careers",
+      "tag": "a",
+      "href": "/careers/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(6)",
+      "visible": true,
+      "box": {
+        "x": 1152,
+        "y": 5263,
+        "w": 50,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-027-rest.png",
+        "hover": "shots/int-027-hover.png",
+        "focus": "shots/int-027-focus.png",
+        "press": "shots/int-027-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 28,
+      "role": "link",
+      "name": "Privacy",
+      "tag": "a",
+      "href": "/privacy/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(7)",
+      "visible": true,
+      "box": {
+        "x": 991,
+        "y": 5291,
+        "w": 47,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-028-rest.png",
+        "hover": "shots/int-028-hover.png",
+        "focus": "shots/int-028-focus.png",
+        "press": "shots/int-028-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    },
+    {
+      "i": 29,
+      "role": "link",
+      "name": "Terms",
+      "tag": "a",
+      "href": "/terms/",
+      "selector": "footer:nth-of-type(1) > div:nth-of-type(1) > nav:nth-of-type(1) > a:nth-of-type(8)",
+      "visible": true,
+      "box": {
+        "x": 1152,
+        "y": 5291,
+        "w": 40,
+        "h": 20
+      },
+      "rest": {
+        "transition": "color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), outline-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), text-decoration-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), fill 0.15s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-from 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-via 0.15s cubic-bezier(0.4, 0, 0.2, 1), --tw-gradient-to 0.15s cubic-bezier(0.4, 0, 0.2, 1)",
+        "transform": "none",
+        "boxShadow": "none",
+        "cursor": "pointer",
+        "outline": "none 3px rgb(154, 154, 168)",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)"
+      },
+      "shots": {
+        "rest": "shots/int-029-rest.png",
+        "hover": "shots/int-029-hover.png",
+        "focus": "shots/int-029-focus.png",
+        "press": "shots/int-029-press.png"
+      },
+      "tabReached": true,
+      "focusVisibleMatched": true,
+      "hoverChanges": ["color", "borderColor", "outline"],
+      "focusChanges": ["outline"],
+      "pressChanges": [],
+      "hoverState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "focusState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(154, 154, 168)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(154, 154, 168)",
+        "outline": "solid 2px rgb(255, 122, 0)"
+      },
+      "pressState": {
+        "transform": "none",
+        "boxShadow": "none",
+        "color": "rgb(245, 245, 247)",
+        "background": "rgba(0, 0, 0, 0)",
+        "textDecoration": "none",
+        "opacity": "1",
+        "borderColor": "rgb(245, 245, 247)",
+        "outline": "none 3px rgb(245, 245, 247)"
+      },
+      "noVisibleHover": false,
+      "noVisibleFocus": false,
+      "noVisiblePress": false
+    }
+  ],
+  "nonInteractive": [
+    {
+      "run": "desktop-normal",
+      "n": 0,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) object-right lg:object-[92%_center] opacity-0",
+      "text": "McCor Labs dark monolith architecture with glowing red stag",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 1440,
+        "h": 765
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"0\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 1,
+      "tag": "video",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) object-right lg:object-[92%_center] opacity-100",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 1440,
+        "h": 765
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"1\"] (video.absolute.inset-0.h-full)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 2,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 1440,
+        "h": 765
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"2\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 3,
+      "tag": "h1",
+      "cls": "text-display-sm leading-tight font-bold tracking-tight text-text drop-shadow-md",
+      "text": "Swift by Instinct. Engineered to the Core.",
+      "box": {
+        "x": 168,
+        "y": 552,
+        "w": 768,
+        "h": 45
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"3\"] (h1.text-display-sm.leading-tight.font-bold)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 4,
+      "tag": "h2",
+      "cls": "font-semibold font-mono text-sm tracking-wider text-muted uppercase",
+      "text": "Delivered",
+      "box": {
+        "x": 168,
+        "y": 879,
+        "w": 1104,
+        "h": 20
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"4\"] (h2.font-semibold.font-mono.text-sm)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 5,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "What we build",
+      "box": {
+        "x": 168,
+        "y": 1116,
+        "w": 1104,
+        "h": 45
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"5\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 6,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Websites",
+      "box": {
+        "x": 193,
+        "y": 1242,
+        "w": 302,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"6\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 7,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Applications",
+      "box": {
+        "x": 569,
+        "y": 1242,
+        "w": 302,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"7\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 8,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "AI integration",
+      "box": {
+        "x": 945,
+        "y": 1242,
+        "w": 302,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"8\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 9,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Developer consulting",
+      "box": {
+        "x": 193,
+        "y": 1404,
+        "w": 302,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"9\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 10,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Hands-on teaching",
+      "box": {
+        "x": 569,
+        "y": 1404,
+        "w": 302,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"10\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 11,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) opacity-60",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 1589,
+        "w": 1440,
+        "h": 900
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"11\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "desktop-normal",
+      "n": 12,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full hidden",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"12\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 13,
+      "tag": "h2",
+      "cls": "max-w-2xl text-display-md leading-tight font-semibold text-text drop-shadow-md",
+      "text": "Built to be evaluated, not just demoed.",
+      "box": {
+        "x": 168,
+        "y": 1933,
+        "w": 672,
+        "h": 140
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"13\"] (h2.max-w-2xl.text-display-md.leading-tight)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 14,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text mb-8",
+      "text": "How retrieval is built",
+      "box": {
+        "x": 168,
+        "y": 3035,
+        "w": 1104,
+        "h": 45
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"14\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 15,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full hidden",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"15\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 16,
+      "tag": "figure",
+      "cls": "relative flex gap-4 sm:block",
+      "text": "A retrieval pipeline: ingestion, chunking, embedding, vector store, hybrid retri",
+      "box": {
+        "x": 168,
+        "y": 3112,
+        "w": 1104,
+        "h": 79
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"16\"] (figure.relative.flex.gap-4)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 17,
+      "tag": "svg",
+      "cls": "w-full overflow-visible max-sm:pointer-events-none max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:opacity-0",
+      "text": "A retrieval pipeline: ingestion, chunking, embedding, vector store, hybrid retri",
+      "box": {
+        "x": 168,
+        "y": 3112,
+        "w": 1104,
+        "h": 55
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"17\"] (svg.w-full.overflow-visible.max-sm:pointer-events-none)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 18,
+      "tag": "svg",
+      "cls": "w-14 shrink-0 overflow-visible sm:hidden",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"18\"] (svg.w-14.shrink-0.overflow-visible)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 19,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Ingestion",
+      "box": {
+        "x": 168,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"19\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 20,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Chunking",
+      "box": {
+        "x": 326,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"20\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 21,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Embedding",
+      "box": {
+        "x": 483,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"21\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 22,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Vector store",
+      "box": {
+        "x": 641,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"22\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 23,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Hybrid retrieval",
+      "box": {
+        "x": 799,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"23\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 24,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Reranking",
+      "box": {
+        "x": 957,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"24\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 25,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Evaluation",
+      "box": {
+        "x": 1114,
+        "y": 3175,
+        "w": 158,
+        "h": 16
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"25\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 26,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "How an engagement runs",
+      "box": {
+        "x": 168,
+        "y": 3342,
+        "w": 1104,
+        "h": 45
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"26\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 27,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "01 · 1–2 weeksDiscoveryWe learn what you actually need, not just the brief you a",
+      "box": {
+        "x": 168,
+        "y": 3419,
+        "w": 552,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"27\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 28,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Discovery",
+      "box": {
+        "x": 193,
+        "y": 3476,
+        "w": 478,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"28\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 29,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "02 · 2–4 weeksFixed-scope proof of conceptA bounded build against a fixed price,",
+      "box": {
+        "x": 720,
+        "y": 3419,
+        "w": 552,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"29\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 30,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Fixed-scope proof of concept",
+      "box": {
+        "x": 745,
+        "y": 3476,
+        "w": 478,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"30\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 31,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "03 · 1 meetingGo / no-goA real decision point. We tell you plainly whether the p",
+      "box": {
+        "x": 1272,
+        "y": 3419,
+        "w": 552,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"31\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 32,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Go / no-go",
+      "box": {
+        "x": 1297,
+        "y": 3476,
+        "w": 478,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"32\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 33,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "04 · 6–12 weeksBuildThe full engagement, delivered in reviewable increments with",
+      "box": {
+        "x": 1824,
+        "y": 3419,
+        "w": 552,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"33\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 34,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Build",
+      "box": {
+        "x": 1849,
+        "y": 3476,
+        "w": 478,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"34\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 35,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "05 · 1 weekHandoverThe repository, infrastructure and documentation move into yo",
+      "box": {
+        "x": 2376,
+        "y": 3419,
+        "w": 552,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"35\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 36,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Handover",
+      "box": {
+        "x": 2401,
+        "y": 3476,
+        "w": 478,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"36\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 37,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full mask-y-from-70% object-cover object-right",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 4571,
+        "w": 1440,
+        "h": 491
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"37\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 38,
+      "tag": "img",
+      "cls": "pointer-events-none absolute right-12 bottom-0 hidden h-[110%] w-auto xl:block",
+      "text": "",
+      "box": {
+        "x": 991,
+        "y": 4637,
+        "w": 257,
+        "h": 329
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"38\"] (img.pointer-events-none.absolute.right-12)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "desktop-normal",
+      "n": 39,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "Have something to build?",
+      "box": {
+        "x": 217,
+        "y": 4716,
+        "w": 390,
+        "h": 45
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"39\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 0,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) object-right lg:object-[92%_center] opacity-0",
+      "text": "McCor Labs dark monolith architecture with glowing red stag",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 390,
+        "h": 717
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"0\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 1,
+      "tag": "video",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) object-right lg:object-[92%_center] opacity-100",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 390,
+        "h": 717
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"1\"] (video.absolute.inset-0.h-full)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 2,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 65,
+        "w": 390,
+        "h": 717
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"2\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 3,
+      "tag": "h1",
+      "cls": "text-display-sm leading-tight font-bold tracking-tight text-text drop-shadow-md",
+      "text": "Swift by Instinct. Engineered to the Core.",
+      "box": {
+        "x": 16,
+        "y": 459,
+        "w": 358,
+        "h": 71
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"3\"] (h1.text-display-sm.leading-tight.font-bold)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 4,
+      "tag": "h2",
+      "cls": "font-semibold font-mono text-sm tracking-wider text-muted uppercase",
+      "text": "Delivered",
+      "box": {
+        "x": 16,
+        "y": 815,
+        "w": 358,
+        "h": 20
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"4\"] (h2.font-semibold.font-mono.text-sm)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 5,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "What we build",
+      "box": {
+        "x": 16,
+        "y": 1104,
+        "w": 358,
+        "h": 35
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"5\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 6,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Websites",
+      "box": {
+        "x": 41,
+        "y": 1221,
+        "w": 308,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"6\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 7,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Applications",
+      "box": {
+        "x": 41,
+        "y": 1383,
+        "w": 308,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"7\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 8,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "AI integration",
+      "box": {
+        "x": 41,
+        "y": 1545,
+        "w": 308,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"8\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 9,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Developer consulting",
+      "box": {
+        "x": 41,
+        "y": 1707,
+        "w": 308,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"9\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 10,
+      "tag": "h3",
+      "cls": "text-xl font-semibold text-text",
+      "text": "Hands-on teaching",
+      "box": {
+        "x": 41,
+        "y": 1869,
+        "w": 308,
+        "h": 28
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"10\"] (h3.text-xl.font-semibold.text-text)",
+      "animatesOnScroll": true
+    },
+    {
+      "run": "mobile-normal",
+      "n": 11,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full object-cover transition-opacity duration-(--duration-scene) opacity-60",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 2022,
+        "w": 390,
+        "h": 844
+      },
+      "animation": "none",
+      "transition": "opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"11\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 12,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full hidden",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"12\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 13,
+      "tag": "h2",
+      "cls": "max-w-2xl text-display-md leading-tight font-semibold text-text drop-shadow-md",
+      "text": "Built to be evaluated, not just demoed.",
+      "box": {
+        "x": 16,
+        "y": 2343,
+        "w": 358,
+        "h": 101
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"13\"] (h2.max-w-2xl.text-display-md.leading-tight)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 14,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text mb-8",
+      "text": "How retrieval is built",
+      "box": {
+        "x": 16,
+        "y": 3352,
+        "w": 358,
+        "h": 35
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"14\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 15,
+      "tag": "canvas",
+      "cls": "pointer-events-none absolute inset-0 h-full w-full hidden",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"15\"] (canvas.pointer-events-none.absolute.inset-0)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 16,
+      "tag": "figure",
+      "cls": "relative flex gap-4 sm:block",
+      "text": "A retrieval pipeline: ingestion, chunking, embedding, vector store, hybrid retri",
+      "box": {
+        "x": 16,
+        "y": 3419,
+        "w": 358,
+        "h": 448
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"16\"] (figure.relative.flex.gap-4)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 17,
+      "tag": "svg",
+      "cls": "w-full overflow-visible max-sm:pointer-events-none max-sm:absolute max-sm:inset-0 max-sm:h-full max-sm:opacity-0",
+      "text": "A retrieval pipeline: ingestion, chunking, embedding, vector store, hybrid retri",
+      "box": {
+        "x": 16,
+        "y": 3419,
+        "w": 358,
+        "h": 448
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"17\"] (svg.w-full.overflow-visible.max-sm:pointer-events-none)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 18,
+      "tag": "svg",
+      "cls": "w-14 shrink-0 overflow-visible sm:hidden",
+      "text": "",
+      "box": {
+        "x": 16,
+        "y": 3419,
+        "w": 56,
+        "h": 448
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"18\"] (svg.w-14.shrink-0.overflow-visible)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 19,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Ingestion",
+      "box": {
+        "x": 88,
+        "y": 3419,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"19\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 20,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Chunking",
+      "box": {
+        "x": 88,
+        "y": 3483,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"20\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 21,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Embedding",
+      "box": {
+        "x": 88,
+        "y": 3547,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"21\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 22,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Vector store",
+      "box": {
+        "x": 88,
+        "y": 3611,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"22\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 23,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Hybrid retrieval",
+      "box": {
+        "x": 88,
+        "y": 3675,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"23\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 24,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Reranking",
+      "box": {
+        "x": 88,
+        "y": 3739,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"24\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 25,
+      "tag": "li",
+      "cls": "max-sm:flex max-sm:h-16 max-sm:items-center",
+      "text": "Evaluation",
+      "box": {
+        "x": 88,
+        "y": 3803,
+        "w": 115,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"25\"] (li.max-sm:flex.max-sm:h-16.max-sm:items-center)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 26,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "How an engagement runs",
+      "box": {
+        "x": 16,
+        "y": 3995,
+        "w": 358,
+        "h": 35
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"26\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 27,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "01 · 1–2 weeksDiscoveryWe learn what you actually need, not just the brief you a",
+      "box": {
+        "x": 16,
+        "y": 4062,
+        "w": 358,
+        "h": 222
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"27\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 28,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Discovery",
+      "box": {
+        "x": 41,
+        "y": 4119,
+        "w": 308,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"28\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 29,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "02 · 2–4 weeksFixed-scope proof of conceptA bounded build against a fixed price,",
+      "box": {
+        "x": 16,
+        "y": 4308,
+        "w": 358,
+        "h": 230
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"29\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 30,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Fixed-scope proof of concept",
+      "box": {
+        "x": 41,
+        "y": 4365,
+        "w": 308,
+        "h": 64
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"30\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 31,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "03 · 1 meetingGo / no-goA real decision point. We tell you plainly whether the p",
+      "box": {
+        "x": 16,
+        "y": 4562,
+        "w": 358,
+        "h": 222
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"31\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 32,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Go / no-go",
+      "box": {
+        "x": 41,
+        "y": 4619,
+        "w": 308,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"32\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 33,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "04 · 6–12 weeksBuildThe full engagement, delivered in reviewable increments with",
+      "box": {
+        "x": 16,
+        "y": 4808,
+        "w": 358,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"33\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 34,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Build",
+      "box": {
+        "x": 41,
+        "y": 4865,
+        "w": 308,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"34\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 35,
+      "tag": "li",
+      "cls": "motion-safe:md:w-full motion-safe:md:shrink-0 motion-safe:md:pr-6 motion-safe:lg:w-1/2",
+      "text": "05 · 1 weekHandoverThe repository, infrastructure and documentation move into yo",
+      "box": {
+        "x": 16,
+        "y": 5030,
+        "w": 358,
+        "h": 198
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"35\"] (li.motion-safe:md:w-full.motion-safe:md:shrink-0.motion-safe:md:pr-6)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 36,
+      "tag": "h3",
+      "cls": "text-2xl font-semibold text-text",
+      "text": "Handover",
+      "box": {
+        "x": 41,
+        "y": 5087,
+        "w": 308,
+        "h": 32
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"36\"] (h3.text-2xl.font-semibold.text-text)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 37,
+      "tag": "img",
+      "cls": "absolute inset-0 h-full w-full mask-y-from-70% object-cover object-right",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 5292,
+        "w": 390,
+        "h": 477
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"37\"] (img.absolute.inset-0.h-full)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 38,
+      "tag": "img",
+      "cls": "pointer-events-none absolute right-12 bottom-0 hidden h-[110%] w-auto xl:block",
+      "text": "",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"38\"] (img.pointer-events-none.absolute.right-12)",
+      "animatesOnScroll": false
+    },
+    {
+      "run": "mobile-normal",
+      "n": 39,
+      "tag": "h2",
+      "cls": "text-display-sm leading-tight font-semibold tracking-tight text-text",
+      "text": "Have something to build?",
+      "box": {
+        "x": 49,
+        "y": 5389,
+        "w": 292,
+        "h": 71
+      },
+      "animation": "none",
+      "transition": "all",
+      "willChange": "auto",
+      "selector": "[data-audit-n=\"39\"] (h2.text-display-sm.leading-tight.font-semibold)",
+      "animatesOnScroll": false
+    }
+  ],
+  "console": [
+    {
+      "run": "desktop-normal",
+      "type": "warning",
+      "text": "[.WebGL-0x13c00513e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "run": "desktop-normal",
+      "type": "warning",
+      "text": "[.WebGL-0x13c00513e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    },
+    {
+      "run": "mobile-normal",
+      "type": "warning",
+      "text": "[.WebGL-0x11c004dea00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "run": "mobile-normal",
+      "type": "warning",
+      "text": "[.WebGL-0x11c004dea00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+    }
+  ],
+  "vitals": {
+    "desktop-normal": {
+      "lcpMs": 136,
+      "lcpElement": "IMG.absolute.inset-0.h-full",
+      "cls": 0,
+      "shifts": []
+    },
+    "desktop-reduced": {
+      "lcpMs": 104,
+      "lcpElement": "IMG.absolute.inset-0.h-full",
+      "cls": 0,
+      "shifts": []
+    },
+    "mobile-normal": {
+      "lcpMs": 92,
+      "lcpElement": "IMG.absolute.inset-0.h-full",
+      "cls": 0,
+      "shifts": []
+    },
+    "mobile-reduced": {
+      "lcpMs": 92,
+      "lcpElement": "IMG.absolute.inset-0.h-full",
+      "cls": 0,
+      "shifts": []
+    }
+  },
+  "overflow": {
+    "desktop-normal": {
+      "docScrollWidth": 1440,
+      "clientWidth": 1440,
+      "offenders": []
+    },
+    "desktop-reduced": {
+      "docScrollWidth": 1440,
+      "clientWidth": 1440,
+      "offenders": []
+    },
+    "mobile-normal": {
+      "docScrollWidth": 390,
+      "clientWidth": 390,
+      "offenders": []
+    },
+    "mobile-reduced": {
+      "docScrollWidth": 390,
+      "clientWidth": 390,
+      "offenders": []
+    }
+  },
+  "notes": [
+    "Main has one wrapper div; sections are main > div > section.",
+    "Next.js dev indicator N badge visible bottom-left in screenshots; dev-only.",
+    "Full-page screenshots of normal mode show voids from pinned/scroll-runway sections; per-section and reduced-motion shots are more representative.",
+    "animatesOnScroll measured in a fresh page by sampling ancestor opacity/transform across scroll steps; only hero media, hero h1 and service h3s changed, so most reveals are not opacity/transform driven or were already settled.",
+    "Interactive hover diff includes descendant style changes; service links 15-19 show no hover change and no press change.",
+    "Pause video buttons and logo have no press change; nav links mostly no press change.",
+    "Mobile menu button and mobile nav links not visible at 1440 so not exercised."
+  ]
+}

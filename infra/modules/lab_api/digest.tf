@@ -16,10 +16,10 @@ locals {
         Resource = ["${aws_cloudwatch_log_group.digest.arn}:*"]
       },
       {
-        Sid      = "ScanMarks"
+        Sid      = "QueryMarks"
         Effect   = "Allow"
-        Action   = ["dynamodb:Scan"]
-        Resource = [aws_dynamodb_table.lab.arn]
+        Action   = ["dynamodb:Query"]
+        Resource = ["${aws_dynamodb_table.lab.arn}/index/marks"]
       },
       {
         Sid       = "Mail"
@@ -53,6 +53,16 @@ locals {
       Effect   = "Allow"
       Action   = ["lambda:InvokeFunction"]
       Resource = [aws_lambda_function.digest.arn]
+    }]
+  }
+
+  digest_scheduler_dlq_policy = {
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "DeadLetter"
+      Effect   = "Allow"
+      Action   = ["sqs:SendMessage"]
+      Resource = [aws_sqs_queue.digest_dlq.arn]
     }]
   }
 }
@@ -106,6 +116,12 @@ resource "aws_iam_role_policy" "digest_scheduler" {
   policy = jsonencode(local.digest_scheduler_policy)
 }
 
+resource "aws_iam_role_policy" "digest_scheduler_dlq" {
+  name   = "digest-scheduler-dlq"
+  role   = aws_iam_role.digest_scheduler.id
+  policy = jsonencode(local.digest_scheduler_dlq_policy)
+}
+
 resource "aws_scheduler_schedule" "digest" {
   name                         = "${var.name}-lab-digest"
   group_name                   = "default"
@@ -124,7 +140,11 @@ resource "aws_scheduler_schedule" "digest" {
       maximum_retry_attempts       = 2
       maximum_event_age_in_seconds = 3600
     }
+
+    dead_letter_config {
+      arn = aws_sqs_queue.digest_dlq.arn
+    }
   }
 
-  depends_on = [aws_iam_role_policy.digest_scheduler]
+  depends_on = [aws_iam_role_policy.digest_scheduler, aws_iam_role_policy.digest_scheduler_dlq]
 }

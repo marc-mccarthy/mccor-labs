@@ -113,6 +113,7 @@ variables {
   contact_from     = "website@example.com"
   contact_to       = "owner@example.com"
   alert_email      = "alerts@example.com"
+  alarm_topic_arn  = "arn:aws:sns:us-east-1:111111111111:t-alerts"
 }
 
 run "digest_schedule" {
@@ -178,11 +179,30 @@ run "digest_policy" {
   }
 
   assert {
+    condition     = !anytrue([for s in local.digest_policy.Statement : contains(s.Action, "dynamodb:Scan")])
+    error_message = "No digest statement may grant dynamodb:Scan."
+  }
+
+  assert {
     condition = anytrue([
       for s in local.digest_policy.Statement :
-      s.Action == ["dynamodb:Scan"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab"]
+      s.Action == ["dynamodb:Query"] && s.Resource == ["arn:aws:dynamodb:us-east-1:111111111111:table/t-lab/index/marks"]
     ])
-    error_message = "The digest may only Scan the one table."
+    error_message = "The digest may only Query the marks index of the one table."
+  }
+
+  assert {
+    condition = alltrue([
+      for s in local.digest_policy.Statement :
+      alltrue([for r in s.Resource : r == "arn:aws:dynamodb:us-east-1:111111111111:table/t-lab/index/marks"])
+      if anytrue([for a in s.Action : startswith(a, "dynamodb:")])
+    ])
+    error_message = "Every digest DynamoDB grant must target the marks index only."
+  }
+
+  assert {
+    condition     = contains(local.lab_brake_deny_policy.Statement[1].Action, "dynamodb:Query") && local.lab_brake_deny_policy.Statement[1].Effect == "Deny"
+    error_message = "The brake deny must block dynamodb:Query so a tripped brake stops the digest."
   }
 
   assert {
@@ -204,6 +224,28 @@ run "digest_policy" {
   assert {
     condition     = !anytrue([for s in local.digest_policy.Statement : contains(s.Resource, "*")])
     error_message = "No digest statement may use a wildcard resource."
+  }
+}
+
+run "marks_index" {
+  command = plan
+
+  assert {
+    condition = length([
+      for g in aws_dynamodb_table.lab.global_secondary_index : g
+      if g.name == "marks" && g.projection_type == "INCLUDE" && toset(g.non_key_attributes) == toset(["ruleId", "verdictId", "reason", "rubricVersion"]) && length(g.key_schema) == 2 && g.key_schema[0].attribute_name == "kind" && g.key_schema[0].key_type == "HASH" && g.key_schema[1].attribute_name == "createdAt" && g.key_schema[1].key_type == "RANGE"
+    ]) == 1
+    error_message = "The table must have a sparse marks GSI keyed kind HASH and createdAt RANGE, projecting only ruleId, verdictId, reason and rubricVersion."
+  }
+
+  assert {
+    condition     = toset([for a in aws_dynamodb_table.lab.attribute : "${a.name}:${a.type}"]) == toset(["pk:S", "kind:S", "createdAt:S"])
+    error_message = "The table must declare pk, kind and createdAt as string attributes."
+  }
+
+  assert {
+    condition     = aws_dynamodb_table.lab.hash_key == "pk" && aws_dynamodb_table.lab.range_key == null
+    error_message = "The table key must stay pk alone; a key change forces table replacement."
   }
 }
 

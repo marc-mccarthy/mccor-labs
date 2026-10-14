@@ -2,7 +2,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2'
 import { formatDigest } from '../lib/digestEmail'
-import { aggregateMarks, scanMarks as realScanMarks } from '../lib/digestQuery'
+import { aggregateMarks, queryMarks as realQueryMarks } from '../lib/digestQuery'
 
 const WEEK_MS = 7 * 86400 * 1000
 
@@ -13,7 +13,7 @@ interface DigestDeps {
   from: string
   to: string
   now: () => Date
-  scanMarks: typeof realScanMarks
+  queryMarks: typeof realQueryMarks
 }
 
 export function createDigestHandler(deps: DigestDeps) {
@@ -21,7 +21,7 @@ export function createDigestHandler(deps: DigestDeps) {
     const until = deps.now()
     const since = new Date(until.getTime() - WEEK_MS)
     const counts = aggregateMarks(
-      await deps.scanMarks({ client: deps.client, table: deps.table, since }),
+      await deps.queryMarks({ client: deps.client, table: deps.table, since }),
     )
     const { subject, text } = formatDigest({ counts, since, until })
     await deps.ses.send(
@@ -53,7 +53,7 @@ export function handler(): Promise<{ total: number }> {
     from: requiredEnv('DIGEST_FROM'),
     to: requiredEnv('DIGEST_TO'),
     now: () => new Date(),
-    scanMarks: realScanMarks,
+    queryMarks: realQueryMarks,
   })
   return live()
 }

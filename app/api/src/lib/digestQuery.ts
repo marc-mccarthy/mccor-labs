@@ -1,4 +1,4 @@
-import { type DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb'
+import { type DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
 
 export interface MarkRecord {
   ruleId: string
@@ -11,7 +11,7 @@ export interface MarkCount extends MarkRecord {
   count: number
 }
 
-interface ScanInput {
+interface QueryInput {
   client: DynamoDBDocumentClient
   table: string
   since: Date
@@ -30,26 +30,28 @@ function toMarkRecord(item: Record<string, unknown>): MarkRecord {
   return { ruleId, verdictId, reason, rubricVersion }
 }
 
-export async function scanMarks({
+export async function queryMarks({
   client,
   table,
   since,
-}: ScanInput): Promise<MarkRecord[]> {
+}: QueryInput): Promise<MarkRecord[]> {
   const records: MarkRecord[] = []
   let startKey: Record<string, unknown> | undefined
   do {
     const page = await client.send(
-      new ScanCommand({
+      new QueryCommand({
         TableName: table,
-        FilterExpression: 'begins_with(pk, :mark) AND createdAt >= :since',
+        IndexName: 'marks',
+        KeyConditionExpression: '#k = :mark AND createdAt >= :since',
         ProjectionExpression: '#rule, #v, #r, #rv',
         ExpressionAttributeNames: {
+          '#k': 'kind',
           '#rule': 'ruleId',
           '#v': 'verdictId',
           '#r': 'reason',
           '#rv': 'rubricVersion',
         },
-        ExpressionAttributeValues: { ':mark': 'mark#', ':since': since.toISOString() },
+        ExpressionAttributeValues: { ':mark': 'mark', ':since': since.toISOString() },
         ExclusiveStartKey: startKey,
       }),
     )

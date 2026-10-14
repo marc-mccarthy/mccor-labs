@@ -1,4 +1,19 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import type { Page } from '@playwright/test'
+
+const CHUNKS_DIR = fileURLToPath(
+  new URL('../../out/_next/static/chunks', import.meta.url),
+)
+
+export function builtWithEndpoint(chunksDir: string = CHUNKS_DIR): boolean {
+  if (!existsSync(chunksDir)) return false
+  return readdirSync(chunksDir, { recursive: true, encoding: 'utf8' })
+    .filter((name) => name.endsWith('.js'))
+    .some((name) => readFileSync(join(chunksDir, name), 'utf8').includes('/api/contact'))
+}
 
 export const ROUTES = [
   '/',

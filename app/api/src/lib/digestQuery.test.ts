@@ -1,8 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { aggregateMarks, scanMarks } from './digestQuery'
+import { aggregateMarks, queryMarks } from './digestQuery'
 
 const ddb = mockClient(DynamoDBDocumentClient)
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}))
@@ -10,10 +10,10 @@ const since = new Date('2026-10-02T13:00:00Z')
 
 beforeEach(() => ddb.reset())
 
-describe('scanMarks', () => {
-  it('filters marks by prefix and window and follows pages', async () => {
+describe('queryMarks', () => {
+  it('queries the marks index by kind and window and follows pages', async () => {
     ddb
-      .on(ScanCommand)
+      .on(QueryCommand)
       .resolvesOnce({
         Items: [
           {
@@ -23,7 +23,11 @@ describe('scanMarks', () => {
             rubricVersion: '1.0.0',
           },
         ],
-        LastEvaluatedKey: { pk: 'mark#A' },
+        LastEvaluatedKey: {
+          pk: 'mark#A',
+          kind: 'mark',
+          createdAt: '2026-10-03T00:00:00.000Z',
+        },
       })
       .resolvesOnce({
         Items: [
@@ -35,26 +39,43 @@ describe('scanMarks', () => {
           },
         ],
       })
-    const records = await scanMarks({ client, table: 'mccorlabs-lab', since })
+    const records = await queryMarks({ client, table: 'mccorlabs-lab', since })
     expect(records).toHaveLength(2)
-    const calls = ddb.commandCalls(ScanCommand)
+    const calls = ddb.commandCalls(QueryCommand)
     expect(calls).toHaveLength(2)
-    expect(calls[0]?.args[0].input).toMatchObject({
+    const first = calls[0]?.args[0].input
+    expect(first).toMatchObject({
       TableName: 'mccorlabs-lab',
-      FilterExpression: 'begins_with(pk, :mark) AND createdAt >= :since',
+      IndexName: 'marks',
+      KeyConditionExpression: '#k = :mark AND createdAt >= :since',
+      ProjectionExpression: '#rule, #v, #r, #rv',
+      ExpressionAttributeNames: {
+        '#k': 'kind',
+        '#rule': 'ruleId',
+        '#v': 'verdictId',
+        '#r': 'reason',
+        '#rv': 'rubricVersion',
+      },
       ExpressionAttributeValues: {
-        ':mark': 'mark#',
+        ':mark': 'mark',
         ':since': '2026-10-02T13:00:00.000Z',
       },
     })
-    expect(calls[1]?.args[0].input.ExclusiveStartKey).toEqual({ pk: 'mark#A' })
+    expect(first?.FilterExpression).toBeUndefined()
+    expect(first?.ExclusiveStartKey).toBeUndefined()
+    expect(calls[1]?.args[0].input).toMatchObject({ IndexName: 'marks' })
+    expect(calls[1]?.args[0].input.ExclusiveStartKey).toEqual({
+      pk: 'mark#A',
+      kind: 'mark',
+      createdAt: '2026-10-03T00:00:00.000Z',
+    })
   })
 
   it('throws on a malformed mark instead of skipping it', async () => {
-    ddb.on(ScanCommand).resolves({
+    ddb.on(QueryCommand).resolves({
       Items: [{ verdictId: 'rules', reason: 'needs-less', rubricVersion: '1.0.0' }],
     })
-    await expect(scanMarks({ client, table: 't', since })).rejects.toThrow(
+    await expect(queryMarks({ client, table: 't', since })).rejects.toThrow(
       'malformed mark',
     )
   })

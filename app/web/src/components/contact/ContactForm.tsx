@@ -21,6 +21,8 @@ import { useLabPrefill } from './useLabPrefill'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
 
+const FIELD_ORDER = ['name', 'email', 'message'] as const
+
 const FIELD =
   'border-border-strong bg-surface text-text placeholder:text-muted w-full rounded-lg border px-3 py-2'
 
@@ -55,12 +57,19 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [status, setStatus] = useState<Status>('idle')
   const [message, setMessage] = useState('')
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
+  const [submitCount, setSubmitCount] = useState(0)
   const openedAt = useRef(0)
   const prefill = useLabPrefill()
 
   useEffect(() => {
     openedAt.current = Date.now()
   }, [])
+
+  useEffect(() => {
+    if (submitCount === 0) return
+    const first = FIELD_ORDER.find((key) => errors[key] !== undefined)
+    if (first !== undefined) document.getElementById(first)?.focus()
+  }, [errors, submitCount])
 
   if (endpoint === null) {
     return (
@@ -86,6 +95,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
   async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (status === 'sending' || status === 'sent') return
     const data = new FormData(event.currentTarget)
     const field = (key: string) => {
       const value = data.get(key)
@@ -103,6 +113,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
     const found = validateContact(request)
     setErrors(found)
+    setSubmitCount((count) => count + 1)
     if (Object.keys(found).length > 0) {
       setStatus('idle')
       setMessage('')
@@ -138,6 +149,9 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       onSubmit={(event) => {
         void onSubmit(event)
       }}
+      onInput={() => {
+        if (status === 'sent') setStatus('idle')
+      }}
       noValidate
       className="max-w-xl space-y-5"
     >
@@ -156,6 +170,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
           <input
             id="name"
             name="name"
+            autoComplete="name"
             className={FIELD}
             aria-invalid={errors.name !== undefined}
             aria-describedby={errors.name === undefined ? undefined : 'name-error'}
@@ -177,6 +192,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             id="email"
             name="email"
             type="email"
+            autoComplete="email"
             className={FIELD}
             aria-invalid={errors.email !== undefined}
             aria-describedby={errors.email === undefined ? undefined : 'email-error'}
@@ -195,7 +211,13 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             {ui.contactLabelCompany}{' '}
             <span className="text-muted">{ui.contactOptional}</span>
           </label>
-          <input id="company" name="company" className={FIELD} />
+          <input
+            id="company"
+            name="company"
+            autoComplete="organization"
+            maxLength={100}
+            className={FIELD}
+          />
         </div>
       </Reveal>
 
@@ -241,11 +263,21 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
       <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>
-        <input id="honeypot" name="honeypot" tabIndex={-1} aria-hidden="true" />
+        <input
+          id="honeypot"
+          name="honeypot"
+          tabIndex={-1}
+          aria-hidden="true"
+          autoComplete="off"
+        />
       </div>
 
       <div className="flex items-center gap-4">
-        <Button type="submit" disabled={status === 'sending'}>
+        <Button
+          type="submit"
+          aria-disabled={status === 'sending' || status === 'sent'}
+          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        >
           {status === 'sending' ? ui.formSending : ui.formSubmit}
         </Button>
       </div>

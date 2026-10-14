@@ -28,6 +28,8 @@ export const ui = {
   systemsHeading: 'Built to be evaluated, not just demoed.',
   systemsBody:
     'The evaluation, the approval gates and the cost ceilings ship with the feature, so you can tell whether it is right.',
+  systemsGates: ['Evaluation', 'Approval gate', 'Cost ceiling'],
+  systemsLink: 'See how the evaluation ships',
   formSubmit: 'Send message',
   formSending: 'Sending…',
   formSuccess: 'Thanks — your message has reached us.',

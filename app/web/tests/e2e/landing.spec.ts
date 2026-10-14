@@ -242,3 +242,78 @@ test.describe('service cards', () => {
     ).toBe('')
   })
 })
+
+test.describe('systems gates', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+  const stage = (page: Page) => page.getByTestId('systems-stage')
+  const evaluationLink = (page: Page) => page.getByRole('link', { name: ui.systemsLink })
+
+  async function pinSystems(page: Page, fraction: number) {
+    await stage(page).waitFor()
+    await page.evaluate((at) => {
+      const pin = document.querySelector('[data-testid="systems-stage"]')?.parentElement
+        ?.parentElement
+      if (!pin) throw new Error('systems pin not found')
+      const top = window.scrollY + pin.getBoundingClientRect().top
+      window.scrollTo(0, top + at * (pin.offsetHeight - window.innerHeight))
+    }, fraction)
+    await expect
+      .poll(() =>
+        stage(page).evaluate((node) => Math.abs(node.getBoundingClientRect().top)),
+      )
+      .toBeLessThan(1)
+  }
+
+  test('systems copy, gates and link fit the 390 viewport while pinned', async ({
+    page,
+  }) => {
+    await atViewport(page, 390, 844)
+    await page.goto('/', { waitUntil: 'load' })
+    await pinSystems(page, 0.6)
+    const headerBox = await page.locator('header').first().boundingBox()
+    const headingBox = await page
+      .getByRole('heading', { level: 2, name: ui.systemsHeading })
+      .boundingBox()
+    const gatesBox = await page.getByTestId('systems-gates').boundingBox()
+    const linkBox = await evaluationLink(page).boundingBox()
+    expect(headerBox && headingBox && gatesBox && linkBox).toBeTruthy()
+    expect(headingBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height)
+    expect(gatesBox!.y + gatesBox!.height).toBeLessThanOrEqual(linkBox!.y)
+    expect(linkBox!.y + linkBox!.height).toBeLessThanOrEqual(844)
+    await expect(evaluationLink(page)).toBeVisible()
+    await expect
+      .poll(() =>
+        page.locator('[data-testid="systems-gates"] [data-state="passed"]').count(),
+      )
+      .toBe(2)
+  })
+
+  test('systems evaluation link has hover, press and focus states', async ({ page }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/', { waitUntil: 'load' })
+    const link = evaluationLink(page)
+    for (let step = 0; step < 60; step += 1) {
+      await page.keyboard.press('Tab')
+      if (await link.evaluate((node) => node === document.activeElement)) break
+    }
+    await expect(link).toBeFocused()
+    expect(await computedOf(link, 'outlineStyle')).not.toBe('none')
+
+    await pinSystems(page, 0.6)
+    const underline = () =>
+      link.evaluate((node) => {
+        const after = getComputedStyle(node, '::after')
+        return `${after.transform} ${after.scale}`
+      })
+    await page.mouse.move(0, 0)
+    const resting = await underline()
+    await link.hover()
+    await expect.poll(underline).not.toBe(resting)
+
+    await page.mouse.down()
+    await expect.poll(() => computedOf(link, 'transform')).not.toBe('none')
+    await page.mouse.move(0, 0)
+    await page.mouse.up()
+  })
+})

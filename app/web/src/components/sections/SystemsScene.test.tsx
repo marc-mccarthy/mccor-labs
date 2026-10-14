@@ -1,13 +1,29 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SystemsScene } from './SystemsScene'
+import {
+  MOTION_STORAGE_KEY,
+  MotionPauseProvider,
+} from '@/components/motion/MotionPauseProvider'
 import { ui } from '@/content/ui'
 
-vi.mock('@/components/effects/NodeLatticeScene', () => ({
-  NodeLatticeScene: ({ className }: { className?: string }) => (
-    <div data-testid="lattice" className={className} />
-  ),
-}))
+type LatticeModule = typeof import('@/components/effects/NodeLatticeScene')
+type LatticeProps = Parameters<LatticeModule['NodeLatticeScene']>[0]
+
+vi.mock('@/components/effects/NodeLatticeScene', async (importOriginal) => {
+  const { useLatticeGates } = await importOriginal<LatticeModule>()
+  return {
+    NodeLatticeScene: ({
+      className,
+      progress,
+      gatePinUnits,
+      gateListRef,
+    }: LatticeProps) => {
+      useLatticeGates(progress, gatePinUnits, gateListRef)
+      return <div data-testid="lattice" className={className} />
+    },
+  }
+})
 
 function mockMatchMedia(reduced: boolean, desktop = false) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -28,8 +44,9 @@ describe('SystemsScene', () => {
   it('renders the numbered eyebrow above the h2', () => {
     mockMatchMedia(false)
     render(<SystemsScene />)
-    expect(screen.getByText(ui.eyebrows.evaluation)).toBeInTheDocument()
-    expect(screen.getByText('02')).toBeInTheDocument()
+    const eyebrow = screen.getByTestId('eyebrow-tick').parentElement!
+    expect(within(eyebrow).getByText(ui.eyebrows.evaluation)).toBeInTheDocument()
+    expect(within(eyebrow).getByText('02')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { level: 2, name: ui.systemsHeading }),
     ).toBeInTheDocument()
@@ -68,6 +85,129 @@ describe('SystemsScene', () => {
       'systems-lattice.webp',
     )
     expect(container.querySelector('[style*="sticky"]')).toBeNull()
+  })
+
+  function gateStates() {
+    return within(screen.getByTestId('systems-gates'))
+      .getAllByRole('listitem')
+      .map((gate) => gate.getAttribute('data-state'))
+  }
+
+  it('lists the three gates as text inside an ordered list', () => {
+    mockMatchMedia(false)
+    render(<SystemsScene />)
+    const list = screen.getByTestId('systems-gates')
+    expect(list.tagName).toBe('OL')
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((gate) => gate.textContent),
+    ).toEqual([...ui.systemsGates])
+    expect(list.closest('[aria-live]')).toBeNull()
+    expect(list.querySelector('[aria-current]')).toBeNull()
+  })
+
+  it('renders every gate passed under reduced motion', () => {
+    mockMatchMedia(true)
+    render(<SystemsScene />)
+    expect(gateStates()).toEqual(['passed', 'passed', 'passed'])
+  })
+
+  it.each([true, false])(
+    'always renders the evaluation link with press feedback (reduced=%s)',
+    (reduced) => {
+      mockMatchMedia(reduced)
+      render(<SystemsScene />)
+      const link = screen.getByRole('link', { name: ui.systemsLink })
+      expect(link).toHaveAttribute('href', '/services/#ai-engineering')
+      expect(link).toHaveClass('press')
+      expect(link).not.toHaveAttribute('tabindex')
+      expect(link.closest('[aria-hidden="true"]')).toBeNull()
+    },
+  )
+
+  describe('gate states while scrolling', () => {
+    const viewport = window.innerHeight
+    const height = viewport * 1.5
+    let top = viewport
+    const animate = vi.fn()
+
+    function scrollToProgress(progress: number) {
+      top = viewport - progress * (viewport + height)
+      act(() => {
+        window.dispatchEvent(new Event('scroll'))
+      })
+    }
+
+    beforeEach(() => {
+      top = viewport
+      animate.mockClear()
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+        () => ({ top, height }) as DOMRect,
+      )
+      Object.defineProperty(HTMLElement.prototype, 'animate', {
+        configurable: true,
+        value: animate,
+      })
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+      Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+      window.localStorage.clear()
+      delete document.documentElement.dataset.motion
+    })
+
+    async function nextFrame() {
+      await act(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => {
+              resolve()
+            })
+          }),
+      )
+    }
+
+    it('passes gates in order through the pinned window and pops each new dot', async () => {
+      mockMatchMedia(false)
+      render(<SystemsScene />)
+      expect(gateStates()).toEqual(['pending', 'pending', 'pending'])
+      await nextFrame()
+      scrollToProgress(0.45)
+      expect(gateStates()).toEqual(['passed', 'pending', 'pending'])
+      scrollToProgress(0.52)
+      expect(gateStates()).toEqual(['passed', 'passed', 'pending'])
+      scrollToProgress(0.58)
+      expect(gateStates()).toEqual(['passed', 'passed', 'passed'])
+      expect(animate).toHaveBeenCalledTimes(3)
+      scrollToProgress(0.41)
+      expect(gateStates()).toEqual(['pending', 'pending', 'pending'])
+      expect(animate).toHaveBeenCalledTimes(3)
+    })
+
+    it('never pops dots for the measurement taken on mount', () => {
+      mockMatchMedia(false)
+      top = viewport - 0.52 * (viewport + height)
+      render(<SystemsScene />)
+      expect(gateStates()).toEqual(['passed', 'passed', 'pending'])
+      expect(animate).not.toHaveBeenCalled()
+    })
+
+    it('keeps updating gate states but skips the pop while motion is paused', async () => {
+      mockMatchMedia(false)
+      window.localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+      render(
+        <MotionPauseProvider>
+          <SystemsScene />
+        </MotionPauseProvider>,
+      )
+      expect(document.documentElement.dataset.motion).toBe('paused')
+      await nextFrame()
+      scrollToProgress(0.52)
+      expect(gateStates()).toEqual(['passed', 'passed', 'pending'])
+      expect(animate).not.toHaveBeenCalled()
+    })
   })
 
   describe('camera-push video', () => {

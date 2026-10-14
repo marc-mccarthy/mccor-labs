@@ -425,6 +425,26 @@ test.describe('live form', () => {
     })
   })
 
+  test.describe('invalid focus with motion', () => {
+    test.use({
+      viewport: { width: 1440, height: 500 },
+      contextOptions: { reducedMotion: 'no-preference' },
+    })
+
+    test('first invalid field takes focus below the header', async ({ page }) => {
+      await open(page)
+      await page.evaluate(() => {
+        window.scrollTo(0, document.body.scrollHeight)
+      })
+      await submit(page)
+      await expect(page.locator('#name')).toBeFocused()
+      const header = await page.locator('header').first().boundingBox()
+      await expect
+        .poll(async () => (await page.locator('#name').boundingBox())?.y ?? 0)
+        .toBeGreaterThan(header?.height ?? 64)
+    })
+  })
+
   test.describe('panel at 1440', () => {
     test.use({ viewport: { width: 1440, height: 900 } })
 

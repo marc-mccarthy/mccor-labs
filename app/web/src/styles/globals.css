@@ -463,3 +463,15 @@
     }
   }
 }
+
+@keyframes field-error {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--space-xs) * -1));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

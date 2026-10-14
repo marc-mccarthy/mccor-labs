@@ -22,8 +22,6 @@ import { useLabPrefill } from './useLabPrefill'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
 
-const FIELD_ORDER = ['name', 'email', 'message'] as const
-
 const LABEL =
   'mb-1 block text-sm text-text motion-on:transition-colors motion-on:duration-(--duration-pointer) group-focus-within/field:text-accent'
 
@@ -60,7 +58,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<ContactError | null>(null)
   const [, setReference] = useState<string | null>(null)
-  const [submitCount, setSubmitCount] = useState(0)
+  const [validationRun, setValidationRun] = useState(0)
+  const formRef = useRef<HTMLFormElement>(null)
   const openedAt = useRef(0)
   const prefill = useLabPrefill()
 
@@ -69,10 +68,9 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   }, [])
 
   useEffect(() => {
-    if (submitCount === 0) return
-    const first = FIELD_ORDER.find((key) => errors[key] !== undefined)
-    if (first !== undefined) document.getElementById(first)?.focus()
-  }, [errors, submitCount])
+    if (validationRun === 0) return
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+  }, [validationRun])
 
   if (endpoint === null) {
     return (
@@ -116,8 +114,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
     const found = validateContact(request)
     setErrors(found)
-    setSubmitCount((count) => count + 1)
     if (Object.keys(found).length > 0) {
+      setValidationRun((count) => count + 1)
       setStatus('idle')
       setMessage('')
       setMailtoHref(null)
@@ -155,6 +153,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
   return (
     <form
+      ref={formRef}
       onSubmit={(event) => {
         void onSubmit(event)
       }}
@@ -188,7 +187,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.name === undefined ? undefined : 'name-error'}
           />
           {errors.name !== undefined && (
-            <p id="name-error" className="mt-1 text-sm text-brand">
+            <p
+              id="name-error"
+              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+            >
               {errors.name}
             </p>
           )}
@@ -207,7 +209,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.email === undefined ? undefined : 'email-error'}
           />
           {errors.email !== undefined && (
-            <p id="email-error" className="mt-1 text-sm text-brand">
+            <p
+              id="email-error"
+              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+            >
               {errors.email}
             </p>
           )}
@@ -274,7 +279,10 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             aria-describedby={errors.message === undefined ? undefined : 'message-error'}
           />
           {errors.message !== undefined && (
-            <p id="message-error" className="mt-1 text-sm text-brand">
+            <p
+              id="message-error"
+              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+            >
               {errors.message}
             </p>
           )}

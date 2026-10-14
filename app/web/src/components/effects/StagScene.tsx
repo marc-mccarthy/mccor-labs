@@ -1,13 +1,18 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useMotionValue, type MotionValue } from 'motion/react'
+import { useCallback, useEffect, type ReactNode, type RefObject } from 'react'
+import { useLenis } from '../motion/LenisProvider'
 import { readDurationSeconds } from '../motion/tokens'
+import { useReducedMotion } from '../motion/useReducedMotion'
 import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntime'
 import { buildScatterPositions, buildSeeds } from './stagAttributes'
+import { roundStagExit, stagExitAmount } from './stagExit'
 
 export interface StagSceneProps {
   className?: string
   fallback: ReactNode
+  exitTarget?: RefObject<HTMLElement | null>
 }
 
 interface CloudExtents {
@@ -40,6 +45,7 @@ const ASSEMBLE_DURATION_SCALE = 2
 const FALLBACK_ASSEMBLE_SECONDS = 1.6
 const POINTER_EASE = 0.08
 const VELOCITY_STRETCH = 0.08
+const EXIT_ATTRIBUTE = 'data-stag-exit'
 
 let assembled = false
 
@@ -86,7 +92,29 @@ function assembleSeconds(): number {
     : FALLBACK_ASSEMBLE_SECONDS
 }
 
-function buildStag(context: SceneContext): SceneHandle {
+function trackExit(
+  exit: MotionValue<number> | undefined,
+  uniform: { value: number },
+  root: HTMLElement | null,
+): () => void {
+  if (!exit) return () => undefined
+  let written: string | null = null
+  const apply = (value: number) => {
+    uniform.value = value
+    const rounded = roundStagExit(value)
+    if (rounded === written) return
+    written = rounded
+    root?.setAttribute(EXIT_ATTRIBUTE, rounded)
+  }
+  apply(exit.get())
+  const stop = exit.on('change', apply)
+  return () => {
+    stop()
+    root?.removeAttribute(EXIT_ATTRIBUTE)
+  }
+}
+
+function buildStag(context: SceneContext, exit?: MotionValue<number>): SceneHandle {
   const { THREE, canvas, renderer, pixelRatioRef, color, fail, velocityRef } = context
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
@@ -96,6 +124,7 @@ function buildStag(context: SceneContext): SceneHandle {
     uPointSize: { value: DEFAULT_POINT_SIZE },
     uPointer: { value: new THREE.Vector2(-9999, -9999) },
     uPointerForce: { value: 0 },
+    uExit: { value: 0 },
     uColorBase: { value: color('--color-base') },
     uColorBrand: { value: color('--color-brand') },
     uColorAccent: { value: color('--color-accent') },
@@ -143,6 +172,7 @@ function buildStag(context: SceneContext): SceneHandle {
     uniforms.uPointer.value.set(worldX, worldY)
   }
 
+  const stopExit = trackExit(exit, uniforms.uExit, canvas.parentElement)
   const resizeObserver = new ResizeObserver(resize)
   resizeObserver.observe(canvas)
   window.addEventListener('pointermove', onPointerMove, { passive: true })
@@ -197,6 +227,7 @@ function buildStag(context: SceneContext): SceneHandle {
     },
     dispose: () => {
       disposed = true
+      stopExit()
       resizeObserver.disconnect()
       window.removeEventListener('pointermove', onPointerMove)
       geometry?.dispose()
@@ -205,6 +236,38 @@ function buildStag(context: SceneContext): SceneHandle {
   }
 }
 
-export function StagScene({ className, fallback }: StagSceneProps) {
-  return <SceneRuntime className={className} fallback={fallback} build={buildStag} />
+function useStagExit(target: RefObject<HTMLElement | null> | undefined) {
+  const reducedMotion = useReducedMotion()
+  const lenis = useLenis()
+  const exit = useMotionValue(0)
+
+  useEffect(() => {
+    const element = target?.current
+    if (reducedMotion || !element) return undefined
+    let height = element.offsetHeight
+    const update = () => {
+      exit.set(stagExitAmount(window.scrollY, height))
+    }
+    const remeasure = () => {
+      height = element.offsetHeight
+      update()
+    }
+    update()
+    window.addEventListener('resize', remeasure, { passive: true })
+    const stopLenis = lenis?.on('scroll', update)
+    if (!lenis) window.addEventListener('scroll', update, { passive: true })
+    return () => {
+      window.removeEventListener('resize', remeasure)
+      window.removeEventListener('scroll', update)
+      stopLenis?.()
+    }
+  }, [exit, lenis, reducedMotion, target])
+
+  return target ? exit : undefined
+}
+
+export function StagScene({ className, fallback, exitTarget }: StagSceneProps) {
+  const exit = useStagExit(exitTarget)
+  const build = useCallback((context: SceneContext) => buildStag(context, exit), [exit])
+  return <SceneRuntime className={className} fallback={fallback} build={build} />
 }

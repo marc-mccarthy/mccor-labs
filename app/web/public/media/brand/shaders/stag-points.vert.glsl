@@ -5,6 +5,7 @@ uniform float uProgress;
 uniform float uPointSize;
 uniform vec2  uPointer;
 uniform float uPointerForce;
+uniform float uExit;
 
 attribute vec3 aScatterPos;
 attribute float aSeed;
@@ -21,6 +22,12 @@ void main() {
   t = smoothstep(0.0, 1.0, t);
 
   vec3 currentPos = mix(aScatterPos, position, t);
+
+  float ember = clamp((uExit - aSeed * 0.35) / 0.65, 0.0, 1.0);
+  ember = smoothstep(0.0, 1.0, ember);
+  vec3 emberPos = aScatterPos;
+  emberPos.y -= aSeed * 1.2;
+  currentPos = mix(currentPos, emberPos, ember);
 
   float driftAngle = uTime * 0.75 + aSeed * 6.2831853;
   vec3 ambientDrift = vec3(
@@ -45,5 +52,5 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(currentPos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
 
-  gl_PointSize = uPointSize;
+  gl_PointSize = uPointSize * (1.0 - ember * 0.4);
 }

@@ -122,6 +122,22 @@ function uniform(name: string): number {
   return params?.uniforms[name]?.value ?? Number.NaN
 }
 
+const HERO_HEIGHT = 765
+
+function renderWithHero() {
+  const hero = document.createElement('section')
+  Object.defineProperty(hero, 'offsetHeight', { value: HERO_HEIGHT })
+  vi.stubGlobal('scrollY', 0)
+  const result = render(<StagScene fallback={<div />} exitTarget={{ current: hero }} />)
+  const scroll = (y: number) => {
+    act(() => {
+      vi.stubGlobal('scrollY', y)
+      window.dispatchEvent(new Event('scroll'))
+    })
+  }
+  return { ...result, scroll }
+}
+
 const status = (container: HTMLElement) =>
   container.querySelector('[data-scene-status]')?.getAttribute('data-scene-status')
 
@@ -217,5 +233,60 @@ describe('StagScene', () => {
       '1',
     )
     expect(uniform('uPointSize')).toBeCloseTo(basePointSize)
+  })
+
+  it('drives uExit and data-stag-exit from hero scroll and reassembles at the top', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container, scroll } = renderWithHero()
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    const root = container.querySelector('[data-scene-status]')
+    expect(uniform('uExit')).toBe(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0')
+
+    scroll(0.8 * HERO_HEIGHT)
+    expect(uniform('uExit')).toBeGreaterThan(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0.9')
+
+    scroll(0)
+    expect(uniform('uExit')).toBe(0)
+    expect(root).toHaveAttribute('data-stag-exit', '0')
+  })
+
+  it('writes data-stag-exit only when the rounded value changes', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container, scroll } = renderWithHero()
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    const root = container.querySelector('[data-scene-status]')
+    if (!root) throw new Error('scene root missing')
+    const write = vi.spyOn(root, 'setAttribute')
+
+    scroll(0.6 * HERO_HEIGHT)
+    scroll(0.6 * HERO_HEIGHT + 2)
+    scroll(0.6 * HERO_HEIGHT + 4)
+    expect(write.mock.calls.filter(([name]) => name === 'data-stag-exit')).toEqual([
+      ['data-stag-exit', '0.4'],
+    ])
+    expect(uniform('uExit')).toBeGreaterThan(0.4)
+  })
+
+  it('leaves uExit at 0 and sets no data-stag-exit without an exit target', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    const { container } = render(<StagScene fallback={<div />} />)
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    act(() => {
+      vi.stubGlobal('scrollY', HERO_HEIGHT)
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(uniform('uExit')).toBe(0)
+    expect(container.querySelector('[data-stag-exit]')).toBeNull()
   })
 })

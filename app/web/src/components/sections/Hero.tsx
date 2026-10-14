@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Fragment, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { BookingCta } from '@/components/layout/BookingCta'
@@ -23,9 +23,10 @@ const sloganSentences = site.slogan.split(/(?<=\.)\s+/)
 
 export function Hero() {
   const [introPlaying, setIntroPlaying] = useState(false)
+  const sectionRef = useRef<HTMLElement | null>(null)
 
   return (
-    <section className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden">
       <Parallax>
         <div className="relative flex min-h-[85vh] items-end">
           <VideoMotionHero
@@ -45,6 +46,7 @@ export function Hero() {
               introPlaying && 'opacity-0',
             )}
             fallback={<HeroMotionCanvas className="opacity-30" />}
+            exitTarget={sectionRef}
           />
           <Container className="relative z-10 pt-16 pb-8 sm:pt-24">
             <div className="relative isolate max-w-xl lg:max-w-5xl">

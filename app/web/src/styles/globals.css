@@ -359,6 +359,39 @@
   }
 }
 
+[data-signal-sweep] {
+  height: 1px;
+  transform-origin: center;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-brand),
+    var(--color-glow-red),
+    transparent
+  );
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes signal-sweep {
+      from {
+        transform: scaleX(0);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    :root:not([data-motion='paused']) [data-signal-sweep] {
+      transform: scaleX(0);
+      animation: signal-sweep linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
 @keyframes signal-draw {
   from {
     stroke-dashoffset: 1;

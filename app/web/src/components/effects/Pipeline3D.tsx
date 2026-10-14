@@ -44,7 +44,7 @@ void main() {
 `
 
 function buildPipeline(context: SceneContext, stageCount: number): SceneHandle {
-  const { THREE, renderer, pixelRatio, color, fitToCanvas } = context
+  const { THREE, renderer, pixelRatioRef, color, fitToCanvas } = context
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute(
     'position',
@@ -53,7 +53,7 @@ function buildPipeline(context: SceneContext, stageCount: number): SceneHandle {
   const uniforms = {
     uTime: { value: 0 },
     uStages: { value: stageCount },
-    uPixelRatio: { value: pixelRatio },
+    uPixelRatio: { value: pixelRatioRef.current },
     uColor: { value: color('--color-accent') },
     uOpacity: { value: OPACITY },
   }
@@ -78,6 +78,7 @@ function buildPipeline(context: SceneContext, stageCount: number): SceneHandle {
   return {
     render: (time) => {
       uniforms.uTime.value = time / 1000
+      uniforms.uPixelRatio.value = pixelRatioRef.current
       renderer.render(scene, camera)
     },
     dispose: () => {

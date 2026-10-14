@@ -1,5 +1,5 @@
-import { render, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, render, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const spies = vi.hoisted(() => ({
   rendererCtor: vi.fn(),
@@ -8,6 +8,7 @@ const spies = vi.hoisted(() => ({
   geometryDispose: vi.fn(),
   materialDispose: vi.fn(),
   render: vi.fn(),
+  materialParams: vi.fn(),
 }))
 
 vi.mock('three', () => {
@@ -42,6 +43,9 @@ vi.mock('three', () => {
     BufferAttribute: vi.fn(),
     ShaderMaterial: class {
       dispose = spies.materialDispose
+      constructor(params: unknown) {
+        spies.materialParams(params)
+      }
     },
     Points: class {
       frustumCulled = true
@@ -78,6 +82,30 @@ function mockWebGL2(available: boolean) {
     id === 'webgl2' && available ? { getExtension: vi.fn(() => null) } : null) as never)
 }
 
+function stubFrames() {
+  let frameCallback: FrameRequestCallback = () => undefined
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frameCallback = callback
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let now = 1000
+  return (count: number, step: number) => {
+    act(() => {
+      for (let i = 0; i < count; i += 1) {
+        now += step
+        frameCallback(now)
+      }
+    })
+  }
+}
+
+function uniform(name: string): number {
+  const params = spies.materialParams.mock.calls.at(-1)?.[0] as
+    { uniforms: Record<string, { value: number }> } | undefined
+  return params?.uniforms[name]?.value ?? Number.NaN
+}
+
 const status = (container: HTMLElement) =>
   container.querySelector('[data-scene-status]')?.getAttribute('data-scene-status')
 
@@ -85,6 +113,10 @@ describe('Pipeline3D', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('ResizeObserver', StubResizeObserver)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('falls back and builds nothing under reduced motion', () => {
@@ -125,6 +157,27 @@ describe('Pipeline3D', () => {
     expect(spies.materialDispose).toHaveBeenCalledTimes(1)
     expect(spies.rendererDispose).toHaveBeenCalledTimes(1)
     expect(spies.forceContextLoss).toHaveBeenCalledTimes(1)
+  })
+
+  it('sizes points with the live pixel ratio after a resolution step', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    vi.stubGlobal('devicePixelRatio', 2)
+    const frames = stubFrames()
+    const { container } = render(<Pipeline3D stages={retrievalPipeline.stages} />)
+    await waitFor(() => {
+      expect(status(container)).toBe('active')
+    })
+
+    frames(1, 16)
+    expect(uniform('uPixelRatio')).toBe(1.5)
+
+    frames(30, 33)
+    expect(container.querySelector('[data-scene-tier]')).toHaveAttribute(
+      'data-scene-tier',
+      '1',
+    )
+    expect(uniform('uPixelRatio')).toBe(1)
   })
 })
 

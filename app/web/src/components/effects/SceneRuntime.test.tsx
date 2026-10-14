@@ -222,20 +222,70 @@ describe('SceneRuntime', () => {
   describe('offscreen pause', () => {
     type ObserverCallback = (entries: { isIntersecting: boolean }[]) => void
     let notify: ObserverCallback
+    let notifyPrewarm: ObserverCallback
     const disconnect = vi.fn()
+    const prewarmDisconnect = vi.fn()
+    const rootMargins: (string | undefined)[] = []
 
     beforeEach(() => {
+      rootMargins.length = 0
       vi.stubGlobal(
         'IntersectionObserver',
         class {
-          constructor(callback: ObserverCallback) {
-            notify = callback
-          }
           observe = vi.fn()
-          disconnect = disconnect
+          disconnect: () => void
+          constructor(callback: ObserverCallback, options?: IntersectionObserverInit) {
+            rootMargins.push(options?.rootMargin)
+            if (options?.rootMargin === undefined) {
+              notify = callback
+              this.disconnect = disconnect
+            } else {
+              notifyPrewarm = callback
+              this.disconnect = prewarmDisconnect
+            }
+          }
         },
       )
     })
+
+    function stubFrames() {
+      let frameCallback: FrameRequestCallback = () => undefined
+      const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+        frameCallback = callback
+        return requestFrame.mock.calls.length
+      })
+      vi.stubGlobal('requestAnimationFrame', requestFrame)
+      vi.stubGlobal('cancelAnimationFrame', vi.fn())
+      let now = 1000
+      const frames = (count: number, step: number) => {
+        act(() => {
+          for (let i = 0; i < count; i += 1) {
+            now += step
+            frameCallback(now)
+          }
+        })
+      }
+      return { requestFrame, frames }
+    }
+
+    async function renderActive() {
+      const build = vi.fn((): SceneHandle => ({ render: vi.fn(), dispose: vi.fn() }))
+      const view = render(<SceneRuntime fallback={<div />} build={build} />)
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
+      await waitFor(() => {
+        expect(view.container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+      return view.container.querySelector('[data-scene-status]')
+    }
+
+    function pixelRatios() {
+      return rendererSetPixelRatio.mock.calls.map(([ratio]: unknown[]) => ratio)
+    }
 
     afterEach(() => {
       vi.unstubAllGlobals()
@@ -353,6 +403,154 @@ describe('SceneRuntime', () => {
       expect(sceneRender).toHaveBeenLastCalledWith(16)
       frameCallback(60_016)
       expect(sceneRender).toHaveBeenLastCalledWith(32)
+    })
+
+    it('pre-warms with a 25% 0px observer that builds and draws one frame before entry', async () => {
+      mockMatchMedia(false)
+      mockWebGL2(true)
+      const { requestFrame } = stubFrames()
+      const sceneRender = vi.fn()
+      const build = vi.fn((): SceneHandle => ({ render: sceneRender, dispose: vi.fn() }))
+
+      const { container, unmount } = render(
+        <SceneRuntime fallback={<div data-testid="fallback" />} build={build} />,
+      )
+      expect(rootMargins).toEqual(['25% 0px', undefined])
+
+      act(() => {
+        notifyPrewarm([{ isIntersecting: false }])
+      })
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+        'data-scene-status',
+        'idle',
+      )
+      expect(rendererCtor).not.toHaveBeenCalled()
+
+      act(() => {
+        notifyPrewarm([{ isIntersecting: true }])
+      })
+      expect(prewarmDisconnect).toHaveBeenCalledTimes(1)
+      await waitFor(() => {
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-status',
+          'active',
+        )
+      })
+      expect(build).toHaveBeenCalledTimes(1)
+      expect(rendererCtor).toHaveBeenCalledTimes(1)
+      expect(sceneRender).toHaveBeenCalledTimes(1)
+      expect(requestFrame).not.toHaveBeenCalled()
+
+      act(() => {
+        notify([{ isIntersecting: true }])
+      })
+      expect(requestFrame).toHaveBeenCalledTimes(1)
+      expect(build).toHaveBeenCalledTimes(1)
+      expect(rendererCtor).toHaveBeenCalledTimes(1)
+
+      unmount()
+      expect(disconnect).toHaveBeenCalledTimes(1)
+    })
+
+    describe('adaptive resolution', () => {
+      it('caps the start ratio at 1.5 and steps down to 1 then 0.75 under sustained 33 ms frames, never back up', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 3)
+        const { frames } = stubFrames()
+
+        const root = await renderActive()
+        expect(pixelRatios()).toEqual([1.5])
+        expect(root).toHaveAttribute('data-scene-tier', '0')
+
+        frames(30, 33)
+        expect(pixelRatios()).toEqual([1.5])
+        frames(1, 33)
+        expect(pixelRatios()).toEqual([1.5, 1])
+        expect(root).toHaveAttribute('data-scene-tier', '1')
+
+        frames(29, 33)
+        expect(pixelRatios()).toEqual([1.5, 1])
+        frames(1, 33)
+        expect(pixelRatios()).toEqual([1.5, 1, 0.75])
+        expect(root).toHaveAttribute('data-scene-tier', '2')
+
+        frames(120, 33)
+        frames(120, 16)
+        expect(pixelRatios()).toEqual([1.5, 1, 0.75])
+        expect(root).toHaveAttribute('data-scene-tier', '2')
+      })
+
+      it('starts a ratio-1 display at 1 and steps only to 0.75', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 1)
+        const { frames } = stubFrames()
+
+        const root = await renderActive()
+        frames(200, 33)
+        expect(pixelRatios()).toEqual([1, 0.75])
+        expect(root).toHaveAttribute('data-scene-tier', '1')
+      })
+
+      it('keeps the start ratio under 16 ms frames', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 2)
+        const { frames } = stubFrames()
+
+        const root = await renderActive()
+        frames(300, 16)
+        expect(pixelRatios()).toEqual([1.5])
+        expect(root).toHaveAttribute('data-scene-tier', '0')
+      })
+
+      it('does not step down for one long frame among fast ones', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 2)
+        const { frames } = stubFrames()
+
+        await renderActive()
+        frames(20, 16)
+        frames(1, 400)
+        frames(60, 16)
+        expect(pixelRatios()).toEqual([1.5])
+      })
+
+      it('ignores the gap across an offscreen pause', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 2)
+        const { frames } = stubFrames()
+
+        await renderActive()
+        frames(30, 19)
+        act(() => {
+          notify([{ isIntersecting: false }])
+        })
+        act(() => {
+          notify([{ isIntersecting: true }])
+        })
+        frames(1, 60_000)
+        frames(100, 19)
+        expect(pixelRatios()).toEqual([1.5])
+      })
+
+      it('ignores the gap across a hidden tab', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        vi.stubGlobal('devicePixelRatio', 2)
+        const { frames } = stubFrames()
+
+        await renderActive()
+        frames(30, 19)
+        document.dispatchEvent(new Event('visibilitychange'))
+        frames(1, 60_000)
+        frames(100, 19)
+        expect(pixelRatios()).toEqual([1.5])
+      })
     })
 
     describe('motion pause', () => {

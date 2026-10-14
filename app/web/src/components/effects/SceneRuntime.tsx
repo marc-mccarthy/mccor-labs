@@ -13,7 +13,7 @@ export interface SceneContext {
   THREE: typeof import('three')
   canvas: HTMLCanvasElement
   renderer: import('three').WebGLRenderer
-  pixelRatio: number
+  pixelRatioRef: { readonly current: number }
   color: (name: string) => import('three').Color
   fail: () => void
   fitToCanvas: (onResize: (width: number, height: number) => void) => () => void
@@ -32,6 +32,11 @@ export interface SceneRuntimeProps {
 }
 
 const MAX_PIXEL_RATIO = 1.5
+const PIXEL_RATIO_STEPS = [MAX_PIXEL_RATIO, 1, 0.75]
+const FRAME_WINDOW = 30
+const SLOW_FRAME_MS = 20
+const MAX_FRAME_SAMPLE_MS = 50
+const PREWARM_MARGIN = '25% 0px'
 const VELOCITY_RANGE = 60
 const VELOCITY_EASE = 0.1
 const VELOCITY_REST = 0.001
@@ -45,6 +50,25 @@ export function easeVelocity(current: number, raw: number): number {
   const target = Math.max(-1, Math.min(1, raw / VELOCITY_RANGE))
   const next = current + (target - current) * VELOCITY_EASE
   return Math.abs(next) < VELOCITY_REST ? 0 : next
+}
+
+function nextPixelRatio(current: number): number | null {
+  return PIXEL_RATIO_STEPS.find((ratio) => ratio < current) ?? null
+}
+
+function createSlowFrameDetector(): (delta: number) => boolean {
+  const samples: number[] = []
+  let sum = 0
+  return (delta) => {
+    const sample = Math.min(delta, MAX_FRAME_SAMPLE_MS)
+    samples.push(sample)
+    sum += sample
+    if (samples.length > FRAME_WINDOW) sum -= samples.shift() ?? 0
+    if (samples.length < FRAME_WINDOW || sum / FRAME_WINDOW <= SLOW_FRAME_MS) return false
+    samples.length = 0
+    sum = 0
+    return true
+  }
 }
 
 let threeModulePromise: Promise<typeof import('three')> | null = null
@@ -109,6 +133,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
   const buildRef = useRef(build)
   const [status, setStatus] = useState<SceneStatus>('idle')
   const [canvasKey, setCanvasKey] = useState(0)
+  const [tier, setTier] = useState(0)
 
   useEffect(() => {
     buildRef.current = build
@@ -139,16 +164,33 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     let frameId: number | null = null
     let mountedCanvas: HTMLCanvasElement | null = null
     let observer: IntersectionObserver | null = null
+    let prewarmObserver: IntersectionObserver | null = null
     let lastTime: number | null = null
     let sceneTime = 0
     let visible = false
     let started = false
     let cancelIdle: (() => void) | null = null
     let stopFitting: (() => void) | null = null
+    const pixelRatioRef = { current: MAX_PIXEL_RATIO }
+    let downgrades = 0
+    const isSlow = createSlowFrameDetector()
     const velocityRef = { current: 0 }
 
+    const stepPixelRatioDown = () => {
+      const next = nextPixelRatio(pixelRatioRef.current)
+      if (next === null || !renderer) return
+      pixelRatioRef.current = next
+      renderer.setPixelRatio(next)
+      downgrades += 1
+      setTier(downgrades)
+    }
+
     const loop = (time: number) => {
-      if (lastTime !== null) sceneTime += time - lastTime
+      if (lastTime !== null) {
+        const delta = time - lastTime
+        sceneTime += delta
+        if (isSlow(delta)) stepPixelRatioDown()
+      }
       lastTime = time
       velocityRef.current = easeVelocity(
         velocityRef.current,
@@ -173,6 +215,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     const teardown = () => {
       observer?.disconnect()
+      prewarmObserver?.disconnect()
       stopFitting?.()
       stopFitting = null
       pause()
@@ -209,6 +252,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
             alpha: true,
           })
           nextRenderer.setPixelRatio(pixelRatio)
+          pixelRatioRef.current = pixelRatio
           renderer = nextRenderer
           canvas.addEventListener('webglcontextlost', onContextLost)
           const fitToCanvas: SceneContext['fitToCanvas'] = (onResize) => {
@@ -231,7 +275,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
             THREE,
             canvas,
             renderer: nextRenderer,
-            pixelRatio,
+            pixelRatioRef,
             color: (name) =>
               new THREE.Color().setStyle(readToken(name), THREE.LinearSRGBColorSpace),
             fail: () => {
@@ -242,12 +286,10 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
             velocityRef,
           })
           setStatus('active')
+          setTier(0)
 
-          if (pausedRef.current) {
-            handle.render(sceneTime)
-          } else {
-            resume()
-          }
+          resume()
+          if (frameId === null) handle.render(sceneTime)
         })
         .catch(() => {
           if (cancelled) return
@@ -259,6 +301,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     const startOnce = () => {
       if (started) return
       started = true
+      prewarmObserver?.disconnect()
       cancelIdle = whenIdleAfterLoad(start)
     }
 
@@ -266,6 +309,13 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     const root = rootRef.current
     if (root && typeof IntersectionObserver !== 'undefined') {
+      prewarmObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) startOnce()
+        },
+        { rootMargin: PREWARM_MARGIN },
+      )
+      prewarmObserver.observe(root)
       observer = new IntersectionObserver((entries) => {
         visible = entries.at(-1)?.isIntersecting ?? false
         if (visible) {
@@ -306,6 +356,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       className={className}
       data-scene-status={status}
       data-scene-paused={paused ? '' : undefined}
+      data-scene-tier={tier}
     >
       <canvas
         key={canvasKey}

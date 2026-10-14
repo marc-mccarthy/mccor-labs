@@ -35,6 +35,7 @@ const LG_BREAKPOINT = 1024
 const POINT_SIZE_DIVISOR = 170
 const MIN_POINT_SIZE = 1.5
 const MAX_POINT_SIZE = 4
+const DEFAULT_POINT_SIZE = 2
 const ASSEMBLE_DURATION_SCALE = 2
 const FALLBACK_ASSEMBLE_SECONDS = 1.6
 const POINTER_EASE = 0.08
@@ -86,13 +87,13 @@ function assembleSeconds(): number {
 }
 
 function buildStag(context: SceneContext): SceneHandle {
-  const { THREE, canvas, renderer, pixelRatio, color, fail, velocityRef } = context
+  const { THREE, canvas, renderer, pixelRatioRef, color, fail, velocityRef } = context
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
   const uniforms = {
     uTime: { value: 0 },
     uProgress: { value: assembled ? 1 : 0 },
-    uPointSize: { value: 2 },
+    uPointSize: { value: DEFAULT_POINT_SIZE },
     uPointer: { value: new THREE.Vector2(-9999, -9999) },
     uPointerForce: { value: 0 },
     uColorBase: { value: color('--color-base') },
@@ -108,6 +109,7 @@ function buildStag(context: SceneContext): SceneHandle {
   let startSeconds: number | null = null
   let pointerInside = false
   let extents: CloudExtents = { midX: 0, midY: 0, height: 2 }
+  let basePointSize = DEFAULT_POINT_SIZE
 
   const resize = () => {
     const { clientWidth: width, clientHeight: height } = canvas
@@ -125,11 +127,10 @@ function buildStag(context: SceneContext): SceneHandle {
     camera.top = extents.midY + stagY * unitsPerPixel
     camera.bottom = extents.midY - (height - stagY) * unitsPerPixel
     camera.updateProjectionMatrix()
-    uniforms.uPointSize.value =
-      Math.min(
-        MAX_POINT_SIZE,
-        Math.max(MIN_POINT_SIZE, stagPixels / POINT_SIZE_DIVISOR),
-      ) * pixelRatio
+    basePointSize = Math.min(
+      MAX_POINT_SIZE,
+      Math.max(MIN_POINT_SIZE, stagPixels / POINT_SIZE_DIVISOR),
+    )
   }
 
   const onPointerMove = (event: PointerEvent) => {
@@ -179,6 +180,7 @@ function buildStag(context: SceneContext): SceneHandle {
       const seconds = time / 1000
       startSeconds ??= seconds
       uniforms.uTime.value = seconds
+      uniforms.uPointSize.value = basePointSize * pixelRatioRef.current
       if (!assembled) {
         uniforms.uProgress.value = Math.min(
           1,

@@ -207,6 +207,7 @@ const STATES: State[] = [
     drive: async (page) => {
       await submitWith(page, reply(200, { reference: REFERENCE }))
       await expectStatus(page, `${ui.formSuccess} ${ui.formReference} ${REFERENCE}.`)
+      await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
     },
   },
   {
@@ -214,6 +215,7 @@ const STATES: State[] = [
     drive: async (page) => {
       await submitWith(page, reply(200, {}))
       await expectStatus(page, ui.formSuccess)
+      await expect.poll(() => signatureAnimations(page), { timeout: 5000 }).toEqual([])
     },
   },
   {

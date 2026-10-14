@@ -71,7 +71,7 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-3">
           <div className="hidden md:block">
-            <BookingCta size="sm" />
+            <BookingCta size="sm" variant={current === '/contact' ? 'link' : 'primary'} />
           </div>
           <MotionPauseToggle />
           <button

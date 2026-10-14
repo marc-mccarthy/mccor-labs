@@ -3,6 +3,7 @@ import { expect, test, type Page, type Route } from '@playwright/test'
 
 import { contactLabCopy } from '@/content/lab/copy'
 import { EMPTY_ANSWERS, QUESTION_KEYS, classifyStep } from '@/content/lab/rubric'
+import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 import { encodeLabResult, toLabResult } from '@/lib/labResult'
 
@@ -296,6 +297,52 @@ test.describe('live form', () => {
           )
         expect(opacity).toBe('1')
       })
+    })
+  })
+
+  test.describe('header at 1440', () => {
+    test.use({ viewport: { width: 1440, height: 900 } })
+
+    test('current contact link thickens on hover', async ({ page }) => {
+      await open(page)
+      const link = page.locator('header nav.hidden a[aria-current="page"]')
+      const height = () =>
+        link.evaluate((node) => getComputedStyle(node, '::after').height)
+      await expect.poll(height).toBe('1px')
+      await link.hover()
+      await expect.poll(height).toBe('2px')
+    })
+  })
+
+  test.describe('menu at 390', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('390 mobile menu on contact keeps one accent CTA', async ({ page }) => {
+      await open(page)
+      const toggle = page.getByRole('button', { name: ui.openMenu })
+      await toggle.click()
+      const menu = page.locator('#mobile-nav')
+      await expect(menu).toBeVisible()
+      for (const item of nav) {
+        await expect(menu.getByRole('link', { name: item.label })).toBeVisible()
+      }
+      await expect(menu.getByRole('link')).toHaveCount(nav.length + 1)
+      await expect(menu.getByRole('link', { name: 'Contact' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      )
+      const cta = menu.getByRole('link', { name: ui.bookCall })
+      await expect(cta).toBeInViewport()
+      await page.waitForFunction(() =>
+        [...document.querySelectorAll('#mobile-nav [style*="--i"]')].every(
+          (element) => getComputedStyle(element).opacity === '1',
+        ),
+      )
+      const results = await new AxeBuilder({ page }).withTags(TAGS).analyze()
+      expect(results.violations, JSON.stringify(results.violations, null, 2)).toEqual([])
+      await page.keyboard.press('Escape')
+      await expect(menu).toBeHidden()
+      await expect(page.getByRole('button', { name: ui.openMenu })).toBeFocused()
     })
   })
 

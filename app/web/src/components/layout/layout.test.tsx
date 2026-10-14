@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BookingCta } from './BookingCta'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { SkipLink } from './SkipLink'
@@ -215,6 +216,58 @@ describe('Header mobile menu', () => {
     for (const line of lines) {
       expect(line).toHaveClass('motion-safe:transition-[translate,rotate,opacity]')
     }
+  })
+})
+
+describe('BookingCta link variant', () => {
+  beforeEach(() => {
+    mocked.env.bookingUrl = null
+    navigation.pathname = '/'
+  })
+
+  it('renders no magnetic wrapper and keeps the mailto link when booking is null', () => {
+    const { container } = render(<BookingCta variant="link" />)
+    expect(container.querySelector('[data-magnetic]')).toBeNull()
+    expect(screen.getByRole('link', { name: ui.contactFallback })).toHaveAttribute(
+      'href',
+      `mailto:${site.contactEmail}`,
+    )
+  })
+
+  it('renders no magnetic wrapper and keeps the booking link when booking is set', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    const { container } = render(<BookingCta variant="link" />)
+    expect(container.querySelector('[data-magnetic]')).toBeNull()
+    expect(screen.getByRole('link', { name: ui.bookCall })).toHaveAttribute(
+      'href',
+      BOOKING_URL,
+    )
+  })
+
+  it('keeps the magnetic wrapper by default', () => {
+    const { container } = render(<BookingCta />)
+    expect(container.querySelector('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('demotes only the desktop header CTA on the contact route', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    navigation.pathname = '/contact/'
+    render(<Header />)
+    const links = screen.getAllByRole('link', { name: ui.bookCall, hidden: true })
+    expect(links).toHaveLength(2)
+    const desktop = links.find((link) => link.closest('.hidden.md\\:block'))!
+    const mobile = links.find((link) => link.closest('#mobile-nav'))!
+    expect(desktop.closest('[data-magnetic]')).toBeNull()
+    expect(mobile.closest('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('keeps the desktop header CTA magnetic off the contact route', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    render(<Header />)
+    const desktop = screen
+      .getAllByRole('link', { name: ui.bookCall, hidden: true })
+      .find((link) => link.closest('.hidden.md\\:block'))!
+    expect(desktop.closest('[data-magnetic]')).not.toBeNull()
   })
 })
 

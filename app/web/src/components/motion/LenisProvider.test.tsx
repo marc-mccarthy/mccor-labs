@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const construct = vi.fn()
 const destroy = vi.fn()
@@ -15,7 +15,18 @@ vi.mock('lenis', () => ({
   },
 }))
 
-import { LenisProvider } from './LenisProvider'
+import { LenisProvider, useLenis } from './LenisProvider'
+import { MotionPauseProvider, useMotionPaused } from './MotionPauseProvider'
+
+function PauseButton() {
+  const { toggle } = useMotionPaused()
+  const lenis = useLenis()
+  return (
+    <button type="button" data-lenis={String(lenis !== null)} onClick={toggle}>
+      pause
+    </button>
+  )
+}
 
 function mockMatchMedia(reduced: boolean) {
   const listeners = new Set<() => void>()
@@ -85,5 +96,38 @@ describe('LenisProvider', () => {
     expect(listeners.size).toBe(1)
     for (const listener of listeners) listener()
     expect(construct).not.toHaveBeenCalled()
+  })
+
+  describe('motion pause', () => {
+    afterEach(() => {
+      localStorage.clear()
+      delete document.documentElement.dataset.motion
+    })
+
+    it('destroys Lenis for native scroll while paused and recreates it on unpause', () => {
+      mockMatchMedia(false)
+      render(
+        <MotionPauseProvider>
+          <LenisProvider>
+            <PauseButton />
+          </LenisProvider>
+        </MotionPauseProvider>,
+      )
+      const button = screen.getByRole('button', { name: 'pause' })
+      expect(construct).toHaveBeenCalledTimes(1)
+      expect(button).toHaveAttribute('data-lenis', 'true')
+
+      act(() => {
+        button.click()
+      })
+      expect(destroy).toHaveBeenCalledTimes(1)
+      expect(button).toHaveAttribute('data-lenis', 'false')
+
+      act(() => {
+        button.click()
+      })
+      expect(construct).toHaveBeenCalledTimes(2)
+      expect(button).toHaveAttribute('data-lenis', 'true')
+    })
   })
 })

@@ -1,5 +1,6 @@
 'use client'
 
+import type { MotionValue } from 'motion/react'
 import { useCallback, type ReactNode } from 'react'
 import {
   buildNodeLayout,
@@ -11,7 +12,7 @@ import { SceneRuntime, type SceneContext, type SceneHandle } from './SceneRuntim
 import { useProgressRef } from './useProgressRef'
 
 export interface NodeLatticeSceneProps {
-  progress: number
+  progress: MotionValue<number>
   className?: string
   fallback?: ReactNode
 }

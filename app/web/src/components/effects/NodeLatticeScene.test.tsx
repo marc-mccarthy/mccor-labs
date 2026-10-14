@@ -1,4 +1,5 @@
 import { render, waitFor } from '@testing-library/react'
+import { motionValue } from 'motion/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const spies = vi.hoisted(() => ({
@@ -120,7 +121,7 @@ describe('NodeLatticeScene', () => {
   it('falls back and builds nothing under reduced motion', () => {
     mockMatchMedia(true)
     mockWebGL2(true)
-    const { container } = render(<NodeLatticeScene progress={0} />)
+    const { container } = render(<NodeLatticeScene progress={motionValue(0)} />)
     expect(status(container)).toBe('fallback')
     expect(spies.rendererCtor).not.toHaveBeenCalled()
   })
@@ -128,7 +129,7 @@ describe('NodeLatticeScene', () => {
   it('falls back when WebGL2 is unavailable', () => {
     mockMatchMedia(false)
     mockWebGL2(false)
-    const { container } = render(<NodeLatticeScene progress={0} />)
+    const { container } = render(<NodeLatticeScene progress={motionValue(0)} />)
     expect(status(container)).toBe('fallback')
     expect(spies.rendererCtor).not.toHaveBeenCalled()
   })
@@ -145,7 +146,7 @@ describe('NodeLatticeScene', () => {
       }),
     )
     spies.lenis = { velocity: 600 }
-    const { container } = render(<NodeLatticeScene progress={0.5} />)
+    const { container } = render(<NodeLatticeScene progress={motionValue(0.5)} />)
     await waitFor(() => {
       expect(status(container)).toBe('active')
     })
@@ -161,7 +162,9 @@ describe('NodeLatticeScene', () => {
   it('places every instance and disposes everything on unmount', async () => {
     mockMatchMedia(false)
     mockWebGL2(true)
-    const { container, unmount } = render(<NodeLatticeScene progress={0.5} />)
+    const { container, unmount } = render(
+      <NodeLatticeScene progress={motionValue(0.5)} />,
+    )
 
     await waitFor(() => {
       expect(status(container)).toBe('active')
@@ -183,7 +186,7 @@ describe('NodeLatticeScene', () => {
   ])('at lg=%s keeps every node clear of the headline: %s', async (wide, clamped) => {
     mockMatchMedia(false, wide)
     mockWebGL2(true)
-    const { container } = render(<NodeLatticeScene progress={0.5} />)
+    const { container } = render(<NodeLatticeScene progress={motionValue(0.5)} />)
     await waitFor(() => {
       expect(status(container)).toBe('active')
     })

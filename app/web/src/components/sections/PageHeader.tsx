@@ -1,5 +1,6 @@
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
+import { Eyebrow } from '@/components/ui/eyebrow'
 import { cn } from '@/lib/cn'
 import { Parallax } from '@/components/motion/Parallax'
 import { HeaderVideo, type HeaderVideoSources } from '@/components/sections/HeaderVideo'
@@ -9,20 +10,39 @@ interface PageHeaderProps {
   description: string
   image?: string
   video?: HeaderVideoSources
+  eyebrow?: { index: string; label: string }
+  size?: 'md' | 'lg'
+  imageClassName?: string
 }
+
+const H1_CLASS = {
+  md: 'text-display-md',
+  lg: 'text-display-lg',
+} as const
+
+const LEDE_CLASS = {
+  md: 'max-w-2xl text-lg text-muted',
+  lg: 'max-w-[48ch] text-xl text-text text-pretty',
+} as const
 
 const BAND_MASK = 'absolute inset-0 mask-t-from-80% mask-b-from-45% *:h-full'
 
-export function PageHeader({ title, description, image, video }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  image,
+  video,
+  eyebrow,
+  size = 'md',
+  imageClassName,
+}: PageHeaderProps) {
   const text = (
     <Container className="relative">
-      <h1 className="text-display-md leading-tight font-semibold text-text">{title}</h1>
-      <p
-        className={cn(
-          'mt-4 max-w-2xl text-lg text-muted',
-          image && 'motion-safe:animate-lede',
-        )}
-      >
+      {eyebrow && <Eyebrow index={eyebrow.index} label={eyebrow.label} />}
+      <h1 className={cn(H1_CLASS[size], 'leading-tight font-semibold text-text')}>
+        {title}
+      </h1>
+      <p className={cn('mt-4', LEDE_CLASS[size], image && 'motion-safe:animate-lede')}>
         {description}
       </p>
     </Container>
@@ -40,7 +60,7 @@ export function PageHeader({ title, description, image, video }: PageHeaderProps
             fetchPriority="high"
             decoding="async"
             data-testid="header-image"
-            className="h-full w-full object-cover object-right"
+            className={cn('h-full w-full object-cover object-right', imageClassName)}
           />
         </Parallax>
       </div>

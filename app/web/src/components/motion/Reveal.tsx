@@ -9,10 +9,13 @@ import { useReducedMotion } from './useReducedMotion'
 export interface RevealProps {
   children: ReactNode
   delay?: number
-  variant?: 'rise' | 'mask'
+  variant?: 'rise' | 'mask' | 'words'
+  className?: string
 }
 
 const RISE_DISTANCE = 24
+
+type MotionVariant = 'rise' | 'mask'
 
 const HIDDEN = {
   rise: { opacity: 0, y: RISE_DISTANCE },
@@ -32,7 +35,51 @@ function isInViewport(element: HTMLElement | null): boolean {
   return rect.top < window.innerHeight && rect.bottom > 0
 }
 
-export function Reveal({ children, delay, variant = 'rise' }: RevealProps) {
+function WordsReveal({
+  children,
+  className,
+}: Pick<RevealProps, 'children' | 'className'>) {
+  const reducedMotion = useReducedMotion()
+  const [phase, setPhase] = useState<'pending' | 'armed' | 'shown'>('pending')
+  const wrapper = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (reducedMotion) return undefined
+    const element = wrapper.current
+    if (isInViewport(element) || typeof IntersectionObserver === 'undefined') {
+      setPhase('shown')
+      return undefined
+    }
+    setPhase('armed')
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setPhase('shown')
+        observer.disconnect()
+      }
+    })
+    if (element) observer.observe(element)
+    return () => {
+      observer.disconnect()
+    }
+  }, [reducedMotion])
+
+  if (reducedMotion) {
+    return className ? <div className={className}>{children}</div> : <>{children}</>
+  }
+
+  return (
+    <div ref={wrapper} data-reveal={phase} className={className}>
+      {children}
+    </div>
+  )
+}
+
+function MotionReveal({
+  children,
+  delay,
+  variant,
+  className,
+}: Omit<RevealProps, 'variant'> & { variant: MotionVariant }) {
   const reducedMotion = useReducedMotion()
   const [phase, setPhase] = useState<FeaturePhase>('pending')
   const placeholder = useRef<HTMLDivElement>(null)
@@ -54,12 +101,12 @@ export function Reveal({ children, delay, variant = 'rise' }: RevealProps) {
   }, [reducedMotion])
 
   if (reducedMotion) {
-    return <>{children}</>
+    return className ? <div className={className}>{children}</div> : <>{children}</>
   }
 
   if (phase !== 'ready') {
     return (
-      <div ref={placeholder} data-reveal={phase}>
+      <div ref={placeholder} data-reveal={phase} className={className}>
         {children}
       </div>
     )
@@ -69,6 +116,7 @@ export function Reveal({ children, delay, variant = 'rise' }: RevealProps) {
     <LazyMotion features={loadDomAnimationFeatures}>
       <m.div
         data-reveal=""
+        className={className}
         initial={HIDDEN[variant]}
         whileInView={SHOWN[variant]}
         viewport={{ once: true }}
@@ -81,5 +129,16 @@ export function Reveal({ children, delay, variant = 'rise' }: RevealProps) {
         {children}
       </m.div>
     </LazyMotion>
+  )
+}
+
+export function Reveal({ children, delay, variant = 'rise', className }: RevealProps) {
+  if (variant === 'words') {
+    return <WordsReveal className={className}>{children}</WordsReveal>
+  }
+  return (
+    <MotionReveal delay={delay} variant={variant} className={className}>
+      {children}
+    </MotionReveal>
   )
 }

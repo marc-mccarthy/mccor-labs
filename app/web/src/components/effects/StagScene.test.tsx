@@ -1,5 +1,5 @@
-import { render, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, render, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const spies = vi.hoisted(() => ({
   rendererCtor: vi.fn(),
@@ -8,6 +8,7 @@ const spies = vi.hoisted(() => ({
   geometryDispose: vi.fn(),
   materialDispose: vi.fn(),
   setAttribute: vi.fn(),
+  materialParams: vi.fn(),
 }))
 
 vi.mock('three', () => ({
@@ -45,6 +46,9 @@ vi.mock('three', () => ({
   BufferAttribute: vi.fn(),
   ShaderMaterial: class {
     dispose = spies.materialDispose
+    constructor(params: unknown) {
+      spies.materialParams(params)
+    }
   },
   Points: class {
     position = { x: 0, y: 0, z: 0 }
@@ -94,6 +98,30 @@ function stubFetch(ok: boolean) {
   )
 }
 
+function stubFrames() {
+  let frameCallback: FrameRequestCallback = () => undefined
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    frameCallback = callback
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let now = 1000
+  return (count: number, step: number) => {
+    act(() => {
+      for (let i = 0; i < count; i += 1) {
+        now += step
+        frameCallback(now)
+      }
+    })
+  }
+}
+
+function uniform(name: string): number {
+  const params = spies.materialParams.mock.calls.at(-1)?.[0] as
+    { uniforms: Record<string, { value: number }> } | undefined
+  return params?.uniforms[name]?.value ?? Number.NaN
+}
+
 const status = (container: HTMLElement) =>
   container.querySelector('[data-scene-status]')?.getAttribute('data-scene-status')
 
@@ -102,6 +130,11 @@ describe('StagScene', () => {
     vi.clearAllMocks()
     vi.stubGlobal('ResizeObserver', StubResizeObserver)
     stubFetch(true)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it('renders the fallback and builds nothing under reduced motion', () => {
@@ -159,5 +192,30 @@ describe('StagScene', () => {
     })
     expect(getByTestId('fallback')).toBeInTheDocument()
     expect(spies.geometryDispose).not.toHaveBeenCalled()
+  })
+
+  it('sizes points with the live pixel ratio after a resolution step', async () => {
+    mockMatchMedia(false)
+    mockWebGL2(true)
+    vi.stubGlobal('devicePixelRatio', 2)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1376)
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(768)
+    const frames = stubFrames()
+    const { container } = render(<StagScene fallback={<div />} />)
+    await waitFor(() => {
+      expect(spies.setAttribute).toHaveBeenCalledWith('aSeed', expect.anything())
+    })
+    expect(status(container)).toBe('active')
+    const basePointSize = 500 / 170
+
+    frames(1, 16)
+    expect(uniform('uPointSize')).toBeCloseTo(basePointSize * 1.5)
+
+    frames(30, 33)
+    expect(container.querySelector('[data-scene-tier]')).toHaveAttribute(
+      'data-scene-tier',
+      '1',
+    )
+    expect(uniform('uPointSize')).toBeCloseTo(basePointSize)
   })
 })

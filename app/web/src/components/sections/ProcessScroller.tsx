@@ -1,11 +1,11 @@
 'use client'
 
-import { useRef, type CSSProperties } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Pinned } from '@/components/motion/Pinned'
 import { useReducedMotion } from '@/components/motion/useReducedMotion'
-import { useScrollProgress } from '@/components/motion/useScrollProgress'
+import { useScrollProgressValue } from '@/components/motion/useScrollProgress'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { process } from '@/content/process'
 
@@ -17,6 +17,15 @@ const PIN_END = PIN_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
 function pinnedFraction(progress: number): number {
   return Math.min(1, Math.max(0, (progress - PIN_START) / (PIN_END - PIN_START)))
 }
+
+function trackShift(fraction: number) {
+  return {
+    '--shift-md': `${String(fraction * (process.length - 1) * 100)}%`,
+    '--shift-lg': `${String(fraction * (process.length - 2) * 50)}%`,
+  }
+}
+
+const RESTING_TRACK = trackShift(0) as CSSProperties
 
 function StageCard({ stage }: { stage: (typeof process)[number] }) {
   return (
@@ -45,7 +54,20 @@ function ProcessHeading({ heading }: ProcessScrollerProps) {
 export function ProcessScroller({ heading }: ProcessScrollerProps) {
   const reducedMotion = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
-  const progress = useScrollProgress(ref)
+  const trackRef = useRef<HTMLOListElement>(null)
+  const progress = useScrollProgressValue(ref)
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (reducedMotion || !track) return undefined
+    const write = (value: number) => {
+      for (const [name, shift] of Object.entries(trackShift(pinnedFraction(value)))) {
+        track.style.setProperty(name, shift)
+      }
+    }
+    write(progress.get())
+    return progress.on('change', write)
+  }, [progress, reducedMotion])
 
   if (reducedMotion) {
     return (
@@ -64,12 +86,6 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
     )
   }
 
-  const fraction = pinnedFraction(progress)
-  const track = {
-    '--shift-md': `${String(fraction * (process.length - 1) * 100)}%`,
-    '--shift-lg': `${String(fraction * (process.length - 2) * 50)}%`,
-  } as CSSProperties
-
   return (
     <Section className="motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0">
       <div ref={ref}>
@@ -78,8 +94,9 @@ export function ProcessScroller({ heading }: ProcessScrollerProps) {
             <ProcessHeading heading={heading} />
             <Container>
               <ol
+                ref={trackRef}
                 className="flex flex-col gap-6 motion-safe:md:-translate-x-(--shift-md) motion-safe:md:flex-row motion-safe:md:gap-0 motion-safe:lg:-translate-x-(--shift-lg)"
-                style={track}
+                style={RESTING_TRACK}
               >
                 {process.map((stage) => (
                   <li

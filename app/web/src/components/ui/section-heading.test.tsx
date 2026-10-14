@@ -57,4 +57,68 @@ describe('SectionHeading', () => {
       wrapper?.firstElementChild,
     )
   })
+
+  it('keeps the default output and applies the md size', () => {
+    mockMatchMedia(true)
+    const { container, rerender } = render(
+      <SectionHeading>Systems we build</SectionHeading>,
+    )
+    expect(container.firstElementChild?.className).toBe(
+      'text-display-sm leading-tight font-semibold tracking-tight text-text',
+    )
+    rerender(<SectionHeading size="md">Systems we build</SectionHeading>)
+    const cls = container.firstElementChild?.className ?? ''
+    expect(cls).toContain('text-display-md')
+    expect(cls).not.toContain('text-display-sm')
+  })
+
+  it('renders the eyebrow outside the h2 and leaves the name intact', () => {
+    mockMatchMedia(false)
+    const { container } = render(
+      <SectionHeading eyebrow={{ index: '01', label: 'Build' }}>
+        Systems we build
+      </SectionHeading>,
+    )
+    const heading = screen.getByRole('heading', { level: 2, name: 'Systems we build' })
+    expect(heading.textContent).toBe('Systems we build')
+    expect(heading.contains(screen.getByText('01'))).toBe(false)
+    expect(screen.getByText('Build')).toBeTruthy()
+    const tick = screen.getByTestId('eyebrow-tick')
+    expect(tick.getAttribute('aria-hidden')).toBe('true')
+    expect(tick.className).toContain('w-4')
+    expect(tick.className).toContain('motion-on:animate-[band-signal_')
+    expect(heading.parentElement?.hasAttribute('data-reveal')).toBe(true)
+    expect(container.querySelector('[data-reveal]')).toBe(heading.parentElement)
+  })
+
+  it('splits words with the accessible name unchanged', () => {
+    mockMatchMedia(false)
+    render(<SectionHeading words>Systems we build</SectionHeading>)
+    const heading = screen.getByRole('heading', { level: 2, name: 'Systems we build' })
+    expect(heading.textContent).toBe('Systems we build')
+    expect(heading.querySelectorAll('[data-word]').length).toBe(3)
+    expect(heading.parentElement?.hasAttribute('data-reveal')).toBe(true)
+  })
+
+  it('does not split when words is off', () => {
+    mockMatchMedia(false)
+    render(<SectionHeading>Systems we build</SectionHeading>)
+    const heading = screen.getByRole('heading', { level: 2 })
+    expect(heading.querySelector('[data-word]')).toBeNull()
+  })
+
+  it('renders the shared eyebrow line unchanged', () => {
+    mockMatchMedia(false)
+    render(
+      <SectionHeading eyebrow={{ index: '01', label: 'Build' }}>
+        Systems we build
+      </SectionHeading>,
+    )
+    const line = screen.getByText('01').parentElement!
+    expect(line.tagName).toBe('P')
+    expect(line.className).toBe(
+      'mb-4 flex items-center gap-3 font-mono text-xs tracking-widest uppercase',
+    )
+    expect(line.children).toHaveLength(4)
+  })
 })

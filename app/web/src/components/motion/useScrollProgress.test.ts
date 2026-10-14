@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const on = vi.fn(() => () => undefined)
 const destroy = vi.fn()
@@ -14,7 +14,7 @@ vi.mock('lenis', () => ({
 }))
 
 import { LenisProvider } from './LenisProvider'
-import { useScrollProgress } from './useScrollProgress'
+import { useScrollProgress, useScrollProgressValue } from './useScrollProgress'
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -50,6 +50,58 @@ function elementRef(rect: DOMRect) {
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect)
   return { current: element }
 }
+
+function movableRef(rect: DOMRect) {
+  const element = document.createElement('div')
+  let current = rect
+  vi.spyOn(element, 'getBoundingClientRect').mockImplementation(() => current)
+  return {
+    ref: { current: element },
+    move: (next: DOMRect) => {
+      current = next
+    },
+  }
+}
+
+function stubIntersectionObserver() {
+  const callbacks: IntersectionObserverCallback[] = []
+  const options: (IntersectionObserverInit | undefined)[] = []
+  const construct = vi.fn()
+  class MockIntersectionObserver {
+    observe = vi.fn()
+    disconnect = vi.fn()
+    constructor(callback: IntersectionObserverCallback, init?: IntersectionObserverInit) {
+      construct()
+      callbacks.push(callback)
+      options.push(init)
+    }
+  }
+  vi.stubGlobal('IntersectionObserver', MockIntersectionObserver)
+  return {
+    construct,
+    options,
+    report(isIntersecting: boolean) {
+      act(() => {
+        for (const callback of callbacks) {
+          callback(
+            [{ isIntersecting } as IntersectionObserverEntry],
+            {} as IntersectionObserver,
+          )
+        }
+      })
+    },
+  }
+}
+
+function scroll() {
+  act(() => {
+    window.dispatchEvent(new Event('scroll'))
+  })
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('useScrollProgress', () => {
   it('returns 0 before the element enters the viewport', () => {
@@ -124,5 +176,101 @@ describe('useScrollProgress', () => {
       window.dispatchEvent(new Event('scroll'))
     })
     expect(result.current).toBe(0)
+  })
+
+  it('ignores scroll and never re-renders while the element is far from the viewport', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const observer = stubIntersectionObserver()
+    const { ref, move } = movableRef(mockRect(2000, 400))
+    let renders = 0
+    const { result } = renderHook(() => {
+      renders += 1
+      return useScrollProgress(ref)
+    })
+    expect(observer.options).toEqual([{ rootMargin: '50% 0px' }])
+    observer.report(false)
+    const settled = renders
+
+    move(mockRect(0, 400))
+    scroll()
+
+    expect(renders).toBe(settled)
+    expect(result.current).toBe(0)
+  })
+
+  it('tracks scroll while near the viewport and clamps to 1 once it leaves upward', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const observer = stubIntersectionObserver()
+    const { ref, move } = movableRef(mockRect(400, 400))
+    const { result } = renderHook(() => useScrollProgress(ref))
+    observer.report(true)
+    expect(result.current).toBeCloseTo(1 / 3, 5)
+
+    move(mockRect(0, 400))
+    scroll()
+    expect(result.current).toBeCloseTo(2 / 3, 5)
+
+    move(mockRect(-900, 400))
+    observer.report(false)
+    expect(result.current).toBe(1)
+
+    move(mockRect(0, 400))
+    scroll()
+    expect(result.current).toBe(1)
+  })
+
+  it('clamps to 0 once the element leaves below the viewport', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const observer = stubIntersectionObserver()
+    const { ref, move } = movableRef(mockRect(400, 400))
+    const { result } = renderHook(() => useScrollProgress(ref))
+    observer.report(true)
+    expect(result.current).toBeCloseTo(1 / 3, 5)
+
+    move(mockRect(1300, 400))
+    observer.report(false)
+    expect(result.current).toBe(0)
+  })
+})
+
+describe('useScrollProgressValue', () => {
+  it('updates the MotionValue on scroll without re-rendering', () => {
+    mockMatchMedia(false)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const { ref, move } = movableRef(mockRect(400, 400))
+    let renders = 0
+    const { result } = renderHook(() => {
+      renders += 1
+      return useScrollProgressValue(ref)
+    })
+    expect(result.current.get()).toBeCloseTo(1 / 3, 5)
+    const settled = renders
+
+    move(mockRect(0, 400))
+    scroll()
+
+    expect(result.current.get()).toBeCloseTo(2 / 3, 5)
+    expect(renders).toBe(settled)
+  })
+
+  it('stays at 0 with no observer or scroll listener under reduced motion', () => {
+    mockMatchMedia(true)
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    const observer = stubIntersectionObserver()
+    const addEventListener = vi.spyOn(window, 'addEventListener')
+    const { ref } = movableRef(mockRect(0, 400))
+    const { result } = renderHook(() => useScrollProgressValue(ref))
+    scroll()
+    expect(result.current.get()).toBe(0)
+    expect(observer.construct).not.toHaveBeenCalled()
+    expect(addEventListener).not.toHaveBeenCalledWith(
+      'scroll',
+      expect.any(Function),
+      expect.anything(),
+    )
+    addEventListener.mockRestore()
   })
 })

@@ -5,6 +5,8 @@ export const ui = {
   openMenu: 'Open menu',
   closeMenu: 'Close menu',
   pauseVideo: 'Pause background video',
+  pauseMotion: 'Pause motion',
+  pauseMotionSystemHint: 'Motion is already reduced by your system setting.',
   bookCall: 'Book a 30-minute call',
   contactFallback: 'Email us directly',
   ctaHeading: 'Have something to build?',

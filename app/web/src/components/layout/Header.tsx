@@ -8,6 +8,7 @@ import { Logo } from './Logo'
 import { BookingCta } from './BookingCta'
 import { Container } from './Container'
 import { UNDERLINE } from './underline'
+import { MotionPauseToggle } from '@/components/motion/MotionPauseToggle'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 
@@ -51,11 +52,7 @@ export function Header() {
       className="sticky top-0 z-40 border-b border-border bg-base/80 backdrop-blur"
     >
       <Container className="flex h-16 items-center justify-between gap-6">
-        <Link
-          href="/"
-          aria-label="McCor Labs home"
-          className="transition-opacity hover:opacity-90"
-        >
+        <Link href="/" aria-label="McCor Labs home" className="press hover:opacity-90">
           <Logo size="sm" />
         </Link>
         <nav aria-label="Primary" className="hidden items-center gap-6 md:flex">
@@ -66,59 +63,62 @@ export function Header() {
               aria-current={
                 stripTrailingSlash(item.href) === current ? 'page' : undefined
               }
-              className={`text-sm text-muted transition-colors hover:text-text ${UNDERLINE}`}
+              className={`press text-sm text-muted hover:text-text ${UNDERLINE}`}
             >
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden md:block">
-          <BookingCta size="sm" />
-        </div>
-        <button
-          ref={toggleRef}
-          type="button"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? ui.closeMenu : ui.openMenu}
-          onClick={() => {
-            setOpen((value) => !value)
-          }}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text hover:bg-surface md:hidden"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            aria-hidden="true"
+        <div className="flex items-center gap-3">
+          <div className="hidden md:block">
+            <BookingCta size="sm" variant={current === '/contact' ? 'link' : 'primary'} />
+          </div>
+          <MotionPauseToggle />
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? ui.closeMenu : ui.openMenu}
+            onClick={() => {
+              setOpen((value) => !value)
+            }}
+            className="inline-flex h-10 w-10 press items-center justify-center rounded-full text-text hover:bg-surface md:hidden"
           >
-            <line
-              x1="3"
-              y1="5"
-              x2="17"
-              y2="5"
-              className={`${BAR} ${open ? 'translate-y-[5px] rotate-45' : ''}`}
-            />
-            <line
-              x1="3"
-              y1="10"
-              x2="17"
-              y2="10"
-              className={`${BAR} ${open ? 'opacity-0' : ''}`}
-            />
-            <line
-              x1="3"
-              y1="15"
-              x2="17"
-              y2="15"
-              className={`${BAR} ${open ? '-translate-y-[5px] -rotate-45' : ''}`}
-            />
-          </svg>
-        </button>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <line
+                x1="3"
+                y1="5"
+                x2="17"
+                y2="5"
+                className={`${BAR} ${open ? 'translate-y-[5px] rotate-45' : ''}`}
+              />
+              <line
+                x1="3"
+                y1="10"
+                x2="17"
+                y2="10"
+                className={`${BAR} ${open ? 'opacity-0' : ''}`}
+              />
+              <line
+                x1="3"
+                y1="15"
+                x2="17"
+                y2="15"
+                className={`${BAR} ${open ? '-translate-y-[5px] -rotate-45' : ''}`}
+              />
+            </svg>
+          </button>
+        </div>
       </Container>
       <nav id="mobile-nav" aria-label="Primary" hidden={!open} className={MOBILE_NAV}>
         <Container className="flex flex-col gap-1 py-4">
@@ -136,7 +136,7 @@ export function Header() {
                 aria-current={
                   stripTrailingSlash(item.href) === current ? 'page' : undefined
                 }
-                className="flex min-h-11 items-center text-sm text-muted transition-colors hover:text-text aria-[current=page]:text-text"
+                className="flex min-h-11 press items-center text-sm text-muted hover:text-text aria-[current=page]:text-text"
               >
                 {item.label}
               </Link>

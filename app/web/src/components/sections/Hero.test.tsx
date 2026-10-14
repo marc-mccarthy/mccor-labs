@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Hero } from './Hero'
+import { INTRO_STORAGE_KEY } from '@/components/motion/VideoMotionHero'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 
@@ -14,7 +15,9 @@ const mocked = vi.hoisted(() => ({
 
 vi.mock('@/lib/env', () => mocked)
 vi.mock('@/components/effects/StagScene', () => ({
-  StagScene: () => <div data-testid="stag-scene" data-scene-status="idle" />,
+  StagScene: ({ className }: { className?: string }) => (
+    <div data-testid="stag-scene" data-scene-status="idle" className={className} />
+  ),
 }))
 
 function mockMatchMedia(reduced: boolean) {
@@ -33,6 +36,10 @@ function mockMatchMedia(reduced: boolean) {
 describe('Hero', () => {
   beforeEach(() => {
     mockMatchMedia(true)
+  })
+
+  afterEach(() => {
+    sessionStorage.clear()
   })
 
   it('renders exactly one h1 containing the slogan and no tagline', () => {
@@ -72,8 +79,31 @@ describe('Hero', () => {
     expect(container.querySelector('video')).toBeNull()
   })
 
-  it('attaches the autoplaying video once motion is allowed', async () => {
+  it('plays the stag charge intro on a first visit and hides the stag scene until it ends', async () => {
     mockMatchMedia(false)
+    const { container } = render(<Hero />)
+    await vi.waitFor(() => {
+      expect(container.querySelector('video')).not.toBeNull()
+    })
+    expect(container.querySelector('video source[type="video/webm"]')).toHaveAttribute(
+      'src',
+      '/media/brand/hero-intro.webm',
+    )
+    const scene = await screen.findByTestId('stag-scene')
+    expect(scene).not.toHaveClass('opacity-0')
+    fireEvent.play(container.querySelector('video')!)
+    expect(screen.getByTestId('stag-scene')).toHaveClass('opacity-0')
+    fireEvent.ended(container.querySelector('video')!)
+    expect(container.querySelector('video source[type="video/webm"]')).toHaveAttribute(
+      'src',
+      '/media/brand/hero-loop.webm',
+    )
+    expect(screen.getByTestId('stag-scene')).not.toHaveClass('opacity-0')
+  })
+
+  it('attaches the autoplaying loop once motion is allowed and the intro was seen', async () => {
+    mockMatchMedia(false)
+    sessionStorage.setItem(INTRO_STORAGE_KEY, '1')
     const { container } = render(<Hero />)
     await vi.waitFor(() => {
       expect(container.querySelector('video')).not.toBeNull()

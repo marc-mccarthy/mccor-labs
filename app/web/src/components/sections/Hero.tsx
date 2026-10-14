@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useState } from 'react'
 import { motionScene } from '@/components/motion/motionScene'
 import { Container } from '@/components/layout/Container'
 import { BookingCta } from '@/components/layout/BookingCta'
@@ -9,6 +10,7 @@ import { Parallax } from '@/components/motion/Parallax'
 import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
 import { Badge } from '@/components/ui/badge'
 import { site } from '@/content/site'
+import { cn } from '@/lib/cn'
 
 const StagScene = motionScene(
   dynamic(
@@ -18,6 +20,8 @@ const StagScene = motionScene(
 )
 
 export function Hero() {
+  const [introPlaying, setIntroPlaying] = useState(false)
+
   return (
     <section className="relative overflow-hidden">
       <Parallax>
@@ -26,12 +30,18 @@ export function Hero() {
             posterSrc="/media/brand/mccor-stag-hero.webp"
             videoSrc="/media/brand/hero-loop.mp4"
             webmSrc="/media/brand/hero-loop.webm"
+            introSrc="/media/brand/hero-intro.mp4"
+            introWebmSrc="/media/brand/hero-intro.webm"
+            onIntroChange={setIntroPlaying}
             altText="McCor Labs dark monolith architecture with glowing red stag"
             className="absolute inset-0"
             objectPosition="object-right lg:object-[92%_center]"
           />
           <StagScene
-            className="pointer-events-none absolute inset-0 z-5"
+            className={cn(
+              'pointer-events-none absolute inset-0 z-5 transition-opacity duration-(--duration-scene)',
+              introPlaying && 'opacity-0',
+            )}
             fallback={<HeroMotionCanvas className="opacity-30" />}
           />
           <Container className="relative z-10 pt-16 pb-8 sm:pt-24">

@@ -1,5 +1,25 @@
 @import 'tailwindcss';
 
+@custom-variant motion-on {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-motion='paused']) & {
+      @slot;
+    }
+  }
+}
+
+@utility press {
+  transition-property: transform, color, background-color, border-color, opacity;
+  transition-duration: var(--duration-pointer);
+  transition-timing-function: var(--ease-pointer);
+
+  @variant motion-on {
+    &:active {
+      transform: scale(0.96);
+    }
+  }
+}
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('/fonts/geist-sans-variable.woff2') format('woff2');
@@ -95,7 +115,7 @@
 
 @keyframes grain-drift {
   to {
-    background-position: 256px 256px;
+    transform: translate3d(256px, 256px, 0);
   }
 }
 
@@ -108,6 +128,11 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  button:not(:disabled),
+  [role='button'] {
+    cursor: pointer;
+  }
+
   body {
     background-color: var(--color-base);
     color: var(--color-text);
@@ -117,17 +142,41 @@
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--color-base);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes focus-settle {
+      from {
+        outline-offset: 6px;
+        outline-color: var(--color-brand);
+      }
+
+      to {
+        outline-offset: 2px;
+        outline-color: var(--color-accent);
+      }
+    }
+
+    :root:not([data-motion='paused']) :focus-visible {
+      animation: focus-settle var(--duration-pointer) var(--ease-pointer);
+    }
   }
 
   body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    inset: -256px;
     z-index: 100;
     pointer-events: none;
+    contain: strict;
     background-image: url('/media/brand/grain-tile.webp');
     opacity: 0.04;
     animation: grain-drift 8s steps(16) infinite;
+  }
+
+  :root[data-motion='paused'] body::after {
+    animation: none;
   }
 
   body:has([data-legal])::after {
@@ -170,10 +219,18 @@
       }
     }
 
-    body:not(:has([data-legal], [data-careers])) [data-site-header] {
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header] {
       animation: header-blur linear both;
       animation-timeline: scroll(root);
       animation-range: 0 80px;
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header] {
+      backdrop-filter: blur(--theme(--blur-xl));
     }
 
     body:not(:has([data-legal], [data-careers])) [data-site-header]::before,
@@ -195,17 +252,39 @@
         transparent
       );
       opacity: 0;
-      animation: header-edge linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 80px;
     }
 
     body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
       background-color: var(--color-brand);
       transform: scaleX(0);
       transform-origin: left;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::before {
+      animation: header-edge linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::after {
       animation: header-progress linear both;
       animation-timeline: scroll(root);
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::before {
+      opacity: 1;
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::after {
+      transform: scaleX(1);
     }
   }
 }
@@ -213,6 +292,13 @@
 @keyframes band-signal {
   from {
     transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-motion='paused'] [class*='animate-[band-signal_'],
+  :root[data-motion='paused'] .animate-pulse {
+    animation: none;
   }
 }
 
@@ -240,6 +326,9 @@
 
     [data-service-rail] {
       display: block;
+    }
+
+    :root:not([data-motion='paused']) [data-service-rail] {
       transform: scaleY(0);
       animation: rail-fill linear both;
       animation-timeline: view();
@@ -257,6 +346,11 @@
 
     body:not(:has([data-legal], [data-careers])) [data-footer-signal] {
       display: block;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-footer-signal] {
       transform: scaleX(0);
       animation: footer-sweep linear both;
       animation-timeline: view();
@@ -265,8 +359,61 @@
   }
 }
 
+[data-signal-sweep] {
+  height: 1px;
+  transform-origin: center;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-brand),
+    var(--color-glow-red),
+    transparent
+  );
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes signal-sweep {
+      from {
+        transform: scaleX(0);
+      }
+
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    :root:not([data-motion='paused']) [data-signal-sweep] {
+      transform: scaleX(0);
+      animation: signal-sweep linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
 @keyframes signal-draw {
   from {
     stroke-dashoffset: 1;
+  }
+}
+
+[data-reveal]:has(:focus-visible) {
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: none !important;
+}
+
+[data-reveal='armed'] [data-word] {
+  @variant motion-on {
+    transform: translateY(100%);
+  }
+}
+
+[data-reveal='shown'] [data-word] {
+  @variant motion-on {
+    transform: none;
+    transition: transform var(--duration-standard) var(--ease-route)
+      calc(var(--i) * var(--stagger-interval));
   }
 }

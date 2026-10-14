@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { BookingCta } from './BookingCta'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { SkipLink } from './SkipLink'
@@ -96,6 +97,15 @@ describe('Header', () => {
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 
+  it('offers the motion pause toggle right before the menu button at every width', () => {
+    render(<Header />)
+    const pause = screen.getByRole('button', { name: ui.pauseMotion })
+    const menu = screen.getByRole('button', { name: ui.openMenu })
+    expect(pause).toHaveAttribute('aria-pressed', 'false')
+    expect(pause.nextElementSibling).toBe(menu)
+    expect(pause.closest('.hidden')).toBeNull()
+  })
+
   it('exposes a menu toggle with an accessible name', () => {
     render(<Header />)
     expect(screen.getByRole('button', { name: ui.openMenu })).toBeInTheDocument()
@@ -189,6 +199,15 @@ describe('Header mobile menu', () => {
     )
   })
 
+  it('gives the menu button and every menu link press feedback', () => {
+    render(<Header />)
+    expect(screen.getByRole('button', { name: ui.openMenu })).toHaveClass('press')
+    const links = within(menu()).getAllByRole('link', { hidden: true })
+    for (const item of nav) {
+      expect(links.find((el) => el.textContent === item.label)).toHaveClass('press')
+    }
+  })
+
   it('draws the menu icon as three lines that only transition when motion is allowed', () => {
     render(<Header />)
     const toggle = screen.getByRole('button', { name: ui.openMenu })
@@ -197,6 +216,58 @@ describe('Header mobile menu', () => {
     for (const line of lines) {
       expect(line).toHaveClass('motion-safe:transition-[translate,rotate,opacity]')
     }
+  })
+})
+
+describe('BookingCta link variant', () => {
+  beforeEach(() => {
+    mocked.env.bookingUrl = null
+    navigation.pathname = '/'
+  })
+
+  it('renders no magnetic wrapper and keeps the mailto link when booking is null', () => {
+    const { container } = render(<BookingCta variant="link" />)
+    expect(container.querySelector('[data-magnetic]')).toBeNull()
+    expect(screen.getByRole('link', { name: ui.contactFallback })).toHaveAttribute(
+      'href',
+      `mailto:${site.contactEmail}`,
+    )
+  })
+
+  it('renders no magnetic wrapper and keeps the booking link when booking is set', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    const { container } = render(<BookingCta variant="link" />)
+    expect(container.querySelector('[data-magnetic]')).toBeNull()
+    expect(screen.getByRole('link', { name: ui.bookCall })).toHaveAttribute(
+      'href',
+      BOOKING_URL,
+    )
+  })
+
+  it('keeps the magnetic wrapper by default', () => {
+    const { container } = render(<BookingCta />)
+    expect(container.querySelector('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('demotes only the desktop header CTA on the contact route', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    navigation.pathname = '/contact/'
+    render(<Header />)
+    const links = screen.getAllByRole('link', { name: ui.bookCall, hidden: true })
+    expect(links).toHaveLength(2)
+    const desktop = links.find((link) => link.closest('.hidden.md\\:block'))!
+    const mobile = links.find((link) => link.closest('#mobile-nav'))!
+    expect(desktop.closest('[data-magnetic]')).toBeNull()
+    expect(mobile.closest('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('keeps the desktop header CTA magnetic off the contact route', () => {
+    mocked.env.bookingUrl = BOOKING_URL
+    render(<Header />)
+    const desktop = screen
+      .getAllByRole('link', { name: ui.bookCall, hidden: true })
+      .find((link) => link.closest('.hidden.md\\:block'))!
+    expect(desktop.closest('[data-magnetic]')).not.toBeNull()
   })
 })
 
@@ -225,6 +296,13 @@ describe('Footer signal', () => {
     const signal = container.querySelector('[data-footer-signal]')!
     expect(signal).toHaveAttribute('aria-hidden', 'true')
     expect(signal).toHaveClass('hidden', 'bg-brand', 'h-px')
+  })
+
+  it('gives every footer link press feedback', () => {
+    render(<Footer />)
+    for (const item of footerNav) {
+      expect(screen.getAllByRole('link', { name: item.label })[0]).toHaveClass('press')
+    }
   })
 
   it('gives every footer link the nav hover underline', () => {

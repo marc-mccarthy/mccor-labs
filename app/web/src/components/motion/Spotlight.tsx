@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { usePointerEffects } from './useReducedMotion'
 
 const RADIUS = { card: '18rem', panel: '32rem' } as const
@@ -9,11 +9,28 @@ function glowFor(size: keyof typeof RADIUS) {
   return `radial-gradient(${RADIUS[size]} circle at var(--spot-x) var(--spot-y), color-mix(in oklab, var(--color-brand) 16%, transparent), transparent)`
 }
 
-interface SpotlightProps {
-  size?: keyof typeof RADIUS
+const BASE =
+  'pointer-events-none absolute inset-0 -z-10 rounded-[inherit] opacity-0 transition-opacity duration-(--duration-standard) ease-(--ease-pointer) group-hover:opacity-100'
+
+const TRIGGER_CLASS = {
+  hover: BASE,
+  'focus-within': `${BASE} group-focus-within:opacity-100`,
+} as const
+
+type Trigger = keyof typeof TRIGGER_CLASS
+
+function styleFor(size: keyof typeof RADIUS, trigger: Trigger): CSSProperties {
+  const backgroundImage = glowFor(size)
+  if (trigger === 'hover') return { backgroundImage }
+  return { backgroundImage, '--spot-x': '50%', '--spot-y': '0%' } as CSSProperties
 }
 
-export function Spotlight({ size = 'card' }: SpotlightProps) {
+interface SpotlightProps {
+  size?: keyof typeof RADIUS
+  trigger?: Trigger
+}
+
+export function Spotlight({ size = 'card', trigger = 'hover' }: SpotlightProps) {
   const enabled = usePointerEffects()
   const ref = useRef<HTMLSpanElement | null>(null)
 
@@ -61,8 +78,8 @@ export function Spotlight({ size = 'card' }: SpotlightProps) {
       ref={ref}
       aria-hidden="true"
       data-spotlight=""
-      className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] opacity-0 transition-opacity duration-(--duration-standard) ease-(--ease-pointer) group-hover:opacity-100"
-      style={{ backgroundImage: glowFor(size) }}
+      className={TRIGGER_CLASS[trigger]}
+      style={styleFor(size, trigger)}
     />
   )
 }

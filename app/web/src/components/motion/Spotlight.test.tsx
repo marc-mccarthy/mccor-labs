@@ -42,10 +42,10 @@ function stubFrames() {
   }
 }
 
-function renderCard(size?: 'card' | 'panel') {
+function renderCard(size?: 'card' | 'panel', trigger?: 'hover' | 'focus-within') {
   const { container } = render(
     <div data-card="">
-      <Spotlight size={size} />
+      <Spotlight size={size} trigger={trigger} />
       <p>content</p>
     </div>,
   )
@@ -149,6 +149,31 @@ describe('Spotlight', () => {
     expect(frames.pending()).toBe(0)
     fireEvent.pointerMove(card, { clientX: 40, clientY: 50 })
     expect(frames.pending()).toBe(0)
+  })
+
+  it('defaults to the hover trigger with no focus-within class and no inline position', () => {
+    mockMatchMedia({ fine: true, reduced: false })
+    stubFrames()
+    const glow = renderCard().querySelector<HTMLElement>('[data-spotlight]')!
+    expect(glow.className).toContain('group-hover:opacity-100')
+    expect(glow.className).not.toContain('group-focus-within')
+    expect(glow.style.getPropertyValue('--spot-x')).toBe('')
+    expect(glow.style.getPropertyValue('--spot-y')).toBe('')
+  })
+
+  it('adds group-focus-within and a valid default position for the focus-within trigger', () => {
+    mockMatchMedia({ fine: true, reduced: false })
+    const frames = stubFrames()
+    const card = renderCard('card', 'focus-within')
+    const glow = card.querySelector<HTMLElement>('[data-spotlight]')!
+    expect(glow.className).toContain('group-hover:opacity-100')
+    expect(glow.className).toContain('group-focus-within:opacity-100')
+    expect(glow.style.getPropertyValue('--spot-x')).toBe('50%')
+    expect(glow.style.getPropertyValue('--spot-y')).toBe('0%')
+    fireEvent.pointerMove(card, { clientX: 50, clientY: 70 })
+    frames.flush()
+    expect(glow.style.getPropertyValue('--spot-x')).toBe('40px')
+    expect(glow.style.getPropertyValue('--spot-y')).toBe('50px')
   })
 
   it('uses an 18rem glow by default and 32rem for the panel size', () => {

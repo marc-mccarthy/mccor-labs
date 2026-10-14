@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react'
 import { Reveal } from '@/components/motion/Reveal'
 import { splitWords } from '@/components/motion/splitWords'
+import { Eyebrow } from '@/components/ui/eyebrow'
 import { cn } from '@/lib/cn'
 
 type SectionHeadingProps = ComponentProps<'h2'> & {
@@ -13,23 +14,6 @@ const SIZE_CLASS = {
   sm: 'text-display-sm',
   md: 'text-display-md',
 } as const
-
-function Eyebrow({ index, label }: { index: string; label: string }) {
-  return (
-    <p className="mb-4 flex items-center gap-3 font-mono text-xs tracking-widest uppercase">
-      <span
-        aria-hidden="true"
-        data-testid="eyebrow-tick"
-        className="h-px w-4 origin-left bg-brand motion-on:animate-[band-signal_var(--duration-standard)_var(--ease-standard)_both]"
-      />
-      <span className="text-text">{index}</span>
-      <span aria-hidden="true" className="text-muted">
-        /
-      </span>
-      <span className="text-muted">{label}</span>
-    </p>
-  )
-}
 
 export function SectionHeading({
   className,

@@ -106,4 +106,19 @@ describe('SectionHeading', () => {
     const heading = screen.getByRole('heading', { level: 2 })
     expect(heading.querySelector('[data-word]')).toBeNull()
   })
+
+  it('renders the shared eyebrow line unchanged', () => {
+    mockMatchMedia(false)
+    render(
+      <SectionHeading eyebrow={{ index: '01', label: 'Build' }}>
+        Systems we build
+      </SectionHeading>,
+    )
+    const line = screen.getByText('01').parentElement!
+    expect(line.tagName).toBe('P')
+    expect(line.className).toBe(
+      'mb-4 flex items-center gap-3 font-mono text-xs tracking-widest uppercase',
+    )
+    expect(line.children).toHaveLength(4)
+  })
 })

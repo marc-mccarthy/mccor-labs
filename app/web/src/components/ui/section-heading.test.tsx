@@ -21,11 +21,14 @@ afterEach(() => {
 })
 
 describe('SectionHeading', () => {
-  it('renders a visible, unclipped h2 with no wrapper under reduced motion', () => {
+  it('renders a visible, unclipped h2 inside a plain wrapper div under reduced motion', () => {
     mockMatchMedia(true)
     const { container } = render(<SectionHeading>Systems we build</SectionHeading>)
     const heading = screen.getByRole('heading', { level: 2, name: 'Systems we build' })
-    expect(container.firstElementChild).toBe(heading)
+    const wrapper = container.firstElementChild as HTMLElement
+    expect(wrapper.tagName).toBe('DIV')
+    expect(wrapper.firstElementChild).toBe(heading)
+    expect(wrapper.style.clipPath).toBe('')
     expect(container.querySelector('[data-reveal]')).toBeNull()
     expect(getComputedStyle(heading).clipPath).toBe('')
     expect(getComputedStyle(heading).opacity).not.toBe('0')
@@ -63,11 +66,12 @@ describe('SectionHeading', () => {
     const { container, rerender } = render(
       <SectionHeading>Systems we build</SectionHeading>,
     )
-    expect(container.firstElementChild?.className).toBe(
+    expect(container.firstElementChild?.tagName).toBe('DIV')
+    expect(screen.getByRole('heading', { level: 2 }).className).toBe(
       'text-display-sm leading-tight font-semibold tracking-tight text-text',
     )
     rerender(<SectionHeading size="md">Systems we build</SectionHeading>)
-    const cls = container.firstElementChild?.className ?? ''
+    const cls = screen.getByRole('heading', { level: 2 }).className
     expect(cls).toContain('text-display-md')
     expect(cls).not.toContain('text-display-sm')
   })

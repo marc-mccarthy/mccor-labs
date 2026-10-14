@@ -23,7 +23,7 @@ describe('Reveal', () => {
     expect(screen.getByText('content')).toBeInTheDocument()
   })
 
-  it('renders children at full opacity with no transform and no animation wrapper under reduced motion', () => {
+  it('renders children at full opacity with no transform inside a plain wrapper div under reduced motion', () => {
     mockMatchMedia(true)
     const { container } = render(
       <Reveal>
@@ -31,7 +31,11 @@ describe('Reveal', () => {
       </Reveal>,
     )
     const node = screen.getByText('content')
-    expect(container.firstElementChild).toBe(node)
+    const wrapper = container.firstElementChild as HTMLElement
+    expect(wrapper.tagName).toBe('DIV')
+    expect(wrapper.firstElementChild).toBe(node)
+    expect(wrapper.style.opacity).toBe('')
+    expect(wrapper.style.transform).toBe('')
     expect(container.querySelector('[data-reveal]')).toBeNull()
     const style = getComputedStyle(node)
     expect(style.opacity).not.toBe('0')

@@ -64,7 +64,7 @@ function WordsReveal({
   }, [reducedMotion])
 
   if (reducedMotion) {
-    return className ? <div className={className}>{children}</div> : <>{children}</>
+    return <div className={className}>{children}</div>
   }
 
   return (
@@ -101,7 +101,7 @@ function MotionReveal({
   }, [reducedMotion])
 
   if (reducedMotion) {
-    return className ? <div className={className}>{children}</div> : <>{children}</>
+    return <div className={className}>{children}</div>
   }
 
   if (phase !== 'ready') {

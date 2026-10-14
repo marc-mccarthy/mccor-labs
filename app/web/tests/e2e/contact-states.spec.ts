@@ -788,6 +788,18 @@ test.describe('live form', () => {
     })
   })
 
+  test('390 hero crop shows orb and trail', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await open(page)
+    const position = () =>
+      page
+        .getByTestId('header-image')
+        .evaluate((node) => getComputedStyle(node).objectPosition)
+    expect(await position()).toBe('70% 50%')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    expect(await position()).toBe('100% 50%')
+  })
+
   test('contact form exposes status', async ({ page }) => {
     await open(page)
     const form = page.locator('form[data-status]')

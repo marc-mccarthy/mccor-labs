@@ -21,6 +21,7 @@ export default function ContactPage() {
         eyebrow={{ index: '00', label: ui.contactEyebrowLabel }}
         description="Tell us about the project, or book a call directly."
         image="/media/brand/cta-terminus.webp"
+        imageClassName="max-sm:object-[70%_50%]"
         scene={<ContactBeam />}
       />
       <ContactPanel endpoint={env.contactEndpoint}>

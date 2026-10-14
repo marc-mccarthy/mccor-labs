@@ -398,7 +398,7 @@
   }
 }
 
-[data-reveal]:focus-within {
+[data-reveal]:has(:focus-visible) {
   opacity: 1 !important;
   transform: none !important;
   clip-path: none !important;

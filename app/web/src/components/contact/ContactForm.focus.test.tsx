@@ -60,7 +60,7 @@ describe('ContactForm focus and resubmit', () => {
     expect(document.getElementById('message')).not.toHaveFocus()
   })
 
-  it('keeps focus on the submit button once sent and blocks a second post', async () => {
+  it('moves focus to the receipt heading once sent and blocks a second post', async () => {
     vi.mocked(signedPostJson).mockResolvedValue(
       new Response(JSON.stringify({ ok: true, reference: 'AB12CD34' }), { status: 200 }),
     )
@@ -68,22 +68,26 @@ describe('ContactForm focus and resubmit', () => {
     await fillValidForm()
     await userEvent.click(submitButton())
     await screen.findByText(new RegExp(ui.formSuccess))
-    expect(submitButton()).toHaveFocus()
+    expect(screen.getByRole('heading', { name: ui.contactReceiptHeading })).toHaveFocus()
+    expect(document.getElementById('name')?.closest('[inert]')).not.toBeNull()
     expect(submitButton()).toHaveAttribute('aria-disabled', 'true')
     await userEvent.click(submitButton())
     expect(signedPostJson).toHaveBeenCalledTimes(1)
-    expect(submitButton()).toHaveFocus()
   })
 
-  it('clears aria-disabled when the sender types after sent', async () => {
+  it('keeps the fields collapsed after sent with no reset control', async () => {
     vi.mocked(signedPostJson).mockResolvedValue(new Response('{}', { status: 200 }))
-    render(<ContactForm endpoint="/api/contact" />)
+    const { container } = render(<ContactForm endpoint="/api/contact" />)
     await fillValidForm()
     await userEvent.click(submitButton())
     await screen.findByText(new RegExp(ui.formSuccess))
-    expect(submitButton()).toHaveAttribute('aria-disabled', 'true')
+    const form = container.querySelector('form')
+    expect(form).toHaveAttribute('data-status', 'sent')
+    expect(screen.queryByRole('button', { name: /another|reset/i })).toBeNull()
     await userEvent.type(screen.getByLabelText(/message/i), ' More detail.')
-    expect(submitButton()).toHaveAttribute('aria-disabled', 'false')
+    expect(form).toHaveAttribute('data-status', 'sent')
+    expect(document.getElementById('name')?.closest('[inert]')).not.toBeNull()
+    expect(submitButton()).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('keeps focus on the submit button after a server error', async () => {

@@ -633,6 +633,75 @@ test.describe('live form', () => {
     })
   })
 
+  for (const motion of ['reduce', 'no-preference'] as const) {
+    test.describe(`receipt ${motion}`, () => {
+      test.use({ contextOptions: { reducedMotion: motion } })
+
+      test(`success becomes a receipt ${motion}`, async ({ page }) => {
+        await open(page)
+        await submitWith(page, reply(200, { reference: REFERENCE }))
+        const status = page.locator('form').getByRole('status')
+        await expect(status).toHaveText(
+          `${ui.formSuccess} ${ui.formReference} ${REFERENCE}.`,
+        )
+        const ink = await tokenColor(page, '--color-text')
+        await expect
+          .poll(() => status.evaluate((node) => getComputedStyle(node).color))
+          .toBe(ink)
+        const heading = page.getByRole('heading', { name: ui.contactReceiptHeading })
+        await expect(heading).toBeVisible()
+        await expect(heading).toBeFocused()
+        await expect(page.locator('[data-receipt-reference]')).toHaveText(REFERENCE)
+        const stack = page.locator('form > [inert]')
+        await expect(stack).toHaveCount(1)
+        await expect
+          .poll(() => stack.evaluate((node) => node.getBoundingClientRect().height))
+          .toBe(0)
+        await expect(page.getByText(ui.contactToastSent)).toBeVisible()
+        await expect(
+          page.getByRole('button', { name: /send another|reset/i }),
+        ).toHaveCount(0)
+        await expectNoViolations(page)
+        await expect(page.getByText(ui.contactToastSent)).toBeHidden({ timeout: 8000 })
+      })
+    })
+  }
+
+  test('sent toast is static under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await open(page)
+    await submitWith(page, reply(200, { reference: REFERENCE }))
+    await expect(page.getByText(ui.contactToastSent)).toBeVisible()
+    expect(await liveAnimations(page)).toEqual([])
+  })
+
+  test.describe('receipt at 390', () => {
+    test.use({
+      viewport: { width: 390, height: 844 },
+      contextOptions: { reducedMotion: 'no-preference' },
+    })
+
+    test('390 receipt fits the panel', async ({ page }) => {
+      await open(page)
+      await submitWith(page, reply(200, { reference: REFERENCE }))
+      const reference = page.locator('[data-receipt-reference]')
+      await expect(reference).toBeVisible()
+      const panel = await page.locator('form').locator('xpath=..').boundingBox()
+      const box = await reference.boundingBox()
+      const toast = await page.locator('[data-sent-toast] > div').boundingBox()
+      expect(panel).not.toBeNull()
+      expect(box).not.toBeNull()
+      expect(toast).not.toBeNull()
+      expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(
+        (panel?.x ?? 0) + (panel?.width ?? 0),
+      )
+      expect(toast?.x).toBeGreaterThanOrEqual(0)
+      expect((toast?.x ?? 0) + (toast?.width ?? 0)).toBeLessThanOrEqual(390)
+      expect((toast?.y ?? 0) + (toast?.height ?? 0)).toBeLessThanOrEqual(844)
+      await noOverflow(page)
+    })
+  })
+
   test('contact form exposes status', async ({ page }) => {
     await open(page)
     const form = page.locator('form[data-status]')
@@ -642,10 +711,8 @@ test.describe('live form', () => {
     await expect(form).toHaveAttribute('data-status', 'sent')
     await expect(form).toHaveAttribute('aria-busy', 'false')
     await expect(form).not.toHaveAttribute('data-error', /.*/)
-    mock.responder = reply(500, {})
-    await page.locator('#message').fill('Another message long enough to pass validation.')
-    await expect(form).toHaveAttribute('data-status', 'idle')
-    await submit(page)
+    await open(page)
+    await submitWith(page, reply(500, {}))
     await expect(form).toHaveAttribute('data-status', 'error')
     await expect(form).toHaveAttribute('data-error', 'server')
   })

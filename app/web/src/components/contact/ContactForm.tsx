@@ -20,6 +20,8 @@ import {
 } from '@/lib/contact'
 import { labMailtoHref } from '@/lib/labResult'
 
+import { ContactReceipt } from './ContactReceipt'
+import { SentToast } from './SentToast'
 import { useLabPrefill } from './useLabPrefill'
 
 type Status = 'idle' | 'sending' | 'sent' | 'error'
@@ -34,6 +36,7 @@ const STATUS_WRAP = cn(
   String.raw`group-data-[error=rate\_limit]/form:border-l-2 group-data-[error=rate\_limit]/form:border-border-strong group-data-[error=rate\_limit]/form:pl-4`,
   String.raw`group-data-[error=too\_fast]/form:border-l-2 group-data-[error=too\_fast]/form:border-border-strong group-data-[error=too\_fast]/form:pl-4`,
   'group-data-[error=validation]/form:[&>p]:text-brand',
+  'group-data-[status=sent]/form:[&>p]:text-text',
 )
 
 function errorMessage(error: ContactError): string {
@@ -68,7 +71,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [message, setMessage] = useState('')
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<ContactError | null>(null)
-  const [, setReference] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   const [validationRun, setValidationRun] = useState(0)
   const sending = status === 'sending'
   const formRef = useRef<HTMLFormElement>(null)
@@ -169,9 +172,6 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       onSubmit={(event) => {
         void onSubmit(event)
       }}
-      onInput={() => {
-        if (status === 'sent') setStatus('idle')
-      }}
       noValidate
       data-status={status}
       data-error={errorKind ?? undefined}
@@ -185,159 +185,174 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
         </div>
       )}
 
-      <Stagger>
-        <div className="group/field">
-          <label htmlFor="name" className={LABEL}>
-            {ui.contactLabelName}
-          </label>
-          <input
-            id="name"
-            name="name"
-            autoComplete="name"
-            readOnly={sending}
-            className={fieldVariants({ kind: 'input' })}
-            aria-invalid={errors.name !== undefined}
-            aria-describedby={errors.name === undefined ? undefined : 'name-error'}
-          />
-          {errors.name !== undefined && (
-            <p
-              id="name-error"
-              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
-            >
-              {errors.name}
-            </p>
-          )}
-        </div>
-        <div className="group/field">
-          <label htmlFor="email" className={LABEL}>
-            {ui.contactLabelEmail}
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            readOnly={sending}
-            className={fieldVariants({ kind: 'input' })}
-            aria-invalid={errors.email !== undefined}
-            aria-describedby={errors.email === undefined ? undefined : 'email-error'}
-          />
-          {errors.email !== undefined && (
-            <p
-              id="email-error"
-              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
-            >
-              {errors.email}
-            </p>
-          )}
-        </div>
-        <div className="group/field">
-          <label htmlFor="company" className={LABEL}>
-            {ui.contactLabelCompany}{' '}
-            <span className="text-muted">{ui.contactOptional}</span>
-          </label>
-          <input
-            id="company"
-            name="company"
-            autoComplete="organization"
-            maxLength={100}
-            readOnly={sending}
-            className={fieldVariants({ kind: 'input' })}
-          />
-        </div>
-        <div className="group/field">
-          <label htmlFor="budget" className={LABEL}>
-            {ui.contactLabelBudget}{' '}
-            <span className="text-muted">{ui.contactOptional}</span>
-          </label>
-          <div className="relative">
-            <select
-              id="budget"
-              name="budget"
-              className={fieldVariants({ kind: 'select' })}
-              defaultValue=""
-            >
-              <option value="">{ui.contactBudgetPlaceholder}</option>
-              {site.budgetOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-            <svg
+      <div
+        inert={status === 'sent'}
+        className="grid grid-rows-[1fr] group-data-[status=sent]/form:grid-rows-[0fr] group-data-[status=sent]/form:motion-reduce:hidden motion-on:transition-[grid-template-rows] motion-on:duration-(--duration-scene) motion-on:ease-(--ease-route)"
+      >
+        <div className="min-h-0 space-y-5 group-data-[status=sent]/form:overflow-hidden">
+          <Stagger>
+            <div className="group/field">
+              <label htmlFor="name" className={LABEL}>
+                {ui.contactLabelName}
+              </label>
+              <input
+                id="name"
+                name="name"
+                autoComplete="name"
+                readOnly={sending}
+                className={fieldVariants({ kind: 'input' })}
+                aria-invalid={errors.name !== undefined}
+                aria-describedby={errors.name === undefined ? undefined : 'name-error'}
+              />
+              {errors.name !== undefined && (
+                <p
+                  id="name-error"
+                  className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+                >
+                  {errors.name}
+                </p>
+              )}
+            </div>
+            <div className="group/field">
+              <label htmlFor="email" className={LABEL}>
+                {ui.contactLabelEmail}
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                readOnly={sending}
+                className={fieldVariants({ kind: 'input' })}
+                aria-invalid={errors.email !== undefined}
+                aria-describedby={errors.email === undefined ? undefined : 'email-error'}
+              />
+              {errors.email !== undefined && (
+                <p
+                  id="email-error"
+                  className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+                >
+                  {errors.email}
+                </p>
+              )}
+            </div>
+            <div className="group/field">
+              <label htmlFor="company" className={LABEL}>
+                {ui.contactLabelCompany}{' '}
+                <span className="text-muted">{ui.contactOptional}</span>
+              </label>
+              <input
+                id="company"
+                name="company"
+                autoComplete="organization"
+                maxLength={100}
+                readOnly={sending}
+                className={fieldVariants({ kind: 'input' })}
+              />
+            </div>
+            <div className="group/field">
+              <label htmlFor="budget" className={LABEL}>
+                {ui.contactLabelBudget}{' '}
+                <span className="text-muted">{ui.contactOptional}</span>
+              </label>
+              <div className="relative">
+                <select
+                  id="budget"
+                  name="budget"
+                  className={fieldVariants({ kind: 'select' })}
+                  defaultValue=""
+                >
+                  <option value="">{ui.contactBudgetPlaceholder}</option>
+                  {site.budgetOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  data-select-chevron=""
+                  className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted group-focus-within/field:text-accent motion-on:transition-transform motion-on:group-focus-within/field:rotate-180"
+                >
+                  <path d="M3 6l5 5 5-5" />
+                </svg>
+              </div>
+            </div>
+            <div className="group/field">
+              <label htmlFor="message" className={LABEL}>
+                {ui.contactLabelMessage}
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                rows={6}
+                key={prefill ?? 'empty'}
+                defaultValue={prefill ?? undefined}
+                readOnly={sending}
+                className={fieldVariants({ kind: 'textarea' })}
+                aria-invalid={errors.message !== undefined}
+                aria-describedby={
+                  errors.message === undefined ? undefined : 'message-error'
+                }
+              />
+              {errors.message !== undefined && (
+                <p
+                  id="message-error"
+                  className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
+                >
+                  {errors.message}
+                </p>
+              )}
+            </div>
+          </Stagger>
+
+          <div
+            className="absolute left-[-9999px] h-0 w-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>
+            <input
+              id="honeypot"
+              name="honeypot"
+              tabIndex={-1}
               aria-hidden="true"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              data-select-chevron=""
-              className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted group-focus-within/field:text-accent motion-on:transition-transform motion-on:group-focus-within/field:rotate-180"
+              autoComplete="off"
+            />
+          </div>
+
+          <div
+            className={cn(
+              'relative flex items-center gap-4',
+              sending && 'cursor-progress',
+            )}
+          >
+            <Button
+              type="submit"
+              aria-disabled={sending || status === 'sent'}
+              className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group-data-[status=sending]/form:aria-disabled:cursor-progress group-data-[status=sending]/form:aria-disabled:opacity-100"
             >
-              <path d="M3 6l5 5 5-5" />
-            </svg>
+              {sending ? ui.formSending : ui.formSubmit}
+            </Button>
+            {sending && (
+              <span
+                aria-hidden="true"
+                data-send-track=""
+                className="absolute inset-x-0 -bottom-2 h-0.5 overflow-hidden rounded-full bg-border"
+              >
+                <span
+                  data-send-bar=""
+                  className="block h-full w-full bg-accent motion-on:animate-[send-sweep_calc(var(--duration-standard)*4)_linear_infinite]"
+                />
+              </span>
+            )}
           </div>
         </div>
-        <div className="group/field">
-          <label htmlFor="message" className={LABEL}>
-            {ui.contactLabelMessage}
-          </label>
-          <textarea
-            id="message"
-            name="message"
-            rows={6}
-            key={prefill ?? 'empty'}
-            defaultValue={prefill ?? undefined}
-            readOnly={sending}
-            className={fieldVariants({ kind: 'textarea' })}
-            aria-invalid={errors.message !== undefined}
-            aria-describedby={errors.message === undefined ? undefined : 'message-error'}
-          />
-          {errors.message !== undefined && (
-            <p
-              id="message-error"
-              className="mt-1 text-sm text-brand motion-on:animate-[field-error_var(--duration-pointer)_var(--ease-pointer)_backwards]"
-            >
-              {errors.message}
-            </p>
-          )}
-        </div>
-      </Stagger>
-
-      <div className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
-        <label htmlFor="honeypot">{ui.contactHoneypotLabel}</label>
-        <input
-          id="honeypot"
-          name="honeypot"
-          tabIndex={-1}
-          aria-hidden="true"
-          autoComplete="off"
-        />
-      </div>
-
-      <div
-        className={cn('relative flex items-center gap-4', sending && 'cursor-progress')}
-      >
-        <Button
-          type="submit"
-          aria-disabled={sending || status === 'sent'}
-          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group-data-[status=sending]/form:aria-disabled:cursor-progress group-data-[status=sending]/form:aria-disabled:opacity-100"
-        >
-          {sending ? ui.formSending : ui.formSubmit}
-        </Button>
-        {sending && (
-          <span
-            aria-hidden="true"
-            data-send-track=""
-            className="absolute inset-x-0 -bottom-2 h-0.5 overflow-hidden rounded-full bg-border"
-          >
-            <span
-              data-send-bar=""
-              className="block h-full w-full bg-accent motion-on:animate-[send-sweep_calc(var(--duration-standard)*4)_linear_infinite]"
-            />
-          </span>
-        )}
       </div>
 
       <div data-status-wrap="" className={STATUS_WRAP}>
@@ -345,6 +360,8 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
           <StatusText text={message} href={mailtoHref} />
         </p>
       </div>
+      {status === 'sent' && <ContactReceipt reference={reference} />}
+      {status === 'sent' && <SentToast />}
     </form>
   )
 }

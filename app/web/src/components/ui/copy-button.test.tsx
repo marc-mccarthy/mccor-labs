@@ -117,4 +117,21 @@ describe('CopyButton', () => {
     unmount()
     expect(vi.getTimerCount()).toBe(0)
   })
+
+  it('without announce adds no status region and names the copied state on the button', async () => {
+    setClipboard({ writeText: vi.fn().mockResolvedValue(undefined) })
+    render(<CopyButton {...props} announce={false} />)
+    expect(screen.queryByRole('status')).toBeNull()
+    await click()
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
+  })
+
+  it('without announce reports a failure through an alert', async () => {
+    setClipboard(undefined)
+    render(<CopyButton {...props} announce={false} />)
+    await click()
+    expect(screen.getByRole('alert')).toHaveTextContent(props.failedLabel)
+    expect(screen.queryByRole('status')).toBeNull()
+  })
 })

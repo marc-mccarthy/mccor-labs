@@ -110,6 +110,16 @@ describe('privacy document', () => {
     )
   })
 
+  it('states the contact retention period with no placeholder', () => {
+    const text = section('How long we keep it')
+      .blocks.flatMap((block) => (block.kind === 'ul' ? block.items : [block.text]))
+      .join('\n')
+    expect(text).toContain(
+      'Contact form submissions and email correspondence are kept for 24 months from our last exchange, then deleted.',
+    )
+    expect(text).not.toContain('TODO(owner)')
+  })
+
   it('covers verdict marks and the weekly digest', () => {
     const text = allText().join('\n')
     expect(text).toContain('Wrong?')

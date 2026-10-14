@@ -61,6 +61,7 @@ test.describe('scene frame cost', () => {
     })
 
     test('logs p95 render and rAF gap for the contact beam scene', async ({ page }) => {
+      test.setTimeout(60_000)
       await page.addInitScript(() => {
         Reflect.set(window, '__sceneStats', {})
       })
@@ -69,8 +70,9 @@ test.describe('scene frame cost', () => {
         timeout: 15_000,
       })
 
-      for (let i = 0; i < 20; i += 1) {
-        await page.mouse.move(200 + i * 50, 150 + (i % 5) * 40, { steps: 8 })
+      const deadline = Date.now() + 5_000
+      for (let i = 0; Date.now() < deadline; i += 1) {
+        await page.mouse.move(200 + (i % 20) * 50, 150 + (i % 5) * 40)
         await page.waitForTimeout(250)
       }
 

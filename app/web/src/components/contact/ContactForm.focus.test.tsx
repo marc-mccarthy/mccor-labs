@@ -107,4 +107,9 @@ describe('ContactForm focus and resubmit', () => {
     )
     expect(document.getElementById('honeypot')).toHaveAttribute('autocomplete', 'off')
   })
+
+  it('caps the company field at the 100 characters validation allows', () => {
+    render(<ContactForm endpoint="/api/contact" />)
+    expect(document.getElementById('company')).toHaveAttribute('maxlength', '100')
+  })
 })

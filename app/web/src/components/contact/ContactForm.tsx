@@ -215,6 +215,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
             id="company"
             name="company"
             autoComplete="organization"
+            maxLength={100}
             className={FIELD}
           />
         </div>

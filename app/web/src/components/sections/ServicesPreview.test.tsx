@@ -56,6 +56,27 @@ describe('ServicesPreview', () => {
     expect(other).not.toHaveAttribute('data-featured')
   })
 
+  it('spans the featured grid item across rows and columns', () => {
+    mockMatchMedia(false)
+    render(<ServicesPreview />)
+    const featured = document.querySelector('[data-featured]')
+    expect(featured).not.toBeNull()
+    const item = featured?.parentElement
+    expect(item).toHaveClass('lg:row-span-2', 'sm:col-span-2')
+    expect(document.querySelectorAll('[data-featured]')).toHaveLength(1)
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(5)
+  })
+
+  it('keeps focus outlines off the stretched link', () => {
+    mockMatchMedia(false)
+    render(<ServicesPreview />)
+    for (const service of services) {
+      const link = screen.getByRole('link', { name: new RegExp(service.title) })
+      expect(link).toHaveClass('focus-visible:outline-none', 'focus-visible:shadow-none')
+      expect(link.className).not.toMatch(/focus-visible:outline-(2|accent|offset)/)
+    }
+  })
+
   it('renders all content under reduced motion', () => {
     mockMatchMedia(true)
     render(<ServicesPreview />)

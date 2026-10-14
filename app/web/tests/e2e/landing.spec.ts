@@ -128,8 +128,10 @@ test.describe('motion pause', () => {
 const heroPauseToggle = (page: Page) =>
   page.getByRole('button', { name: ui.pauseVideo }).first()
 
-const computedOf = (locator: Locator, property: 'cursor' | 'transform') =>
-  locator.evaluate((node, prop) => getComputedStyle(node)[prop], property)
+const computedOf = (
+  locator: Locator,
+  property: 'cursor' | 'transform' | 'outlineStyle' | 'boxShadow',
+) => locator.evaluate((node, prop) => getComputedStyle(node)[prop], property)
 
 test('pause toggle has pointer cursor', async ({ page }) => {
   await atViewport(page, 1440, 900)
@@ -195,5 +197,48 @@ test.describe('press feedback', () => {
     await page.mouse.down()
     await expect.poll(() => computedOf(link, 'transform')).not.toBe('none')
     await page.mouse.up()
+  })
+})
+
+test.describe('service cards', () => {
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
+  test('service card shows hover lift, press and card-edge focus ring', async ({
+    page,
+  }) => {
+    await atViewport(page, 1440, 900)
+    await page.goto('/')
+    await page.waitForLoadState('networkidle')
+    const card = page.locator('[data-service]').first()
+    const link = card.getByRole('link')
+    await card.scrollIntoViewIfNeeded()
+    await card.hover()
+    await expect.poll(() => computedOf(card, 'transform')).not.toBe('none')
+    const strong = await tokenColor(page, '--color-border-strong')
+    await expect
+      .poll(() => card.evaluate((node) => getComputedStyle(node).borderTopColor))
+      .toBe(strong)
+    const lifted = await computedOf(card, 'transform')
+    await page.mouse.down()
+    await expect.poll(() => computedOf(card, 'transform')).not.toBe(lifted)
+    await page.mouse.move(0, 0)
+    await page.mouse.up()
+
+    await page.evaluate(() => {
+      window.scrollTo(0, 0)
+    })
+    for (let step = 0; step < 40; step += 1) {
+      await page.keyboard.press('Tab')
+      if (await link.evaluate((node) => node === document.activeElement)) break
+    }
+    await expect(link).toBeFocused()
+    await expect
+      .poll(() => card.evaluate((node) => getComputedStyle(node).outlineStyle))
+      .not.toBe('none')
+    expect(await computedOf(link, 'outlineStyle')).toBe('none')
+    const linkShadow = await computedOf(link, 'boxShadow')
+    expect(
+      linkShadow.replaceAll('rgba(0, 0, 0, 0) 0px 0px 0px 0px', '').replace(/[,\s]/g, ''),
+    ).toBe('')
   })
 })

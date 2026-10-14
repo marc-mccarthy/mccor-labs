@@ -23,6 +23,7 @@ import {
 import { labMailtoHref } from '@/lib/labResult'
 
 import { ContactReceipt } from './ContactReceipt'
+import { contactCharge, contactSignal, type ContactPhase } from './contactSignal'
 import { SentToast } from './SentToast'
 import { useLabPrefill } from './useLabPrefill'
 
@@ -36,7 +37,21 @@ function syncMessageFill(form: HTMLFormElement | null) {
   else delete field.dataset.met
 }
 
-type Status = 'idle' | 'sending' | 'sent' | 'error'
+function fieldValue(form: HTMLFormElement, id: string): string {
+  return form.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)?.value ?? ''
+}
+
+function syncProgress(form: HTMLFormElement | null) {
+  syncMessageFill(form)
+  if (!form) return
+  contactSignal.setCharge(
+    contactCharge({
+      name: fieldValue(form, 'name'),
+      email: fieldValue(form, 'email'),
+      message: fieldValue(form, 'message'),
+    }),
+  )
+}
 
 const LABEL =
   'mb-1 block text-sm text-text motion-on:transition-colors motion-on:duration-(--duration-pointer) group-focus-within/field:text-accent'
@@ -79,7 +94,7 @@ function StatusText({ text, href }: { text: string; href: string | null }) {
 
 export function ContactForm({ endpoint }: { endpoint: string | null }) {
   const [errors, setErrors] = useState<ContactErrors>({})
-  const [status, setStatus] = useState<Status>('idle')
+  const [status, setStatusState] = useState<ContactPhase>('idle')
   const [message, setMessage] = useState('')
   const [mailtoHref, setMailtoHref] = useState<string | null>(null)
   const [errorKind, setErrorKind] = useState<ContactError | null>(null)
@@ -94,14 +109,21 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     openedAt.current = Date.now()
   }, [])
 
+  useEffect(() => contactSignal.reset, [])
+
   useEffect(() => {
     if (validationRun === 0) return
     formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
   }, [validationRun])
 
   useEffect(() => {
-    syncMessageFill(formRef.current)
+    syncProgress(formRef.current)
   }, [prefill])
+
+  function setStatus(next: ContactPhase) {
+    setStatusState(next)
+    contactSignal.setPhase(next)
+  }
 
   if (endpoint === null) {
     return (
@@ -199,7 +221,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       }}
       noValidate
       onInput={(event) => {
-        syncMessageFill(event.currentTarget)
+        syncProgress(event.currentTarget)
       }}
       data-status={status}
       data-error={errorKind ?? undefined}

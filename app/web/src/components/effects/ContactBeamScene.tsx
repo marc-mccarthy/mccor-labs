@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, type ReactNode } from 'react'
+import { contactSignal } from '@/components/contact/contactSignal'
 import { cn } from '@/lib/cn'
+import { readDurationSeconds } from '../motion/tokens'
 import { usePointerEffects } from '../motion/useReducedMotion'
 import {
   beamLayout,
@@ -32,6 +34,8 @@ export const PATH_POINTS = TRAIL_ANCHORS.length * SAMPLES_PER_SPAN + 1
 export const PACKET_PERIOD_SECONDS = 7
 export const PACKET_TRAVEL_SECONDS = 6
 export const BREATH_PERIOD_SECONDS = 4
+export const SENDING_PACKET_RATE = 4
+export const CHARGE_EASE_SECONDS = 0.25
 
 const CORE_WIDTH = 2.2
 const HALO_WIDTH = 12
@@ -48,6 +52,12 @@ const BREATH_BASE = 0.26
 const BREATH_SWING = 0.1
 const ARRIVAL_GAIN = 0.35
 const ARRIVAL_DECAY = 3
+const CHARGE_REACH = 0.8
+const CHARGE_PACKET_GAIN = 0.6
+const FLARE_GAIN = 0.9
+const FLARE_SPREAD = 0.5
+const ACCENT_DROP = 0.7
+const BRAND_RAISE = 0.8
 
 const VERTEX_SHADER = `
 void main() {
@@ -73,6 +83,10 @@ uniform float uPacket;
 uniform float uPacketLength;
 uniform float uPacketGain;
 uniform float uBloom;
+uniform float uCharge;
+uniform float uFlare;
+uniform float uAccentGain;
+uniform float uBrandGain;
 
 void main() {
   vec2 p = gl_FragCoord.xy / uPixelRatio;
@@ -91,7 +105,7 @@ void main() {
     }
   }
   float total = uArc[${String(PATH_POINTS - 1)}];
-  float reveal = smoothstep(0.0, total * ${LEAD_IN.toFixed(2)}, along);
+  float reveal = smoothstep(0.0, total * ${LEAD_IN.toFixed(2)} * (1.0 - ${CHARGE_REACH.toFixed(2)} * uCharge), along);
   float occluded = smoothstep(uOccluder.z - uSoftness, uOccluder.z + uSoftness, length(p - uOccluder.xy));
   float orbDistance = length(p - uOrb.xy) / uOrb.z;
   float intoOrb = smoothstep(0.35, 1.0, orbDistance);
@@ -101,12 +115,13 @@ void main() {
   float packetHalo = exp(-dist / (uHalo * ${PACKET_HALO_SPREAD.toFixed(2)}));
   float flow = 0.8 + 0.2 * sin(along / uHalo - uTime * 1.5);
   float packetOffset = (along - uPacket) / uPacketLength;
-  float packet = exp(-packetOffset * packetOffset) * uPacketGain * mask;
+  float packet = exp(-packetOffset * packetOffset) * uPacketGain * (1.0 + ${CHARGE_PACKET_GAIN.toFixed(2)} * uCharge) * mask;
   float bloom = exp(-orbDistance * orbDistance * 1.4) * uBloom;
-  vec3 light = uColorBrand * (core * flow * mask * 0.5)
+  float flare = exp(-orbDistance * orbDistance * ${FLARE_SPREAD.toFixed(2)}) * uFlare * ${FLARE_GAIN.toFixed(2)};
+  vec3 light = uColorBrand * (core * flow * mask * 0.5 * uBrandGain)
     + uColorGlowRed * (halo * mask * 0.16)
-    + uColorAccent * (packet * (core * 1.4 + packetHalo * ${PACKET_HALO_GAIN.toFixed(2)}))
-    + uColorAccent * bloom;
+    + uColorAccent * (packet * (core * 1.4 + packetHalo * ${PACKET_HALO_GAIN.toFixed(2)}) * uAccentGain)
+    + uColorAccent * ((bloom + flare) * uAccentGain);
   light = clamp(light, 0.0, 1.0);
   float alpha = max(max(light.r, light.g), light.b);
   gl_FragColor = vec4(light, alpha);
@@ -139,6 +154,20 @@ export function breath(seconds: number): number {
   return (
     BREATH_BASE + BREATH_SWING * Math.sin((2 * Math.PI * seconds) / BREATH_PERIOD_SECONDS)
   )
+}
+
+export function flareLevel(elapsed: number, duration: number): number {
+  if (!(duration > 0) || elapsed < 0 || elapsed >= duration) return 0
+  return (1 - elapsed / duration) ** 2
+}
+
+export function flickerLevel(elapsed: number, duration: number): number {
+  if (!(duration > 0) || elapsed < 0 || elapsed >= duration) return 0
+  return Math.sin((Math.PI * elapsed) / duration)
+}
+
+export function easeCharge(current: number, target: number, step: number): number {
+  return current + (target - current) * (1 - Math.exp(-step / CHARGE_EASE_SECONDS))
 }
 
 function boundsOf(
@@ -179,6 +208,10 @@ function buildBeam(context: SceneContext, drift: PointerDrift): SceneHandle {
     uPacketLength: { value: PACKET_LENGTH },
     uPacketGain: { value: 0 },
     uBloom: { value: BREATH_BASE },
+    uCharge: { value: 0 },
+    uFlare: { value: 0 },
+    uAccentGain: { value: 1 },
+    uBrandGain: { value: 1 },
   }
   const material = new THREE.ShaderMaterial({
     uniforms,
@@ -200,6 +233,24 @@ function buildBeam(context: SceneContext, drift: PointerDrift): SceneHandle {
   let height = 0
   let bendX = 0
   let bendY = 0
+  let signal = contactSignal.getSnapshot()
+  let flarePending = false
+  let flickerPending = false
+  let flareAt = Number.NEGATIVE_INFINITY
+  let flickerAt = Number.NEGATIVE_INFINITY
+  let charge = signal.charge
+  let packetClock = 0
+  let lastSeconds: number | null = null
+  const sceneDuration = readDurationSeconds('--duration-scene')
+
+  const stopListening = contactSignal.subscribe(() => {
+    const next = contactSignal.getSnapshot()
+    if (next.phase !== signal.phase) {
+      if (next.phase === 'sent') flarePending = true
+      if (next.phase === 'error') flickerPending = true
+    }
+    signal = next
+  })
 
   const stopFitting = fitToCanvas((nextWidth, nextHeight) => {
     width = nextWidth
@@ -224,6 +275,15 @@ function buildBeam(context: SceneContext, drift: PointerDrift): SceneHandle {
     render: (time) => {
       if (!layout) return
       const seconds = time / 1000
+      const step = lastSeconds === null ? 0 : Math.max(0, seconds - lastSeconds)
+      lastSeconds = seconds
+      if (flarePending) flareAt = seconds
+      if (flickerPending) flickerAt = seconds
+      flarePending = false
+      flickerPending = false
+      charge = easeCharge(charge, signal.charge, step)
+      packetClock += step * (signal.phase === 'sending' ? SENDING_PACKET_RATE : 1)
+      const flicker = flickerLevel(seconds - flickerAt, sceneDuration)
       bendX = easeVelocity(bendX, drift.x)
       bendY = easeVelocity(bendY, drift.y)
       drift.x = 0
@@ -237,7 +297,7 @@ function buildBeam(context: SceneContext, drift: PointerDrift): SceneHandle {
         pathValue[index]?.set(point.x, height - point.y)
       })
       const total = layout.arcs.at(-1) ?? 0
-      const { progress, arrival } = packetState(seconds)
+      const { progress, arrival } = packetState(packetClock)
       const stretch = 1 + PACKET_STRETCH * Math.abs(velocityRef.current)
       uniforms.uPixelRatio.value = pixelRatioRef.current
       uniforms.uTime.value = seconds
@@ -245,9 +305,14 @@ function buildBeam(context: SceneContext, drift: PointerDrift): SceneHandle {
       uniforms.uPacketLength.value = PACKET_LENGTH * layout.scale * stretch
       uniforms.uPacketGain.value = packetGain(progress)
       uniforms.uBloom.value = breath(seconds) + ARRIVAL_GAIN * arrival
+      uniforms.uCharge.value = charge
+      uniforms.uFlare.value = flareLevel(seconds - flareAt, sceneDuration)
+      uniforms.uAccentGain.value = 1 - ACCENT_DROP * flicker
+      uniforms.uBrandGain.value = 1 + BRAND_RAISE * flicker
       renderer.render(scene, camera)
     },
     dispose: () => {
+      stopListening()
       stopFitting()
       geometry.dispose()
       material.dispose()

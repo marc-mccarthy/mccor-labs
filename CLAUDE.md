@@ -21,6 +21,7 @@ Next.js 16 static export (app/web), Terraform (infra/), brand media (app/web/pub
 - Use subagent driven work by taking any task that takes up more than 50% of the context maximum of the subagents.
 - After each subagent finished a sub-task, it will discourse with the main expert agent until the correct solution is decided, then it will commit.
 - Delete code comments you come across. Exempt: tool directives (`@vitest-environment`, `eslint-disable`, `use client`) and package.json `"//"` keys. Commented-out code: ask first. No lint rule backs this; review-only.
+- Tests: after a change, run only the tests for the changed file(s) (`pnpm -F web exec vitest related <files> --run`). Never the full suite. `test:e2e`, `test:e2e:smoke` and `test:a11y` run only before a push.
 
 ## Media
 

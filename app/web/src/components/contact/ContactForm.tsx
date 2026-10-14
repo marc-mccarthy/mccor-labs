@@ -5,11 +5,12 @@ import { useEffect, useRef, useState, type SubmitEvent } from 'react'
 import { BookingCta } from '@/components/layout/BookingCta'
 import { Stagger } from '@/components/motion/Stagger'
 import { Button } from '@/components/ui/button'
+import { CopyButton } from '@/components/ui/copy-button'
 import { fieldVariants } from '@/components/ui/field'
 import { contactLabCopy } from '@/content/lab/copy'
 import { site } from '@/content/site'
 import { ui } from '@/content/ui'
-import { inlineLinkDescendant } from '@/components/ui/inline-link'
+import { inlineLink, inlineLinkDescendant } from '@/components/ui/inline-link'
 import { cn } from '@/lib/cn'
 import {
   MESSAGE_MIN,
@@ -106,19 +107,28 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
     return (
       <div>
         {prefill !== null && <p className="mb-4 text-text">{contactLabCopy.added}</p>}
-        <p className="text-text">{ui.contactNotLive}</p>
+        <p className="text-lg text-text">{ui.contactNotLive}</p>
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+          <a
+            href={`mailto:${site.contactEmail}`}
+            className={cn(inlineLink, 'font-mono text-xl break-all sm:text-display-sm')}
+          >
+            {site.contactEmail}
+          </a>
+          <CopyButton
+            value={site.contactEmail}
+            label={ui.contactCopyEmail}
+            copiedLabel={ui.contactCopied}
+            failedLabel={ui.contactCopyFailed}
+          />
+        </div>
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <BookingCta />
           {prefill !== null && (
-            <Button asChild variant="link">
-              <a href={labMailtoHref(site.contactEmail, prefill)}>
-                {contactLabCopy.emailResults}
-              </a>
-            </Button>
+            <a href={labMailtoHref(site.contactEmail, prefill)} className={inlineLink}>
+              {contactLabCopy.emailResults}
+            </a>
           )}
-          <Button asChild variant="link">
-            <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
-          </Button>
         </div>
       </div>
     )

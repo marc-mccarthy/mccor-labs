@@ -4,6 +4,7 @@ import { expect, test, type Page, type Route } from '@playwright/test'
 import { contactLabCopy } from '@/content/lab/copy'
 import { EMPTY_ANSWERS, QUESTION_KEYS, classifyStep } from '@/content/lab/rubric'
 import { nav } from '@/content/nav'
+import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 import { encodeLabResult, toLabResult } from '@/lib/labResult'
 
@@ -826,6 +827,29 @@ test.describe('fallback', () => {
         await expectNoViolations(page)
         expect(mock.requests).toHaveLength(0)
       })
+
+      test(`fallback shows the address as the hero link ${motion}`, async ({ page }) => {
+        await open(page)
+        const link = page.getByRole('link', { name: site.contactEmail })
+        await expect(link).toHaveCount(1)
+        await expect(link).toHaveAttribute('href', `mailto:${site.contactEmail}`)
+        const font = await link.evaluate((node) => getComputedStyle(node).fontFamily)
+        expect(font).toMatch(/mono/i)
+        await expect(
+          page.getByRole('button', { name: ui.contactCopyEmail }),
+        ).toBeVisible()
+        await expectNoViolations(page)
+      })
     })
   }
+
+  test.describe('at 390', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('390 fallback email wraps without overflow', async ({ page }) => {
+      await open(page)
+      await expect(page.getByRole('link', { name: site.contactEmail })).toBeVisible()
+      await noOverflow(page)
+    })
+  })
 })

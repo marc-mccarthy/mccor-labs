@@ -179,9 +179,12 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       className="group/form space-y-5"
     >
       {prefill !== null && (
-        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4">
+        <div
+          data-lab-strip=""
+          className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border-l-2 border-accent bg-elevated px-4 py-3"
+        >
           <p className="text-text">{contactLabCopy.added}</p>
-          <BookingCta size="sm" />
+          <BookingCta variant="link" size="sm" />
         </div>
       )}
 

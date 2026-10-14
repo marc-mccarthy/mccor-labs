@@ -702,6 +702,60 @@ test.describe('live form', () => {
     })
   })
 
+  test.describe('lab arrival at 1440', () => {
+    test.use({ viewport: { width: 1440, height: 900 } })
+
+    test('lab prefill strip has one accent pill', async ({ page }) => {
+      await open(page, labHash())
+      await expect(page.locator('[data-lab-strip]')).toBeVisible()
+      const accent = await tokenColor(page, '--color-accent')
+      const pills = await page.locator('a:visible, button:visible').evaluateAll(
+        (nodes, color) =>
+          nodes.filter((node) => {
+            const style = getComputedStyle(node)
+            return style.clipPath === 'none' && style.backgroundColor === color
+          }).length,
+        accent,
+      )
+      expect(pills).toBe(1)
+      await expect(
+        page.locator('aside').getByRole('link', { name: ui.bookCall }),
+      ).toBeHidden()
+    })
+
+    test('fresh lab arrival shows an empty status', async ({ browser }) => {
+      const context = await browser.newContext()
+      const page = await context.newPage()
+      await page.goto(`/contact/${labHash()}`, { waitUntil: 'networkidle' })
+      await expect(page.locator('form')).toHaveAttribute('data-status', 'idle')
+      await expect(page.locator('form').getByRole('status')).toHaveText('')
+      await context.close()
+    })
+  })
+
+  test.describe('lab arrival at 390', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('390 lab strip wraps and the prefilled message is not clipped', async ({
+      page,
+    }) => {
+      await open(page, labHash())
+      const strip = page.locator('[data-lab-strip]')
+      await expect(strip).toBeVisible()
+      const strips = await strip.evaluate((node) => ({
+        scroll: node.scrollWidth,
+        client: node.clientWidth,
+      }))
+      expect(strips.scroll).toBe(strips.client)
+      const message = await page.locator('#message').evaluate((node) => ({
+        scroll: node.scrollHeight,
+        client: node.clientHeight,
+      }))
+      expect(message.scroll).toBeLessThanOrEqual(message.client + 1)
+      await noOverflow(page)
+    })
+  })
+
   test('contact form exposes status', async ({ page }) => {
     await open(page)
     const form = page.locator('form[data-status]')

@@ -59,6 +59,33 @@ test.describe('scene frame cost', () => {
         )
       }
     })
+
+    test('logs p95 render and rAF gap for the contact beam scene', async ({ page }) => {
+      await page.addInitScript(() => {
+        Reflect.set(window, '__sceneStats', {})
+      })
+      await page.goto('/contact/', { waitUntil: 'load' })
+      await expect(page.locator('[data-scene-status="active"]')).not.toHaveCount(0, {
+        timeout: 15_000,
+      })
+
+      for (let i = 0; i < 20; i += 1) {
+        await page.mouse.move(200 + i * 50, 150 + (i % 5) * 40, { steps: 8 })
+        await page.waitForTimeout(250)
+      }
+
+      const stats = await page.evaluate(
+        () => Reflect.get(window, '__sceneStats') as Record<string, Samples>,
+      )
+      const rows = Object.values(stats)
+      expect(rows.length).toBeGreaterThan(0)
+
+      for (const samples of rows) {
+        console.log(
+          `SOFT contact beam p95 render ${p95(samples.render).toFixed(2)}ms p95 gap ${p95(samples.gap).toFixed(2)}ms (${String(samples.count)} frames)`,
+        )
+      }
+    })
   })
 
   test.describe('reduced motion', () => {

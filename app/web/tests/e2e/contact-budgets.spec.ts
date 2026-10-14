@@ -151,5 +151,27 @@ test.describe('contact gates', () => {
       )
       expect(worst).toBeLessThan(INP_MAX_MS)
     })
+
+    test(`INP on /contact/ with the beam scene active is under budget`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: 'no-preference' })
+      await observeWorstInteraction(page)
+      await page.goto('/contact/', { waitUntil: 'networkidle' })
+      await expect(page.locator('[data-scene-status="active"]')).not.toHaveCount(0, {
+        timeout: 15_000,
+      })
+      await page.locator('#message').click()
+      await page.keyboard.type('x'.repeat(40), { delay: 20 })
+      for (let i = 0; i < 6; i += 1) {
+        await page.keyboard.press('Tab')
+        await page.waitForTimeout(120)
+      }
+      const worst = await page.evaluate(
+        () => (window as unknown as { worst: number }).worst,
+      )
+      console.log(`SOFT contact beam INP worst ${worst.toFixed(1)}ms`)
+      expect(worst).toBeLessThan(INP_MAX_MS)
+    })
   })
 })

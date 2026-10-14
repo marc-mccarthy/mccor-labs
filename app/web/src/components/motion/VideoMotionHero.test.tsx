@@ -1,7 +1,53 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { VideoMotionHero } from './VideoMotionHero'
+import {
+  MOTION_STORAGE_KEY,
+  MotionPauseProvider,
+  useMotionPaused,
+} from './MotionPauseProvider'
 import { ui } from '@/content/ui'
+
+function PauseButton() {
+  const { toggle } = useMotionPaused()
+  return (
+    <button type="button" onClick={toggle}>
+      motion
+    </button>
+  )
+}
+
+function renderPausableHero() {
+  return render(
+    <MotionPauseProvider>
+      <PauseButton />
+      <VideoMotionHero
+        posterSrc="/poster.webp"
+        webmSrc="/loop.webm"
+        videoSrc="/loop.mp4"
+      />
+    </MotionPauseProvider>,
+  )
+}
+
+function mockLiveMatchMedia() {
+  const state = { reduced: false }
+  const listeners = new Set<() => void>()
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    get matches() {
+      return state.reduced && query === '(prefers-reduced-motion: reduce)'
+    },
+    media: query,
+    addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+    removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+  }))
+  return (reduced: boolean) => {
+    state.reduced = reduced
+    act(() => {
+      for (const listener of listeners) listener()
+    })
+  }
+}
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -217,5 +263,84 @@ describe('VideoMotionHero', () => {
     expect(pause).toHaveBeenCalledTimes(1)
     report(true)
     expect(play).toHaveBeenCalled()
+  })
+
+  describe('motion pause', () => {
+    afterEach(() => {
+      localStorage.clear()
+      delete document.documentElement.dataset.motion
+    })
+
+    it('pauses the attached video while motion is paused and plays it again on unpause', () => {
+      mockMatchMedia(false)
+      const play = vi
+        .spyOn(HTMLMediaElement.prototype, 'play')
+        .mockResolvedValue(undefined)
+      const { container } = renderPausableHero()
+      act(() => {
+        vi.runAllTimers()
+      })
+      expect(container.querySelector('video')).not.toBeNull()
+      pause.mockClear()
+
+      fireEvent.click(screen.getByRole('button', { name: 'motion' }))
+      expect(pause).toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: ui.pauseVideo })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+
+      play.mockClear()
+      fireEvent.click(screen.getByRole('button', { name: 'motion' }))
+      act(() => {
+        vi.runAllTimers()
+      })
+      expect(play).toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: ui.pauseVideo })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      )
+    })
+
+    it('ignores the video toggle while motion is paused', () => {
+      mockMatchMedia(false)
+      const play = vi
+        .spyOn(HTMLMediaElement.prototype, 'play')
+        .mockResolvedValue(undefined)
+      renderPausableHero()
+      act(() => {
+        vi.runAllTimers()
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'motion' }))
+      play.mockClear()
+      fireEvent.click(screen.getByRole('button', { name: ui.pauseVideo }))
+      expect(play).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: ui.pauseVideo })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      )
+    })
+
+    it('never attaches the video when the page loads paused', () => {
+      mockMatchMedia(false)
+      localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+      const { container } = renderPausableHero()
+      act(() => {
+        vi.runAllTimers()
+      })
+      expect(container.querySelector('video')).toBeNull()
+    })
+
+    it('pauses the video when the OS setting turns on after load', () => {
+      const setReduced = mockLiveMatchMedia()
+      const { container } = renderHero()
+      act(() => {
+        vi.runAllTimers()
+      })
+      expect(container.querySelector('video')).not.toBeNull()
+      pause.mockClear()
+      setReduced(true)
+      expect(pause).toHaveBeenCalled()
+    })
   })
 })

@@ -10,6 +10,7 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react'
+import { useMotionPausedFlag } from './MotionPauseProvider'
 
 interface LenisStore {
   subscribe: (callback: () => void) => () => void
@@ -40,6 +41,7 @@ export function useLenis(): Lenis | null {
 }
 
 export function LenisProvider({ children }: { children: ReactNode }) {
+  const paused = useMotionPausedFlag()
   const instanceRef = useRef<Lenis | null>(null)
   const listenersRef = useRef(new Set<() => void>())
   const [store] = useState<LenisStore>(() => ({
@@ -73,7 +75,7 @@ export function LenisProvider({ children }: { children: ReactNode }) {
     }
 
     const start = () => {
-      if (query.matches || instanceRef.current) return
+      if (paused || query.matches || instanceRef.current) return
       const instance = new Lenis({ anchors: true })
       instanceRef.current = instance
       const step = (time: number) => {
@@ -99,7 +101,7 @@ export function LenisProvider({ children }: { children: ReactNode }) {
       query.removeEventListener('change', onChange)
       stop()
     }
-  }, [])
+  }, [paused])
 
   return <LenisContext.Provider value={store}>{children}</LenisContext.Provider>
 }

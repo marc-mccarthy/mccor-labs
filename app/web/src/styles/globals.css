@@ -138,6 +138,10 @@
     animation: grain-drift 8s steps(16) infinite;
   }
 
+  :root[data-motion='paused'] body::after {
+    animation: none;
+  }
+
   body:has([data-legal])::after {
     display: none;
   }
@@ -178,10 +182,18 @@
       }
     }
 
-    body:not(:has([data-legal], [data-careers])) [data-site-header] {
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header] {
       animation: header-blur linear both;
       animation-timeline: scroll(root);
       animation-range: 0 80px;
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header] {
+      backdrop-filter: blur(--theme(--blur-xl));
     }
 
     body:not(:has([data-legal], [data-careers])) [data-site-header]::before,
@@ -203,17 +215,39 @@
         transparent
       );
       opacity: 0;
-      animation: header-edge linear both;
-      animation-timeline: scroll(root);
-      animation-range: 0 80px;
     }
 
     body:not(:has([data-legal], [data-careers])) [data-site-header]::after {
       background-color: var(--color-brand);
       transform: scaleX(0);
       transform-origin: left;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::before {
+      animation: header-edge linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80px;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::after {
       animation: header-progress linear both;
       animation-timeline: scroll(root);
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::before {
+      opacity: 1;
+    }
+
+    :root[data-motion='paused']
+      body:not(:has([data-legal], [data-careers]))
+      [data-site-header]::after {
+      transform: scaleX(1);
     }
   }
 }
@@ -221,6 +255,13 @@
 @keyframes band-signal {
   from {
     transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-motion='paused'] [class*='animate-[band-signal_'],
+  :root[data-motion='paused'] .animate-pulse {
+    animation: none;
   }
 }
 
@@ -248,6 +289,9 @@
 
     [data-service-rail] {
       display: block;
+    }
+
+    :root:not([data-motion='paused']) [data-service-rail] {
       transform: scaleY(0);
       animation: rail-fill linear both;
       animation-timeline: view();
@@ -265,6 +309,11 @@
 
     body:not(:has([data-legal], [data-careers])) [data-footer-signal] {
       display: block;
+    }
+
+    :root:not([data-motion='paused'])
+      body:not(:has([data-legal], [data-careers]))
+      [data-footer-signal] {
       transform: scaleX(0);
       animation: footer-sweep linear both;
       animation-timeline: view();

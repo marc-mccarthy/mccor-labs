@@ -96,6 +96,15 @@ describe('Header', () => {
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 
+  it('offers the motion pause toggle right before the menu button at every width', () => {
+    render(<Header />)
+    const pause = screen.getByRole('button', { name: ui.pauseMotion })
+    const menu = screen.getByRole('button', { name: ui.openMenu })
+    expect(pause).toHaveAttribute('aria-pressed', 'false')
+    expect(pause.nextElementSibling).toBe(menu)
+    expect(pause.closest('.hidden')).toBeNull()
+  })
+
   it('exposes a menu toggle with an accessible name', () => {
     render(<Header />)
     expect(screen.getByRole('button', { name: ui.openMenu })).toBeInTheDocument()

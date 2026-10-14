@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { HeroMotionCanvas } from './HeroMotionCanvas'
+import { MOTION_STORAGE_KEY, MotionPauseProvider } from './MotionPauseProvider'
 
 describe('HeroMotionCanvas', () => {
   beforeEach(() => {
@@ -59,6 +60,36 @@ describe('HeroMotionCanvas', () => {
     })
     expect(canvas).toBeInTheDocument()
     expect(canvas.tagName.toLowerCase()).toBe('canvas')
+  })
+
+  afterEach(() => {
+    window.localStorage.removeItem(MOTION_STORAGE_KEY)
+    delete document.documentElement.dataset.motion
+    vi.unstubAllGlobals()
+  })
+
+  it('draws one still frame and starts no loop when motion is paused', () => {
+    window.localStorage.setItem(MOTION_STORAGE_KEY, 'paused')
+    document.documentElement.dataset.motion = 'paused'
+    const frame = vi.fn(() => 1)
+    vi.stubGlobal('requestAnimationFrame', frame)
+    render(
+      <MotionPauseProvider>
+        <HeroMotionCanvas />
+      </MotionPauseProvider>,
+    )
+    expect(frame).not.toHaveBeenCalled()
+  })
+
+  it('starts its loop when motion is not paused', () => {
+    const frame = vi.fn(() => 1)
+    vi.stubGlobal('requestAnimationFrame', frame)
+    render(
+      <MotionPauseProvider>
+        <HeroMotionCanvas />
+      </MotionPauseProvider>,
+    )
+    expect(frame).toHaveBeenCalled()
   })
 
   it('cleans up without throwing on unmount', () => {

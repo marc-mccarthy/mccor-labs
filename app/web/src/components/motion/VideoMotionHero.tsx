@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { useMotionPausedFlag } from '@/components/motion/MotionPauseProvider'
+import { useReducedMotion } from '@/components/motion/useReducedMotion'
 import { VideoPauseToggle } from '@/components/motion/VideoPauseToggle'
 import { cn } from '@/lib/cn'
 
@@ -30,15 +32,18 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
   const [paused, setPaused] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const pausedRef = useRef(false)
+  const reducedMotion = useReducedMotion()
+  const motionPaused = useMotionPausedFlag()
+  const halted = reducedMotion || motionPaused
+  const haltedRef = useRef(halted)
 
   useEffect(() => {
-    if (!enabled) return
+    haltedRef.current = halted
+    if (halted) videoRef.current?.pause()
+  }, [halted])
 
-    const reducedMotion =
-      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        : false
-    if (reducedMotion) return
+  useEffect(() => {
+    if (!enabled || halted) return
     if (media && !window.matchMedia(media).matches) return
 
     const conn = (navigator as unknown as { connection?: { saveData?: boolean } })
@@ -49,8 +54,9 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
     let observer: IntersectionObserver | undefined
     const attachVideo = () => {
       const target = onScreenRef?.current
-      if (!target) {
+      if (!target || typeof IntersectionObserver === 'undefined') {
         setShouldAttachVideo(true)
+        if (!pausedRef.current) videoRef.current?.play().catch(rethrowUnlessAborted)
         return
       }
       observer?.disconnect()
@@ -98,9 +104,10 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
       window.removeEventListener('pagehide', releaseVideo)
       window.removeEventListener('pageshow', restoreVideo)
     }
-  }, [enabled, media, onScreenRef])
+  }, [enabled, halted, media, onScreenRef])
 
   const togglePaused = () => {
+    if (haltedRef.current) return
     const next = !pausedRef.current
     pausedRef.current = next
     setPaused(next)
@@ -114,7 +121,7 @@ export function useVideoAttach({ enabled, media, onScreenRef }: VideoAttachOptio
     shouldAttachVideo,
     videoLoaded,
     setVideoLoaded,
-    paused,
+    paused: paused || halted,
     togglePaused,
   }
 }

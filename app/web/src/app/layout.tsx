@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SkipLink } from '@/components/layout/SkipLink'
 import { LenisProvider } from '@/components/motion/LenisProvider'
+import { MotionPauseProvider } from '@/components/motion/MotionPauseProvider'
 import { site } from '@/content/site'
 import { env } from '@/lib/env'
 import '@/styles/globals.css'
@@ -21,10 +22,13 @@ export const metadata: Metadata = {
   openGraph: { siteName: site.name, type: 'website', locale: 'en' },
 }
 
+const RESTORE_MOTION_PAUSE = `try{if(localStorage.getItem('mccor-motion')==='paused')document.documentElement.dataset.motion='paused'}catch(error){reportError(error)}`
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-theme="dark">
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: RESTORE_MOTION_PAUSE }} />
         <link
           rel="preload"
           href="/fonts/geist-sans-variable.woff2"
@@ -37,14 +41,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </noscript>
       </head>
       <body className="flex min-h-dvh flex-col">
-        <SkipLink />
-        <Header />
-        <LenisProvider>
-          <main id="main" className="flex-1">
-            {children}
-          </main>
-        </LenisProvider>
-        <Footer />
+        <MotionPauseProvider>
+          <SkipLink />
+          <Header />
+          <LenisProvider>
+            <main id="main" className="flex-1">
+              {children}
+            </main>
+          </LenisProvider>
+          <Footer />
+        </MotionPauseProvider>
       </body>
     </html>
   )

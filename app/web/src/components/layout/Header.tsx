@@ -8,6 +8,7 @@ import { Logo } from './Logo'
 import { BookingCta } from './BookingCta'
 import { Container } from './Container'
 import { UNDERLINE } from './underline'
+import { MotionPauseToggle } from '@/components/motion/MotionPauseToggle'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 
@@ -72,53 +73,56 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:block">
-          <BookingCta size="sm" />
-        </div>
-        <button
-          ref={toggleRef}
-          type="button"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? ui.closeMenu : ui.openMenu}
-          onClick={() => {
-            setOpen((value) => !value)
-          }}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text hover:bg-surface md:hidden"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            aria-hidden="true"
+        <div className="flex items-center gap-3">
+          <div className="hidden md:block">
+            <BookingCta size="sm" />
+          </div>
+          <MotionPauseToggle />
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? ui.closeMenu : ui.openMenu}
+            onClick={() => {
+              setOpen((value) => !value)
+            }}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-text hover:bg-surface md:hidden"
           >
-            <line
-              x1="3"
-              y1="5"
-              x2="17"
-              y2="5"
-              className={`${BAR} ${open ? 'translate-y-[5px] rotate-45' : ''}`}
-            />
-            <line
-              x1="3"
-              y1="10"
-              x2="17"
-              y2="10"
-              className={`${BAR} ${open ? 'opacity-0' : ''}`}
-            />
-            <line
-              x1="3"
-              y1="15"
-              x2="17"
-              y2="15"
-              className={`${BAR} ${open ? '-translate-y-[5px] -rotate-45' : ''}`}
-            />
-          </svg>
-        </button>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <line
+                x1="3"
+                y1="5"
+                x2="17"
+                y2="5"
+                className={`${BAR} ${open ? 'translate-y-[5px] rotate-45' : ''}`}
+              />
+              <line
+                x1="3"
+                y1="10"
+                x2="17"
+                y2="10"
+                className={`${BAR} ${open ? 'opacity-0' : ''}`}
+              />
+              <line
+                x1="3"
+                y1="15"
+                x2="17"
+                y2="15"
+                className={`${BAR} ${open ? '-translate-y-[5px] -rotate-45' : ''}`}
+              />
+            </svg>
+          </button>
+        </div>
       </Container>
       <nav id="mobile-nav" aria-label="Primary" hidden={!open} className={MOBILE_NAV}>
         <Container className="flex flex-col gap-1 py-4">

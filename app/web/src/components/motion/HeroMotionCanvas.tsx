@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/cn'
+import { useMotionPausedFlag } from './MotionPauseProvider'
 
 export interface HeroMotionCanvasProps {
   className?: string
@@ -40,6 +41,7 @@ export function HeroMotionCanvas({
   secondaryColor,
 }: HeroMotionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const paused = useMotionPausedFlag()
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -56,9 +58,8 @@ export function HeroMotionCanvas({
 
     let animationFrameId: number | null = null
     let isVisible = true
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
+    const prefersReducedMotion =
+      paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     let width = 0
     let height = 0
@@ -222,6 +223,7 @@ export function HeroMotionCanvas({
     maxDistance,
     mode,
     particleCount,
+    paused,
     primaryColor,
     secondaryColor,
     speed,

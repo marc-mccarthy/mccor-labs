@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { useLenis } from '../motion/LenisProvider'
+import { useMotionPausedFlag } from '../motion/MotionPauseProvider'
 import { readToken } from '../motion/tokens'
 import { useReducedMotion } from '../motion/useReducedMotion'
 
@@ -34,6 +35,11 @@ const MAX_PIXEL_RATIO = 1.5
 const VELOCITY_RANGE = 60
 const VELOCITY_EASE = 0.1
 const VELOCITY_REST = 0.001
+
+interface LoopControl {
+  hold: () => void
+  wake: () => void
+}
 
 export function easeVelocity(current: number, raw: number): number {
   const target = Math.max(-1, Math.min(1, raw / VELOCITY_RANGE))
@@ -93,6 +99,9 @@ function whenIdleAfterLoad(callback: () => void): () => void {
 
 export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) {
   const reducedMotion = useReducedMotion()
+  const paused = useMotionPausedFlag()
+  const pausedRef = useRef(paused)
+  const loopRef = useRef<LoopControl | null>(null)
   const lenis = useLenis()
   const lenisRef = useRef(lenis)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -149,7 +158,8 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       frameId = requestAnimationFrame(loop)
     }
     const resume = () => {
-      if (frameId === null && handle && visible) frameId = requestAnimationFrame(loop)
+      if (frameId === null && handle && visible && !pausedRef.current)
+        frameId = requestAnimationFrame(loop)
     }
     const pause = () => {
       if (frameId !== null) cancelAnimationFrame(frameId)
@@ -233,7 +243,11 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
           })
           setStatus('active')
 
-          resume()
+          if (pausedRef.current) {
+            handle.render(sceneTime)
+          } else {
+            resume()
+          }
         })
         .catch(() => {
           if (cancelled) return
@@ -247,6 +261,8 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
       started = true
       cancelIdle = whenIdleAfterLoad(start)
     }
+
+    loopRef.current = { hold: pause, wake: resume }
 
     const root = rootRef.current
     if (root && typeof IntersectionObserver !== 'undefined') {
@@ -267,6 +283,7 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
 
     return () => {
       cancelled = true
+      loopRef.current = null
       document.removeEventListener('visibilitychange', onVisibilityChange)
       cancelIdle?.()
       teardown()
@@ -274,8 +291,22 @@ export function SceneRuntime({ className, fallback, build }: SceneRuntimeProps) 
     }
   }, [reducedMotion])
 
+  useEffect(() => {
+    pausedRef.current = paused
+    if (paused) {
+      loopRef.current?.hold()
+    } else {
+      loopRef.current?.wake()
+    }
+  }, [paused])
+
   return (
-    <div ref={rootRef} className={className} data-scene-status={status}>
+    <div
+      ref={rootRef}
+      className={className}
+      data-scene-status={status}
+      data-scene-paused={paused ? '' : undefined}
+    >
       <canvas
         key={canvasKey}
         ref={canvasRef}

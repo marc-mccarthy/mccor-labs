@@ -23,6 +23,16 @@ import {
   type SceneContext,
   type SceneHandle,
 } from './SceneRuntime'
+import { MotionPauseProvider, useMotionPaused } from '../motion/MotionPauseProvider'
+
+function PauseButton() {
+  const { toggle } = useMotionPaused()
+  return (
+    <button type="button" onClick={toggle}>
+      pause
+    </button>
+  )
+}
 
 function mockMatchMedia(reduced: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -343,6 +353,118 @@ describe('SceneRuntime', () => {
       expect(sceneRender).toHaveBeenLastCalledWith(16)
       frameCallback(60_016)
       expect(sceneRender).toHaveBeenLastCalledWith(32)
+    })
+
+    describe('motion pause', () => {
+      afterEach(() => {
+        localStorage.clear()
+        delete document.documentElement.dataset.motion
+      })
+
+      it('holds the last frame with no frame request while paused and resumes on unpause', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        let frameCallback: FrameRequestCallback = () => undefined
+        let nextId = 0
+        const requestFrame = vi.fn((callback: FrameRequestCallback) => {
+          frameCallback = callback
+          nextId += 1
+          return nextId
+        })
+        const cancelFrame = vi.fn()
+        vi.stubGlobal('requestAnimationFrame', requestFrame)
+        vi.stubGlobal('cancelAnimationFrame', cancelFrame)
+        const sceneRender = vi.fn()
+        const build = vi.fn((): SceneHandle => ({
+          render: sceneRender,
+          dispose: vi.fn(),
+        }))
+
+        const { container } = render(
+          <MotionPauseProvider>
+            <PauseButton />
+            <SceneRuntime fallback={<div data-testid="fallback" />} build={build} />
+          </MotionPauseProvider>,
+        )
+        act(() => {
+          notify([{ isIntersecting: true }])
+        })
+        await waitFor(() => {
+          expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+            'data-scene-status',
+            'active',
+          )
+        })
+        const root = container.querySelector('[data-scene-status]')
+        expect(root).not.toHaveAttribute('data-scene-paused')
+        frameCallback(1000)
+        frameCallback(1016)
+        expect(sceneRender).toHaveBeenLastCalledWith(16)
+
+        const requestsBeforePause = requestFrame.mock.calls.length
+        act(() => {
+          screen.getByRole('button', { name: 'pause' }).click()
+        })
+        expect(cancelFrame).toHaveBeenCalledWith(nextId)
+        expect(root).toHaveAttribute('data-scene-paused')
+        expect(root).toHaveAttribute('data-scene-status', 'active')
+        expect(screen.queryByTestId('fallback')).not.toBeInTheDocument()
+        expect(rendererCtor).toHaveBeenCalledTimes(1)
+
+        act(() => {
+          notify([{ isIntersecting: false }])
+          notify([{ isIntersecting: true }])
+        })
+        expect(requestFrame).toHaveBeenCalledTimes(requestsBeforePause)
+
+        act(() => {
+          screen.getByRole('button', { name: 'pause' }).click()
+        })
+        expect(root).not.toHaveAttribute('data-scene-paused')
+        expect(requestFrame).toHaveBeenCalledTimes(requestsBeforePause + 1)
+        frameCallback(60_000)
+        frameCallback(60_016)
+        expect(sceneRender).toHaveBeenLastCalledWith(32)
+        expect(rendererCtor).toHaveBeenCalledTimes(1)
+        expect(build).toHaveBeenCalledTimes(1)
+      })
+
+      it('draws one still frame and requests none when it becomes active while paused', async () => {
+        mockMatchMedia(false)
+        mockWebGL2(true)
+        const requestFrame = vi.fn(() => 1)
+        vi.stubGlobal('requestAnimationFrame', requestFrame)
+        vi.stubGlobal('cancelAnimationFrame', vi.fn())
+        const sceneRender = vi.fn()
+        const build = vi.fn((): SceneHandle => ({
+          render: sceneRender,
+          dispose: vi.fn(),
+        }))
+
+        const { container } = render(
+          <MotionPauseProvider>
+            <PauseButton />
+            <SceneRuntime fallback={<div />} build={build} />
+          </MotionPauseProvider>,
+        )
+        act(() => {
+          screen.getByRole('button', { name: 'pause' }).click()
+        })
+        act(() => {
+          notify([{ isIntersecting: true }])
+        })
+        await waitFor(() => {
+          expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+            'data-scene-status',
+            'active',
+          )
+        })
+        expect(sceneRender).toHaveBeenCalledTimes(1)
+        expect(requestFrame).not.toHaveBeenCalled()
+        expect(container.querySelector('[data-scene-status]')).toHaveAttribute(
+          'data-scene-paused',
+        )
+      })
     })
   })
 })

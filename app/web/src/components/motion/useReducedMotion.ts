@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
+import { useMotionPausedFlag } from './MotionPauseProvider'
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
 const FINE_POINTER = '(hover: hover) and (pointer: fine)'
@@ -43,5 +44,6 @@ export function useReducedMotion(): boolean {
 export function usePointerEffects(): boolean {
   const reduced = useReducedMotion()
   const fine = useMediaQuery(FINE_POINTER)
-  return fine && !reduced
+  const paused = useMotionPausedFlag()
+  return fine && !reduced && !paused
 }

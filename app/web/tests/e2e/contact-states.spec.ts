@@ -106,7 +106,7 @@ async function submitWith(page: Page, responder: Responder) {
 }
 
 async function expectStatus(page: Page, text: string) {
-  await expect(page.getByRole('status')).toHaveText(text)
+  await expect(page.locator('form').getByRole('status')).toHaveText(text)
 }
 
 interface State {
@@ -163,7 +163,7 @@ const STATES: State[] = [
     name: 'daily_cap',
     drive: async (page) => {
       await submitWith(page, reply(429, { reason: 'daily_cap' }))
-      await expect(page.getByRole('status')).toContainText(
+      await expect(page.locator('form').getByRole('status')).toContainText(
         ui.formErrorDailyCap.slice(0, 20),
       )
     },
@@ -193,7 +193,7 @@ const STATES: State[] = [
     name: 'server',
     drive: async (page) => {
       await submitWith(page, reply(500, {}))
-      await expect(page.getByRole('status')).toContainText(
+      await expect(page.locator('form').getByRole('status')).toContainText(
         ui.formErrorServer.slice(0, 20),
       )
     },
@@ -362,6 +362,37 @@ test.describe('live form', () => {
     await submitWith(page, reply(200, { reference: REFERENCE }))
     await expectStatus(page, `${ui.formSuccess} ${ui.formReference} ${REFERENCE}.`)
     expect(mock.requests).toHaveLength(1)
+  })
+
+  test.describe('panel at 1440', () => {
+    test.use({ viewport: { width: 1440, height: 900 } })
+
+    test('panel sits beside aside at 1440', async ({ page }) => {
+      await open(page)
+      const panel = await page.locator('form').locator('xpath=..').boundingBox()
+      const aside = await page.locator('aside').boundingBox()
+      expect(panel).not.toBeNull()
+      expect(aside).not.toBeNull()
+      if (panel === null || aside === null) return
+      expect(aside.x).toBeGreaterThanOrEqual(panel.x + panel.width)
+      expect(Math.abs(aside.y - panel.y)).toBeLessThan(2)
+      await noOverflow(page)
+    })
+  })
+
+  test.describe('panel at 390', () => {
+    test.use({ viewport: { width: 390, height: 844 } })
+
+    test('390 panel stacks form before aside without overflow', async ({ page }) => {
+      await open(page)
+      const form = await page.locator('form').boundingBox()
+      const aside = await page.locator('aside').boundingBox()
+      expect(form).not.toBeNull()
+      expect(aside).not.toBeNull()
+      if (form === null || aside === null) return
+      expect(aside.y).toBeGreaterThanOrEqual(form.y + form.height)
+      await noOverflow(page)
+    })
   })
 
   test('contact form exposes status', async ({ page }) => {

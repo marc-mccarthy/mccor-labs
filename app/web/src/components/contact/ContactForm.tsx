@@ -75,7 +75,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
 
   if (endpoint === null) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-6">
+      <div>
         {prefill !== null && <p className="mb-4 text-text">{contactLabCopy.added}</p>}
         <p className="text-text">{ui.contactNotLive}</p>
         <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -164,7 +164,7 @@ export function ContactForm({ endpoint }: { endpoint: string | null }) {
       data-status={status}
       data-error={errorKind ?? undefined}
       aria-busy={status === 'sending'}
-      className="group/form max-w-xl space-y-5"
+      className="group/form space-y-5"
     >
       {prefill !== null && (
         <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-4">

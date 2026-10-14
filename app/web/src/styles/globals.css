@@ -103,7 +103,7 @@
 
 @keyframes grain-drift {
   to {
-    background-position: 256px 256px;
+    transform: translate3d(256px, 256px, 0);
   }
 }
 
@@ -130,9 +130,10 @@
   body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    inset: -256px;
     z-index: 100;
     pointer-events: none;
+    contain: strict;
     background-image: url('/media/brand/grain-tile.webp');
     opacity: 0.04;
     animation: grain-drift 8s steps(16) infinite;

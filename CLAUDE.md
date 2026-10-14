@@ -6,7 +6,6 @@ Next.js 16 static export (app/web), Terraform (infra/), brand media (app/web/pub
 
 ## Process
 
-- Ask questions in the proper, concise manner to the user if any part of work or direction is unclear at the beginning.
 - No user interaction is needed for commits, pushes, and merges for any work. Create separate branches for any issues/stories, in which the main expert agent is in charge of getting it into main.
 - Plans and spec files should have tasks (ex. T1, T2) should be in sequential order of work with indented sub-tasks (ex. ST1, ST2) and reviewed for accuracy, bugs, issues, errors, missing parts, etc. before being approved by the main expert agent and any agents helping to create those files before any work on those files is done.
 - Work is not finished until a merge to main happens and the working branch is deleted locally and remotely after main is repulled.

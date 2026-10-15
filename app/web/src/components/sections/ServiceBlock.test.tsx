@@ -4,6 +4,7 @@ import { CapabilityBlock } from './CapabilityBlock'
 import { ServiceBlock } from './ServiceBlock'
 import { services } from '@/content/services'
 import type { Capability } from '@/content/types'
+import { ui } from '@/content/ui'
 
 vi.mock('@/components/substance/CodeBlock', () => ({
   CodeBlock: ({ filename }: { filename: string }) => <pre>{filename}</pre>,
@@ -36,7 +37,7 @@ describe('ServiceBlock', () => {
   beforeEach(mockMatchMedia)
 
   it('renders title, detail and every deliverable', () => {
-    render(<ServiceBlock service={websites} />)
+    render(<ServiceBlock service={websites} index={0} total={services.length} />)
     expect(screen.getByRole('heading', { name: websites.title })).toBeInTheDocument()
     expect(screen.getByText(websites.detail)).toBeInTheDocument()
     for (const deliverable of websites.deliverables) {
@@ -45,50 +46,55 @@ describe('ServiceBlock', () => {
   })
 
   it('renders its title through SectionHeading', () => {
-    render(<ServiceBlock service={websites} />)
+    render(<ServiceBlock service={websites} index={0} total={services.length} />)
     const heading = screen.getByRole('heading', { level: 2, name: websites.title })
     expect(heading.parentElement).toHaveAttribute('data-reveal')
   })
 
   it('renders an anchor carrying the service slug', () => {
-    const { container } = render(<ServiceBlock service={websites} />)
+    const { container } = render(
+      <ServiceBlock service={websites} index={0} total={services.length} />,
+    )
     expect(container.querySelector(`#${websites.slug}`)).not.toBeNull()
   })
 
-  it('carries the scroll rail and the hash-landing cue as decorative hooks', () => {
-    const { container } = render(<ServiceBlock service={websites} />)
-    const rail = container.querySelector('[data-service-rail]')!
-    expect(rail).toHaveAttribute('aria-hidden', 'true')
-    expect(rail).toHaveClass('bg-brand', 'hidden')
-    const cue = container.querySelector('[data-target-cue]')!
-    expect(cue).toHaveAttribute('aria-hidden', 'true')
-    expect(cue).toHaveClass('bg-brand', 'opacity-0')
+  it('tags the heading row with its position out of the total, outside the h2', () => {
+    render(<ServiceBlock service={ai} index={2} total={services.length} />)
+    const heading = screen.getByRole('heading', { level: 2, name: ai.title })
+    const tag = screen.getByText('03').parentElement!
+    expect(tag.textContent).toBe(`03 / ${String(services.length).padStart(2, '0')}`)
+    expect(tag.textContent).not.toContain(ui.eyebrows.services)
+    expect(heading.contains(tag)).toBe(false)
+    expect(heading.nextElementSibling).toBe(tag)
   })
 
-  it('places the rail inside the relative content column without leaving the viewport', () => {
-    const { container } = render(<ServiceBlock service={websites} />)
-    const rail = container.querySelector('[data-service-rail]')!
-    expect(rail.parentElement).toHaveClass('relative', 'max-w-6xl')
-    expect(rail).toHaveClass('absolute', 'left-1', 'sm:left-3')
-    expect(rail.className).not.toMatch(/(^|\s)-left-/)
+  it('leaves the signal-rule treatment to SectionHeading alone', () => {
+    const { container } = render(
+      <ServiceBlock service={websites} index={0} total={services.length} />,
+    )
+    expect(container.querySelector('[data-service-rail]')).toBeNull()
+    expect(container.querySelector('[data-target-cue]')).toBeNull()
+    expect(container.querySelector('.max-w-6xl')).toHaveClass('flex-col', 'gap-6')
   })
 
   it('renders its deliverables as direct list items of the list', () => {
-    const { container } = render(<ServiceBlock service={websites} />)
+    const { container } = render(
+      <ServiceBlock service={websites} index={0} total={services.length} />,
+    )
     for (const child of container.querySelector('ul')!.children) {
       expect(child.tagName).toBe('LI')
     }
   })
 
   it('renders one capability block per capability when present', () => {
-    render(<ServiceBlock service={ai} />)
+    render(<ServiceBlock service={ai} index={2} total={services.length} />)
     expect(screen.getAllByTestId('capability')).toHaveLength(
       ai.capabilities?.length ?? -1,
     )
   })
 
   it('renders no capability blocks when absent', () => {
-    render(<ServiceBlock service={consulting} />)
+    render(<ServiceBlock service={consulting} index={3} total={services.length} />)
     expect(screen.queryAllByTestId('capability')).toHaveLength(0)
   })
 })

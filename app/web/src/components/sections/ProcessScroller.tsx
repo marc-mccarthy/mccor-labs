@@ -146,18 +146,16 @@ function ProgressRail() {
 interface ProcessScrollerProps {
   heading?: string
   eyebrow?: { index: string; label: string }
-  headingSize?: 'sm' | 'md'
   glow?: boolean
 }
 
 function ProcessHeading({
   heading,
   eyebrow,
-  headingSize,
-}: Pick<ProcessScrollerProps, 'heading' | 'eyebrow' | 'headingSize'>) {
+}: Pick<ProcessScrollerProps, 'heading' | 'eyebrow'>) {
   return heading ? (
     <Container className="mb-8">
-      <SectionHeading size={headingSize} eyebrow={eyebrow} words={eyebrow !== undefined}>
+      <SectionHeading eyebrow={eyebrow} words={eyebrow !== undefined} rule={false}>
         {heading}
       </SectionHeading>
     </Container>
@@ -167,7 +165,6 @@ function ProcessHeading({
 export function ProcessScroller({
   heading,
   eyebrow,
-  headingSize,
   glow = false,
 }: ProcessScrollerProps) {
   const reducedMotion = useReducedMotion()
@@ -188,7 +185,7 @@ export function ProcessScroller({
   return (
     <Section
       className={cn(
-        'motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:py-0',
+        'motion-safe:md:-my-[max(0px,calc(50vh-12rem))] motion-safe:md:pb-0',
         glow && 'relative isolate',
       )}
     >
@@ -197,14 +194,10 @@ export function ProcessScroller({
         <div className="motion-safe:md:sticky motion-safe:md:top-0">
           <div
             data-testid="process-stage"
-            className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:justify-center motion-safe:md:overflow-hidden"
+            className="motion-safe:md:flex motion-safe:md:h-screen motion-safe:md:flex-col motion-safe:md:overflow-hidden motion-safe:md:pt-[max(0px,calc(50vh-12rem))]"
           >
             <div ref={groupRef} data-testid="process-group" style={RESTING_TRACK}>
-              <ProcessHeading
-                heading={heading}
-                eyebrow={eyebrow}
-                headingSize={headingSize}
-              />
+              <ProcessHeading heading={heading} eyebrow={eyebrow} />
               <Container>
                 <ProgressRail />
                 <div

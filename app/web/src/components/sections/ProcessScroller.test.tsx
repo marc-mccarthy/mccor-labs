@@ -94,13 +94,12 @@ describe('ProcessScroller', () => {
         <ProcessScroller
           heading="How it runs"
           eyebrow={{ index: '04', label: 'Engagement' }}
-          headingSize="md"
           glow
         />,
       )
       expect(screen.getByText('Engagement')).toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 2, name: 'How it runs' })).toHaveClass(
-        'text-display-md',
+        'text-display-sm',
       )
       expect(container.querySelector('section')).toHaveClass('relative', 'isolate')
     },
@@ -123,6 +122,29 @@ describe('ProcessScroller', () => {
       expect(hasStickyAncestor(heading)).toBe(false)
       expect(screen.getByText(new RegExp(stage.duration))).toBeInTheDocument()
     }
+  })
+
+  it('leaves the heading row unruled because the progress track draws the line', () => {
+    mockMatchMedia(false)
+    render(<ProcessScroller heading="How it runs" />)
+    const row = screen.getByRole('heading', {
+      level: 2,
+      name: 'How it runs',
+    }).parentElement!
+    expect(row).toHaveClass('flex', 'sm:flex-row')
+    expect(row.className).not.toMatch(/border-b|after:/)
+  })
+
+  it('top-aligns the pinned stage by the same offset its section pulls up by', () => {
+    mockMatchMedia(false)
+    const { container } = render(<ProcessScroller heading="How it runs" />)
+    const offset = 'max(0px,calc(50vh-12rem))'
+    const section = container.querySelector('section')!
+    expect(section).toHaveClass(`motion-safe:md:-my-[${offset}]`, 'motion-safe:md:pb-0')
+    expect(section).not.toHaveClass('motion-safe:md:py-0')
+    const stage = screen.getByTestId('process-stage')
+    expect(stage).toHaveClass(`motion-safe:md:pt-[${offset}]`, 'motion-safe:md:h-screen')
+    expect(stage).not.toHaveClass('motion-safe:md:justify-center')
   })
 
   it.each([false, true])('sets aria-hidden on no stage (reduced: %s)', (reduced) => {

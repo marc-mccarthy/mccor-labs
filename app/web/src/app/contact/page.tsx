@@ -4,7 +4,6 @@ import { ContactForm } from '@/components/contact/ContactForm'
 import { ContactPanel } from '@/components/contact/ContactPanel'
 import { ContactBeam } from '@/components/sections/ContactBeam'
 import { PageHeader } from '@/components/sections/PageHeader'
-import { ui } from '@/content/ui'
 import { env } from '@/lib/env'
 
 export const metadata: Metadata = {
@@ -17,8 +16,6 @@ export default function ContactPage() {
     <>
       <PageHeader
         title="Contact"
-        size="lg"
-        eyebrow={{ index: '00', label: ui.contactEyebrowLabel }}
         description="Tell us about the project, or book a call directly."
         image="/media/brand/cta-terminus.webp"
         imageClassName="max-sm:object-[70%_50%]"

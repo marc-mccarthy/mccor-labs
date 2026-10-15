@@ -90,11 +90,22 @@ describe('CtaBlock', () => {
     expect(screen.getByRole('heading', { name: ui.ctaHeading })).toBeInTheDocument()
   })
 
-  it('renders the numbered eyebrow and keeps the h2 name', () => {
+  it('drops the spacious padding and keeps the panel gap at gap-8', () => {
+    const { container } = render(<CtaBlock />)
+    const section = container.querySelector('section')!
+    expect(section).toHaveClass('py-8', 'sm:py-8')
+    expect(section).not.toHaveClass('py-24', 'sm:py-32')
+    const row = screen.getByRole('heading', { level: 2 }).parentElement!
+    expect(row.parentElement?.parentElement).toHaveClass('gap-8')
+  })
+
+  it('renders the closing h2 without a numbered tag or heading rule', () => {
     render(<CtaBlock />)
-    expect(screen.getByText(ui.eyebrows.contact)).toBeInTheDocument()
-    expect(screen.getByText('05')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: ui.ctaHeading })).toBeVisible()
+    const heading = screen.getByRole('heading', { level: 2, name: ui.ctaHeading })
+    expect(heading).toBeVisible()
+    expect(heading.nextElementSibling).toBeNull()
+    expect(screen.queryByText('05')).toBeNull()
+    expect(heading.parentElement?.className).not.toMatch(/border-b|after:/)
   })
 
   it('puts a decorative, lazily loaded image behind the card', () => {

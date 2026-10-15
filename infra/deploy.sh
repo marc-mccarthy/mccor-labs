@@ -25,13 +25,13 @@ while IFS= read -r name; do
   SETTING_NAMES+=("$name")
 done < <(sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)=.*/\1/p' "$SETTINGS")
 for name in "${SETTING_NAMES[@]}"; do
-  case $name in TF_VAR_delegation_set_id) continue ;; esac
-  if [[ ($name == TF_VAR_domain_name || $name == DOMAIN_NAME) && "${ALLOW_EMPTY_DOMAIN:-}" == 1 ]]; then
+  case $name in TF_VAR_DELEGATION_SET_ID) continue ;; esac
+  if [[ ($name == TF_VAR_DOMAIN_NAME || $name == DOMAIN_NAME) && "${ALLOW_EMPTY_DOMAIN:-}" == 1 ]]; then
     continue
   fi
   if [[ -z "${!name:-}" ]]; then
     echo "$name is empty or not set; it should come from 1Password via app.env." >&2
-    if [[ $name == TF_VAR_domain_name ]]; then
+    if [[ $name == TF_VAR_DOMAIN_NAME ]]; then
       echo "An empty domain_name plans to destroy the zone and the mail server (EBS volume included)." >&2
       echo "To deploy without a domain on purpose, run with ALLOW_EMPTY_DOMAIN=1." >&2
     fi

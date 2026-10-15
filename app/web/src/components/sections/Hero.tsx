@@ -69,7 +69,7 @@ export function Hero() {
                 ))}
               </h1>
 
-              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted drop-shadow-md sm:text-xl motion-on:animate-lede">
+              <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted drop-shadow-md sm:text-xl motion-on:animate-lede">
                 {site.lede}
               </p>
 

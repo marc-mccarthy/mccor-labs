@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { Section } from './Section'
 
 describe('Section', () => {
-  it('keeps the default padding unchanged', () => {
+  it('applies the default section rhythm padding', () => {
     const { container } = render(<Section>x</Section>)
-    expect(container.firstElementChild?.className).toBe('py-16 sm:py-24')
+    expect(container.firstElementChild?.className).toBe('py-14 sm:py-20')
   })
 
   it('maps compact and spacious sizes', () => {

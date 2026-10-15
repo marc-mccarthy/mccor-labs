@@ -61,19 +61,45 @@ describe('SectionHeading', () => {
     )
   })
 
-  it('keeps the default output and applies the md size', () => {
+  it('sets the h2 on the display-sm scale inside a ruled row with a 2px brand segment', () => {
     mockMatchMedia(true)
-    const { container, rerender } = render(
-      <SectionHeading>Systems we build</SectionHeading>,
-    )
-    expect(container.firstElementChild?.tagName).toBe('DIV')
+    const { container } = render(<SectionHeading>Systems we build</SectionHeading>)
+    const row = container.firstElementChild as HTMLElement
+    expect(row.tagName).toBe('DIV')
     expect(screen.getByRole('heading', { level: 2 }).className).toBe(
-      'text-display-sm leading-tight font-semibold tracking-tight text-text',
+      'text-display-sm leading-tight font-semibold tracking-tight text-balance text-text',
     )
-    rerender(<SectionHeading size="md">Systems we build</SectionHeading>)
-    const cls = screen.getByRole('heading', { level: 2 }).className
-    expect(cls).toContain('text-display-md')
-    expect(cls).not.toContain('text-display-sm')
+    expect(row).toHaveClass(
+      'relative',
+      'flex',
+      'flex-col',
+      'items-start',
+      'gap-y-1',
+      'sm:flex-row',
+      'sm:items-baseline',
+      'sm:justify-start',
+      'sm:gap-x-6',
+      'border-b',
+      'border-border',
+      'pb-4',
+      'after:absolute',
+      'after:-bottom-px',
+      'after:left-0',
+      'after:h-0.5',
+      'after:w-12',
+      'after:bg-brand',
+    )
+    expect(row).not.toHaveClass('justify-between', 'sm:justify-between')
+  })
+
+  it('drops the rule and brand segment when rule is off', () => {
+    mockMatchMedia(true)
+    const { container } = render(
+      <SectionHeading rule={false}>Systems we build</SectionHeading>,
+    )
+    const row = container.firstElementChild as HTMLElement
+    expect(row).toHaveClass('flex', 'sm:flex-row')
+    expect(row.className).not.toMatch(/border-b|after:|pb-4/)
   })
 
   it('renders the eyebrow outside the h2 and leaves the name intact', () => {
@@ -87,10 +113,7 @@ describe('SectionHeading', () => {
     expect(heading.textContent).toBe('Systems we build')
     expect(heading.contains(screen.getByText('01'))).toBe(false)
     expect(screen.getByText('Build')).toBeTruthy()
-    const tick = screen.getByTestId('eyebrow-tick')
-    expect(tick.getAttribute('aria-hidden')).toBe('true')
-    expect(tick.className).toContain('w-4')
-    expect(tick.className).toContain('motion-on:animate-[band-signal_')
+    expect(screen.queryByTestId('eyebrow-tick')).toBeNull()
     expect(heading.parentElement?.hasAttribute('data-reveal')).toBe(true)
     expect(container.querySelector('[data-reveal]')).toBe(heading.parentElement)
   })
@@ -111,18 +134,22 @@ describe('SectionHeading', () => {
     expect(heading.querySelector('[data-word]')).toBeNull()
   })
 
-  it('renders the shared eyebrow line unchanged', () => {
+  it('renders the index and label as a tag right after the h2 in the heading row', () => {
     mockMatchMedia(false)
     render(
       <SectionHeading eyebrow={{ index: '01', label: 'Build' }}>
         Systems we build
       </SectionHeading>,
     )
-    const line = screen.getByText('01').parentElement!
-    expect(line.tagName).toBe('P')
-    expect(line.className).toBe(
-      'mb-4 flex items-center gap-3 font-mono text-xs tracking-widest uppercase',
+    const heading = screen.getByRole('heading', { level: 2, name: 'Systems we build' })
+    const tag = screen.getByText('01').parentElement!
+    expect(tag.tagName).toBe('P')
+    expect(tag.className).toBe(
+      'shrink-0 font-mono text-xs tracking-widest text-muted uppercase tabular-nums',
     )
-    expect(line.children).toHaveLength(4)
+    expect(tag.parentElement).toBe(heading.parentElement)
+    expect(heading.nextElementSibling).toBe(tag)
+    expect(tag.textContent).toBe('01 / Build')
+    expect(screen.getByText('/')).toHaveAttribute('aria-hidden', 'true')
   })
 })

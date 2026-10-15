@@ -26,7 +26,7 @@ Each task is tagged laptop (agent on the owner's machine, no AWS writes) or OWNE
 - Shared names are fixed: workspace `app/api` (`pnpm -F api`), `src/lib/counter.ts` `takeUnit`, `src/lib/http.ts` `json` and `parseJsonBody`, `src/handlers/lab.ts`, `src/config.ts`, `dist/<name>.zip`, table `mccorlabs-lab`, counter keys `lab-race#<YYYY-MM-DD>` and `lab-argue#<YYYY-MM-DD>`, module `infra/modules/lab_api` with output `api_origins`, SSM `/mccorlabs/labs/should-this-be-ai/enabled`, `app/web/src/lib/signedPost.ts` `signedPostJson`, `app/web/src/components/lab/`, trace `app/web/src/content/lab/traces/race-recorded.json`, rubric `app/web/src/content/lab/rubric.ts` (`Verdict`, `RuleId`).
 - Before editing any file, re-read it. Phase 0 and phase 1 land first and their exact code is not known to this plan. Where a step says "match phase 0" or "match phase 1", read that file and follow its pattern; if it contradicts a step here, stop and report.
 - Every `app/api` task runs `pnpm -F api exec tsc --noEmit`, `pnpm -F api lint`, `pnpm -F api test:run`. Every `app/web` task runs `pnpm -F web exec tsc --noEmit`, `pnpm -F web lint`, `pnpm -F web test:run`. Every `infra/` task runs the four `ci.yml` checks plus the module test. Every task runs `pnpm format:check`.
-- Done-gate per task: self-review of the diff, then a reviewer subagent running `/code-review`. No `console.log` left behind; structured logging goes through `src/lab/logEvent.ts` only.
+- Done-gate per task: self-review of the diff, then a reviewer subagent running `/code-review`. No `console.log` left behind; structured logging goes through `phase-2/src/lab/logEvent.ts` only.
 
 ## Review Focus
 
@@ -105,8 +105,8 @@ Created:
 | `app/api/src/config.ts`                                                    | Model IDs, prices, caps, limits, verdict ids and labels  |
 | `app/api/src/lab/types.ts`                                                 | Request, result, response and trace types                |
 | `app/api/src/lab/validate.ts`                                              | Race and argue request validation                        |
-| `app/api/src/lab/logEvent.ts`                                              | One JSON metadata line to stdout                         |
-| `app/api/src/lab/killFlag.ts`                                              | SSM kill-flag reader with 60 s cache                     |
+| `app/api/phase-2/src/lab/logEvent.ts`                                      | One JSON metadata line to stdout                         |
+| `app/api/phase-2/src/lab/killFlag.ts`                                      | SSM kill-flag reader with 60 s cache                     |
 | `app/api/src/lab/cost.ts`                                                  | Per-run cost and worst-case math                         |
 | `app/api/src/lab/guardrail.ts`                                             | `ApplyGuardrail` wrapper                                 |
 | `app/api/src/lab/argue.ts`                                                 | Converse call for argue                                  |
@@ -115,8 +115,8 @@ Created:
 | `app/api/src/lab/replay.ts`                                                | Loads committed traces into recorded responses           |
 | `app/api/src/handlers/lab.ts`                                              | Lambda handler for `/api/lab/race` and `/api/lab/argue`  |
 | `app/api/src/infraDrift.test.ts`                                           | Asserts Terraform and `config.ts` agree                  |
-| `app/api/scripts/worst-case.ts`                                            | Prints the worst-case monthly USD                        |
-| `app/api/scripts/record-trace.ts`                                          | Owner-run recorder for both traces                       |
+| `app/api/phase-2/scripts/worst-case.ts`                                    | Prints the worst-case monthly USD                        |
+| `app/api/phase-2/scripts/record-trace.ts`                                  | Owner-run recorder for both traces                       |
 | `app/api/scripts/fixtures/race-examples.json`, `argue-example.json`        | Fictional inputs for the recorder                        |
 | `app/web/src/content/lab/traces/race-recorded.json`, `argue-recorded.json` | Recorded runs (written by P2-T11 only)                   |
 | `infra/modules/lab_api/guardrail.tf`                                       | Guardrail and its version                                |
@@ -516,7 +516,7 @@ git commit -m "feat(api): add lab request types and validation"
 
 ### P2-T4 laptop: kill-flag reader with 60 s cache, and `logEvent`
 
-**Files:** Create `app/api/src/lab/logEvent.ts`, `app/api/src/lab/killFlag.ts`, `app/api/src/lab/killFlag.test.ts`.
+**Files:** Create `app/api/phase-2/src/lab/logEvent.ts`, `app/api/phase-2/src/lab/killFlag.ts`, `app/api/phase-2/src/lab/killFlag.test.ts`.
 **Interfaces:** Consumes `KILL_FLAG`. Produces `logEvent(fields: Record<string, string | number | boolean | null>): void` and `createKillFlag({ client: SSMClient, name: string, now: () => number, cacheMs?: number }): () => Promise<boolean>`.
 
 - [ ] **Step 1: failing test** (`aws-sdk-client-mock` on `SSMClient`, `GetParameterCommand`) covering:
@@ -525,7 +525,7 @@ git commit -m "feat(api): add lab request types and validation"
   - a rejected `send` (`ParameterNotFound`) returns `false`, writes one stdout line whose JSON is `{ "event": "kill_flag_error", "error": "ParameterNotFound" }`, and a second call within 60 s sends nothing (`vi.spyOn(process.stdout, 'write')`).
   - the request uses `Name` equal to the configured name.
 
-- [ ] **Step 2: run** `pnpm -F api test:run src/lab/killFlag.test.ts`. Expected: FAIL, cannot resolve `./killFlag`.
+- [ ] **Step 2: run** `pnpm -F api test:run phase-2/src/lab/killFlag.test.ts`. Expected: FAIL, cannot resolve `./killFlag`.
 
 - [ ] **Step 3: implement**
 
@@ -588,7 +588,7 @@ export function createKillFlag({
 - [ ] **Step 5: commit**
 
 ```bash
-git add app/api/src/lab/logEvent.ts app/api/src/lab/killFlag.ts app/api/src/lab/killFlag.test.ts
+git add app/api/phase-2/src/lab/logEvent.ts app/api/phase-2/src/lab/killFlag.ts app/api/phase-2/src/lab/killFlag.test.ts
 git commit -m "feat(api): add fail-closed lab kill flag with 60 second cache"
 ```
 
@@ -596,7 +596,7 @@ git commit -m "feat(api): add fail-closed lab kill flag with 60 second cache"
 
 ### P2-T5 laptop: cost calculator and worst-case script
 
-**Files:** Create `app/api/src/lab/cost.ts`, `app/api/src/lab/cost.test.ts`, `app/api/scripts/worst-case.ts`.
+**Files:** Create `app/api/src/lab/cost.ts`, `app/api/src/lab/cost.test.ts`, `app/api/phase-2/scripts/worst-case.ts`.
 **Interfaces:** Consumes `PRICES`, `GUARDRAIL`, `LAMBDA`, `CAPS`, `RACE`, `ARGUE`. Produces `textUnits(chars)`, `modelCostUsd({ inputTokens, outputTokens })`, `guardrailCostUsd(units)`, `lambdaCostUsd(ms)`, `runCostUsd({ inputTokens, outputTokens, guardrailUnits, ms })`, `worstCaseRaceUsd()`, `worstCaseArgueUsd()`, `worstCaseMonthlyUsd(days = 31)`.
 
 - [ ] **Step 1: failing test** asserting:
@@ -683,7 +683,7 @@ export function worstCaseMonthlyUsd(days = 31): number {
 }
 ```
 
-`scripts/worst-case.ts`
+`phase-2/scripts/worst-case.ts`
 
 ```ts
 import { BUDGET_USD, REJECTED_POSTS_USD_PER_10M } from '../src/config'
@@ -703,7 +703,7 @@ process.stdout.write(
 - [ ] **Step 4: run** the four check commands, then
 
 ```bash
-pnpm -F api exec esbuild scripts/worst-case.ts --bundle --platform=node --format=esm --log-level=warning | node --input-type=module
+pnpm -F api exec esbuild phase-2/scripts/worst-case.ts --bundle --platform=node --format=esm --log-level=warning | node --input-type=module
 ```
 
 Expected: tests pass; the script prints one JSON line with `"labMonthlyUsd":11.18573...` and `"budgetUsd":25`. If `app/api`'s tsconfig `include` leaves out `scripts/`, add `scripts` to it in this task and add `app/api/tsconfig.json` to the commit.
@@ -711,7 +711,7 @@ Expected: tests pass; the script prints one JSON line with `"labMonthlyUsd":11.1
 - [ ] **Step 5: commit**
 
 ```bash
-git add app/api/src/lab/cost.ts app/api/src/lab/cost.test.ts app/api/scripts/worst-case.ts
+git add app/api/src/lab/cost.ts app/api/src/lab/cost.test.ts app/api/phase-2/scripts/worst-case.ts
 git commit -m "feat(api): add lab cost calculator and worst-case script"
 ```
 
@@ -948,7 +948,7 @@ git commit -m "feat(api): add race scoring and leave-one-out simple program lane
 
 ### P2-T10 laptop: owner-run trace recording script
 
-**Files:** Create `app/api/scripts/record-trace.ts`, `app/api/scripts/fixtures/race-examples.json`, `app/api/scripts/fixtures/argue-example.json`.
+**Files:** Create `app/api/phase-2/scripts/record-trace.ts`, `app/api/scripts/fixtures/race-examples.json`, `app/api/phase-2/scripts/fixtures/argue-example.json`.
 **Interfaces:** Consumes `raceModel`, `argueModel`, `programAnswers`, `scoreAnswers`, `runCostUsd`, `textUnits`, `validateRace`, `validateArgue`, config. Produces, when run by the owner, `app/web/src/content/lab/traces/race-recorded.json` and `argue-recorded.json` in the `RaceTrace` and `ArgueTrace` shapes.
 
 - [ ] **Step 1: fixtures** (fictional, no names or personal details)
@@ -981,7 +981,7 @@ git commit -m "feat(api): add race scoring and leave-one-out simple program lane
 - [ ] **Step 3: verify without AWS**
 
 ```bash
-pnpm -F api exec esbuild scripts/record-trace.ts --bundle --platform=node --format=esm --outfile=.record-trace.mjs --log-level=warning
+pnpm -F api exec esbuild phase-2/scripts/record-trace.ts --bundle --platform=node --format=esm --outfile=.record-trace.mjs --log-level=warning
 pnpm -F api exec tsc --noEmit
 pnpm -F api lint
 pnpm format:check
@@ -992,7 +992,7 @@ Expected: esbuild writes the bundle with no output; tsc, lint and prettier are c
 - [ ] **Step 4: commit**
 
 ```bash
-git add app/api/scripts/record-trace.ts app/api/scripts/fixtures/race-examples.json app/api/scripts/fixtures/argue-example.json
+git add app/api/phase-2/scripts/record-trace.ts app/api/scripts/fixtures/race-examples.json app/api/phase-2/scripts/fixtures/argue-example.json
 git commit -m "feat(api): add owner-run script that records race and argue traces"
 ```
 
@@ -1006,7 +1006,7 @@ git commit -m "feat(api): add owner-run script that records race and argue trace
 - [ ] **Step 1: run** (admin keys from `app.env`, one real call each; cost under 0.01 USD)
 
 ```bash
-pnpm -F api exec esbuild scripts/record-trace.ts --bundle --platform=node --format=esm --outfile=.record-trace.mjs --log-level=warning
+pnpm -F api exec esbuild phase-2/scripts/record-trace.ts --bundle --platform=node --format=esm --outfile=.record-trace.mjs --log-level=warning
 op run --env-file=app.env -- env -u AWS_PROFILE node app/api/.record-trace.mjs
 rm app/api/.record-trace.mjs
 ```
@@ -1990,7 +1990,7 @@ Commit: none.
 - [ ] **Step 1: lab worst case**
 
 ```bash
-pnpm -F api exec esbuild scripts/worst-case.ts --bundle --platform=node --format=esm --log-level=warning | node --input-type=module
+pnpm -F api exec esbuild phase-2/scripts/worst-case.ts --bundle --platform=node --format=esm --log-level=warning | node --input-type=module
 ```
 
 Expected: `labMonthlyUsd` about 11.19.

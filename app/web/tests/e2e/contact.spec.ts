@@ -27,6 +27,7 @@ test.describe('contact route', () => {
     await expect(page.getByRole('button', { name: /send message/i })).toBeVisible()
     await expect(page.locator('#name')).toBeVisible()
     await expect(page.locator('#email')).toBeVisible()
+    await expect(page.locator('#phone')).toBeVisible()
     await expect(page.locator('#message')).toBeVisible()
   })
 })

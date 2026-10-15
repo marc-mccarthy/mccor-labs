@@ -31,6 +31,7 @@ test('contact signal reaches sent', async ({ page }) => {
   await page.goto('/contact/', { waitUntil: 'networkidle' })
   await page.locator('#name').fill('Ada Lovelace')
   await page.locator('#email').fill('ada@example.com')
+  await page.locator('#phone').fill('2025550123')
   await page.locator('#message').fill('A message long enough to pass validation.')
   await expect.poll(() => page.evaluate(() => window.__contactSignal?.charge)).toBe(1)
   await page.getByRole('button', { name: ui.formSubmit }).click()

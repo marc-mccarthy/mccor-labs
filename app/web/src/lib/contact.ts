@@ -1,9 +1,11 @@
 import { ui } from '@/content/ui'
+import { isValidUsPhone, toE164 } from '@/lib/phone'
 import { signedPostJson } from '@/lib/signedPost'
 
 export interface ContactRequest {
   name: string
   email: string
+  phone: string
   company?: string
   message: string
   budget?: string
@@ -19,7 +21,7 @@ export type ContactResponse =
   | { ok: false; error: ContactError; detail?: string }
 
 export type ContactErrors = Partial<
-  Record<'name' | 'email' | 'company' | 'message', string>
+  Record<'name' | 'email' | 'phone' | 'company' | 'message', string>
 >
 
 export const CONTACT_TIMEOUT_MS = 15000
@@ -38,6 +40,9 @@ export function validateContact(request: ContactRequest): ContactErrors {
   else if (name.length > 100) errors.name = ui.contactErrorNameLength
 
   if (email.length > 254 || !EMAIL.test(email)) errors.email = ui.contactErrorEmail
+
+  if (request.phone.trim().length < 1) errors.phone = ui.contactErrorPhone
+  else if (!isValidUsPhone(request.phone)) errors.phone = ui.contactErrorPhoneInvalid
 
   if ((request.company ?? '').trim().length > 100) {
     errors.company = ui.contactErrorCompanyLength
@@ -88,7 +93,10 @@ export async function submitContact(
   }
 
   try {
-    const response = await postWithin(endpoint, request)
+    const response = await postWithin(endpoint, {
+      ...request,
+      phone: toE164(request.phone),
+    })
     if (response === 'timeout') return { ok: false, error: 'server' }
     const data = await readJson(response)
 

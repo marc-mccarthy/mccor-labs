@@ -17,6 +17,7 @@ export function ownerEmailText(input: ContactInput, reference: string): string {
     `Reference: ${reference}`,
     `Name: ${input.name}`,
     `Email: ${input.email}`,
+    `Phone: ${orNotGiven(input.phone)}`,
     `Company: ${orNotGiven(input.company)}`,
     `Budget: ${orNotGiven(input.budget)}`,
     '',

@@ -19,6 +19,10 @@ async function fillEmail() {
   await userEvent.type(screen.getByLabelText(/email/i), 'ada@example.com')
 }
 
+async function fillPhone() {
+  await userEvent.type(screen.getByLabelText(ui.contactLabelPhone), '2025550123')
+}
+
 async function fillMessage() {
   await userEvent.type(
     screen.getByLabelText(/message/i),
@@ -29,6 +33,7 @@ async function fillMessage() {
 async function fillValidForm() {
   await fillName()
   await fillEmail()
+  await fillPhone()
   await fillMessage()
 }
 
@@ -52,6 +57,7 @@ describe('ContactForm focus and resubmit', () => {
   it('focuses only the email field when the email is bad', async () => {
     render(<ContactForm endpoint="/api/contact" />)
     await fillName()
+    await fillPhone()
     await fillMessage()
     await userEvent.type(screen.getByLabelText(/email/i), 'not-an-email')
     await userEvent.click(submitButton())
@@ -105,6 +111,7 @@ describe('ContactForm focus and resubmit', () => {
     render(<ContactForm endpoint="/api/contact" />)
     expect(document.getElementById('name')).toHaveAttribute('autocomplete', 'name')
     expect(document.getElementById('email')).toHaveAttribute('autocomplete', 'email')
+    expect(document.getElementById('phone')).toHaveAttribute('autocomplete', 'tel')
     expect(document.getElementById('company')).toHaveAttribute(
       'autocomplete',
       'organization',

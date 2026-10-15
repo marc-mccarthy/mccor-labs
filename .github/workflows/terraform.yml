@@ -1,0 +1,70 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'scripts/plan-guard*'
+      - 'app/api/package.json'
+      - 'app/api/scripts/**'
+      - '.trivyignore.yaml'
+      - '.github/workflows/terraform.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  terraform:
+    name: Terraform validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+        with:
+          terraform_version: '1.16.1'
+      - name: Format check
+        run: terraform fmt -check -recursive infra
+      - name: Plan guard test
+        run: bash scripts/plan-guard.test.sh
+      - name: Publish guard test
+        run: bash infra/tests/publish-guard.test.sh
+      - name: Mailbox sync test
+        run: bash infra/tests/sync-accounts.test.sh
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -F api build
+      - name: Init and validate
+        run: |
+          terraform -chdir=infra init -backend=false -input=false
+          terraform -chdir=infra validate
+          terraform -chdir=infra/bootstrap init -backend=false -input=false
+          terraform -chdir=infra/bootstrap validate
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337
+      - name: Lint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --chdir=infra --init
+          tflint --chdir=infra
+          tflint --chdir=infra/bootstrap --config="$PWD/infra/.tflint.hcl"
+      - name: Scan infra for misconfiguration
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: config
+          scan-ref: infra
+          trivyignores: .trivyignore.yaml
+          exit-code: '1'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true

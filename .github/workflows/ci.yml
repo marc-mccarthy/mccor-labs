@@ -2,15 +2,16 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '24'
@@ -19,6 +20,7 @@ jobs:
   quality:
     name: Lint, types, unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
@@ -38,9 +40,11 @@ jobs:
   e2e:
     name: End-to-end, accessibility, budgets
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       NEXT_PUBLIC_SITE_URL: https://example.com
       NEXT_PUBLIC_BOOKING_URL: https://booking.example.com/ci
+      NEXT_PUBLIC_CONTACT_ENDPOINT: /api/contact
       LAB_EVALS_DIR: tests/fixtures/evals
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -50,7 +54,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -F web exec playwright install --with-deps chromium chrome
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(pnpm -F web exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
+      - if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm -F web exec playwright install --with-deps chromium
+      - if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm -F web exec playwright install-deps chromium
+      # Branded Chrome installs system-wide via apt, outside ~/.cache/ms-playwright, so it runs on every hit too.
+      - run: pnpm -F web exec playwright install chrome
       - run: pnpm build:raw
       - run: pnpm -F web test:e2e
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -61,50 +79,3 @@ jobs:
             app/web/playwright-report/
             app/web/test-results/
           retention-days: 7
-
-  terraform:
-    name: Terraform validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
-        with:
-          terraform_version: '1.16.1'
-      - name: Format check
-        run: terraform fmt -check -recursive infra
-      - name: Plan guard test
-        run: bash scripts/plan-guard.test.sh
-      - name: Publish guard test
-        run: bash infra/tests/publish-guard.test.sh
-      - name: Mailbox sync test
-        run: bash infra/tests/sync-accounts.test.sh
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm -F api build
-      - name: Init and validate
-        run: |
-          terraform -chdir=infra init -backend=false -input=false
-          terraform -chdir=infra validate
-          terraform -chdir=infra/bootstrap init -backend=false -input=false
-          terraform -chdir=infra/bootstrap validate
-      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337
-      - name: Lint
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          tflint --chdir=infra --init
-          tflint --chdir=infra
-          tflint --chdir=infra/bootstrap --config="$PWD/infra/.tflint.hcl"
-      - name: Scan infra for misconfiguration
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
-        with:
-          scan-type: config
-          scan-ref: infra
-          trivyignores: .trivyignore.yaml
-          exit-code: '1'
-          severity: 'HIGH,CRITICAL'
-          ignore-unfixed: true

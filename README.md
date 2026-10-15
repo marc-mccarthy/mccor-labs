@@ -66,7 +66,7 @@ account on the **Paid** plan (the Free plan closes the account after six months)
 `AWS_SECRET_KEY`, `region`). Any `AWS_PROFILE` in your shell is ignored. Run `op signin`, then check:
 
 ```bash
-op run --env-file=app.env -- aws sts get-caller-identity
+op run --env-file=app.env -- sh -c 'AWS_ACCESS_KEY_ID=$AWS_SECRET_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY aws sts get-caller-identity'
 ```
 
 ### 2. Fill in your settings

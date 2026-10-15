@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 
 SETTINGS="$PWD/../app.env"
 SETTINGS_MISSING_MSG="Refusing to continue: deploying without settings risks applying an
-empty mailboxes map, which would destroy the mailbox passwords."
+empty MAILBOXES map, which would destroy the mailbox passwords."
 
 if [[ -z "${DEPLOY_UNDER_OP:-}" ]]; then
   if ! command -v op >/dev/null; then
@@ -32,7 +32,7 @@ for name in "${SETTING_NAMES[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "$name is empty or not set; it should come from 1Password via app.env." >&2
     if [[ $name == TF_VAR_DOMAIN_NAME ]]; then
-      echo "An empty domain_name plans to destroy the zone and the mail server (EBS volume included)." >&2
+      echo "An empty DOMAIN_NAME plans to destroy the zone and the mail server (EBS volume included)." >&2
       echo "To deploy without a domain on purpose, run with ALLOW_EMPTY_DOMAIN=1." >&2
     fi
     echo "$SETTINGS_MISSING_MSG" >&2

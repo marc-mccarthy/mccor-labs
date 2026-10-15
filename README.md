@@ -62,24 +62,27 @@ account on the **Paid** plan (the Free plan closes the account after six months)
 
 `deploy.sh` takes AWS credentials only from 1Password, never from AWS profiles.
 `AWS_SECRET_ID`, `AWS_SECRET_KEY` and `AWS_REGION` in `app.env` point at the
-`mccor-labs` item in the Development vault (fields `AWS_SECRET_ID`,
-`AWS_SECRET_KEY`, `region`). Any `AWS_PROFILE` in your shell is ignored. Run `op signin`, then check:
+`AWS Credentials` item in the Secrets vault (fields of the same names). The AWS CLI and Terraform
+read only `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, so `deploy.sh` maps the two keys to
+those names. Any `AWS_PROFILE` in your shell is ignored. For commands you run by hand, define
+`r`, which does the same mapping. Run `op signin`, then check:
 
 ```bash
-op run --env-file=app.env -- sh -c 'AWS_ACCESS_KEY_ID=$AWS_SECRET_ID AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY aws sts get-caller-identity'
+r() { op run --no-masking --env-file=app.env -- sh -c 'export AWS_ACCESS_KEY_ID="$AWS_SECRET_ID" AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"; exec "$@"' sh "$@"; }
+r aws sts get-caller-identity
 ```
 
 ### 2. Fill in your settings
 
-Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `NAME`, `REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_SECRET_ID`, `AWS_SECRET_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
+Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `NAME`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
-Two fields need care. `delegation_set_id` is the one you fill in after step 3, from the bootstrap output. `domain_registrar_is_route53` stays `false` until the domain has been transferred to Route 53. `domain_contact` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
+Two fields need care. `DELEGATION_SET_ID` is the one you fill in after step 3, from the bootstrap output. `DOMAIN_REGISTRAR_IS_ROUTE53` stays `false` until the domain has been transferred to Route 53. `DOMAIN_CONTACT` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
 
 ### 3. Apply the bootstrap stack
 
-You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_ENABLE_BUDGET=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
+You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_ENABLE_BUDGET=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it, so run each `terraform` command through `r` from step 1. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
 
-Afterwards, put the `delegation_set_id` output in the `delegation_set_id` field in 1Password. The `name_servers` output lists the four name servers for step 4.
+Afterwards, put the `delegation_set_id` output in the `DELEGATION_SET_ID` field in 1Password. The `name_servers` output lists the four name servers for step 4.
 
 ### 4. Point Namecheap at Route 53
 
@@ -125,11 +128,9 @@ If `terraform init` changes `infra/.terraform.lock.hcl` or
 The main stack is removed from your laptop only. `deploy.sh` has no destroy action, and CI's plan guard blocks deletes. Its site bucket refuses to be deleted while it holds files, so turn that protection off first, then destroy:
 
 ```bash
-op run --no-masking --env-file=app.env -- terraform -chdir=infra init
-op run --no-masking --env-file=app.env -- env TF_VAR_PROTECT_DATA=false \
-  terraform -chdir=infra apply -target=module.site
-op run --no-masking --env-file=app.env -- env TF_VAR_PROTECT_DATA=false \
-  terraform -chdir=infra destroy
+r terraform -chdir=infra init
+r env TF_VAR_PROTECT_DATA=false terraform -chdir=infra apply -target=module.site
+r env TF_VAR_PROTECT_DATA=false terraform -chdir=infra destroy
 ```
 
 **This permanently deletes the live site, every file in it and the mail server with its mail volume.**

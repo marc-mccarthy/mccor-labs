@@ -93,7 +93,8 @@ describe('PipelineSection', () => {
   it('keeps the numbered eyebrow and the heading', () => {
     mockMatchMedia(false)
     render(<PipelineSection />)
-    const eyebrow = screen.getByTestId('eyebrow-tick').parentElement!
+    const eyebrow = screen.getByText('03').parentElement!
+    expect(eyebrow.closest('h2')).toBeNull()
     expect(within(eyebrow).getByText(ui.eyebrows.retrieval)).toBeInTheDocument()
     expect(within(eyebrow).getByText('03')).toBeInTheDocument()
     expect(

@@ -41,15 +41,17 @@ function mockMatchMedia(reduced: boolean, desktop = false) {
 }
 
 describe('SystemsScene', () => {
-  it('renders the numbered eyebrow above the h2', () => {
+  it('renders the numbered tag in the ruled heading row after the h2', () => {
     mockMatchMedia(false)
     render(<SystemsScene />)
-    const eyebrow = screen.getByTestId('eyebrow-tick').parentElement!
-    expect(within(eyebrow).getByText(ui.eyebrows.evaluation)).toBeInTheDocument()
-    expect(within(eyebrow).getByText('02')).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { level: 2, name: ui.systemsHeading }),
-    ).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 2, name: ui.systemsHeading })
+    const tag = screen.getByText('02').parentElement!
+    expect(within(tag).getByText(ui.eyebrows.evaluation)).toBeInTheDocument()
+    expect(heading.nextElementSibling).toBe(tag)
+    expect(heading).toHaveClass('text-display-sm')
+    expect(heading.parentElement).toHaveClass('border-b', 'after:bg-brand')
+    expect(heading.parentElement?.parentElement).toHaveClass('drop-shadow-md')
+    expect(screen.queryByTestId('eyebrow-tick')).toBeNull()
   })
 
   it('renders the heading and copy outside the effect wrapper', async () => {

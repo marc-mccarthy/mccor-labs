@@ -46,15 +46,10 @@ export function PipelineSection() {
     <Section ref={sectionRef} className="relative isolate">
       <GlowField anchor="center" />
       <Container>
-        <SectionHeading
-          className="mb-8"
-          size="md"
-          words
-          eyebrow={{ index: '03', label: ui.eyebrows.retrieval }}
-        >
+        <SectionHeading words eyebrow={{ index: '03', label: ui.eyebrows.retrieval }}>
           {ui.pipelineHeading}
         </SectionHeading>
-        <div className="relative">
+        <div className="relative mt-8">
           <Pipeline3D
             stages={retrievalPipeline.stages}
             progress={progress}

@@ -25,8 +25,13 @@ export default function ServicesPage() {
           mp4: '/media/brand/header-services-loop.mp4',
         }}
       />
-      {services.map((service) => (
-        <ServiceBlock key={service.slug} service={service} />
+      {services.map((service, index) => (
+        <ServiceBlock
+          key={service.slug}
+          service={service}
+          index={index}
+          total={services.length}
+        />
       ))}
       <Section>
         <Container>

@@ -21,7 +21,6 @@ export default function HomePage() {
       <ProcessScroller
         heading={ui.processHeading}
         eyebrow={{ index: '04', label: ui.eyebrows.engagement }}
-        headingSize="md"
         glow
       />
       <CtaBlock />

@@ -305,16 +305,6 @@
   }
 }
 
-@keyframes cue-in {
-  from {
-    opacity: 0;
-  }
-}
-
-:target ~ * [data-target-cue] {
-  opacity: 1;
-}
-
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     @keyframes rail-fill {
@@ -323,15 +313,6 @@
       }
     }
 
-    :target ~ * [data-target-cue] {
-      animation: cue-in var(--duration-scene) var(--ease-standard) both;
-    }
-
-    [data-service-rail] {
-      display: block;
-    }
-
-    :root:not([data-motion='paused']) [data-service-rail],
     :root:not([data-motion='paused']) [data-process-rail] {
       transform: scaleY(0);
       animation: rail-fill linear both;

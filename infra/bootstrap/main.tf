@@ -8,7 +8,7 @@ provider "aws" {
   region = "us-east-1"
   default_tags {
     tags = {
-      Project   = var.name
+      Project   = var.NAME
       ManagedBy = "terraform"
       Stack     = "bootstrap"
     }
@@ -16,10 +16,10 @@ provider "aws" {
 }
 data "aws_caller_identity" "current" {}
 resource "aws_budgets_budget" "monthly" {
-  count        = var.enable_budget ? 1 : 0
-  name         = "${var.name}-monthly"
+  count        = var.ENABLE_BUDGET ? 1 : 0
+  name         = "${var.NAME}-monthly"
   budget_type  = "COST"
-  limit_amount = tostring(var.monthly_budget_usd)
+  limit_amount = tostring(var.MONTHLY_BUDGET_USD)
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
   notification {
@@ -27,13 +27,13 @@ resource "aws_budgets_budget" "monthly" {
     threshold                  = 80
     threshold_type             = "PERCENTAGE"
     notification_type          = "FORECASTED"
-    subscriber_email_addresses = [var.alert_email]
+    subscriber_email_addresses = [var.ALERT_EMAIL]
   }
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 100
     threshold_type             = "PERCENTAGE"
     notification_type          = "ACTUAL"
-    subscriber_email_addresses = [var.alert_email]
+    subscriber_email_addresses = [var.ALERT_EMAIL]
   }
 }

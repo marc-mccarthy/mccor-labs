@@ -1,7 +1,7 @@
 import { Container } from '@/components/layout/Container'
 import { Section } from '@/components/layout/Section'
 import { Stagger } from '@/components/motion/Stagger'
-import { SectionHeading } from '@/components/ui/section-heading'
+import { Reveal } from '@/components/motion/Reveal'
 import { proof } from '@/content/proof'
 import { ui } from '@/content/ui'
 
@@ -17,9 +17,11 @@ export function DeliveredStrip() {
         className="pointer-events-none absolute inset-x-0 -top-px block"
       />
       <Container>
-        <SectionHeading className="font-mono text-sm tracking-wider text-muted uppercase">
-          {ui.deliveredHeading}
-        </SectionHeading>
+        <Reveal variant="mask">
+          <h2 className="font-mono text-sm leading-tight font-semibold tracking-wider text-muted uppercase">
+            {ui.deliveredHeading}
+          </h2>
+        </Reveal>
         <div className={`mt-6 grid gap-8 sm:grid-cols-2 sm:gap-0 ${COLUMNS_CLASS}`}>
           <Stagger>
             {proof.map((point, index) => (

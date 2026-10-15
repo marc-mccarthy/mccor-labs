@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn'
 
 const SIZE_CLASS = {
   compact: 'py-12 sm:py-16',
-  default: 'py-16 sm:py-24',
+  default: 'py-14 sm:py-20',
   spacious: 'py-24 sm:py-32',
 } as const
 

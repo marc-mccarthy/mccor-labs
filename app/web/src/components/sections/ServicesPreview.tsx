@@ -33,14 +33,10 @@ const STAGGER_INTERVAL_SECONDS = 0.08
 
 export function ServicesPreview() {
   return (
-    <Section className="relative isolate">
+    <Section className="relative isolate pt-12 sm:pt-16">
       <GlowField anchor="right" />
       <Container>
-        <SectionHeading
-          size="md"
-          words
-          eyebrow={{ index: '01', label: ui.eyebrows.services }}
-        >
+        <SectionHeading words eyebrow={{ index: '01', label: ui.eyebrows.services }}>
           {ui.servicesHeading}
         </SectionHeading>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">

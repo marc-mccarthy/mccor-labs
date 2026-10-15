@@ -34,10 +34,17 @@ test.describe('scene frame cost', () => {
         timeout: 15_000,
       })
 
-      for (let i = 0; i < 24; i += 1) {
+      const atBottom = () =>
+        page.evaluate(
+          () =>
+            window.scrollY + window.innerHeight >=
+            document.documentElement.scrollHeight - 1,
+        )
+      for (let i = 0; i < 24 && !(await atBottom()); i += 1) {
         await page.mouse.wheel(0, 600)
         await page.waitForTimeout(500)
       }
+      await expect.poll(atBottom).toBe(true)
 
       const rows = await page.evaluate<SceneRow[]>(() => {
         const stats = Reflect.get(window, '__sceneStats') as Record<string, Samples>

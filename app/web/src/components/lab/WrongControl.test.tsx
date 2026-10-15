@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { feedbackCopy } from '@/content/lab/feedback'
@@ -114,7 +114,9 @@ describe('WrongControl', () => {
     )
     release()
     const confirmation = await screen.findByText(/^Thanks\./)
-    expect(confirmation).toHaveFocus()
+    await waitFor(() => {
+      expect(confirmation).toHaveFocus()
+    })
     expect(confirmation).toHaveAttribute('tabindex', '-1')
     expect(send).toHaveBeenCalledTimes(1)
     expect(send).toHaveBeenCalledWith({

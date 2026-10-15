@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "state" {
-  bucket = "${var.name}-tfstate-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.NAME}-tfstate-${data.aws_caller_identity.current.account_id}"
   lifecycle {
     prevent_destroy = true
   }

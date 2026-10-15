@@ -4,20 +4,15 @@ import { join, resolve } from 'node:path'
 
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime'
 
-import { BEDROCK_CLIENT, MODEL_ID, MODEL_LABEL, PRICES_AS_OF } from '../../src/config'
-import { argueModel } from '../../src/lab/argue'
-import { runCostUsd, textUnits } from '../../src/lab/cost'
-import { raceModel } from '../../src/lab/race'
-import { programAnswers, scoreAnswers } from '../../src/lab/score'
-import type {
-  ArgueRequest,
-  ArgueTrace,
-  RaceRequest,
-  RaceTrace,
-} from '../../src/lab/types'
-import { countChars, validateArgue, validateRace } from '../../src/lab/validate'
+import { BEDROCK_CLIENT, MODEL_ID, MODEL_LABEL, PRICES_AS_OF } from '../src/config'
+import { argueModel } from '../src/lab/argue'
+import { runCostUsd, textUnits } from '../src/lab/cost'
+import { raceModel } from '../src/lab/race'
+import { programAnswers, scoreAnswers } from '../src/lab/score'
+import type { ArgueRequest, ArgueTrace, RaceRequest, RaceTrace } from '../src/lab/types'
+import { countChars, validateArgue, validateRace } from '../src/lab/validate'
 import argueFixture from './fixtures/argue-example.json'
-import raceFixture from '../../scripts/fixtures/race-examples.json'
+import raceFixture from './fixtures/race-examples.json'
 
 const CONTENT_DIR = resolve(process.cwd(), 'app/web/src/content')
 const TRACES_DIR = join(CONTENT_DIR, 'lab/traces')

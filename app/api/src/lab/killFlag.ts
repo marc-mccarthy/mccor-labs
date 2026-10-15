@@ -1,6 +1,6 @@
 import { GetParameterCommand, type SSMClient } from '@aws-sdk/client-ssm'
 
-import { KILL_FLAG } from '../../../src/config'
+import { KILL_FLAG } from '../config'
 import { logEvent } from './logEvent'
 
 interface KillFlagOptions {

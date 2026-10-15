@@ -1,9 +1,5 @@
-import { BUDGET_USD, REJECTED_POSTS_USD_PER_10M } from '../../src/config'
-import {
-  worstCaseArgueUsd,
-  worstCaseMonthlyUsd,
-  worstCaseRaceUsd,
-} from '../../src/lab/cost'
+import { BUDGET_USD, REJECTED_POSTS_USD_PER_10M } from '../src/config'
+import { worstCaseArgueUsd, worstCaseMonthlyUsd, worstCaseRaceUsd } from '../src/lab/cost'
 
 process.stdout.write(
   `${JSON.stringify({

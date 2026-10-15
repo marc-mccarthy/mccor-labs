@@ -56,6 +56,14 @@ function nameField(n: number) {
   return screen.getByLabelText(fillTemplate(builderCopy.stepNameLabel, { n }))
 }
 
+async function addStepsToMax() {
+  const add = screen.getByRole('button', { name: builderCopy.add })
+  for (let i = 1; i < MAX_STEPS; i += 1) {
+    await userEvent.click(add)
+  }
+  return add
+}
+
 async function answer(n: number, key: keyof typeof questionCopy, value: 'yes' | 'no') {
   const step = screen.getByTestId(`step-${String(n)}`)
   const group = within(step).getByRole('group', { name: questionCopy[key].text })
@@ -110,10 +118,7 @@ describe('WorkflowBuilder', () => {
 
   it('stops at eight steps with an aria-disabled Add that says why', async () => {
     render(<WorkflowBuilder snippets={snippets} />)
-    for (let i = 1; i < MAX_STEPS; i += 1) {
-      await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
-    }
-    const add = screen.getByRole('button', { name: builderCopy.add })
+    const add = await addStepsToMax()
     expect(add).toHaveAttribute('aria-disabled', 'true')
     expect(add).toHaveAccessibleDescription(builderCopy.addLimit)
     await userEvent.click(add)
@@ -312,14 +317,14 @@ describe('WorkflowBuilder move, remove and undo', () => {
 
   it('hides Undo at eight steps and never announces a restore that did not happen', async () => {
     render(<WorkflowBuilder snippets={snippets} />)
-    for (let i = 1; i < MAX_STEPS; i += 1) {
-      await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
-    }
+    const add = await addStepsToMax()
     await userEvent.click(
-      screen.getByRole('button', { name: `Remove Step ${String(MAX_STEPS)}` }),
+      within(screen.getByTestId(`step-${String(MAX_STEPS)}`)).getByRole('button', {
+        name: `Remove Step ${String(MAX_STEPS)}`,
+      }),
     )
     expect(undoButton()).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: builderCopy.add }))
+    await userEvent.click(add)
     expect(screen.getAllByTestId(/^step-\d+$/)).toHaveLength(MAX_STEPS)
     expect(undoButton()).not.toBeInTheDocument()
     expect(screen.queryByText(builderCopy.removedNotice)).not.toBeInTheDocument()

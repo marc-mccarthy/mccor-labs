@@ -13,7 +13,7 @@ import { env } from '@/lib/env'
 
 function Aside({ live }: { live: boolean }) {
   return (
-    <aside>
+    <aside data-sticky-layout className="self-start lg:sticky lg:top-24">
       <h2 className="text-xl font-semibold text-text">{ui.contactAsideHeading}</h2>
       {live ? (
         <dl className="mt-6 space-y-6">

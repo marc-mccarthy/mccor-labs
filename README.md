@@ -151,12 +151,13 @@ The marketing site lives in `app/web`. It is a Next.js app that builds to plain
 static files, deployed to the same S3 bucket and CloudFront distribution as
 everything else here.
 
-Requirements: Node 24 and pnpm 12.9.1 (both pinned in `.mise.toml`; pnpm also by
-`packageManager` in `package.json`), and the 1Password CLI (`op`), signed in.
+Requirements: Node 24 (pinned in `.mise.toml`), pnpm (any install; it switches
+itself to the 12.9.1 pinned by `packageManager` in `package.json`), and the
+1Password CLI (`op`), signed in.
 
-Node and pnpm come from mise, so no `PATH` changes are needed. The committed
-`.mise.toml` pins node 24, pnpm 12.9.1, terraform 1.16.1, tflint 0.64.0 and trivy
-0.74.0. The git hooks put `~/.local/share/mise/shims` on `PATH` themselves.
+Node comes from mise, so no `PATH` changes are needed. The committed `.mise.toml`
+pins node 24, terraform 1.16.1, tflint 0.64.0 and trivy 0.74.0. The git hooks put
+`~/.local/share/mise/shims` on `PATH` themselves.
 
 ### Running it locally
 

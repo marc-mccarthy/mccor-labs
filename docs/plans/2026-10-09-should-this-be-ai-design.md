@@ -1,7 +1,7 @@
 # Design: Should This Be AI? (the wrong-tool test)
 
 Status: revised after plan reviews 2026-10-09; awaiting owner approval of plans
-Sources: `~/.claude/prompt-results/mccor-labs-aws-next-level-ideas-10-8-26.md` section 3, `docs/findings/2026-10-09-site-holes.md`, code map of 2026-10-09, the three reviews.
+Sources: `~/.claude/prompt-results/mccor-labs-aws-next-level-ideas-10-8-26.md` section 3, `docs/plans/open-work.md`, code map of 2026-10-09, the three reviews.
 
 ## Goal
 
@@ -266,7 +266,7 @@ Every task runs `pnpm -F web exec tsc --noEmit`, `pnpm -F web lint` and `pnpm -F
 
 ## Out of scope
 
-- Fixing the other holes in `docs/findings/2026-10-09-site-holes.md` (client claims, team-size copy, `TODO(owner)` legal strings, home page speed, enforcing the CSP). Hole 1 and hole 2 gate parts of this work as noted above.
+- Fixing the other holes in `docs/plans/open-work.md` (client claims, team-size copy, `TODO(owner)` legal strings, home page speed, enforcing the CSP). Hole 1 and hole 2 gate parts of this work as noted above.
 - Streaming responses, per-visitor rate limits, AWS WAF, analytics, new design tokens.
 
 ## Token gap (report only)

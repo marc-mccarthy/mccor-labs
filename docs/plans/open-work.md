@@ -29,7 +29,6 @@ Verified not done on 2026-10-17 against the repo, origin/main and the live site.
 - P2-T35: `NEXT_PUBLIC_LAB_LIVE` absent from `app.env`.
 - P3-T1: "Confirmed" column empty (phase-3 plan ~162-187).
 - P3-T30: no eval trace committed (`content/lab/evals/` has only `.gitkeep`).
-- Phone-field plan T8: `contactInput.ts:33` still accepts `phone === ''`; `mail.ts:20` still uses `orNotGiven` for phone. Deliberate until stale pages expired (`cc535da`); now due.
 - Lab subtitle defined (`content/lab/copy.ts:16`) but not rendered.
 - `/lab/evals/` says every run is shown, failed runs included; 4 failed runs left no trace.
 

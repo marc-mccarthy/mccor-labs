@@ -53,16 +53,12 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
 - Hard budgets in `app/web/tests/e2e/budgets.spec.ts:11-15`: no initial-JS, TBT or LCP-time limit.
 - Guard test that fails the build on any `TODO(owner)` in `app/web/src/content` (today `legal.test.ts:136,158` cover two sections only).
 - Mobile home performance (last Lighthouse 59, TBT 3,970 ms): defer the three.js scene until idle or visible, poster first on mobile, re-run Lighthouse 3 times and take the median.
-- `/index.html` serves 200 (duplicate of `/`); unknown paths 301 before 404.
-- Review findings on the merged UI changes, checked in a browser on 2026-10-18:
-  - `PageHeader.tsx` shows the signal line as a static brand line under reduced motion (was hidden).
-  - `PageHeader` is 30vh (270 px at 900 px tall), was 60vh.
-  - `ProcessScroller` pinned content sits about 32 px above centre: the top padding assumes 384 px of
-    content, it is 321 px (was `justify-center`).
-  - `CtaBlock` lost its "05 / Contact" eyebrow; home numbering ends at 04.
-  - `SystemsScene` heading gets the border rule over the video (`rule` defaults to true); other
-    sections pass `rule={false}`.
-  - `DeliveredStrip` hand-builds its heading instead of using `SectionHeading`.
+- Owner rulings 2026-10-18: Lead B drafts all copy and the owner approves it; media and fonts get a
+  content hash plus `immutable` caching; deferring the three.js scene on mobile is in scope; the UI
+  review findings from #32 (`PageHeader` reduced-motion line and 30vh height, `ProcessScroller`
+  offset, `CtaBlock` eyebrow, `SystemsScene` rule, `DeliveredStrip` heading) are intended and stay.
+- CSP e2e check: `app/web/tests/e2e/csp.spec.ts` loads every route with `local.csp` from
+  `infra/modules/static_site/main.tf` applied and fails on any violation (see M3).
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)
 
@@ -78,6 +74,8 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
   Live after merge and deploy; check the terraform plan in the deploy run.
 - Not doing: TLS-RPT (large providers report only for domains with MTA-STS or DANE) and MTA-STS (needs
   a new `mta-sts` host and certificate; low value at this mail volume).
+- `/index.html` serves 200 (duplicate of `/`); unknown paths 301 before 404. Fix in the CloudFront
+  viewer-request function (`infra/modules/static_site/`).
 
 ## M4 Live lab (blocked on Bedrock)
 

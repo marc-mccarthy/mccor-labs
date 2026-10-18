@@ -2,7 +2,11 @@
 
 Created: 2026-10-17. Last update: 2026-10-17.
 
-Verified not done on 2026-10-17 against the repo, origin/main and the live site. Replaces planned-enhancements, site-holes and LEFTOVERS.
+Verified not done on 2026-10-17 against the repo, origin/main and the live site. Replaces planned-enhancements, site-holes, LEFTOVERS, CONTENT-TODO, the phase 0/1/3 plans and docs/content privacy-policy and services.
+
+## Blocker
+
+- Bedrock model access is not enabled. All 4 eval runs failed with `Error 002: Access to Bedrock models is not allowed for this account` (latest run 38650123957, 2026-10-14). Blocks phase 2 live work and P3-T30.
 
 ## Owner content and legal
 
@@ -15,6 +19,7 @@ Verified not done on 2026-10-17 against the repo, origin/main and the live site.
 - Team names are initials only, no profile links.
 - No social proof: no testimonials, LLC name, address or profile links (`Footer.tsx:36`).
 - No Services-page link to the lab.
+- Privacy text describes the live lab (Bedrock) while it is not live (`legal.ts:30,90-98`).
 
 ## Should This Be AI: phase 1-3 leftovers
 
@@ -24,7 +29,9 @@ Verified not done on 2026-10-17 against the repo, origin/main and the live site.
 - P2-T35: `NEXT_PUBLIC_LAB_LIVE` absent from `app.env`.
 - P3-T1: "Confirmed" column empty (phase-3 plan ~162-187).
 - P3-T30: no eval trace committed (`content/lab/evals/` has only `.gitkeep`).
-- Phone-field plan T8: `contactInput.ts:33` still accepts `phone === ''`.
+- Phone-field plan T8: `contactInput.ts:33` still accepts `phone === ''`; `mail.ts:20` still uses `orNotGiven` for phone. Deliberate until stale pages expired (`cc535da`); now due.
+- Lab subtitle defined (`content/lab/copy.ts:16`) but not rendered.
+- `/lab/evals/` says every run is shown, failed runs included; 4 failed runs left no trace.
 
 ## Site engineering
 
@@ -46,6 +53,15 @@ Verified not done on 2026-10-17 against the repo, origin/main and the live site.
 - No SES configuration set.
 - Brake doesn't deny `dynamodb:UpdateItem` (`lab_api/brake.tf`).
 
+## Deferred features (from CONTENT-TODO)
+
+- Analytics (Plausible or Umami); update `/privacy` first.
+- Light mode and theme toggle.
+- Blog / Insights.
+- Case-study pages `/work/[slug]` (blocked on real projects and permission).
+- Cloudflare Turnstile on the contact form if spam gets past the honeypot (limit today is the DynamoDB daily cap, not API Gateway).
+- Webmail (mail v2).
+
 ## Roadmap not started (from planned-enhancements)
 
 - Spend brake extras: tag-filtered AI budget, tagged inference profiles, Cost Anomaly Detection, c11 cost-ledger page.
@@ -53,4 +69,4 @@ Verified not done on 2026-10-17 against the repo, origin/main and the live site.
 
 ## Unverified (need live AWS or you, not on the list above)
 
-SES production access (P0-T21), privacy approvals (P0-T23, P2-T31, P3-T29), live form email check (P0-T25), P2-T1 pre-flight, P2-T34 cost gate, P3-T20/T21 `terraform plan` checks, mailbox MFA claim (`legal.ts:193`), mobile Lighthouse (last 59).
+SES production access (P0-T21), privacy approvals (P0-T23, P2-T31, P3-T29), live form email check (P0-T25), P2-T1 pre-flight, P2-T34 cost gate, P3-T20/T21 `terraform plan` checks, mailbox MFA claim (`legal.ts:193`), mobile Lighthouse (last 59), 24-month retention confirmation, contact/feedback/digest smoke tests, guardrail and brake applied in AWS, Bedrock request logging off, real budget value (bootstrap default 5, plan assumes 25).

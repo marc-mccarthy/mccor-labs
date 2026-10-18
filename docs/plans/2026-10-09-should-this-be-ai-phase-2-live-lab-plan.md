@@ -143,7 +143,7 @@ Each `.ts` or `.tsx` source above has a sibling `*.test.ts` or `*.test.tsx`.
 
 Read these before P2-T2 and stop if any differs:
 
-Source: `docs/plans/2026-10-09-should-this-be-ai-phase-0-contact-plan.md` (spot-checked 2026-10-09; it was being written in parallel, so re-read it).
+Source: the phase 0 code on main (the phase 0 plan is shipped and deleted; read the files below).
 
 - `app/api/src/lib/counter.ts` (P0-T4): `takeUnit({ client: DynamoDBDocumentClient; table: string; key: string; cap: number; ttlDays: number; now: Date }): Promise<{ ok: boolean; used: number; remaining: number }>`; at cap it resolves `{ ok: false, used: cap, remaining: 0 }`, other errors reject.
 - `app/api/src/lib/http.ts` (P0-T2): `json(status: number, body: unknown): LambdaFunctionURLResult`, `parseJsonBody<T>(event: LambdaFunctionURLEvent, maxBytes: number): T | null`, and the two minimal interfaces (no `@types/aws-lambda`). Error bodies use `{ reason: ... }`, as the contact handler does.

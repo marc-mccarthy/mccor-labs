@@ -1,10 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { assertNoClaims } from '@/test/noClaims'
 import * as copyModule from './copy'
 import {
   fillTemplate,
   labLive,
-  labPageCopy,
   presets,
   questionCopy,
   stepLabel,
@@ -14,6 +13,20 @@ import {
 import { NAME_MAX } from './limits'
 import { classifyStep, visibleQuestions } from './rubric'
 import { RULES } from './rules'
+
+async function loadMethodBody(live: boolean): Promise<string> {
+  vi.stubEnv('NEXT_PUBLIC_LAB_LIVE', live ? '1' : '0')
+  vi.resetModules()
+  return (await import('./copy')).labPageCopy.methodBody
+}
+
+const liveMethodBody = await loadMethodBody(true)
+const quietMethodBody = await loadMethodBody(false)
+
+afterAll(() => {
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
 
 const EXPECTED: Readonly<Record<string, readonly string[]>> = {
   'invoice-intake': ['R5', 'R7+', 'R8+', 'R2'],
@@ -199,11 +212,22 @@ describe('live lab copy', () => {
     )
   })
 
-  it('tells the visitor a live test sends its text to Amazon Bedrock', () => {
-    expect(labPageCopy.methodBody).toMatch(
-      /Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock\.$/,
+  it('tells the visitor a live test sends its text to Amazon Bedrock when the lab is live', () => {
+    expect(liveMethodBody).toBe(
+      "Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.",
     )
-    expect(labPageCopy.methodBody).not.toContain('unless you send it to us.')
+  })
+
+  it('names no live test or Bedrock when the lab is not live', () => {
+    expect(quietMethodBody).toBe(
+      'Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us.',
+    )
+    expect(quietMethodBody).not.toMatch(/Bedrock|live test/)
+  })
+
+  it('makes no claim in either method body', () => {
+    assertNoClaims(liveMethodBody)
+    assertNoClaims(quietMethodBody)
   })
 })
 

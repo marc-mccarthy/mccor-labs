@@ -1,7 +1,7 @@
 export const evalsCopy = {
   title: 'Evals',
   description:
-    'Every eval run of the Should This Be AI? lab prompts, failed runs included.',
+    'Committed eval runs of the Should This Be AI? lab prompts, failed runs included.',
   latestHeading: 'Latest Run',
   historyHeading: 'Run History',
   historyCaption: 'Every committed eval run, newest first',
@@ -29,7 +29,7 @@ export const evalsCopy = {
   method: [
     'Each run sends 20 invented cases to the model the lab uses. Code checks every answer first. Then the same model, acting as a judge, grades the written answers that passed the code checks.',
     'We run at most 15 times a month.',
-    'Every run is shown here, failed runs included.',
+    'Every committed run is shown here, failed runs included. A run that was not committed is not shown.',
     'A staged run is a real model run where we swapped one right answer on purpose, to show what a failed run looks like.',
     'Each run is a committed file that links to its run log.',
   ],

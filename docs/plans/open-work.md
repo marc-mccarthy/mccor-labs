@@ -65,20 +65,24 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
 
 ### M2 tasks
 
-- [ ] T1 SEO metadata: canonical, `openGraph.url`, `og:locale`, JSON-LD.
-- [ ] T2 `/work` noindex, Services excerpt, lab subtitle (after T1).
-- [ ] T3 Home and 404 titles; drafted strings for owner approval (after T1).
-- [ ] T4 Evals and privacy wording made true, gated on `env.labLive`; owner approval.
-- [ ] T5 `TODO(owner)` guard test.
-- [ ] T6 `security.txt` and `llms.txt`; owner approval.
-- [ ] T7 `apple-touch-icon.png` and `favicon.ico` (after T1).
-- [ ] T8 Build-time content hash of media and fonts.
-- [ ] T9 `deploy.yml` serves hashed media and fonts `immutable` (after T8).
-- [ ] T10 Deploy gate on the quality job (after T9).
-- [ ] T11 Lighthouse median of 3, mobile baseline and TBT diagnosis.
-- [ ] T12 Mobile poster first and deferred scene (after T11).
+- [x] T1 SEO metadata: canonical, `openGraph.url`, `og:locale`, JSON-LD.
+- [x] T2 `/work` noindex, Services excerpt, lab subtitle (after T1).
+- [x] T3 Home and 404 titles; drafted strings for owner approval (after T1).
+- [x] T4 Evals and privacy wording made true, gated on `env.labLive`; owner approval.
+- [x] T5 `TODO(owner)` guard test.
+- [x] T6 `security.txt` and `llms.txt`; owner approval.
+- [x] T7 `apple-touch-icon.png` and `favicon.ico` (after T1).
+- [x] T8 Build-time content hash of media and fonts. The 27 unused files under `app/web/public` stay
+      for now and are listed in `docs/unused-brand-media.md`.
+- [x] T9 `deploy.yml` serves hashed media and fonts `immutable` (after T8).
+- [x] T10 Deploy gate on the quality job (after T9).
+- [x] T11 Lighthouse median of 3, mobile baseline and TBT diagnosis. Mobile `/` median: score 88,
+      TBT 72 ms, LCP 3,842 ms (simulated throttling on the hero image). The recorded 59 / 3,970 ms
+      did not reproduce.
+- [x] T12 Mobile poster first and deferred scene: skipped, owner ruling 2026-10-18. Mobile passes
+      the 85 target and the scene already defers to idle, so there is no measured lever.
 - [ ] T13 `csp.spec.ts`.
-- [ ] T14 Hard budgets from measured numbers (after T12).
+- [ ] T14 Hard budgets from measured numbers (after T11).
 - [ ] V Final verification by a verifier team.
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)

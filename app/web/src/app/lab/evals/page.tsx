@@ -9,10 +9,12 @@ import { fillTemplate } from '@/content/lab/copy'
 import { TRACE_DIR, loadTraces } from '@/content/lab/evals'
 import { evalsCopy } from '@/content/lab/evalsCopy'
 import { RUBRIC_VERSION } from '@/content/lab/rubric'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: evalsCopy.title,
   description: evalsCopy.description,
+  ...pageSeo('/lab/evals/'),
 }
 
 export default function EvalsPage() {

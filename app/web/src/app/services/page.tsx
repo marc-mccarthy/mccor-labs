@@ -7,10 +7,12 @@ import { ServiceBlock } from '@/components/sections/ServiceBlock'
 import { IntegrationMarks } from '@/components/substance/IntegrationMarks'
 import { services } from '@/content/services'
 import { toolsWeBuildWith } from '@/content/substance'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Services',
   description: 'What we build, and how we price it.',
+  ...pageSeo('/services/'),
 }
 
 export default function ServicesPage() {

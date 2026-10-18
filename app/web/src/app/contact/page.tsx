@@ -5,10 +5,12 @@ import { ContactPanel } from '@/components/contact/ContactPanel'
 import { ContactBeam } from '@/components/sections/ContactBeam'
 import { PageHeader } from '@/components/sections/PageHeader'
 import { env } from '@/lib/env'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description: 'Tell us about the project, or book a call directly.',
+  ...pageSeo('/contact/'),
 }
 
 export default function ContactPage() {

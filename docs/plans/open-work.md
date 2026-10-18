@@ -66,9 +66,18 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)
 
-- CSP is report-only with no report target (`infra/modules/static_site/main.tf:101`). Add a report
-  endpoint, watch, then plan the switch to enforce. Enforcing as written would block WebAssembly (no `'wasm-unsafe-eval'`) and any off-origin fetch (`connect-src 'self'`); drop `'unsafe-inline'` from `script-src` with hashes if the static export allows.
-- DNS: DMARC `p=none` (`infra/modules/mailserver/main.tf:323`); no MTA-STS, TLS-RPT or CAA.
+- CSP (owner ruling 2026-10-18: no report endpoint). Browser CSP reports cannot carry the signed
+  `x-amz-content-sha256` header the `/api/*` OAC routes need, so a report endpoint would have to be a
+  new public one. Instead: Lead B adds an e2e check that loads every route with the CSP from
+  `infra/modules/static_site/main.tf` applied and fails on any violation; then Lead A switches the
+  header from `Content-Security-Policy-Report-Only` (`main.tf:101`) to enforced. Enforcing as written
+  blocks WebAssembly (no `'wasm-unsafe-eval'`) and any off-origin fetch (`connect-src 'self'`).
+- Done on `feat/site-fixes`: DMARC `p=quarantine` (`infra/modules/mailserver/main.tf:323`; outbound
+  mail is DKIM-signed by SES with the domain key, so it still passes); CAA at the apex allowing only
+  `amazon.com` and `letsencrypt.org`, no wildcards (`infra/dns.tf`, test `infra/tests/dns.tftest.hcl`).
+  Live after merge and deploy; check the terraform plan in the deploy run.
+- Not doing: TLS-RPT (large providers report only for domains with MTA-STS or DANE) and MTA-STS (needs
+  a new `mta-sts` host and certificate; low value at this mail volume).
 
 ## M4 Live lab (blocked on Bedrock)
 

@@ -320,7 +320,7 @@ resource "aws_route53_record" "dmarc" {
   name    = "_dmarc.${var.domain_name}"
   type    = "TXT"
   ttl     = 600
-  records = ["v=DMARC1; p=none; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
+  records = ["v=DMARC1; p=quarantine; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
 }
 
 resource "aws_iam_role" "dlm" {

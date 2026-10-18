@@ -14,6 +14,7 @@
     "test:e2e:smoke": "playwright test -c playwright.config.ts --grep @smoke",
     "test:a11y": "playwright test -c playwright.config.ts tests/e2e/a11y.spec.ts",
     "portraits": "tsx scripts/build-portraits.ts",
+    "build:icons": "tsx scripts/build-icons.ts",
     "lighthouse": "tsx scripts/lighthouse.ts"
   },
   "dependencies": {

@@ -16,9 +16,12 @@ export const metadata: Metadata = {
   title: { default: site.name, template: `%s · ${site.name}` },
   description: site.tagline,
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: openGraphBase,
 }

@@ -1,13 +1,13 @@
 resource "aws_iam_role" "evals" {
   count                = local.has_domain ? 1 : 0
-  name                 = "${var.name}-github-evals"
+  name                 = "${var.NAME}-github-evals"
   assume_role_policy   = data.aws_iam_policy_document.github_main_assume.json
   max_session_duration = 3600
 }
 
 resource "aws_ssm_parameter" "eval_guardrail" {
   count = local.has_domain ? 1 : 0
-  name  = "/${var.name}/labs/evals/guardrail"
+  name  = "/${var.NAME}/labs/evals/guardrail"
   type  = "String"
   value = jsonencode({
     id      = module.lab_api[0].lab_guardrail_id
@@ -47,7 +47,7 @@ data "aws_iam_policy_document" "evals" {
 
 resource "aws_iam_role_policy" "evals" {
   count  = local.has_domain ? 1 : 0
-  name   = "${var.name}-github-evals"
+  name   = "${var.NAME}-github-evals"
   role   = aws_iam_role.evals[0].id
   policy = data.aws_iam_policy_document.evals[0].json
 }

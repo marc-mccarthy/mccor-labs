@@ -7,6 +7,7 @@ import { HeaderVideo, type HeaderVideoSources } from '@/components/sections/Head
 
 interface PageHeaderProps {
   title: string
+  subtitle?: string
   description: string
   image?: string
   video?: HeaderVideoSources
@@ -19,6 +20,7 @@ const BAND_MASK = 'absolute inset-0 mask-t-from-80% mask-b-from-45% *:h-full'
 
 export function PageHeader({
   title,
+  subtitle,
   description,
   image,
   video,
@@ -29,6 +31,7 @@ export function PageHeader({
   const text = (
     <Container className="relative">
       <h1 className="text-display-md leading-tight font-semibold text-text">{title}</h1>
+      {subtitle && <p className="mt-1 font-mono text-sm text-muted">{subtitle}</p>}
       <p
         className={cn(
           'mt-2 max-w-2xl text-lg text-muted',

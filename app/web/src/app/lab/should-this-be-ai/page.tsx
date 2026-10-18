@@ -39,6 +39,7 @@ export default async function LabPage() {
     <>
       <PageHeader
         title={labPageCopy.title}
+        subtitle={labPageCopy.subtitle}
         description={labPageCopy.headerDescription}
         image="/media/brand/systems-lattice.webp"
       />

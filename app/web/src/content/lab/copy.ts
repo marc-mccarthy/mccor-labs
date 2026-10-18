@@ -20,7 +20,7 @@ export const labPageCopy = {
   title: 'Should This Be AI?',
   subtitle: 'The Wrong-Tool Test',
   headerDescription:
-    'The wrong-tool test. Find out which steps of your work need AI, and which need a simple program, a checklist or a person.',
+    'Find out which steps of your work need AI, and which need a simple program, a checklist or a person.',
   metaDescription:
     'A free test that sorts each step of a workflow into the tool that fits it, with the reason in plain words.',
   howItWorksHeading: 'How It Works',
@@ -33,7 +33,7 @@ export const labPageCopy = {
   methodBody: env.labLive
     ? `${METHOD_RULES} Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.`
     : `${METHOD_RULES} Nothing you type leaves this page unless you send it to us.`,
-  evalsLink: 'See Every Eval Run',
+  evalsLink: 'See the Eval Runs',
   rubricVersion: 'Rubric Version {version}',
 } as const
 

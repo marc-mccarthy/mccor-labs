@@ -17,6 +17,10 @@ describe('LabPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: labPageCopy.title }),
     ).toBeInTheDocument()
+    const subtitle = screen.getByText(labPageCopy.subtitle)
+    expect(subtitle).toBeVisible()
+    expect(subtitle.tagName).toBe('P')
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByText(`Rubric Version ${RUBRIC_VERSION}`)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: labPageCopy.evalsLink })).toHaveAttribute(
       'href',

@@ -5,6 +5,7 @@ import { metadata as layoutMetadata } from './layout'
 import robots from './robots'
 import sitemap from './sitemap'
 import { footerNav, unlistedPages } from '@/content/nav'
+import { terminalSamples } from '@/content/substance'
 import { env } from '@/lib/env'
 
 describe('sitemap', () => {
@@ -93,6 +94,17 @@ describe('page metadata', () => {
   it('leaves /work without a canonical', async () => {
     const { metadata } = await import('./work/page')
     expect(metadata.alternates).toBeUndefined()
+  })
+
+  it('marks /work noindex', async () => {
+    const { metadata } = await import('./work/page')
+    expect(metadata.robots).toMatchObject({ index: false })
+  })
+
+  it('lists no /work route in the Services terminal sample', () => {
+    const text = (terminalSamples['static-export-build'] ?? []).map((line) => line.text)
+    expect(text.some((line) => line.includes('/work'))).toBe(false)
+    expect(text).toContain('└ ○ /services')
   })
 
   it('sets the en_US locale on the layout', () => {

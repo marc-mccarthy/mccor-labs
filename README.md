@@ -78,7 +78,7 @@ Two fields need care. `DELEGATION_SET_ID` is the one you fill in after step 3, f
 
 ### 3. Apply the bootstrap stack
 
-You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_ENABLE_BUDGET=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it, so run each `terraform` command through `r` from step 1. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
+You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_ENABLE_BUDGET=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it, so run each `terraform` command through `r` from step 1.
 
 Afterwards, put the `delegation_set_id` output in the `DELEGATION_SET_ID` field in 1Password. The `name_servers` output lists the four name servers for step 4.
 

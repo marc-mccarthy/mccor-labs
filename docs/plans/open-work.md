@@ -74,8 +74,10 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
   Live after merge and deploy; check the terraform plan in the deploy run.
 - Not doing: TLS-RPT (large providers report only for domains with MTA-STS or DANE) and MTA-STS (needs
   a new `mta-sts` host and certificate; low value at this mail volume).
-- `/index.html` serves 200 (duplicate of `/`); unknown paths 301 before 404. Fix in the CloudFront
-  viewer-request function (`infra/modules/static_site/`).
+- Done on `feat/site-fixes`: any `.../index.html` now 301s to its directory in one hop, `www`
+  included (`infra/modules/static_site/viewer_request.js.tftpl`, tests in
+  `tests/viewer_request.test.mjs`). Not fixing: unknown paths still 301 to a trailing slash before
+  the 404; the function cannot see which pages exist without a route list kept in sync with the build.
 
 ## M4 Live lab (blocked on Bedrock)
 

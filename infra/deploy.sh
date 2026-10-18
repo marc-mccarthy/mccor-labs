@@ -40,7 +40,6 @@ for name in "${SETTING_NAMES[@]}"; do
   fi
 done
 unset AWS_PROFILE AWS_DEFAULT_PROFILE AWS_SESSION_TOKEN TF_WORKSPACE
-export AWS_ACCESS_KEY_ID_ID="$AWS_SECRET_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"
 
 ACTION="${1:-apply}"
 for f in *.auto.tfvars terraform.tfvars; do
@@ -110,7 +109,6 @@ case "$ACTION" in
       for name in "${SETTING_NAMES[@]}"; do
         case $name in DOMAIN_NAME|NEXT_PUBLIC_*) ;; *) unset "$name" ;; esac
       done
-      unset AWS_ACCESS_KEY_ID_ID AWS_SECRET_ACCESS_KEY
       NEXT_PUBLIC_SITE_URL="$SITE_URL" pnpm -F web build
     )
 

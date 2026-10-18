@@ -50,6 +50,18 @@ touch "$ROOT/app/web/public/secret.env"
 expect "ignored file under app/web/public" 1 "app/web/public/secret.env"
 
 fixture
+touch "$STAGE/apple-touch-icon.png" "$STAGE/favicon.ico"
+expect "root touch icon and favicon" 0
+
+fixture
+touch "$STAGE/media/brand/apple-touch-icon.png"
+expect "png outside the root icon" 1 "media/brand/apple-touch-icon.png: extension not allowed"
+
+fixture
+touch "$STAGE/media/brand/favicon.ico"
+expect "ico outside the root favicon" 1 "media/brand/favicon.ico: extension not allowed"
+
+fixture
 touch "$STAGE/media/brand/._hero.webp"
 expect "dotfile with an allowed extension" 1 "._hero.webp: dotfile"
 

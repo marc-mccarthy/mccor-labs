@@ -176,7 +176,7 @@ test.describe('about page', () => {
   }) => {
     await page.goto('/about/')
     await expect(page.locator('h1')).toHaveCount(1)
-    await expect(page.getByText(/we are four people/i)).toBeVisible()
+    await expect(page.getByText(/four people in the twin cities/i)).toBeVisible()
     for (const member of team) {
       await expect(
         page.getByRole('heading', { level: 2, name: member.name }),

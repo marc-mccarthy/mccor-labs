@@ -19,7 +19,7 @@ const StagScene = motionScene(
 
 export function CtaBlock() {
   return (
-    <Section size="spacious" className="relative overflow-hidden">
+    <Section className="relative overflow-hidden py-8 sm:py-8">
       <img
         src="/media/brand/cta-terminus.webp"
         alt=""
@@ -53,7 +53,7 @@ export function CtaBlock() {
             }
           />
         </div>
-        <div className="group relative isolate flex flex-col items-start gap-6 rounded-xl border border-border bg-linear-to-r from-surface via-surface/90 to-surface/40 p-8 sm:p-12">
+        <div className="group relative isolate flex flex-col items-start gap-8 rounded-xl border border-border bg-linear-to-r from-surface via-surface/90 to-surface/40 p-8 sm:p-12">
           <Spotlight size="panel" />
           <span
             aria-hidden="true"
@@ -62,11 +62,7 @@ export function CtaBlock() {
             className="pointer-events-none absolute inset-x-6 -top-px"
           />
           <div>
-            <SectionHeading
-              size="md"
-              words
-              eyebrow={{ index: '05', label: ui.eyebrows.contact }}
-            >
+            <SectionHeading words rule={false}>
               {ui.ctaHeading}
             </SectionHeading>
           </div>

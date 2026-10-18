@@ -91,6 +91,14 @@ describe('ServicesPreview', () => {
     }
   })
 
+  it('starts with a trimmed top pad so it sits closer to the strip above', () => {
+    mockMatchMedia(true)
+    const { container } = render(<ServicesPreview />)
+    const section = container.querySelector('section')!
+    expect(section).toHaveClass('pt-12', 'sm:pt-16')
+    expect(section).not.toHaveClass('pt-14', 'sm:pt-20')
+  })
+
   it('renders all content under reduced motion', () => {
     mockMatchMedia(true)
     render(<ServicesPreview />)

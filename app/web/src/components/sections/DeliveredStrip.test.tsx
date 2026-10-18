@@ -31,6 +31,21 @@ describe('DeliveredStrip', () => {
     expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
   })
 
+  it('keeps the label as a plain mono h2 without the section heading rule', () => {
+    mockMatchMedia(true)
+    render(<DeliveredStrip />)
+    const heading = screen.getByRole('heading', { level: 2 })
+    expect(heading).toHaveClass(
+      'font-mono',
+      'text-sm',
+      'tracking-wider',
+      'text-muted',
+      'uppercase',
+    )
+    expect(heading).not.toHaveClass('text-display-sm')
+    expect(heading.parentElement).not.toHaveClass('border-b')
+  })
+
   it('sets the proof points in the mono face', () => {
     mockMatchMedia(false)
     render(<DeliveredStrip />)

@@ -8,7 +8,7 @@ import { ui } from '@/content/ui'
 
 export function Footer() {
   return (
-    <footer className="relative mt-24 border-t border-border">
+    <footer className="relative mt-12 border-t border-border">
       <span
         aria-hidden="true"
         data-footer-signal=""

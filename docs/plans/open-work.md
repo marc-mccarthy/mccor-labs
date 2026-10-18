@@ -102,9 +102,6 @@ T35 go-live.
 - P1-T28 five moderated sessions and a screen-reader check; P3-T1 "Confirmed" name-map column; P3-T30
   first eval run once Bedrock works.
 - Stag charge hero video: the Kling prompt chain is under "Stag charge video prompts" below. Whether the video is finished is unknown.
-- Local machine: the pre-push `terraform-validate` hook fails because `aws-op-creds` /
-  `api_keys_refresh` expect `secret_id` and `secret_key` fields on the Secrets-vault `AWS Credentials`
-  item, which are gone.
 
 ## Stag charge video prompts
 

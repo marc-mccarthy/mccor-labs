@@ -180,17 +180,17 @@ jobs:
           test -f out/index.html
           test -f out/404.html
           grep -qF "Sitemap: $SITE/sitemap.xml" out/robots.txt
+          unhashed=$(find out/media out/fonts -type f ! -name '*.[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].*')
+          test -z "$unhashed" || { echo "::error::unhashed media or fonts:"$'\n'"$unhashed" >&2; exit 1; }
           rm -rf out/404 out/_not-found
       - name: Sync static site
         run: |
           set -euo pipefail
           IMMUTABLE="public, max-age=31536000, immutable"
-          MEDIA="public, max-age=86400, stale-while-revalidate=604800"
           REVALIDATE="public, max-age=0, s-maxage=86400, must-revalidate"
-          aws s3 sync out/_next/static "s3://$BUCKET/_next/static" --no-progress --cache-control "$IMMUTABLE"
-          for dir in media fonts; do
+          for dir in _next/static media fonts; do
             if [ -d "out/$dir" ]; then
-              aws s3 sync "out/$dir" "s3://$BUCKET/$dir" --no-progress --cache-control "$MEDIA"
+              aws s3 sync "out/$dir" "s3://$BUCKET/$dir" --no-progress --cache-control "$IMMUTABLE"
             fi
           done
           aws s3 sync out/ "s3://$BUCKET/" --no-progress \
@@ -216,3 +216,6 @@ jobs:
           done
           test "$code" = 200 || { echo "::error::$SITE returned $code" >&2; exit 1; }
           curl -fsS --max-time 20 "$SITE/robots.txt" | grep -qF "Sitemap: $SITE/sitemap.xml"
+          font=$(grep -oE '/fonts/[^"]+\.woff2' out/index.html | head -n 1)
+          test -n "$font" || { echo "::error::no font reference in out/index.html" >&2; exit 1; }
+          curl -fsSI --max-time 20 "$SITE$font" | grep -i '^cache-control:' | grep -q immutable

@@ -45,6 +45,14 @@ touch "$ROOT/rejected-media/ai-neural.webp" "$STAGE/media/brand/ai-neural.webp"
 expect "basename in rejected-media" 1 "ai-neural.webp"
 
 fixture
+touch "$ROOT/rejected-media/ai-neural.webp" "$STAGE/media/brand/ai-neural.1a2b3c4d.webp"
+expect "hashed media name in rejected-media" 1 "ai-neural.1a2b3c4d.webp"
+
+fixture
+touch "$ROOT/rejected-media/b.js" "$STAGE/_next/static/chunks/b.1a2b3c4d.js"
+expect "hash kept outside media and fonts" 0
+
+fixture
 echo "*.env" > "$ROOT/.gitignore"
 touch "$ROOT/app/web/public/secret.env"
 expect "ignored file under app/web/public" 1 "app/web/public/secret.env"

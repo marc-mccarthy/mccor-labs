@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import NotFound from './not-found'
+import NotFound, { metadata } from './not-found'
 import { ui } from '@/content/ui'
 
 vi.mock('@/lib/env', () => ({
@@ -8,6 +8,10 @@ vi.mock('@/lib/env', () => ({
 }))
 
 describe('NotFound', () => {
+  it('titles the page for the layout template', () => {
+    expect(metadata.title).toBe('Page Not Found')
+  })
+
   it('keeps its message and home button', () => {
     render(<NotFound />)
     expect(

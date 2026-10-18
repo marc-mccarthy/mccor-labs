@@ -17,13 +17,13 @@ data "aws_iam_policy_document" "github_main_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["${var.github_subject_prefix}:ref:refs/heads/main"]
+      values   = ["${var.GITHUB_SUBJECT_PREFIX}:ref:refs/heads/main"]
     }
   }
 }
 
 resource "aws_iam_role" "deploy" {
-  name               = "${var.name}-github-deploy"
+  name               = "${var.NAME}-github-deploy"
   assume_role_policy = data.aws_iam_policy_document.github_main_assume.json
 }
 
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "deploy" {
 }
 
 resource "aws_iam_role_policy" "deploy" {
-  name   = "${var.name}-github-deploy"
+  name   = "${var.NAME}-github-deploy"
   role   = aws_iam_role.deploy.id
   policy = data.aws_iam_policy_document.deploy.json
 }

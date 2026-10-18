@@ -62,13 +62,13 @@ override_resource {
 }
 
 variables {
-  name                  = "t"
-  domain_name           = "example.com"
-  delegation_set_id     = "N1234567890"
-  mailboxes             = { marcm = "Marc M" }
-  admin_mailbox         = "marcm"
-  alert_email           = "alerts@example.com"
-  github_subject_prefix = "repo:owner@1/repo@2"
+  NAME                  = "t"
+  DOMAIN_NAME           = "example.com"
+  DELEGATION_SET_ID     = "N1234567890"
+  MAILBOXES             = { marcm = "Marc M" }
+  ADMIN_MAILBOX         = "marcm"
+  ALERT_EMAIL           = "alerts@example.com"
+  GITHUB_SUBJECT_PREFIX = "repo:owner@1/repo@2"
 }
 
 run "eval_policy" {

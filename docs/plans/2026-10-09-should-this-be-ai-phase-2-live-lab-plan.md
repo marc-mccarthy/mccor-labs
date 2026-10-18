@@ -10,7 +10,20 @@
 
 **Tech Stack:** TypeScript, `@aws-sdk/client-bedrock-runtime` (`ConverseCommand`, `ApplyGuardrailCommand`), `@aws-sdk/client-ssm`, `@aws-sdk/lib-dynamodb`, Vitest with `aws-sdk-client-mock`, esbuild; Terraform `hashicorp/aws ~> 6.63` (`aws_lambda_function`, `aws_lambda_function_url`, `aws_bedrock_guardrail`, `aws_bedrock_guardrail_version`, `aws_ssm_parameter`, `aws_budgets_budget`, `aws_budgets_budget_action`); Next.js 16 static export, React 19, Testing Library, Playwright with axe.
 
-**Branch:** `feat/should-this-be-ai-phase-2`, cut from `main` after the phase 0 and phase 1 branches are merged.
+**Branch:** `chore/deployment-changes` (the repo's one shared branch). Phases 0, 1 and 3 are merged to main; their plans are deleted, so read their code, listed below.
+
+**Status 2026-10-18 (audited against main):**
+
+- Blocked: Bedrock model access is not enabled ("Error 002: Access to Bedrock models is not allowed for this account", eval run 38650123957). P2-T1, T11, T34, T35 need it.
+- Done (17): T2 `app/api/src/config.ts`; T3 `lab/types.ts`, `lab/validate.ts`; T4 `lab/killFlag.ts`, `lab/logEvent.ts`; T5 `lab/cost.ts`, `scripts/worst-case.ts`; T6 `lab/guardrail.ts`; T7 `lab/argue.ts`; T10 `scripts/record-trace.ts`; T16 `infra/modules/lab_api/guardrail.tf`; T17 `lab_iam.tf`; T19 `brake.tf`; T23 `CostLine.tsx`; T24 `useLabRun.ts`; T25 `RaceLane.tsx`, `LaneParts.tsx`; T26 `RaceInputs.tsx`; T27 `ArgueLane.tsx`; T29 `LiveLabPanel.tsx` + `env.labLive` (`app/web/src/lib/env.ts:59`); T30 privacy text in `legal.ts`. Paths under `app/api/src/` and `app/web/src/components/lab/` unless shown.
+- Done differently from this plan's text (code wins): T8 `lab/race.ts` (labels in the user message, `temperature: 0`), T9 `lab/score.ts` (Jaccard scoring), T21 `lib/labCost.ts` (rounds up, guardrail share), T22 `content/lab/copy.ts` `labLive` (Title Case).
+- Not built: T12 replay loader, T13–T14 `handlers/lab.ts`, T15 `lab.zip`, T18 lab Lambda + Function URL + `/api/lab/*` in `lab_api/outputs.tf` `api_origins` + reserved concurrency + `infraDrift.test.ts`, T20 `recordedRaceTrace`/`recordedArgueTrace`, T28 `RecordedRace`, T32 `lab-live.spec.ts` + CI flag, T33 full verification.
+
+**Where the shipped phases live (read these instead of the deleted plans):**
+
+- Phase 0 contact: `app/api/src/handlers/contact.ts`, `app/api/src/lib/{http,counter,contactInput,mail}.ts`, `app/web/src/lib/signedPost.ts`, `app/api/scripts/build.mjs`, `infra/modules/lab_api/main.tf` + `outputs.tf`, `infra/modules/static_site/main.tf` (Lambda OAC origins), `app/web/src/components/contact/ContactForm.tsx`, `app/web/src/lib/contact.ts`.
+- Phase 1 static lab: `app/web/src/content/lab/{rubric,copy,limits}.ts`, `content/lab/rules/R1–R13.ts`, `app/web/src/components/lab/{WorkflowBuilder,StepCard,VerdictCard,SummaryTable,ProgressRail,SendResult,WhyDrawer}.tsx`, `app/web/src/lib/{labResult,ruleSource}.ts`, `app/web/src/components/lab/workflowState.ts`, `app/web/src/app/lab/should-this-be-ai/page.tsx`, `app/web/tests/e2e/lab.spec.ts`.
+- Phase 3 learning loop: `app/api/src/handlers/{feedback,digest}.ts`, `app/api/src/lib/{feedbackInput,mark,digestQuery,digestEmail}.ts`, `app/api/evals/`, `infra/modules/lab_api/{feedback,digest,alarms}.tf`, `infra/evals.tf`, `.github/workflows/eval.yml`, `app/web/src/components/lab/WrongControl.tsx`, `app/web/src/components/lab/evals/{RunSummary,RunHistory}.tsx`, `app/web/src/app/lab/evals/page.tsx`.
 
 **Persona:** principal engineer (AWS Bedrock Converse, Guardrails ApplyGuardrail, Lambda, DynamoDB, SSM, Budgets actions, Terraform, React and accessibility). Every subagent prompt names its persona: "TypeScript + AWS SDK v3 engineer" for `app/api` tasks, "Terraform + AWS IAM engineer" for `infra/` tasks, "React + accessibility engineer" for `app/web` tasks, "Playwright engineer" for e2e.
 

@@ -1,7 +1,13 @@
 import { act, render, screen } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { activeStage, PIN_UNITS, ProcessScroller, trackShift } from './ProcessScroller'
+import {
+  activeStage,
+  PIN_UNITS,
+  pinnedFraction,
+  ProcessScroller,
+  trackShift,
+} from './ProcessScroller'
 import { process } from '@/content/process'
 
 function mockMatchMedia(reduced: boolean) {
@@ -228,6 +234,18 @@ describe('ProcessScroller', () => {
       for (const callback of callbacks) callback([], {} as ResizeObserver)
     })
     expect(parseFloat(group.style.getPropertyValue('--track-shift'))).toBe(1200)
+  })
+
+  it('keeps the track at rest until the pin has scrolled a whole pixel', () => {
+    const viewport = 900
+    const pinHeight = (viewport * PIN_UNITS) / 100
+    const at = (pinTop: number) => (viewport - pinTop) / (viewport + pinHeight)
+    const range = pinHeight - viewport
+    expect(pinnedFraction(at(0), viewport)).toBe(0)
+    expect(pinnedFraction(at(-0.3125), viewport)).toBe(0)
+    expect(pinnedFraction(at(-1.3125), viewport)).toBe(1 / range)
+    expect(pinnedFraction(at(-range), viewport)).toBe(1)
+    expect(pinnedFraction(at(200), viewport)).toBe(0)
   })
 
   it('derives the active stage from the pinned fraction', () => {

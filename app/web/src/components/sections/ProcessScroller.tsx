@@ -12,8 +12,7 @@ import { cn } from '@/lib/cn'
 
 const VIEWPORT_UNITS = 100
 export const PIN_UNITS = 150
-const PIN_START = VIEWPORT_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
-const PIN_END = PIN_UNITS / (VIEWPORT_UNITS + PIN_UNITS)
+const FLOAT_TOLERANCE = 1e-6
 
 type StageState = 'active' | 'near' | 'far'
 
@@ -21,8 +20,11 @@ function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value))
 }
 
-function pinnedFraction(progress: number): number {
-  return clampUnit((progress - PIN_START) / (PIN_END - PIN_START))
+export function pinnedFraction(progress: number, viewportHeight: number): number {
+  const unit = viewportHeight / VIEWPORT_UNITS
+  const scrolled = (progress * (VIEWPORT_UNITS + PIN_UNITS) - VIEWPORT_UNITS) * unit
+  const range = (PIN_UNITS - VIEWPORT_UNITS) * unit
+  return clampUnit(Math.floor(scrolled + FLOAT_TOLERANCE) / range)
 }
 
 export function trackShift(
@@ -67,7 +69,7 @@ function driveTrack(
   let active = -1
 
   const write = () => {
-    const fraction = pinnedFraction(progress.get())
+    const fraction = pinnedFraction(progress.get(), window.innerHeight)
     const shift = trackShift(fraction, size.scroll, size.client)
     group.style.setProperty('--track-fraction', String(fraction))
     group.style.setProperty('--track-shift', `${String(shift)}px`)

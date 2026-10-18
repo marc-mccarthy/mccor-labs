@@ -61,14 +61,12 @@ account on the **Paid** plan (the Free plan closes the account after six months)
 ### 1. AWS access keys
 
 `deploy.sh` takes AWS credentials only from 1Password, never from AWS profiles.
-`AWS_SECRET_ACCESS_KEY`, `AWS_SECRET_KEY` and `AWS_REGION` in `app.env` point at the
-`AWS Credentials` item in the Secrets vault (fields of the same names). The AWS CLI and Terraform
-read only `AWS_ACCESS_KEY_ID_ID` and `AWS_SECRET_ACCESS_KEY`, so `deploy.sh` maps the two keys to
-those names. Any `AWS_PROFILE` in your shell is ignored. For commands you run by hand, define
-`r`, which does the same mapping. Run `op signin`, then check:
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` in `app.env` point at the
+`AWS Credentials` item in the `McCor Labs` vault (fields of the same names). Any `AWS_PROFILE` in
+your shell is ignored. For commands you run by hand, define `r`. Run `op signin`, then check:
 
 ```bash
-r() { op run --no-masking --env-file=app.env -- sh -c 'export AWS_ACCESS_KEY_ID_ID="$AWS_SECRET_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$AWS_SECRET_KEY"; exec "$@"' sh "$@"; }
+r() { op run --no-masking --env-file=app.env -- env -u AWS_PROFILE "$@"; }
 r aws sts get-caller-identity
 ```
 

@@ -1,7 +1,7 @@
 # Design: Should This Be AI? (the wrong-tool test)
 
 Status: revised after plan reviews 2026-10-09; awaiting owner approval of plans
-Sources: `~/.claude/prompt-results/mccor-labs-aws-next-level-ideas-10-8-26.md` section 3, `docs/plans/open-work.md`, code map of 2026-10-09, the three reviews.
+Sources: `~/.claude/prompt-results/mccorlabs-aws-next-level-ideas-10-8-26.md` section 3, `docs/plans/open-work.md`, code map of 2026-10-09, the three reviews.
 
 ## Goal
 

@@ -1,9 +1,9 @@
 resource "aws_route53_zone" "this" {
   count = local.has_domain ? 1 : 0
 
-  name              = var.domain_name
+  name              = var.DOMAIN_NAME
   comment           = "Managed by Terraform"
-  delegation_set_id = var.delegation_set_id
+  delegation_set_id = var.DELEGATION_SET_ID
 }
 
 resource "aws_route53_record" "site" {

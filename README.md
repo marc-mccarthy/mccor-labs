@@ -71,13 +71,13 @@ op run --env-file=app.env -- aws sts get-caller-identity
 
 ### 2. Fill in your settings
 
-Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `name`, `region`, `domain_name`, `alert_email`, `delegation_set_id`, `mailboxes` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `admin_mailbox`, `instance_type`, `mail_volume_gb`, `github_subject_prefix`, `booking_url`, `monthly_budget_usd`, `domain_registrar_is_route53`, `domain_contact`, `aws_access_key_id`, `aws_secret_access_key`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
+Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `NAME`, `REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
 Two fields need care. `delegation_set_id` is the one you fill in after step 3, from the bootstrap output. `domain_registrar_is_route53` stays `false` until the domain has been transferred to Route 53. `domain_contact` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
 
 ### 3. Apply the bootstrap stack
 
-You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_enable_budget=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
+You apply `infra/bootstrap` by hand, once, from your laptop. The first apply runs on local state, with `TF_VAR_ENABLE_BUDGET=false` if another stack still owns a budget with the same name. Then `terraform init -migrate-state` moves the state into the versioned S3 bucket the stack created (see `infra/bootstrap/backend.tf`), so it does not stay on your machine. `deploy.sh` does not run it. The exact commands and checks are in the "Revised live order" section of the addendum in `docs/plans/ci-terraform-apply.md`.
 
 Afterwards, put the `delegation_set_id` output in the `delegation_set_id` field in 1Password. The `name_servers` output lists the four name servers for step 4.
 
@@ -126,9 +126,9 @@ The main stack is removed from your laptop only. `deploy.sh` has no destroy acti
 
 ```bash
 op run --no-masking --env-file=app.env -- terraform -chdir=infra init
-op run --no-masking --env-file=app.env -- env TF_VAR_protect_data=false \
+op run --no-masking --env-file=app.env -- env TF_VAR_PROTECT_DATA=false \
   terraform -chdir=infra apply -target=module.site
-op run --no-masking --env-file=app.env -- env TF_VAR_protect_data=false \
+op run --no-masking --env-file=app.env -- env TF_VAR_PROTECT_DATA=false \
   terraform -chdir=infra destroy
 ```
 

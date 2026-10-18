@@ -59,6 +59,27 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
   offset, `CtaBlock` eyebrow, `SystemsScene` rule, `DeliveredStrip` heading) are intended and stay.
 - CSP e2e check: `app/web/tests/e2e/csp.spec.ts` loads every route with `local.csp` from
   `infra/modules/static_site/main.tf` applied and fails on any violation (see M3).
+- Owner rulings 2026-10-18 (continued): the deploy gate is the `ci.yml` quality job only (lint,
+  types, unit tests); the `TODO(owner)` guard allows exactly the 6 in `legal.ts` and fails on any
+  new one; hashed names are `<name>.<8 lowercase hex>.<ext>` under `media/` and `fonts/` only.
+
+### M2 tasks
+
+- [ ] T1 SEO metadata: canonical, `openGraph.url`, `og:locale`, JSON-LD.
+- [ ] T2 `/work` noindex, Services excerpt, lab subtitle (after T1).
+- [ ] T3 Home and 404 titles; drafted strings for owner approval (after T1).
+- [ ] T4 Evals and privacy wording made true, gated on `env.labLive`; owner approval.
+- [ ] T5 `TODO(owner)` guard test.
+- [ ] T6 `security.txt` and `llms.txt`; owner approval.
+- [ ] T7 `apple-touch-icon.png` and `favicon.ico` (after T1).
+- [ ] T8 Build-time content hash of media and fonts.
+- [ ] T9 `deploy.yml` serves hashed media and fonts `immutable` (after T8).
+- [ ] T10 Deploy gate on the quality job (after T9).
+- [ ] T11 Lighthouse median of 3, mobile baseline and TBT diagnosis.
+- [ ] T12 Mobile poster first and deferred scene (after T11).
+- [ ] T13 `csp.spec.ts`.
+- [ ] T14 Hard budgets from measured numbers (after T12).
+- [ ] V Final verification by a verifier team.
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)
 

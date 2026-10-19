@@ -21,6 +21,7 @@ function clampUnit(value: number): number {
 }
 
 export function pinnedFraction(progress: number, viewportHeight: number): number {
+  if (viewportHeight <= 0) return 0
   const unit = viewportHeight / VIEWPORT_UNITS
   const scrolled = (progress * (VIEWPORT_UNITS + PIN_UNITS) - VIEWPORT_UNITS) * unit
   const range = (PIN_UNITS - VIEWPORT_UNITS) * unit

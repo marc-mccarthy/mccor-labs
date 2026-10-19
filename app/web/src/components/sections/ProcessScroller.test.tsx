@@ -246,6 +246,7 @@ describe('ProcessScroller', () => {
     expect(pinnedFraction(at(-1.3125), viewport)).toBe(1 / range)
     expect(pinnedFraction(at(-range), viewport)).toBe(1)
     expect(pinnedFraction(at(200), viewport)).toBe(0)
+    expect(pinnedFraction(0.5, 0)).toBe(0)
   })
 
   it('derives the active stage from the pinned fraction', () => {

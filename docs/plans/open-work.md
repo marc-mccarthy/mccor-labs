@@ -81,9 +81,15 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
       did not reproduce.
 - [x] T12 Mobile poster first and deferred scene: skipped, owner ruling 2026-10-18. Mobile passes
       the 85 target and the scene already defers to idle, so there is no measured lever.
-- [ ] T13 `csp.spec.ts`.
-- [ ] T14 Hard budgets from measured numbers (after T11).
-- [ ] V Final verification by a verifier team.
+- [x] T13 `csp.spec.ts`: all 12 routes pass under the enforced policy. Lead A can switch
+      `main.tf:101` from Report-Only to enforced.
+- [x] T14 Hard budgets on `/`: initial JS 260 kB; TBT 200 ms and LCP 450 ms at 4× CPU throttle,
+      tripled on CI. Measured worst of 5: 224,076 B, 51 ms, 148 ms; a 12-run replica reached 174 ms
+      and 296 ms, so the local limits sit above that.
+- [x] V Final verification: two verifiers (web app; build, CI and e2e) passed every criterion with
+      exit-code evidence and agreed in the challenge round.
+- Owner note: `security.txt` `Expires` is build time plus 180 days, so the file goes stale if no
+  deploy runs for 180 days. A scheduled monthly deploy would guarantee it; not done.
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)
 

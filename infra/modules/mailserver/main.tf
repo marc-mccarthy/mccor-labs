@@ -323,6 +323,14 @@ resource "aws_route53_record" "dmarc" {
   records = ["v=DMARC1; p=quarantine; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
 }
 
+resource "aws_route53_record" "bimi" {
+  zone_id = var.zone_id
+  name    = "default._bimi.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=BIMI1; l=https://${var.domain_name}/bimi/logo.svg; a="]
+}
+
 resource "aws_iam_role" "dlm" {
   name = "${var.name}-mail-dlm"
 

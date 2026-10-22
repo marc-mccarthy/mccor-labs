@@ -72,7 +72,7 @@ r aws sts get-caller-identity
 
 ### 2. Fill in your settings
 
-Settings live in 1Password, in the `Development` vault under the `mccor-labs` item that `app.env` points at. Fill in its fields there: `NAME`, `REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
+Settings live in 1Password, in the `McCor Labs` vault under the `McCor Labs` item that `app.env` points at. Fill in its fields there: `NAME`, `REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map, e.g. `{ marcm = "Marc M" }`), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
 Two fields need care. `DELEGATION_SET_ID` is the one you fill in after step 3, from the bootstrap output. `DOMAIN_REGISTRAR_IS_ROUTE53` stays `false` until the domain has been transferred to Route 53. `DOMAIN_CONTACT` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
 
@@ -175,7 +175,7 @@ test -f .git/hooks/pre-commit && echo "hooks installed"
 ```
 
 - The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
-- Values live in 1Password, in the `Development` vault under the `mccor-labs` item. The references are in `app.env`, which is committed because it holds `op://` paths, not values.
+- Values live in 1Password, in the `McCor Labs` vault under the `McCor Labs` item. The references are in `app.env`, which is committed because it holds `op://` paths, not values.
 - `pnpm dev` and `pnpm build` strip the AWS keys from the environment and set `NEXT_PUBLIC_SITE_URL` to `https://` plus `DOMAIN_NAME`, which comes from the `domain_name` field.
 - A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.
 - `pnpm build:raw` skips `op run` entirely. It is the escape hatch for building against an unconfigured or locked vault; the environment-dependent values come out empty.

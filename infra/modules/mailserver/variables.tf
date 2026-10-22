@@ -20,7 +20,7 @@ variable "hostname" {
 }
 
 variable "mailboxes" {
-  description = "Mailbox local part => display name. marcm = \"Marc M\" creates marcm@<domain_name>."
+  description = "Mailbox local part => person's name, for reference only. marcm = \"Marc M\" creates marcm@<domain_name>. The name senders show is set in each mail client."
   type        = map(string)
 
   validation {

@@ -64,6 +64,9 @@ describe('design tokens', () => {
       'accent-hover',
       'on-accent',
       'glow-red',
+      'crimson',
+      'crimson-deep',
+      'crimson-shadow',
     ]) {
       expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
         /^#[0-9a-f]{6}$/,
@@ -184,6 +187,39 @@ function blend(hex: string, grey: number, opacity: number): string {
   )
   return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`
 }
+
+describe('BIMI logo', () => {
+  const svg = () =>
+    readFileSync(join(import.meta.dirname, '../../public/bimi/logo.svg'), 'utf8')
+
+  it('declares the SVG Tiny PS profile with one title', () => {
+    expect(svg()).toMatch(/<svg [^>]*version="1\.2"[^>]*baseProfile="tiny-ps"/)
+    expect(svg().match(/<title>/g)).toHaveLength(1)
+  })
+
+  it('has a square viewBox and no root x or y', () => {
+    const root = /<svg [^>]*>/.exec(svg())?.[0] ?? ''
+    expect(root).toMatch(/viewBox="0 0 (\d+) \1"/)
+    expect(root).not.toMatch(/\s[xy]="/)
+  })
+
+  it('carries no script, filter or external reference', () => {
+    expect(svg()).not.toMatch(/<script|<filter|<image|href="http/)
+  })
+
+  it('stays under the 32kB BIMI limit', () => {
+    expect(Buffer.byteLength(svg())).toBeLessThan(32_768)
+  })
+
+  it('takes every color from the theme tokens', () => {
+    const allowed = new Set(Object.values(tokens()))
+    const used = svg().match(/#[0-9a-fA-F]{6}\b/g) ?? []
+    expect(used.length).toBeGreaterThan(0)
+    for (const hex of used) {
+      expect(allowed, `${hex} is not a --color token`).toContain(hex.toLowerCase())
+    }
+  })
+})
 
 describe('film grain', () => {
   it('is a fixed, non-interactive overlay at no more than 5% opacity', () => {

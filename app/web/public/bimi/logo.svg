@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 128 128">
+  <title>McCor Labs</title>
+  <defs>
+    <linearGradient id="antlers" x1="20" y1="12" x2="108" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff7a00"/>
+      <stop offset="1" stop-color="#ff3b30"/>
+    </linearGradient>
+    <linearGradient id="head" x1="40" y1="50" x2="88" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff3b30"/>
+      <stop offset="0.6" stop-color="#e02424"/>
+      <stop offset="1" stop-color="#991b1b"/>
+    </linearGradient>
+    <linearGradient id="facet" x1="64" y1="54" x2="40" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff2a42"/>
+      <stop offset="1" stop-color="#e02424"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" fill="#08080a"/>
+  <g transform="translate(64 64) scale(0.85) translate(-64 -64)">
+    <g fill="none" stroke="url(#antlers)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M56 50 L42 32 L30 18"/>
+      <path d="M42 32 L26 34"/>
+      <path d="M34 23 L22 20"/>
+      <path d="M48 42 L34 46"/>
+      <path d="M72 50 L86 32 L98 18"/>
+      <path d="M86 32 L102 34"/>
+      <path d="M94 23 L106 20"/>
+      <path d="M80 42 L94 46"/>
+    </g>
+    <polygon points="64,54 44,60 48,82 64,112" fill="url(#head)"/>
+    <polygon points="64,54 84,60 80,82 64,112" fill="url(#facet)"/>
+    <polygon points="64,54 54,68 64,84 74,68" fill="#ff3b30"/>
+    <polygon points="46,58 32,54 44,64" fill="#e02424"/>
+    <polygon points="82,58 96,54 84,64" fill="#ff2a42"/>
+    <polygon points="64,84 56,104 64,112 72,104" fill="#7f1d1d"/>
+    <circle cx="64" cy="106" r="2.5" fill="#ff7a00"/>
+  </g>
+</svg>

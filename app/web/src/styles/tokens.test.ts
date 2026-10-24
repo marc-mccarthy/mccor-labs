@@ -62,6 +62,7 @@ describe('design tokens', () => {
       'brand',
       'accent',
       'accent-hover',
+      'amber',
       'on-accent',
       'glow-red',
       'crimson',
@@ -218,6 +219,41 @@ describe('BIMI logo', () => {
     for (const hex of used) {
       expect(allowed, `${hex} is not a --color token`).toContain(hex.toLowerCase())
     }
+  })
+})
+
+describe('site logos', () => {
+  const LOGOS = ['favicon.svg', 'icon.svg', 'media/brand/mccor-stag-logo.svg'] as const
+  const read = (name: string) =>
+    readFileSync(join(import.meta.dirname, '../../public', name), 'utf8')
+
+  it.each(LOGOS)('%s takes every color from the theme tokens', (name) => {
+    const allowed = new Set(Object.values(tokens()))
+    const used = read(name).match(/#[0-9a-fA-F]{6}\b/g) ?? []
+    expect(used.length).toBeGreaterThan(0)
+    for (const hex of used) {
+      expect(allowed, `${hex} is not a --color token`).toContain(hex.toLowerCase())
+    }
+  })
+
+  it.each(LOGOS)('%s carries no script, raster or external reference', (name) => {
+    expect(read(name)).not.toMatch(/<script|<image|href="http|<!--/)
+  })
+
+  it.each(['favicon.svg', 'icon.svg'])(
+    '%s has no filter and a square viewBox',
+    (name) => {
+      expect(read(name)).not.toMatch(/<filter/)
+      expect(read(name)).toMatch(/viewBox="\d+ \d+ (\d+) \1"/)
+    },
+  )
+
+  it('keeps favicon.svg and icon.svg identical', () => {
+    expect(read('favicon.svg')).toBe(read('icon.svg'))
+  })
+
+  it('glows the antlers only in the brand master', () => {
+    expect(read('media/brand/mccor-stag-logo.svg')).toMatch(/<filter id="glow"/)
   })
 })
 

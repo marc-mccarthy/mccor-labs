@@ -20,12 +20,17 @@ variable "hostname" {
 }
 
 variable "mailboxes" {
-  description = "Mailbox local part => person's name, for reference only. marcm = \"Marc M\" creates marcm@<domain_name>. The name senders show is set in each mail client."
+  description = "Mailbox local part => sender display name. marcm = \"Marc McCarthy\" creates marcm@<domain_name>, and the server stamps that name on everything it sends from that address, whatever the mail app."
   type        = map(string)
 
   validation {
     condition     = alltrue([for k in keys(var.mailboxes) : can(regex("^[a-z0-9][a-z0-9._-]{0,63}$", k))])
     error_message = "Mailbox names must be lowercase letters, numbers, dot, dash or underscore."
+  }
+
+  validation {
+    condition     = alltrue([for v in values(var.mailboxes) : can(regex("^[A-Za-z][A-Za-z .'-]{0,63}$", v))])
+    error_message = "Display names must start with a letter and use only letters, spaces, dot, apostrophe or dash, up to 64 characters."
   }
 }
 

@@ -81,6 +81,14 @@ resource "aws_ssm_parameter" "mailbox" {
   value = random_password.mailbox[each.key].result
 }
 
+resource "aws_ssm_parameter" "sender_name" {
+  for_each = var.mailboxes
+
+  name  = "/${var.name}/mail/_names/${each.key}"
+  type  = "String"
+  value = each.value
+}
+
 resource "aws_ssm_parameter" "smtp_password" {
   name  = "/${var.name}/mail/_relay_password"
   type  = "SecureString"

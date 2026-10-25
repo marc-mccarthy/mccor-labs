@@ -290,6 +290,62 @@ fi
 echo "accounts file now has $(grep -c '|' "$ACCOUNTS" 2>/dev/null || echo 0) mailbox(es)"
 SYNC
 chmod +x /opt/mail/sync-accounts.sh
+
+cat > /opt/mail/sync-names.sh <<'NAMES'
+#!/usr/bin/env bash
+set -euo pipefail
+
+NAMES_FILE="$${NAMES_FILE:-/var/mail-data/config/sender-names.cf}"
+DOMAIN_RE="$(printf '%s' '${domain}' | sed 's/[.]/\\./g')"
+SCRATCH="$(mktemp)"
+trap 'rm -f "$SCRATCH"' EXIT
+touch "$NAMES_FILE"
+
+if ! PARAMS="$(aws ssm get-parameters-by-path --region ${region} --path ${param_prefix}/_names \
+                 --query 'Parameters[].[Name,Value]' --output text)"; then
+  echo "FATAL: could not read sender names from SSM; names left unchanged" >&2
+  exit 1
+fi
+
+while IFS=$'\t' read -r NAME DISPLAY; do
+  [ -n "$NAME" ] || continue
+  LOCAL="$${NAME##*/}"
+  case "$DISPLAY" in
+    '' | *[!A-Za-z\ .\'-]*)
+      echo "WARNING: skipping sender name for $LOCAL: only letters, spaces, dot, apostrophe and dash are allowed" >&2
+      continue
+      ;;
+  esac
+  printf '/^From:(.*[[:space:]<])?%s@%s>?[[:space:]]*$/ REPLACE From: "%s" <%s@${domain}>\n' \
+    "$(printf '%s' "$LOCAL" | sed 's/[.]/\\./g')" "$DOMAIN_RE" "$DISPLAY" "$LOCAL"
+done <<< "$PARAMS" | sort > "$SCRATCH"
+
+cmp -s "$SCRATCH" "$NAMES_FILE" && exit 0
+cat "$SCRATCH" > "$NAMES_FILE"
+echo "sender names now cover $(grep -c REPLACE "$NAMES_FILE" || true) mailbox(es)"
+
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx mailserver; then
+  docker exec mailserver postfix reload >/dev/null
+fi
+NAMES
+chmod +x /opt/mail/sync-names.sh
+if ! /opt/mail/sync-names.sh; then
+  echo "WARNING: sender name sync failed; mail goes out with the name each app sets" >&2
+fi
+
+cat > /var/mail-data/config/user-patches.sh <<'PATCHES'
+#!/bin/bash
+set -euo pipefail
+NAMES=regexp:/tmp/docker-mailserver/sender-names.cf
+touch /tmp/docker-mailserver/sender-names.cf
+CURRENT="$(postconf -Ph sender-cleanup/unix/header_checks)"
+case "$CURRENT" in
+  *"$NAMES"*) ;;
+  *) postconf -P "sender-cleanup/unix/header_checks=$${CURRENT:+$CURRENT,}$NAMES" ;;
+esac
+PATCHES
+chmod +x /var/mail-data/config/user-patches.sh
+
 for attempt in 1 2 3 4 5; do
   if /opt/mail/sync-accounts.sh; then
     break
@@ -378,6 +434,7 @@ PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 export PATH
 
 /opt/mail/sync-accounts.sh
+/opt/mail/sync-names.sh
 SYNCCRON
 chmod +x /etc/cron.hourly/mail-sync-accounts
 

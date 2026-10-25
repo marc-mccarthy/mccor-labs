@@ -41,3 +41,36 @@ run "bimi" {
     error_message = "BIMI record must point at the logo served from the apex domain."
   }
 }
+
+run "sender_names" {
+  command = plan
+
+  variables {
+    mailboxes = { marcm = "Marc McCarthy", mariem = "Marie O'Neil-Smith Jr." }
+  }
+
+  assert {
+    condition     = aws_ssm_parameter.sender_name["marcm"].name == "/t/mail/_names/marcm"
+    error_message = "Sender names must live under <prefix>/_names so the account sync skips them."
+  }
+
+  assert {
+    condition     = aws_ssm_parameter.sender_name["marcm"].value == "Marc McCarthy" && aws_ssm_parameter.sender_name["marcm"].type == "String"
+    error_message = "Each mailbox's display name must be published as a plain String parameter."
+  }
+
+  assert {
+    condition     = aws_ssm_parameter.sender_name["mariem"].value == "Marie O'Neil-Smith Jr."
+    error_message = "Apostrophes, dashes and dots must be allowed in names."
+  }
+}
+
+run "rejects_unsafe_sender_name" {
+  command = plan
+
+  variables {
+    mailboxes = { marcm = "Marc \"x\" <evil@example.org>" }
+  }
+
+  expect_failures = [var.mailboxes]
+}

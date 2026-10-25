@@ -46,7 +46,7 @@ variable "PROTECT_DATA" {
 }
 
 variable "MAILBOXES" {
-  description = "Mailbox local part => person's name, for reference only. marcm = \"Marc M\" creates marcm@<domain_name>. The name senders show is set in each mail client."
+  description = "Mailbox local part => sender display name. marcm = \"Marc McCarthy\" creates marcm@<domain_name>, and the server stamps that name on everything it sends from that address, whatever the mail app."
   type        = map(string)
 
   validation {

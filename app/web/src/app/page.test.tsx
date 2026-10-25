@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import HomePage from './page'
+import HomePage, { metadata } from './page'
 
 vi.mock('@/components/sections/Hero', () => ({ Hero: () => <div /> }))
 vi.mock('@/components/sections/DeliveredStrip', () => ({
@@ -28,6 +28,13 @@ describe('HomePage', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }))
+  })
+
+  it('sets an absolute title that skips the layout template', () => {
+    expect(metadata.title).toEqual({
+      absolute: 'McCor Labs · Swift by Instinct. Engineered to the Core.',
+    })
+    expect(metadata.alternates).toEqual({ canonical: '/' })
   })
 
   it('places a seam after services and after the pipeline, none above delivered', () => {

@@ -8,6 +8,7 @@ import { LenisProvider } from '@/components/motion/LenisProvider'
 import { MotionPauseProvider } from '@/components/motion/MotionPauseProvider'
 import { site } from '@/content/site'
 import { env } from '@/lib/env'
+import { openGraphBase, organizationJsonLd, serializeJsonLd } from '@/lib/seo'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
@@ -15,11 +16,14 @@ export const metadata: Metadata = {
   title: { default: site.name, template: `%s · ${site.name}` },
   description: site.tagline,
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/icon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
-  openGraph: { siteName: site.name, type: 'website', locale: 'en' },
+  openGraph: openGraphBase,
 }
 
 const RESTORE_MOTION_PAUSE = `try{if(localStorage.getItem('mccor-motion')==='paused')document.documentElement.dataset.motion='paused'}catch(error){reportError(error)}`
@@ -29,6 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: RESTORE_MOTION_PAUSE }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationJsonLd()) }}
+        />
         <link
           rel="preload"
           href="/fonts/geist-sans-variable.woff2"

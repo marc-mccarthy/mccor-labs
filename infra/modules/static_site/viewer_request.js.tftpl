@@ -4,9 +4,14 @@ function handler(event) {
   var request = event.request;
   var host = request.headers.host ? request.headers.host.value.toLowerCase() : '';
   var uri = request.uri;
+  var clean = uri.endsWith('/index.html') ? uri.slice(0, -'index.html'.length) : uri;
 
   if (PRIMARY_HOST && host !== PRIMARY_HOST) {
-    return redirect(needsSlash(uri) ? uri + '/' : uri, request);
+    return redirect(needsSlash(clean) ? clean + '/' : clean, request);
+  }
+
+  if (clean !== uri) {
+    return redirect(clean, request);
   }
 
   if (uri.endsWith('/')) {

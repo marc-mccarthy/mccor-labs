@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/sections/PageHeader'
 export const metadata: Metadata = {
   title: 'Work',
   description: 'Case studies are in production. Talk to us in the meantime.',
+  robots: { index: false },
 }
 
 export default function WorkPage() {

@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/sections/PageHeader'
 import { RoleBlock } from '@/components/sections/RoleBlock'
 import { roles } from '@/content/careers'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Careers',
   description: 'How we hire, and what we look for.',
+  ...pageSeo('/careers/'),
 }
 
 export default function CareersPage() {

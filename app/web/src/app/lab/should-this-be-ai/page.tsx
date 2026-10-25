@@ -9,10 +9,12 @@ import { CodeBlock } from '@/components/substance/CodeBlock'
 import { fillTemplate, labPageCopy, whyCopy } from '@/content/lab/copy'
 import { RULE_IDS, RUBRIC_VERSION, type RuleId } from '@/content/lab/rubric'
 import { readRuleSource } from '@/lib/ruleSource'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: labPageCopy.title,
   description: labPageCopy.metaDescription,
+  ...pageSeo('/lab/should-this-be-ai/'),
 }
 
 async function buildSnippets(): Promise<Record<RuleId, ReactNode>> {
@@ -37,6 +39,7 @@ export default async function LabPage() {
     <>
       <PageHeader
         title={labPageCopy.title}
+        subtitle={labPageCopy.subtitle}
         description={labPageCopy.headerDescription}
         image="/media/brand/systems-lattice.webp"
       />

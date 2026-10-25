@@ -62,7 +62,9 @@ interface StagAssets {
   fragmentShader: string
 }
 
-const ASSET_ROOT = '/media/brand'
+const POINTS_URL = '/media/brand/stag-points.json'
+const VERTEX_SHADER_URL = '/media/brand/shaders/stag-points.vert.glsl'
+const FRAGMENT_SHADER_URL = '/media/brand/shaders/stag-points.frag.glsl'
 const POSTER_WIDTH = 1376
 const POSTER_HEIGHT = 768
 const POSTER_STAG_CENTER_X = 1149
@@ -88,20 +90,18 @@ const VIEW_SETTLE = 0.001
 
 const assembledInstances = new Set<string>()
 
-async function fetchAsset(path: string): Promise<Response> {
-  const response = await fetch(`${ASSET_ROOT}/${path}`)
+async function fetchAsset(url: string): Promise<Response> {
+  const response = await fetch(url)
   if (!response.ok)
-    throw new Error(`Stag asset ${path} failed with ${String(response.status)}`)
+    throw new Error(`Stag asset ${url} failed with ${String(response.status)}`)
   return response
 }
 
 async function loadAssets(): Promise<StagAssets> {
   const [points, vertexShader, fragmentShader] = await Promise.all([
-    fetchAsset('stag-points.json').then(
-      (r) => r.json() as Promise<{ positions: number[] }>,
-    ),
-    fetchAsset('shaders/stag-points.vert.glsl').then((r) => r.text()),
-    fetchAsset('shaders/stag-points.frag.glsl').then((r) => r.text()),
+    fetchAsset(POINTS_URL).then((r) => r.json() as Promise<{ positions: number[] }>),
+    fetchAsset(VERTEX_SHADER_URL).then((r) => r.text()),
+    fetchAsset(FRAGMENT_SHADER_URL).then((r) => r.text()),
   ])
   const positions = new Float32Array(points.positions)
   return { positions, extents: measure(positions), vertexShader, fragmentShader }

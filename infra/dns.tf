@@ -22,3 +22,17 @@ resource "aws_route53_record" "site" {
     evaluate_target_health = false
   }
 }
+
+resource "aws_route53_record" "caa" {
+  count = local.has_domain ? 1 : 0
+
+  zone_id = aws_route53_zone.this[0].zone_id
+  name    = var.DOMAIN_NAME
+  type    = "CAA"
+  ttl     = 3600
+  records = [
+    "0 issue \"amazon.com\"",
+    "0 issue \"letsencrypt.org\"",
+    "0 issuewild \";\"",
+  ]
+}

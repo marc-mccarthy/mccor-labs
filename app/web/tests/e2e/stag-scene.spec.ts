@@ -106,7 +106,7 @@ test('CTA stag stays a webp below xl', async ({ page }) => {
   await expect(page.getByTestId('cta-stag')).toBeHidden()
   await expect(page.getByTestId('cta-stag')).toHaveAttribute(
     'src',
-    '/media/brand/mccor-stag-stride.webp',
+    /\/media\/brand\/mccor-stag-stride\.[0-9a-f]{8}\.webp/,
   )
   const contexts = await page.evaluate(
     () => (window as unknown as { stagContexts: string[] }).stagContexts,

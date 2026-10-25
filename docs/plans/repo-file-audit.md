@@ -38,8 +38,6 @@ Ruling: unused TS files and exports are found with `pnpm dlx knip` (ephemeral, n
 
 Ruling: docs and ui-audit PNGs cannot be proven by a build. They are DEAD only when every task box is ticked or the fix is verified in code, and nothing live references them. (cost if wrong: a historical doc is deleted; it can be restored from git)
 
-Ruling: `LEFTOVERS.md` is untracked, so git cannot recover it. It is classified but never deleted; it is listed for the user to decide (global rule 13). (cost if wrong: none)
-
 Ruling: there is no push or merge. The branch carries unrelated deploy work, so landing it is the user's call. (cost if wrong: the work waits for the user's merge)
 
 Ruling: the T2 executors read test files only through their import lines and unticked-checkbox excerpts of the five largest plans, because the byte estimate shows full reads of web-src tests and the plan files overflow the 500k unit budget. (cost if wrong: a file whose imports are hidden past line 25 is marked UNCLEAR, never DEAD)

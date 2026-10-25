@@ -53,22 +53,62 @@ models is not allowed for this account` (latest run 39091157242, 2026-10-18). It
 - Hard budgets in `app/web/tests/e2e/budgets.spec.ts:11-15`: no initial-JS, TBT or LCP-time limit.
 - Guard test that fails the build on any `TODO(owner)` in `app/web/src/content` (today `legal.test.ts:136,158` cover two sections only).
 - Mobile home performance (last Lighthouse 59, TBT 3,970 ms): defer the three.js scene until idle or visible, poster first on mobile, re-run Lighthouse 3 times and take the median.
-- `/index.html` serves 200 (duplicate of `/`); unknown paths 301 before 404.
-- Review findings on the merged UI changes, checked in a browser on 2026-10-18:
-  - `PageHeader.tsx` shows the signal line as a static brand line under reduced motion (was hidden).
-  - `PageHeader` is 30vh (270 px at 900 px tall), was 60vh.
-  - `ProcessScroller` pinned content sits about 32 px above centre: the top padding assumes 384 px of
-    content, it is 321 px (was `justify-center`).
-  - `CtaBlock` lost its "05 / Contact" eyebrow; home numbering ends at 04.
-  - `SystemsScene` heading gets the border rule over the video (`rule` defaults to true); other
-    sections pass `rule={false}`.
-  - `DeliveredStrip` hand-builds its heading instead of using `SectionHeading`.
+- Owner rulings 2026-10-18: Lead B drafts all copy and the owner approves it; media and fonts get a
+  content hash plus `immutable` caching; deferring the three.js scene on mobile is in scope; the UI
+  review findings from #32 (`PageHeader` reduced-motion line and 30vh height, `ProcessScroller`
+  offset, `CtaBlock` eyebrow, `SystemsScene` rule, `DeliveredStrip` heading) are intended and stay.
+- CSP e2e check: `app/web/tests/e2e/csp.spec.ts` loads every route with `local.csp` from
+  `infra/modules/static_site/main.tf` applied and fails on any violation (see M3).
+- Owner rulings 2026-10-18 (continued): the deploy gate is the `ci.yml` quality job only (lint,
+  types, unit tests); the `TODO(owner)` guard allows exactly the 6 in `legal.ts` and fails on any
+  new one; hashed names are `<name>.<8 lowercase hex>.<ext>` under `media/` and `fonts/` only.
+
+### M2 tasks
+
+- [x] T1 SEO metadata: canonical, `openGraph.url`, `og:locale`, JSON-LD.
+- [x] T2 `/work` noindex, Services excerpt, lab subtitle (after T1).
+- [x] T3 Home and 404 titles; drafted strings for owner approval (after T1).
+- [x] T4 Evals and privacy wording made true, gated on `env.labLive`; owner approval.
+- [x] T5 `TODO(owner)` guard test.
+- [x] T6 `security.txt` and `llms.txt`; owner approval.
+- [x] T7 `apple-touch-icon.png` and `favicon.ico` (after T1).
+- [x] T8 Build-time content hash of media and fonts. The 27 unused files under `app/web/public` stay
+      for now and are listed in `docs/unused-brand-media.md`.
+- [x] T9 `deploy.yml` serves hashed media and fonts `immutable` (after T8).
+- [x] T10 Deploy gate on the quality job (after T9).
+- [x] T11 Lighthouse median of 3, mobile baseline and TBT diagnosis. Mobile `/` median: score 88,
+      TBT 72 ms, LCP 3,842 ms (simulated throttling on the hero image). The recorded 59 / 3,970 ms
+      did not reproduce.
+- [x] T12 Mobile poster first and deferred scene: skipped, owner ruling 2026-10-18. Mobile passes
+      the 85 target and the scene already defers to idle, so there is no measured lever.
+- [x] T13 `csp.spec.ts`: all 12 routes pass under the enforced policy. Lead A can switch
+      `main.tf:101` from Report-Only to enforced.
+- [x] T14 Hard budgets on `/`: initial JS 260 kB; TBT 200 ms and LCP 450 ms at 4× CPU throttle,
+      tripled on CI. Measured worst of 5: 224,076 B, 51 ms, 148 ms; a 12-run replica reached 174 ms
+      and 296 ms, so the local limits sit above that.
+- [x] V Final verification: two verifiers (web app; build, CI and e2e) passed every criterion with
+      exit-code evidence and agreed in the challenge round.
+- Owner note: `security.txt` `Expires` is build time plus 180 days, so the file goes stale if no
+  deploy runs for 180 days. A scheduled monthly deploy would guarantee it; not done.
 
 ## M3 Infra hardening (Lead A; show the terraform plan before apply)
 
-- CSP is report-only with no report target (`infra/modules/static_site/main.tf:101`). Add a report
-  endpoint, watch, then plan the switch to enforce. Enforcing as written would block WebAssembly (no `'wasm-unsafe-eval'`) and any off-origin fetch (`connect-src 'self'`); drop `'unsafe-inline'` from `script-src` with hashes if the static export allows.
-- DNS: DMARC `p=none` (`infra/modules/mailserver/main.tf:323`); no MTA-STS, TLS-RPT or CAA.
+- CSP (owner ruling 2026-10-18: no report endpoint). Browser CSP reports cannot carry the signed
+  `x-amz-content-sha256` header the `/api/*` OAC routes need, so a report endpoint would have to be a
+  new public one. Instead: Lead B adds an e2e check that loads every route with the CSP from
+  `infra/modules/static_site/main.tf` applied and fails on any violation; then Lead A switches the
+  header from `Content-Security-Policy-Report-Only` (`main.tf:101`) to enforced. Enforcing as written
+  blocks WebAssembly (no `'wasm-unsafe-eval'`) and any off-origin fetch (`connect-src 'self'`).
+- Done on `feat/site-fixes`: DMARC `p=quarantine` (`infra/modules/mailserver/main.tf:323`; outbound
+  mail is DKIM-signed by SES with the domain key, so it still passes); CAA at the apex allowing only
+  `amazon.com` and `letsencrypt.org`, no wildcards (`infra/dns.tf`, test `infra/tests/dns.tftest.hcl`).
+  Live after merge and deploy; check the terraform plan in the deploy run.
+- Not doing: TLS-RPT (large providers report only for domains with MTA-STS or DANE) and MTA-STS (needs
+  a new `mta-sts` host and certificate; low value at this mail volume).
+- Done on `feat/site-fixes`: any `.../index.html` now 301s to its directory in one hop, `www`
+  included (`infra/modules/static_site/viewer_request.js.tftpl`, tests in
+  `tests/viewer_request.test.mjs`). Not fixing: unknown paths still 301 to a trailing slash before
+  the 404; the function cannot see which pages exist without a route list kept in sync with the build.
 
 ## M4 Live lab (blocked on Bedrock)
 

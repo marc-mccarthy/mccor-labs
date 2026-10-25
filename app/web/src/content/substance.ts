@@ -103,8 +103,7 @@ export const terminalSamples: Readonly<Record<string, readonly TerminalSampleLin
     { kind: 'output', text: '▲ Next.js 16.3.6 (Turbopack)' },
     { kind: 'output', text: 'Route (app)' },
     { kind: 'output', text: '┌ ○ /' },
-    { kind: 'output', text: '├ ○ /services' },
-    { kind: 'output', text: '└ ○ /work' },
+    { kind: 'output', text: '└ ○ /services' },
     { kind: 'output', text: '○  (Static)  prerendered as static content' },
   ],
 }

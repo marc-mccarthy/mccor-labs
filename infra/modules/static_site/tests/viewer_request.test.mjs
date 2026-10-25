@@ -40,6 +40,9 @@ const redirects = [
   ['www.example.com', '/services', 'a=1', 'https://example.com/services/?a=1'],
   ['d111.cloudfront.net', '/about', undefined, 'https://example.com/about/'],
   ['www.example.com', '/x', 'utm=a%20b&a=1&a=2', 'https://example.com/x/?utm=a%20b&a=1&a=2'],
+  ['example.com', '/index.html', undefined, 'https://example.com/'],
+  ['example.com', '/services/index.html', 'a=1', 'https://example.com/services/?a=1'],
+  ['www.example.com', '/index.html', undefined, 'https://example.com/'],
 ];
 
 for (const [host, uri, raw, expected] of rewrites) {

@@ -81,6 +81,14 @@ resource "aws_ssm_parameter" "mailbox" {
   value = random_password.mailbox[each.key].result
 }
 
+resource "aws_ssm_parameter" "sender_name" {
+  for_each = var.mailboxes
+
+  name  = "/${var.name}/mail/_names/${each.key}"
+  type  = "String"
+  value = each.value
+}
+
 resource "aws_ssm_parameter" "smtp_password" {
   name  = "/${var.name}/mail/_relay_password"
   type  = "SecureString"
@@ -320,7 +328,15 @@ resource "aws_route53_record" "dmarc" {
   name    = "_dmarc.${var.domain_name}"
   type    = "TXT"
   ttl     = 600
-  records = ["v=DMARC1; p=none; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
+  records = ["v=DMARC1; p=quarantine; rua=mailto:${var.admin_mailbox}@${var.domain_name}"]
+}
+
+resource "aws_route53_record" "bimi" {
+  zone_id = var.zone_id
+  name    = "default._bimi.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=BIMI1; l=https://${var.domain_name}/bimi/logo.svg; a="]
 }
 
 resource "aws_iam_role" "dlm" {

@@ -12,7 +12,12 @@ const CLS_MAX = 0.1
 const INP_MAX_MS = process.env.CI ? 600 : 200
 const FONTS_MAX_BYTES = 150_000
 const LCP_IMAGE_MAX_BYTES = 250_000
-const INITIAL_JS_SOFT_BYTES = 250_000
+const INITIAL_JS_MAX_BYTES = 260_000
+const TBT_MAX_MS = process.env.CI ? 600 : 200
+const LCP_MAX_MS = process.env.CI ? 1350 : 450
+const CPU_THROTTLE_RATE = 4
+const LONG_TASK_FLOOR_MS = 50
+const SETTLE_MS = 500
 
 interface Weights {
   initialJs: number
@@ -100,6 +105,34 @@ async function observeWorstInteraction(page: Page) {
   })
 }
 
+async function measureLoadTiming(page: Page, path: string) {
+  await page.addInitScript(() => {
+    const holder = window as unknown as { longTasks: number[]; lcp: number }
+    holder.longTasks = []
+    holder.lcp = 0
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) holder.longTasks.push(entry.duration)
+    }).observe({ type: 'longtask', buffered: true })
+    new PerformanceObserver((list) => {
+      const last = list.getEntries().at(-1)
+      if (last) holder.lcp = last.startTime
+    }).observe({ type: 'largest-contentful-paint', buffered: true })
+  })
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU_THROTTLE_RATE })
+  await page.goto(path, { waitUntil: 'load' })
+  await page.waitForTimeout(SETTLE_MS)
+  const { longTasks, lcp } = await page.evaluate(() => {
+    const holder = window as unknown as { longTasks: number[]; lcp: number }
+    return { longTasks: holder.longTasks, lcp: holder.lcp }
+  })
+  const tbt = longTasks.reduce(
+    (sum, duration) => sum + Math.max(0, duration - LONG_TASK_FLOOR_MS),
+    0,
+  )
+  return { tbt, lcp }
+}
+
 test.describe('hard gates', () => {
   test.describe.configure({ retries: 2 })
 
@@ -147,6 +180,23 @@ test.describe('hard gates', () => {
       expect(bytes).toBeGreaterThan(0)
       expect(bytes).toBeLessThanOrEqual(LCP_IMAGE_MAX_BYTES)
     }
+  })
+
+  test(`initial JS on / is at most ${String(INITIAL_JS_MAX_BYTES)} bytes`, async ({
+    page,
+  }) => {
+    const weights = measureWeights(page)
+    await page.goto('/', { waitUntil: 'load' })
+    const { initialJs } = await weights()
+    expect(initialJs).toBeLessThanOrEqual(INITIAL_JS_MAX_BYTES)
+  })
+
+  test(`TBT and LCP on / under ${String(CPU_THROTTLE_RATE)}x CPU throttle`, async ({
+    page,
+  }) => {
+    const { tbt, lcp } = await measureLoadTiming(page, '/')
+    expect.soft(tbt).toBeLessThanOrEqual(TBT_MAX_MS)
+    expect(lcp).toBeLessThanOrEqual(LCP_MAX_MS)
   })
 
   for (const path of ROUTES) {
@@ -250,9 +300,8 @@ test.describe('soft budgets, measured and reported only', () => {
       await page.goto(path, { waitUntil: 'load' })
       await scrollThrough(page)
       const w = await weights()
-      const flag = w.initialJs > INITIAL_JS_SOFT_BYTES ? ' OVER' : ''
       console.log(
-        `SOFT ${path} initialJs=${String(w.initialJs)}${flag} lazyJs=${String(w.lazyJs)} css=${String(w.css)} total=${String(w.total)}`,
+        `SOFT ${path} initialJs=${String(w.initialJs)} lazyJs=${String(w.lazyJs)} css=${String(w.css)} total=${String(w.total)}`,
       )
     })
   }

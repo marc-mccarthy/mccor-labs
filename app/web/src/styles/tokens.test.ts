@@ -62,8 +62,12 @@ describe('design tokens', () => {
       'brand',
       'accent',
       'accent-hover',
+      'amber',
       'on-accent',
       'glow-red',
+      'crimson',
+      'crimson-deep',
+      'crimson-shadow',
     ]) {
       expect(t[name], `--color-${name} is missing from globals.css`).toMatch(
         /^#[0-9a-f]{6}$/,
@@ -184,6 +188,74 @@ function blend(hex: string, grey: number, opacity: number): string {
   )
   return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`
 }
+
+describe('BIMI logo', () => {
+  const svg = () =>
+    readFileSync(join(import.meta.dirname, '../../public/bimi/logo.svg'), 'utf8')
+
+  it('declares the SVG Tiny PS profile with one title', () => {
+    expect(svg()).toMatch(/<svg [^>]*version="1\.2"[^>]*baseProfile="tiny-ps"/)
+    expect(svg().match(/<title>/g)).toHaveLength(1)
+  })
+
+  it('has a square viewBox and no root x or y', () => {
+    const root = /<svg [^>]*>/.exec(svg())?.[0] ?? ''
+    expect(root).toMatch(/viewBox="0 0 (\d+) \1"/)
+    expect(root).not.toMatch(/\s[xy]="/)
+  })
+
+  it('carries no script, filter or external reference', () => {
+    expect(svg()).not.toMatch(/<script|<filter|<image|href="http/)
+  })
+
+  it('stays under the 32kB BIMI limit', () => {
+    expect(Buffer.byteLength(svg())).toBeLessThan(32_768)
+  })
+
+  it('takes every color from the theme tokens', () => {
+    const allowed = new Set(Object.values(tokens()))
+    const used = svg().match(/#[0-9a-fA-F]{6}\b/g) ?? []
+    expect(used.length).toBeGreaterThan(0)
+    for (const hex of used) {
+      expect(allowed, `${hex} is not a --color token`).toContain(hex.toLowerCase())
+    }
+  })
+})
+
+describe('site logos', () => {
+  const LOGOS = ['favicon.svg', 'icon.svg', 'media/brand/mccor-stag-logo.svg'] as const
+  const read = (name: string) =>
+    readFileSync(join(import.meta.dirname, '../../public', name), 'utf8')
+
+  it.each(LOGOS)('%s takes every color from the theme tokens', (name) => {
+    const allowed = new Set(Object.values(tokens()))
+    const used = read(name).match(/#[0-9a-fA-F]{6}\b/g) ?? []
+    expect(used.length).toBeGreaterThan(0)
+    for (const hex of used) {
+      expect(allowed, `${hex} is not a --color token`).toContain(hex.toLowerCase())
+    }
+  })
+
+  it.each(LOGOS)('%s carries no script, raster or external reference', (name) => {
+    expect(read(name)).not.toMatch(/<script|<image|href="http|<!--/)
+  })
+
+  it.each(['favicon.svg', 'icon.svg'])(
+    '%s has no filter and a square viewBox',
+    (name) => {
+      expect(read(name)).not.toMatch(/<filter/)
+      expect(read(name)).toMatch(/viewBox="\d+ \d+ (\d+) \1"/)
+    },
+  )
+
+  it('keeps favicon.svg and icon.svg identical', () => {
+    expect(read('favicon.svg')).toBe(read('icon.svg'))
+  })
+
+  it('glows the antlers only in the brand master', () => {
+    expect(read('media/brand/mccor-stag-logo.svg')).toMatch(/<filter id="glow"/)
+  })
+})
 
 describe('film grain', () => {
   it('is a fixed, non-interactive overlay at no more than 5% opacity', () => {

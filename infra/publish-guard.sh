@@ -6,7 +6,7 @@ publish_guard_reject() {
 }
 
 check_publish_stage() {
-  local stage="$1" root="$2" failed=0 rejected="" ignored file name
+  local stage="$1" root="$2" failed=0 rejected="" ignored file name compared
   if [[ -d "$root/rejected-media" ]]; then
     rejected="$(find "$root/rejected-media" -type f -exec basename {} \;)" || return 1
   fi
@@ -18,13 +18,19 @@ check_publish_stage() {
       publish_guard_reject "${file#"$stage"/}" "symlink"
     elif [[ "$name" == .* ]]; then
       publish_guard_reject "${file#"$stage"/}" "dotfile"
+    elif [[ "${file#"$stage"/}" == "apple-touch-icon.png" || "${file#"$stage"/}" == "favicon.ico" ]]; then
+      :
     else
       case "$name" in
         *.html | *.txt | *.js | *.css | *.json | *.xml | *.woff2 | *.webp | *.avif | *.jpg | *.svg | *.mp4 | *.webm | *.glsl) ;;
         *) publish_guard_reject "${file#"$stage"/}" "extension not allowed" ;;
       esac
     fi
-    if [[ -n "$rejected" ]] && grep -qxF -- "$name" <<<"$rejected"; then
+    compared="$name"
+    if [[ "${file#"$stage"/}" =~ ^(media|fonts)/ && "$name" =~ ^(.+)\.[0-9a-f]{8}(\.[^.]+)$ ]]; then
+      compared="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
+    fi
+    if [[ -n "$rejected" ]] && grep -qxF -- "$compared" <<<"$rejected"; then
       publish_guard_reject "${file#"$stage"/}" "same name as a file in rejected-media/"
     fi
   done < <(find "$stage" ! -type d -print0)

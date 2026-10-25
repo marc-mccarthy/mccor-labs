@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import { PageHeader } from '@/components/sections/PageHeader'
 import { ProcessScroller } from '@/components/sections/ProcessScroller'
 import { ui } from '@/content/ui'
+import { pageSeo } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Process',
   description: 'How an engagement runs, from first call to launch.',
+  ...pageSeo('/process/'),
 }
 
 export default function ProcessPage() {

@@ -1,4 +1,38 @@
-import type { LegalDocument } from './types'
+import { env } from '@/lib/env'
+
+import type { LegalBlock, LegalDocument } from './types'
+
+const liveLabBlocks: readonly LegalBlock[] = [
+  { kind: 'h3', text: 'When You Use the Live Lab' },
+  {
+    kind: 'p',
+    text: 'The lab’s builder runs in your browser. Step names and answers stay in your browser’s memory and are gone when you close the tab.',
+  },
+  {
+    kind: 'p',
+    text: 'If you choose Race this step or Argue the other side, the examples or step description you type are sent to Amazon Bedrock, an AWS service, to run that one test. AWS processes it in its US regions (N. Virginia, Ohio or Oregon). We do not store the text, and we have turned off Bedrock’s request logging.',
+  },
+  {
+    kind: 'p',
+    text: 'Our server keeps a count of how many live runs happened each day, with no link to you, for 7 days. The lab shows you how many runs are left today.',
+  },
+  {
+    kind: 'p',
+    text: 'Our server writes a short technical log for each run: the time, whether it succeeded, how long it took and how many tokens it used. It never includes what you typed. These logs are deleted after 3 days.',
+  },
+]
+
+const quietLabBlocks: readonly LegalBlock[] = [
+  { kind: 'h3', text: 'When You Use the Lab' },
+  {
+    kind: 'p',
+    text: 'The lab’s builder runs in your browser. Step names and answers stay in your browser’s memory and are gone when you close the tab.',
+  },
+  {
+    kind: 'p',
+    text: 'The lab’s live tests, Race this step and Argue the other side, are not switched on. Nothing you type in the lab is sent to Amazon Bedrock or any other AI service.',
+  },
+]
 
 export const privacy: LegalDocument = {
   title: 'Privacy Policy',
@@ -27,7 +61,9 @@ export const privacy: LegalDocument = {
       blocks: [
         {
           kind: 'p',
-          text: 'We collect what you send us through the contact form. If you use the live part of our lab, the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.',
+          text: env.labLive
+            ? 'We collect what you send us through the contact form. If you use the live part of our lab, the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.'
+            : 'We collect what you send us through the contact form. The live part of our lab is not switched on, so nothing you type in the lab is sent to an AI service. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.',
         },
         {
           kind: 'p',
@@ -80,23 +116,7 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'We receive whatever you send, including your email address and anything in your signature or attachments. Same use: replying to you.',
         },
-        { kind: 'h3', text: 'When You Use the Live Lab' },
-        {
-          kind: 'p',
-          text: 'The lab’s builder runs in your browser. Step names and answers stay in your browser’s memory and are gone when you close the tab.',
-        },
-        {
-          kind: 'p',
-          text: 'If you choose Race this step or Argue the other side, the examples or step description you type are sent to Amazon Bedrock, an AWS service, to run that one test. AWS processes it in its US regions (N. Virginia, Ohio or Oregon). We do not store the text, and we have turned off Bedrock’s request logging.',
-        },
-        {
-          kind: 'p',
-          text: 'Our server keeps a count of how many live runs happened each day, with no link to you, for 7 days. The lab shows you how many runs are left today.',
-        },
-        {
-          kind: 'p',
-          text: 'Our server writes a short technical log for each run: the time, whether it succeeded, how long it took and how many tokens it used. It never includes what you typed. These logs are deleted after 3 days.',
-        },
+        ...(env.labLive ? liveLabBlocks : quietLabBlocks),
         { kind: 'h3', text: 'When You Mark a Verdict as Wrong' },
         {
           kind: 'p',
@@ -132,7 +152,9 @@ export const privacy: LegalDocument = {
         { kind: 'h3', text: 'Server Logs' },
         {
           kind: 'p',
-          text: 'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.',
+          text: env.labLive
+            ? 'We do not keep server access logs for this website. The contact form’s 3-day technical log and the live lab’s short technical log are described above.'
+            : 'We do not keep server access logs for this website. The contact form’s 3-day technical log is described above.',
         },
       ],
     },
@@ -143,7 +165,9 @@ export const privacy: LegalDocument = {
         {
           kind: 'ul',
           items: [
-            'Amazon Web Services gets contact form submissions in transit and at rest, the email itself, and the text of any live lab test you run. They host this site, run the email delivery and run the lab’s AI model. Contact data is processed in the US East (N. Virginia) region; live lab tests may be processed in N. Virginia, Ohio or Oregon',
+            env.labLive
+              ? 'Amazon Web Services gets contact form submissions in transit and at rest, the email itself, and the text of any live lab test you run. They host this site, run the email delivery and run the lab’s AI model. Contact data is processed in the US East (N. Virginia) region; live lab tests may be processed in N. Virginia, Ohio or Oregon'
+              : 'Amazon Web Services gets contact form submissions in transit and at rest, and the email itself. They host this site and run the email delivery. Contact data is processed in the US East (N. Virginia) region',
             'Google (Calendar appointment scheduling) gets whatever you enter when you book a call, typically your name, email address and any note you add. This happens only if you click through to book, and Google’s own privacy policy applies from that point',
           ],
         },
@@ -170,7 +194,9 @@ export const privacy: LegalDocument = {
         },
         {
           kind: 'p',
-          text: 'Live lab text: not kept. Daily run counts: 7 days. Technical logs: 3 days.',
+          text: env.labLive
+            ? 'Live lab text: not kept. Daily run counts: 7 days. Technical logs: 3 days.'
+            : 'Daily message counts: 7 days. Technical logs: 3 days.',
         },
         {
           kind: 'p',

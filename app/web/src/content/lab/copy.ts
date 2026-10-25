@@ -1,3 +1,5 @@
+import { env } from '@/lib/env'
+
 import type { Answer, Frequency, QuestionKey, StepAnswers, Verdict } from './rubric'
 
 interface VerdictText {
@@ -11,11 +13,14 @@ interface QuestionText {
   readonly example: string
 }
 
+const METHOD_RULES =
+  'Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict.'
+
 export const labPageCopy = {
   title: 'Should This Be AI?',
   subtitle: 'The Wrong-Tool Test',
   headerDescription:
-    'The wrong-tool test. Find out which steps of your work need AI, and which need a simple program, a checklist or a person.',
+    'Find out which steps of your work need AI, and which need a simple program, a checklist or a person.',
   metaDescription:
     'A free test that sorts each step of a workflow into the tool that fits it, with the reason in plain words.',
   howItWorksHeading: 'How It Works',
@@ -25,9 +30,10 @@ export const labPageCopy = {
     'See which tool fits each step, and the rule that decided it.',
   ],
   methodHeading: 'How the Verdicts Are Made',
-  methodBody:
-    "Every verdict comes from a fixed set of rules written in code. For any set of answers exactly one rule matches, so the same answers always give the same verdict. Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.",
-  evalsLink: 'See Every Eval Run',
+  methodBody: env.labLive
+    ? `${METHOD_RULES} Nothing you type leaves this page unless you send it to us, or run a live test, which sends that test's text to Amazon Bedrock.`
+    : `${METHOD_RULES} Nothing you type leaves this page unless you send it to us.`,
+  evalsLink: 'See the Eval Runs',
   rubricVersion: 'Rubric Version {version}',
 } as const
 

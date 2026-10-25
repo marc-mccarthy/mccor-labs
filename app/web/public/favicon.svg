@@ -1,59 +1,46 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="165 150 720 720">
   <defs>
-    <linearGradient id="stag-antlers" x1="20" y1="12" x2="108" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff9500" />
-      <stop offset="50%" stop-color="#ff7a00" />
-      <stop offset="100%" stop-color="#ff3b30" />
+    <linearGradient id="antler" x1="0" y1="170" x2="0" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffab41"/>
+      <stop offset="0.65" stop-color="#ff8f24"/>
+      <stop offset="1" stop-color="#ff7a00"/>
     </linearGradient>
-    <linearGradient id="stag-head" x1="40" y1="50" x2="88" y2="114" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff3b30" />
-      <stop offset="60%" stop-color="#e02424" />
-      <stop offset="100%" stop-color="#991b1b" />
-    </linearGradient>
-    <linearGradient id="stag-facet-light" x1="64" y1="54" x2="40" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ff6b6b" />
-      <stop offset="100%" stop-color="#dc2626" />
-    </linearGradient>
-    <linearGradient id="stag-shield" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#141418" />
-      <stop offset="100%" stop-color="#08080a" />
-    </linearGradient>
-    <filter id="antler-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
   </defs>
-
-  <!-- Obsidian Badge Background -->
-  <rect width="128" height="128" rx="26" fill="url(#stag-shield)" stroke="#22222a" stroke-width="2.5" />
-
-  <!-- Glowing Orange Antlers (Left & Right Branching) -->
-  <g filter="url(#antler-glow)" stroke="url(#stag-antlers)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Left Main Beam & Tines -->
-    <path d="M56 50 L42 32 L30 18" />
-    <path d="M42 32 L26 34" />
-    <path d="M34 23 L22 20" />
-    <path d="M48 42 L34 46" />
-    
-    <!-- Right Main Beam & Tines -->
-    <path d="M72 50 L86 32 L98 18" />
-    <path d="M86 32 L102 34" />
-    <path d="M94 23 L106 20" />
-    <path d="M80 42 L94 46" />
+  <g fill="none" stroke="url(#antler)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="20" d="M562 392 L520 350 L472 318 L446 288 L432 248 L428 188"/>
+    <path d="M460 262 L482 172"/>
+    <path d="M472 300 L528 215"/>
+    <path d="M492 332 L514 268"/>
+    <path d="M520 350 L555 290"/>
+    <path stroke-width="20" d="M642 392 L684 350 L732 318 L758 288 L772 248 L776 188"/>
+    <path d="M744 262 L722 172"/>
+    <path d="M732 300 L676 215"/>
+    <path d="M712 332 L690 268"/>
+    <path d="M684 350 L649 290"/>
   </g>
-
-  <!-- Geometric Crimson Stag Head Facets -->
-  <!-- Left Cheek & Jaw -->
-  <polygon points="64,54 44,60 48,82 64,112" fill="url(#stag-head)" />
-  <!-- Right Cheek & Jaw (Highlighted) -->
-  <polygon points="64,54 84,60 80,82 64,112" fill="url(#stag-facet-light)" />
-  <!-- Forehead Center Diamond -->
-  <polygon points="64,54 54,68 64,84 74,68" fill="#ff4d4d" />
-  <!-- Left Ear -->
-  <polygon points="46,58 32,54 44,64" fill="#c81e1e" />
-  <!-- Right Ear -->
-  <polygon points="82,58 96,54 84,64" fill="#ff5252" />
-  <!-- Muzzle & Nose Tip -->
-  <polygon points="64,84 56,104 64,112 72,104" fill="#7f1d1d" />
-  <circle cx="64" cy="106" r="2.5" fill="#ff9500" />
+  <g stroke="#9a9aa8" stroke-width="2.5" stroke-opacity="0.6" stroke-linejoin="round">
+    <polygon points="330,690 300,760 270,850 300,852 345,735 365,700" fill="#7f1d1d"/>
+    <polygon points="505,640 590,650 585,720 575,790 548,852 520,850 545,800 555,730 560,662" fill="#991b1b"/>
+    <polygon points="590,650 630,640 650,640 690,672 680,705 640,692 612,655" fill="#991b1b"/>
+    <polygon points="680,705 690,672 702,700 684,740 692,765 666,778 650,768 662,745 666,715" fill="#7f1d1d"/>
+    <polygon points="330,620 325,660 340,690 365,700 360,650 360,600" fill="#e02424"/>
+    <polygon points="360,600 360,650 365,700 395,660 390,625" fill="#ff3b30"/>
+    <polygon points="345,735 380,760 420,800 455,850 480,850 450,780 410,730 395,690 365,700" fill="#991b1b"/>
+    <polygon points="315,605 360,575 375,560 430,555 410,610 390,625 360,600 330,620" fill="#e02424"/>
+    <polygon points="430,555 520,540 470,585 410,610" fill="#ff3b30"/>
+    <polygon points="520,540 505,600 470,585" fill="#ff2a42"/>
+    <polygon points="520,540 560,520 548,600 505,600" fill="#ff2a42"/>
+    <polygon points="410,610 505,600 470,640 440,655 395,660" fill="#e02424"/>
+    <polygon points="505,600 548,600 520,650 470,640" fill="#991b1b"/>
+    <polygon points="548,600 600,560 660,560 655,600 630,640 590,650 560,660" fill="#991b1b"/>
+    <polygon points="560,520 600,500 640,470 660,560 600,560" fill="#ff3b30"/>
+    <polygon points="548,600 560,520 600,560" fill="#e02424"/>
+    <polygon points="575,490 620,485 640,470 600,500 560,520" fill="#e02424"/>
+    <polygon points="557,392 640,392 650,420 620,440 560,470 522,460 525,440" fill="#ff3b30"/>
+    <polygon points="557,392 640,392 596,420" fill="#ff2a42"/>
+    <polygon points="640,392 690,382 666,420 640,412" fill="#e02424"/>
+    <polygon points="525,460 560,470 620,440 622,485 575,492" fill="#991b1b"/>
+    <polygon points="620,440 650,420 640,470 622,485" fill="#7f1d1d"/>
+    <polygon points="584,432 600,428 598,440 584,441" fill="#08080a" stroke="none"/>
+  </g>
 </svg>

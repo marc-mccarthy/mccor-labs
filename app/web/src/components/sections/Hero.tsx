@@ -9,6 +9,7 @@ import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
 import { Parallax } from '@/components/motion/Parallax'
 import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
 import { Badge } from '@/components/ui/badge'
+import { heroMedia } from '@/content/hero-media'
 import { site } from '@/content/site'
 import { cn } from '@/lib/cn'
 
@@ -30,11 +31,11 @@ export function Hero() {
       <Parallax>
         <div className="relative flex min-h-[85vh] items-end">
           <VideoMotionHero
-            posterSrc="/media/brand/mccor-stag-hero.webp"
-            videoSrc="/media/brand/hero-loop.mp4"
-            webmSrc="/media/brand/hero-loop.webm"
-            introSrc="/media/brand/hero-intro.mp4"
-            introWebmSrc="/media/brand/hero-intro.webm"
+            posterSrc={heroMedia.poster}
+            videoSrc={heroMedia.loop.mp4}
+            webmSrc={heroMedia.loop.webm}
+            introSrc={heroMedia.intro.mp4}
+            introWebmSrc={heroMedia.intro.webm}
             onIntroChange={setIntroPlaying}
             altText="McCor Labs dark monolith architecture with glowing red stag"
             className="absolute inset-0"

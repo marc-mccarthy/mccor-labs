@@ -109,7 +109,7 @@ describe('Hero', () => {
     })
     expect(container.querySelector('video source[type="video/webm"]')).toHaveAttribute(
       'src',
-      '/media/brand/hero-intro.webm',
+      '/media/brand/stag-charge-burst-return.webm',
     )
     const scene = await screen.findByTestId('stag-scene')
     expect(scene).not.toHaveClass('opacity-0')
@@ -118,7 +118,7 @@ describe('Hero', () => {
     fireEvent.ended(container.querySelector('video')!)
     expect(container.querySelector('video source[type="video/webm"]')).toHaveAttribute(
       'src',
-      '/media/brand/hero-loop.webm',
+      '/media/brand/stag-idle-loop.webm',
     )
     expect(screen.getByTestId('stag-scene')).not.toHaveClass('opacity-0')
   })
@@ -134,7 +134,7 @@ describe('Hero', () => {
     expect(video.autoplay).toBe(true)
     expect(video.querySelector('source[type="video/webm"]')).toHaveAttribute(
       'src',
-      '/media/brand/hero-loop.webm',
+      '/media/brand/stag-idle-loop.webm',
     )
   })
 

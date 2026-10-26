@@ -68,6 +68,16 @@ describe('renderSignature', () => {
     expect(html).toContain('Swift &amp; Sure')
   })
 
+  it('emits only ASCII so mail clients cannot mis-decode it', () => {
+    const withDot = renderSignature(
+      template,
+      { ...person, title: 'Founder · Engineer' },
+      ctx,
+    )
+    expect(withDot).toContain('Founder &#183; Engineer')
+    expect(withDot).toMatch(/^[\x00-\x7e]*$/)
+  })
+
   it('links the per-person hosted images', () => {
     expect(html).toContain('https://mccorlabs.com/sig/name-marcm.png')
     expect(html).toContain('https://mccorlabs.com/sig/photo-marcm.jpg')

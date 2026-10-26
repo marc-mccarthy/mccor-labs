@@ -44,7 +44,6 @@ const KEPT_UNREFERENCED: ReadonlySet<string> = new Set([
   '/media/brand/mccor-vector-space.webp',
   '/media/brand/stag-logo-run-reassemble.mp4',
   '/media/brand/stag-logo-run-reassemble.webm',
-  '/media/brand/stag-turn-run-burst-return.mp4',
   '/media/brand/systems-loop.mp4',
   '/media/brand/systems-loop.webm',
   '/media/brand/systems-pipeline-loop.mp4',

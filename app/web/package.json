@@ -15,6 +15,8 @@
     "test:a11y": "playwright test -c playwright.config.ts tests/e2e/a11y.spec.ts",
     "portraits": "tsx scripts/build-portraits.ts",
     "build:icons": "tsx scripts/build-icons.ts",
+    "signature": "tsx scripts/signature/build-signature.ts",
+    "signature:scene": "tsx scripts/signature/build-scene.ts",
     "lighthouse": "tsx scripts/lighthouse.ts"
   },
   "dependencies": {

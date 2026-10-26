@@ -33,3 +33,4 @@ lighthouse-report/
 **/.playwright-cli/
 infra/**/superpowers/
 infra/**/.superpowers/
+app/web/signatures/

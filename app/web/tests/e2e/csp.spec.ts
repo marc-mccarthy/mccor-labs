@@ -78,9 +78,14 @@ for (const route of [...ROUTES, UNKNOWN_ROUTE]) {
       await page.mouse.wheel(0, 600)
       await page.waitForTimeout(250)
     }
-    await expect(page.locator('[data-scene-status="idle"]')).toHaveCount(0, {
-      timeout: 15_000,
-    })
+    await page.waitForLoadState('networkidle')
+    const idleScenes = page.locator('[data-scene-status="idle"]')
+    await expect(async () => {
+      if ((await idleScenes.count()) > 0) {
+        await idleScenes.first().scrollIntoViewIfNeeded({ timeout: 1_000 })
+      }
+      await expect(idleScenes).toHaveCount(0, { timeout: 1_000 })
+    }).toPass({ timeout: 15_000 })
     await expect(page.locator('[data-scene-status="fallback"]')).toHaveCount(0)
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500)

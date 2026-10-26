@@ -9,7 +9,7 @@ import { HeroMotionCanvas } from '@/components/motion/HeroMotionCanvas'
 import { Parallax } from '@/components/motion/Parallax'
 import { VideoMotionHero } from '@/components/motion/VideoMotionHero'
 import { Badge } from '@/components/ui/badge'
-import { heroMedia } from '@/content/hero-media'
+import { heroMedia, pickIntro } from '@/content/hero-media'
 import { site } from '@/content/site'
 import { cn } from '@/lib/cn'
 
@@ -23,6 +23,7 @@ const StagScene = motionScene(
 const sloganSentences = site.slogan.split(/(?<=\.)\s+/)
 
 export function Hero() {
+  const [intro] = useState(pickIntro)
   const [introPlaying, setIntroPlaying] = useState(false)
   const sectionRef = useRef<HTMLElement | null>(null)
 
@@ -34,8 +35,8 @@ export function Hero() {
             posterSrc={heroMedia.poster}
             videoSrc={heroMedia.loop.mp4}
             webmSrc={heroMedia.loop.webm}
-            introSrc={heroMedia.intro.mp4}
-            introWebmSrc={heroMedia.intro.webm}
+            introSrc={intro.mp4}
+            introWebmSrc={intro.webm}
             onIntroChange={setIntroPlaying}
             altText="McCor Labs dark monolith architecture with glowing red stag"
             className="absolute inset-0"

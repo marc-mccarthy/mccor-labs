@@ -11,3 +11,5 @@ docs/ui-references/
 infra/
 .media-work/
 .superpowers/
+app/web/signatures/
+app/web/scripts/signature/template.html

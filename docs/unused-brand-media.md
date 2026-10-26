@@ -24,14 +24,13 @@ The font licence stays: `fonts/OFL.txt` must ship beside the Geist font files.
 
 ## Hero intro alternates
 
-`app/web/src/content/hero-media.ts` names the intro and loop the hero plays. To swap, point it at
-one of these, then move the clip it replaced into this list and `KEPT_UNREFERENCED`.
+`app/web/src/content/hero-media.ts` lists the intro clips the hero picks from at random. To add one
+to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`.
 
-| File                                                                                           | Size   |
-| ---------------------------------------------------------------------------------------------- | ------ |
-| [stag-logo-run-reassemble.mp4](../app/web/public/media/brand/stag-logo-run-reassemble.mp4)     | 621 KB |
-| [stag-logo-run-reassemble.webm](../app/web/public/media/brand/stag-logo-run-reassemble.webm)   | 345 KB |
-| [stag-turn-run-burst-return.mp4](../app/web/public/media/brand/stag-turn-run-burst-return.mp4) | 2.1 MB |
+| File                                                                                         | Size   |
+| -------------------------------------------------------------------------------------------- | ------ |
+| [stag-logo-run-reassemble.mp4](../app/web/public/media/brand/stag-logo-run-reassemble.mp4)   | 621 KB |
+| [stag-logo-run-reassemble.webm](../app/web/public/media/brand/stag-logo-run-reassemble.webm) | 345 KB |
 
 ## Stills
 

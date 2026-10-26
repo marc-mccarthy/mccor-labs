@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "marcm",
+    "name": "Marc McCarthy",
+    "title": "Founder · Full-Stack and AI Engineer",
+    "phone": "+1 (612) 555-0123",
+    "email": "marcm@mccorlabs.com",
+    "linkedin": "https://www.linkedin.com/in/marc-mccarthy-placeholder",
+    "facebook": "https://www.facebook.com/mccorlabs",
+    "photo": "marcm"
+  },
+  {
+    "slug": "nateb",
+    "name": "Nate Berg",
+    "title": "Consultation Specialist",
+    "phone": "+1 (612) 555-0124",
+    "email": "nateb@mccorlabs.com",
+    "linkedin": "https://www.linkedin.com/in/nate-berg-placeholder",
+    "facebook": "",
+    "photo": "nateb"
+  },
+  {
+    "slug": "ashleyt",
+    "name": "Ashley Tran",
+    "title": "Designer and Frontend Engineer",
+    "phone": "+1 (612) 555-0125",
+    "email": "ashleyt@mccorlabs.com",
+    "linkedin": "https://www.linkedin.com/in/ashley-tran-placeholder",
+    "facebook": "https://www.facebook.com/mccorlabs",
+    "photo": "ashleyt"
+  },
+  {
+    "slug": "mariem",
+    "name": "Marie Moore",
+    "title": "Project Lead and Quality Engineer",
+    "phone": "+1 (612) 555-0126",
+    "email": "mariem@mccorlabs.com",
+    "linkedin": "",
+    "facebook": "",
+    "photo": "mariem"
+  }
+]

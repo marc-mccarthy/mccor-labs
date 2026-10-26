@@ -13,7 +13,7 @@ JPEG with baked rounded corners, then name as a script-font PNG in `amber`, then
 phone, email, site, "Book a call" and the slogan as live text in a system font stack, LinkedIn and
 Facebook as 20x20 PNG icons.
 
-Scene GIF: cut from the owner's generated video `scripts/signature/scene-source.mp4` (muted), cropped to the stag and pines, cut to the first 2.4 s (one glow sweep, compressed to 1.5 s) spliced to the final 0.7 s (every tree lit, stag rimmed white, right side brightness ramped up because the source ends dimmer on the right), so it sweeps once in 1.5 s and holds fully lit, 10 fps, 96 colours, lightly denoised, background pushed to black, under 500 KB. It plays once (no NETSCAPE loop block) so the glow pass happens a single time; the last frame then stays.
+Scene GIF: cut from the owner's generated video `scripts/signature/scene-source.mp4` (muted), cropped to the stag and pines, cut to the first 2.4 s (one glow sweep, compressed to 1.5 s) spliced to the final 0.7 s (every tree lit, stag rimmed white, brightness peaked at the centre and faded evenly to both edges, with a left-to-right ramp underneath because the source ends dimmer on the right), so it sweeps once in 1.5 s and holds fully lit, 10 fps, 96 colours, lightly denoised, background pushed to black, under 500 KB. It plays once (no NETSCAPE loop block) so the glow pass happens a single time; the last frame then stays.
 
 Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`height` on every
 `img`, alt text, no SVG, WebP, CSS backgrounds, web fonts or CSS animation.

@@ -17,10 +17,10 @@ const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
 const FINALE_START_S = 3.33
-const FINALE_LEFT_GAIN = 0.35
-const FINALE_RIGHT_GAIN = 1.75
-const FINALE_CENTRE_GAIN = 1.2
-const FINALE_EDGE_FALLOFF = 1.1
+const GREEN_CHROMA_MAX = 118
+const STROKE_LUMA_MIN = 135
+const STROKE_LUMA_FLAT = 150
+const STROKE_LUMA_SLOPE = 0.1
 const COLORS = 96
 const DENOISE = 'hqdn3d=4:3:16:12'
 const MAX_BYTES = 500_000
@@ -31,7 +31,9 @@ function filters(): string {
   const crop = `crop=${String(CROP.w)}:${String(CROP.h)}:${String(CROP.x)}:${String(CROP.y)}`
   const levels = `colorlevels=rimin=${String(BLACK_POINT.r)}:gimin=${String(BLACK_POINT.g)}:bimin=${String(BLACK_POINT.b)}`
   const sweep = `[s0]trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)[a]`
-  const evenOut = `geq=lum='min(255,lum(X,Y)*(${String(FINALE_LEFT_GAIN)}+${String(FINALE_RIGHT_GAIN - FINALE_LEFT_GAIN)}*X/W)*(${String(FINALE_CENTRE_GAIN)}-${String(FINALE_EDGE_FALLOFF)}*abs(X/W-0.5)))':cb='cb(X,Y)':cr='cr(X,Y)'`
+  const isGreen = `lt(cr(X/2,Y/2),${String(GREEN_CHROMA_MAX)})*lt(cb(X/2,Y/2),${String(GREEN_CHROMA_MAX)})*gt(lum(X,Y),${String(STROKE_LUMA_MIN)})`
+  const flat = `${String(STROKE_LUMA_FLAT)}+${String(STROKE_LUMA_SLOPE)}*(lum(X,Y)-${String(STROKE_LUMA_MIN)})`
+  const evenOut = `geq=lum='if(${isGreen},${flat},lum(X,Y))':cb='cb(X,Y)':cr='cr(X,Y)'`
   const finale = `[s1]trim=start=${String(FINALE_START_S)},setpts=PTS-STARTPTS,${evenOut}[b]`
   const cut = `[0:v]split[s0][s1];${sweep};${finale};[a][b]concat=n=2:v=1:a=0`
   return `${cut},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`

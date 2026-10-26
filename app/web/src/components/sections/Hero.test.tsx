@@ -40,6 +40,7 @@ describe('Hero', () => {
 
   afterEach(() => {
     sessionStorage.clear()
+    vi.restoreAllMocks()
   })
 
   it('renders exactly one h1 containing the slogan and no tagline', () => {
@@ -103,6 +104,7 @@ describe('Hero', () => {
 
   it('plays the stag charge intro on a first visit and hides the stag scene until it ends', async () => {
     mockMatchMedia(false)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
     const { container } = render(<Hero />)
     await vi.waitFor(() => {
       expect(container.querySelector('video')).not.toBeNull()
@@ -121,6 +123,22 @@ describe('Hero', () => {
       '/media/brand/stag-idle-loop.webm',
     )
     expect(screen.getByTestId('stag-scene')).not.toHaveClass('opacity-0')
+  })
+
+  it.each([
+    [0.5, '/media/brand/stag-turn-run-burst-return.webm'],
+    [0.99, '/media/brand/stag-logo-run-reassemble.webm'],
+  ])('picks the intro from the pool by the random draw %s', async (draw, webm) => {
+    mockMatchMedia(false)
+    vi.spyOn(Math, 'random').mockReturnValue(draw)
+    const { container } = render(<Hero />)
+    await vi.waitFor(() => {
+      expect(container.querySelector('video')).not.toBeNull()
+    })
+    expect(container.querySelector('video source[type="video/webm"]')).toHaveAttribute(
+      'src',
+      webm,
+    )
   })
 
   it('attaches the autoplaying loop once motion is allowed and the intro was seen', async () => {

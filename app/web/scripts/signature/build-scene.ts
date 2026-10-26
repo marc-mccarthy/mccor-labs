@@ -13,8 +13,9 @@ const OUT = join(OUT_DIR, 'scene.gif')
 export const SCENE_W = 596
 export const SCENE_H = 310
 const CROP = { w: 760, h: 395, x: 260, y: 75 }
-const FPS = 6
-const SWEEP_END_S = 1.95
+const FPS = 5
+const SWEEP_END_S = 2.4
+const SWEEP_SLOWDOWN = 2
 const FINALE_START_S = 3.33
 const COLORS = 48
 const DENOISE = 'hqdn3d=14:12:24:18'
@@ -25,7 +26,9 @@ const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
 function filters(): string {
   const crop = `crop=${String(CROP.w)}:${String(CROP.h)}:${String(CROP.x)}:${String(CROP.y)}`
   const levels = `colorlevels=rimin=${String(BLACK_POINT.r)}:gimin=${String(BLACK_POINT.g)}:bimin=${String(BLACK_POINT.b)}`
-  const cut = `select='lt(t,${String(SWEEP_END_S)})+gte(t,${String(FINALE_START_S)})',setpts=N/FRAME_RATE/TB`
+  const sweep = `[s0]trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)[a]`
+  const finale = `[s1]trim=start=${String(FINALE_START_S)},setpts=PTS-STARTPTS[b]`
+  const cut = `[0:v]split[s0][s1];${sweep};${finale};[a][b]concat=n=2:v=1:a=0`
   return `${cut},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
 }
 
@@ -39,7 +42,7 @@ function main(): void {
     '-y',
     '-i',
     SOURCE,
-    '-vf',
+    '-lavfi',
     `${filters()},palettegen=max_colors=${String(COLORS)}`,
     palette,
   ])

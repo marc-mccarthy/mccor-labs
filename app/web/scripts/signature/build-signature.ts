@@ -24,7 +24,7 @@ const SITE_URL = 'https://mccorlabs.com'
 const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
-  holland: { file: 'Holland-JRGaj.ttf', size: 35, lift: 0 },
+  holland: { file: 'Holland.ttf', size: 35, lift: 0 },
   darceyoliver: { file: 'DarceyOliver.ttf', size: 40, lift: 0 },
   allison: { file: 'Allison-Regular.ttf', size: 44, lift: 2 },
 } as const

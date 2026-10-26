@@ -11,32 +11,32 @@
   },
   {
     "slug": "nateb",
-    "name": "Nate Berg",
+    "name": "Nate Best",
     "title": "Consultation Specialist",
-    "phone": "",
+    "phone": "+1 (612) 555-0124",
     "email": "nateb@mccorlabs.com",
-    "linkedin": "https://www.linkedin.com/in/nate-berg-placeholder",
-    "facebook": "",
+    "linkedin": "https://www.linkedin.com/in/nateb-placeholder",
+    "facebook": "https://www.facebook.com/nateb.placeholder",
     "photo": "nateb"
   },
   {
     "slug": "ashleyt",
-    "name": "Ashley Tran",
+    "name": "Ashley Thomas",
     "title": "Designer and Frontend Engineer",
-    "phone": "",
+    "phone": "+1 (612) 555-0125",
     "email": "ashleyt@mccorlabs.com",
-    "linkedin": "https://www.linkedin.com/in/ashley-tran-placeholder",
-    "facebook": "https://www.facebook.com/mccorlabs",
+    "linkedin": "https://www.linkedin.com/in/ashleyt-placeholder",
+    "facebook": "https://www.facebook.com/ashleyt.placeholder",
     "photo": "ashleyt"
   },
   {
     "slug": "mariem",
-    "name": "Marie Moore",
+    "name": "Marie Mohaven",
     "title": "Project Lead and Quality Engineer",
-    "phone": "",
+    "phone": "+1 (612) 555-0126",
     "email": "mariem@mccorlabs.com",
-    "linkedin": "",
-    "facebook": "",
+    "linkedin": "https://www.linkedin.com/in/mariem-placeholder",
+    "facebook": "https://www.facebook.com/mariem.placeholder",
     "photo": "mariem"
   }
 ]

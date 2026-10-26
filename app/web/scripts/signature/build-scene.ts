@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -16,11 +16,9 @@ const CROP = { w: 760, h: 395, x: 260, y: 75 }
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
-const FINALE_START_S = 3.33
-const GREEN_CHROMA_MAX = 118
-const STROKE_LUMA_MIN = 135
-const STROKE_LUMA_FLAT = 150
-const STROKE_LUMA_SLOPE = 0.1
+const LIT_DIM = 0.85
+const FADE_FRAMES = 4
+const FRAME_DELAY_CS = 10
 const COLORS = 96
 const DENOISE = 'hqdn3d=4:3:16:12'
 const MAX_BYTES = 500_000
@@ -30,49 +28,90 @@ const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
 function filters(): string {
   const crop = `crop=${String(CROP.w)}:${String(CROP.h)}:${String(CROP.x)}:${String(CROP.y)}`
   const levels = `colorlevels=rimin=${String(BLACK_POINT.r)}:gimin=${String(BLACK_POINT.g)}:bimin=${String(BLACK_POINT.b)}`
-  const sweep = `[s0]trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)[a]`
-  const isGreen = `lt(cr(X/2,Y/2),${String(GREEN_CHROMA_MAX)})*lt(cb(X/2,Y/2),${String(GREEN_CHROMA_MAX)})*gt(lum(X,Y),${String(STROKE_LUMA_MIN)})`
-  const flat = `${String(STROKE_LUMA_FLAT)}+${String(STROKE_LUMA_SLOPE)}*(lum(X,Y)-${String(STROKE_LUMA_MIN)})`
-  const evenOut = `geq=lum='if(${isGreen},${flat},lum(X,Y))':cb='cb(X,Y)':cr='cr(X,Y)'`
-  const finale = `[s1]trim=start=${String(FINALE_START_S)},setpts=PTS-STARTPTS,${evenOut}[b]`
-  const cut = `[0:v]split[s0][s1];${sweep};${finale};[a][b]concat=n=2:v=1:a=0`
-  return `${cut},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
+  const sweep = `trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)`
+  return `${sweep},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
+}
+
+function renderSweep(dir: string): string[] {
+  execFileSync('ffmpeg', [
+    '-v',
+    'error',
+    '-y',
+    '-i',
+    SOURCE,
+    '-vf',
+    filters(),
+    join(dir, 'sweep-%03d.png'),
+  ])
+  return readdirSync(dir)
+    .filter((name) => name.startsWith('sweep-'))
+    .sort()
+    .map((name) => join(dir, name))
+}
+
+function renderLit(dir: string, sweep: string[]): string {
+  const lit = join(dir, 'lit.png')
+  execFileSync('magick', [
+    ...sweep,
+    '-evaluate-sequence',
+    'max',
+    '-evaluate',
+    'multiply',
+    String(LIT_DIM),
+    lit,
+  ])
+  return lit
+}
+
+function renderFade(dir: string, from: string, to: string): string[] {
+  const frames: string[] = []
+  for (let i = 1; i <= FADE_FRAMES; i++) {
+    const path = join(dir, `fade-${String(i)}.png`)
+    const percent = Math.round((100 * i) / (FADE_FRAMES + 1))
+    execFileSync('magick', [
+      from,
+      to,
+      '-compose',
+      'blend',
+      '-define',
+      `compose:args=${String(percent)}`,
+      '-composite',
+      path,
+    ])
+    frames.push(path)
+  }
+  return frames
 }
 
 function main(): void {
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
-  const palette = join(dir, 'palette.png')
   mkdirSync(OUT_DIR, { recursive: true })
-  execFileSync('ffmpeg', [
-    '-v',
-    'error',
-    '-y',
-    '-i',
-    SOURCE,
-    '-lavfi',
-    `${filters()},palettegen=max_colors=${String(COLORS)}`,
-    palette,
-  ])
-  execFileSync('ffmpeg', [
-    '-v',
-    'error',
-    '-y',
-    '-i',
-    SOURCE,
-    '-i',
-    palette,
-    '-lavfi',
-    `${filters()} [x]; [x][1:v] paletteuse=dither=none:diff_mode=rectangle`,
+  const sweep = renderSweep(dir)
+  const last = sweep.at(-1)
+  if (!last) throw new Error('ffmpeg produced no sweep frames')
+  const lit = renderLit(dir, sweep)
+  const frames = [...sweep, ...renderFade(dir, last, lit), lit]
+  execFileSync('magick', [
+    '-delay',
+    String(FRAME_DELAY_CS),
+    ...frames,
     '-loop',
-    '-1',
+    '1',
+    '-colors',
+    String(COLORS),
+    '-fuzz',
+    OPTIMIZE_FUZZ,
+    '-layers',
+    'Optimize',
     OUT,
   ])
-  execFileSync('magick', [OUT, '-fuzz', OPTIMIZE_FUZZ, '-layers', 'Optimize', OUT])
   rmSync(dir, { recursive: true, force: true })
   const bytes = statSync(OUT).size
   if (bytes > MAX_BYTES)
     throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
-  console.log(`wrote scene.gif ${String(bytes)} bytes, plays once`)
+  console.log(
+    `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
+  )
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

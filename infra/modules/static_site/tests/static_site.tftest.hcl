@@ -88,6 +88,21 @@ run "headers" {
   }
 
   assert {
+    condition     = strcontains(local.csp, "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;")
+    error_message = "CSP must let the Google Analytics tag load from googletagmanager.com."
+  }
+
+  assert {
+    condition     = strcontains(local.csp, "img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com;")
+    error_message = "CSP must allow Google Analytics image beacons."
+  }
+
+  assert {
+    condition     = strcontains(local.csp, "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com;")
+    error_message = "CSP must allow Google Analytics collection requests."
+  }
+
+  assert {
     condition     = !strcontains(local.csp, "upgrade-insecure-requests")
     error_message = "upgrade-insecure-requests is ignored in Report-Only and must be left out."
   }

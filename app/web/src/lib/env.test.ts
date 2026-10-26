@@ -16,6 +16,7 @@ afterEach(() => {
   delete mutableEnv.NEXT_PUBLIC_CONTACT_ENDPOINT
   delete mutableEnv.NEXT_PUBLIC_BOOKING_URL
   delete mutableEnv.NEXT_PUBLIC_LAB_LIVE
+  delete mutableEnv.NEXT_PUBLIC_GA_ID
   mutableEnv.NODE_ENV = 'test'
 })
 
@@ -26,6 +27,26 @@ describe('env', () => {
     expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '0' })).labLive).toBe(false)
     expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: '' })).labLive).toBe(false)
     expect((await loadEnv({ NEXT_PUBLIC_LAB_LIVE: undefined })).labLive).toBe(false)
+  })
+
+  it('leaves Google Analytics off when no measurement ID is set', async () => {
+    expect((await loadEnv({ NEXT_PUBLIC_GA_ID: undefined })).gaId).toBeNull()
+    expect((await loadEnv({ NEXT_PUBLIC_GA_ID: '' })).gaId).toBeNull()
+  })
+
+  it('reads a GA4 measurement ID', async () => {
+    expect((await loadEnv({ NEXT_PUBLIC_GA_ID: 'G-ABC123XYZ9' })).gaId).toBe(
+      'G-ABC123XYZ9',
+    )
+  })
+
+  it('rejects a value that is not a GA4 measurement ID', async () => {
+    await expect(loadEnv({ NEXT_PUBLIC_GA_ID: 'UA-1234-1' })).rejects.toThrow(
+      'NEXT_PUBLIC_GA_ID',
+    )
+    await expect(loadEnv({ NEXT_PUBLIC_GA_ID: 'G-abc<script>' })).rejects.toThrow(
+      'NEXT_PUBLIC_GA_ID',
+    )
   })
 
   it('defaults the site url to production', async () => {

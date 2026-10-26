@@ -13,7 +13,6 @@ export interface SignatureContext {
   assetBase: string
   siteUrl: string
   bookingUrl: string
-  slogan: string
   tokens: Record<string, string>
 }
 
@@ -23,7 +22,7 @@ const TOKEN_KEYS = {
   borderStrong: 'border-strong',
   muted: 'muted',
   text: 'text',
-  link: 'crimson',
+  link: 'accent',
 } as const
 
 const SOCIAL = [
@@ -92,9 +91,9 @@ export function socialCells(person: Person, ctx: SignatureContext): string {
   return SOCIAL.filter(({ key }) => person[key] !== '')
     .map(
       ({ key, file, alt }) =>
-        `<td style="padding:0 8px 0 0;vertical-align:middle;line-height:0;"><a href="${escapeHtml(person[key])}" style="color:${muted};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="20" height="20" alt="${alt}" style="display:block;width:20px;height:20px;border:0;"></a></td>`,
+        `<a href="${escapeHtml(person[key])}" style="color:${muted};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="14" height="14" alt="${alt}" style="width:14px;height:14px;border:0;vertical-align:-2px;margin-left:6px;"></a>`,
     )
-    .join('\n          ')
+    .join('')
 }
 
 export function renderSignature(
@@ -106,7 +105,6 @@ export function renderSignature(
     assetBase: ctx.assetBase,
     siteUrl: ctx.siteUrl,
     bookingUrl: ctx.bookingUrl,
-    slogan: escapeHtml(ctx.slogan),
     slug: person.slug,
     name: escapeHtml(person.name),
     title: escapeHtml(person.title),

@@ -22,7 +22,6 @@ const ctx: SignatureContext = {
   assetBase: 'https://mccorlabs.com/sig',
   siteUrl: 'https://mccorlabs.com',
   bookingUrl: 'https://example.com/book',
-  slogan: 'Swift & Sure',
   tokens: readTokens(css),
 }
 
@@ -65,9 +64,8 @@ describe('renderSignature', () => {
     expect(html).not.toMatch(/{{\w+}}/)
   })
 
-  it('escapes person fields and encodes the slogan', () => {
+  it('escapes person fields', () => {
     expect(html).toContain('Marc &lt;McCarthy&gt;')
-    expect(html).toContain('Swift &amp; Sure')
   })
 
   it('keeps astral characters as one entity', () => {

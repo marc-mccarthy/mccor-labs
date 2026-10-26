@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
 import sharp from 'sharp'
-import { site } from '../../src/content/site'
 import {
   type Person,
   type SignatureContext,
@@ -24,17 +23,17 @@ const SITE_URL = 'https://mccorlabs.com'
 const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
-  holland: { file: 'Holland.ttf', size: 27, lift: 0 },
+  holland: { file: 'Holland.ttf', size: 24, lift: 0 },
 } as const
 type FontKey = keyof typeof FONTS
 const DEFAULT_FONT: FontKey = 'holland'
 
-const NAME_W = 190
-const NAME_H = 34
-const PHOTO_W = 76
-const PHOTO_H = 95
-const PHOTO_RADIUS = 8
-const ICON = 20
+const NAME_W = 170
+const NAME_H = 30
+const PHOTO_W = 52
+const PHOTO_H = 64
+const PHOTO_RADIUS = 6
+const ICON = 14
 const SCALE = 2
 
 const ICON_PATHS = {
@@ -125,7 +124,6 @@ async function main(): Promise<void> {
     assetBase: ASSET_BASE,
     siteUrl: SITE_URL,
     bookingUrl: process.env.NEXT_PUBLIC_BOOKING_URL ?? BOOKING_FALLBACK,
-    slogan: site.slogan,
     tokens,
   }
   const base = requireToken(tokens, 'base')

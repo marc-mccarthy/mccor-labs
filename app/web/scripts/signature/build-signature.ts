@@ -25,7 +25,6 @@ const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
   holland: { file: 'Holland.ttf', size: 35, lift: 0 },
-  darceyoliver: { file: 'DarceyOliver.ttf', size: 40, lift: 0 },
 } as const
 type FontKey = keyof typeof FONTS
 const DEFAULT_FONT: FontKey = 'holland'

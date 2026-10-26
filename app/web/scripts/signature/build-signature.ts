@@ -133,7 +133,7 @@ async function main(): Promise<void> {
   mkdirSync(OUT_HTML, { recursive: true })
   mkdirSync(OUT_ASSETS, { recursive: true })
 
-  await renderNames(people, font, requireToken(tokens, 'accent'), base)
+  await renderNames(people, font, requireToken(tokens, 'amber'), base)
   await Promise.all(people.map((person) => renderPhoto(person, base)))
   await renderIcon('linkedin', requireToken(tokens, 'muted'), base)
   await renderIcon('facebook', requireToken(tokens, 'muted'), base)

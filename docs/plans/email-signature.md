@@ -14,7 +14,7 @@ phone, email, site, "Book a call" and the slogan as live text in a system font s
 Facebook as 20x20 PNG icons. Bottom: a 6 px McCarthy tartan band PNG in `crimson-deep`, `brand`,
 `pine` and `base`.
 
-Scene GIF: 14 frames, 3.5 s loop, 96 colours, under 500 KB. Antler glow breathes 60% to 100% and a
+Scene GIF: 34 frames, 10 s loop, 64 colours, under 500 KB. Antler glow breathes 60% to 100% and a
 soft brightness shimmer travels slowly across the pines and the stag once per loop; the black
 background stays black because the shimmer scales pixel brightness instead of adding light. Frame 1 is the complete static scene because
 classic Outlook shows only the first frame.
@@ -58,5 +58,5 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 
 - `pnpm -F web signature` regenerates all four mocks.
 - `pnpm -F web exec vitest related scripts/signature/build-signature.ts --run` passes.
-- `magick identify app/web/public/sig/scene.gif | wc -l` prints 14; file under 500 KB.
+- `magick identify app/web/public/sig/scene.gif | wc -l` prints 34; file under 500 KB.
 - Paste `signatures/marcm.html` into Gmail, send to Outlook and iPhone, animation plays on iPhone.

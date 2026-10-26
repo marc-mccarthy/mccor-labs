@@ -15,9 +15,9 @@ const W = 880
 const H = 640
 const OUT_W = 440
 const OUT_H = 320
-const FRAMES_N = 14
-const FRAME_DELAY_CS = 25
-const COLORS = 96
+const FRAMES_N = 34
+const FRAME_DELAY_CS = 29
+const COLORS = 64
 const MAX_BYTES = 500_000
 
 const STAG_H = 560
@@ -26,10 +26,11 @@ const ANTLER_FRACTION = 0.36
 const GLOW_BLUR = 30
 const GLOW_MIN = 0.6
 const GLOW_MAX = 1
-const SHIMMER_W = 340
+const SHIMMER_W = 300
 const SHIMMER_SKEW = 120
-const SHIMMER_GAIN = 2.1
-const SHIMMER_LIFT = 4
+const SHIMMER_GAIN = 3
+const SHIMMER_LIFT = 0
+const SHIMMER_BLOOM = 10
 
 const PINES: readonly { x: number; h: number; faint?: boolean }[] = [
   { x: 120, h: 400 },
@@ -160,8 +161,10 @@ async function renderFrame(
     GLOW_MIN + (GLOW_MAX - GLOW_MIN) * (0.5 - 0.5 * Math.cos(2 * Math.PI * t))
   const shimmerX = Math.round(-SHIMMER_W + t * (W + SHIMMER_W * 2))
   const scene = await composeScene(bg, stag, stagW, glow, glowAlpha)
-  const lit = await sharp(scene)
-    .linear(SHIMMER_GAIN, SHIMMER_LIFT)
+  const bright = await sharp(scene).linear(SHIMMER_GAIN, SHIMMER_LIFT).png().toBuffer()
+  const bloom = await sharp(bright).blur(SHIMMER_BLOOM).png().toBuffer()
+  const lit = await sharp(bright)
+    .composite([{ input: bloom, blend: 'screen' }])
     .ensureAlpha()
     .composite([{ input: shimmerMask(shimmerX), blend: 'dest-in' }])
     .png()

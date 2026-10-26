@@ -10,8 +10,8 @@ const SOURCE = join(HERE, 'scene-source.mp4')
 const OUT_DIR = join(WEB, 'public', 'sig')
 const OUT = join(OUT_DIR, 'scene.gif')
 
-export const SCENE_W = 596
-export const SCENE_H = 310
+export const SCENE_W = 436
+export const SCENE_H = 227
 const CROP = { w: 760, h: 395, x: 260, y: 75 }
 const FPS = 10
 const SWEEP_END_S = 2.4

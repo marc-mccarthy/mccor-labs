@@ -24,15 +24,15 @@ const SITE_URL = 'https://mccorlabs.com'
 const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
-  holland: { file: 'Holland.ttf', size: 35, lift: 0 },
+  holland: { file: 'Holland.ttf', size: 27, lift: 0 },
 } as const
 type FontKey = keyof typeof FONTS
 const DEFAULT_FONT: FontKey = 'holland'
 
-const NAME_W = 240
-const NAME_H = 44
-const PHOTO_W = 98
-const PHOTO_H = 122
+const NAME_W = 190
+const NAME_H = 34
+const PHOTO_W = 76
+const PHOTO_H = 95
 const PHOTO_RADIUS = 8
 const ICON = 20
 const SCALE = 2

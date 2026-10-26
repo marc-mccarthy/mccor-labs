@@ -28,8 +28,9 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
   one mixed PR).
 - Ruling: name rendered to PNG on the `base` background, never transparent (cost if wrong: invisible
   name in light mode).
-- Ruling: per-person HTML lands in `app/web/signatures/`, not under `public/`, so phone numbers are
-  not published (cost if wrong: staff copy from a file instead of a URL).
+- Ruling: per-person HTML lands in `app/web/signatures/`, gitignored and outside `public/`, so
+  phone numbers are neither committed nor published (cost if wrong: staff copy from a local file
+  instead of a URL).
 - Ruling: the owner chose Darcey Oliver (Eldertype Studio), which is personal-use only without a
   paid licence, so it is not bundled. `build-signature.ts` uses it when a licensed
   `fonts/DarceyOliver.ttf` exists and falls back to Allison (SIL OFL) otherwise (cost if wrong: a

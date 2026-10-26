@@ -1,6 +1,6 @@
 # Email signature
 
-Created: 2026-10-25. Last update: 2026-10-25.
+Created: 2026-10-25. Last update: 2026-10-26.
 
 One shared HTML signature for every McCor Labs mailbox. Only name, title, phone, email, photo,
 LinkedIn and Facebook change per person; the card, art and animation are identical.
@@ -14,8 +14,9 @@ phone, email, site, "Book a call" and the slogan as live text in a system font s
 Facebook as 20x20 PNG icons. Bottom: a 6 px McCarthy tartan band PNG in `crimson-deep`, `brand`,
 `pine` and `base`.
 
-Scene GIF: 12 frames, 3 s loop, 128 colours, under 500 KB. Antler glow breathes 60% to 100% and a
-light sweep crosses the pine outlines once per loop. Frame 1 is the complete static scene because
+Scene GIF: 14 frames, 3.5 s loop, 96 colours, under 500 KB. Antler glow breathes 60% to 100% and a
+soft brightness shimmer travels slowly across the pines and the stag once per loop; the black
+background stays black because the shimmer scales pixel brightness instead of adding light. Frame 1 is the complete static scene because
 classic Outlook shows only the first frame.
 
 Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`height` on every
@@ -33,8 +34,10 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
   name in light mode).
 - Ruling: per-person HTML lands in `app/web/signatures/`, not under `public/`, so phone numbers are
   not published (cost if wrong: staff copy from a file instead of a URL).
-- Ruling: two script font candidates in the mocks, Mr Dafoe and Allison (SIL OFL); the owner picks
-  one and the other is deleted (cost if wrong: one font swap).
+- Ruling: the owner chose Darcey Oliver (Eldertype Studio), which is personal-use only without a
+  paid licence, so it is not bundled. `build-signature.ts` uses it when a licensed
+  `fonts/DarceyOliver.ttf` exists and falls back to Allison (SIL OFL) otherwise (cost if wrong: a
+  licence breach in every outgoing mail).
 - Ruling: hosted assets live under `app/web/public/sig/`, not `public/media/`, because
   `scripts/hash-assets.ts` renames everything under `media/` on build and pasted signatures need
   stable URLs (cost if wrong: broken images in every sent mail).
@@ -48,13 +51,12 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 - T2 `build-scene.ts` draws the pine and grass background as SVG, composes 12 frames with
   `sharp` and assembles `scene.gif` with `magick` (`pnpm -F web signature:scene`).
 - T3 `people.json`, `template.html`, `signature.ts`, `build-signature.ts`, tests, `pnpm -F web signature`.
-- T4 Light and dark Playwright screenshots of `signatures/marcm.html` for both fonts, sent to the
-  owner.
-- T5 Font pick, drop the other, ship.
+- T4 Light and dark Playwright screenshots of `signatures/marcm.html`, sent to the owner.
+- T5 Owner supplies the licensed Darcey Oliver file and real phone numbers, then ship.
 
 ## Verification
 
 - `pnpm -F web signature` regenerates all four mocks.
 - `pnpm -F web exec vitest related scripts/signature/build-signature.ts --run` passes.
-- `magick identify app/web/public/sig/scene.gif | wc -l` prints 12; file under 500 KB.
+- `magick identify app/web/public/sig/scene.gif | wc -l` prints 14; file under 500 KB.
 - Paste `signatures/marcm.html` into Gmail, send to Outlook and iPhone, animation plays on iPhone.

@@ -15,20 +15,21 @@ const W = 880
 const H = 640
 const OUT_W = 440
 const OUT_H = 320
-const FRAMES_N = 12
+const FRAMES_N = 14
 const FRAME_DELAY_CS = 25
-const COLORS = 128
+const COLORS = 96
 const MAX_BYTES = 500_000
 
 const STAG_H = 560
 const STAG_Y = 60
 const ANTLER_FRACTION = 0.36
 const GLOW_BLUR = 30
-const GLOW_MIN = 0.25
+const GLOW_MIN = 0.6
 const GLOW_MAX = 1
-const SWEEP_W = 220
-const SWEEP_ALPHA = 0.55
-const SWEEP_SKEW = 90
+const SHIMMER_W = 340
+const SHIMMER_SKEW = 120
+const SHIMMER_GAIN = 2.1
+const SHIMMER_LIFT = 4
 
 const PINES: readonly { x: number; h: number; faint?: boolean }[] = [
   { x: 120, h: 400 },
@@ -113,10 +114,37 @@ async function glowLayer(stag: Buffer, width: number, amber: string): Promise<Bu
     .toBuffer()
 }
 
-function sweepSvg(x: number, pine: string): Buffer {
+function shimmerMask(x: number): Buffer {
   return Buffer.from(
-    String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="${pine}" stop-opacity="0"/><stop offset="0.5" stop-color="${pine}" stop-opacity="${SWEEP_ALPHA}"/><stop offset="1" stop-color="${pine}" stop-opacity="0"/></linearGradient></defs><polygon points="${x},0 ${x + SWEEP_W},0 ${x + SWEEP_W - SWEEP_SKEW},${H} ${x - SWEEP_SKEW},${H}" fill="url(#g)"/></svg>`,
+    String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><polygon points="${x},0 ${x + SHIMMER_W},0 ${x + SHIMMER_W - SHIMMER_SKEW},${H} ${x - SHIMMER_SKEW},${H}" fill="url(#g)"/></svg>`,
   )
+}
+
+async function composeScene(
+  bg: Buffer,
+  stag: Buffer,
+  stagW: number,
+  glow: Buffer,
+  glowAlpha: number,
+): Promise<Buffer> {
+  const stagX = Math.round((W - stagW) / 2)
+  const glowFaded = await sharp(glow)
+    .ensureAlpha()
+    .linear([1, 1, 1, glowAlpha], [0, 0, 0, 0])
+    .png()
+    .toBuffer()
+  return sharp(bg)
+    .composite([
+      {
+        input: glowFaded,
+        left: stagX - GLOW_BLUR * 2,
+        top: STAG_Y - GLOW_BLUR * 2,
+        blend: 'screen',
+      },
+      { input: stag, left: stagX, top: STAG_Y },
+    ])
+    .png()
+    .toBuffer()
 }
 
 async function renderFrame(
@@ -126,30 +154,21 @@ async function renderFrame(
   stag: Buffer,
   stagW: number,
   glow: Buffer,
-  pine: string,
 ): Promise<string> {
   const t = i / FRAMES_N
   const glowAlpha =
     GLOW_MIN + (GLOW_MAX - GLOW_MIN) * (0.5 - 0.5 * Math.cos(2 * Math.PI * t))
-  const sweepX = Math.round(-SWEEP_W + t * (W + SWEEP_W * 2))
-  const stagX = Math.round((W - stagW) / 2)
-  const glowFaded = await sharp(glow)
+  const shimmerX = Math.round(-SHIMMER_W + t * (W + SHIMMER_W * 2))
+  const scene = await composeScene(bg, stag, stagW, glow, glowAlpha)
+  const lit = await sharp(scene)
+    .linear(SHIMMER_GAIN, SHIMMER_LIFT)
     .ensureAlpha()
-    .linear([1, 1, 1, glowAlpha], [0, 0, 0, 0])
+    .composite([{ input: shimmerMask(shimmerX), blend: 'dest-in' }])
     .png()
     .toBuffer()
   const path = join(dir, `frame-${String(i).padStart(2, '0')}.png`)
-  const composed = await sharp(bg)
-    .composite([
-      { input: sweepSvg(sweepX, pine), blend: 'screen' },
-      {
-        input: glowFaded,
-        left: stagX - GLOW_BLUR * 2,
-        top: STAG_Y - GLOW_BLUR * 2,
-        blend: 'screen',
-      },
-      { input: stag, left: stagX, top: STAG_Y },
-    ])
+  const composed = await sharp(scene)
+    .composite([{ input: lit }])
     .png()
     .toBuffer()
   await sharp(composed).resize(OUT_W, OUT_H).png().toFile(path)
@@ -174,9 +193,7 @@ async function main(): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), 'sig-frames-'))
   const frames: string[] = []
   for (let i = 0; i < FRAMES_N; i++) {
-    frames.push(
-      await renderFrame(i, dir, bg, stag, width, glow, requireToken(tokens, 'pine')),
-    )
+    frames.push(await renderFrame(i, dir, bg, stag, width, glow))
   }
   mkdirSync(join(WEB, 'public', 'sig'), { recursive: true })
   execFileSync('magick', [
@@ -187,6 +204,8 @@ async function main(): Promise<void> {
     ...frames,
     '-colors',
     String(COLORS),
+    '-fuzz',
+    '4%',
     '-layers',
     'Optimize',
     OUT,

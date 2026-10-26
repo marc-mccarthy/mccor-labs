@@ -23,7 +23,7 @@ const TOKEN_KEYS = {
   borderStrong: 'border-strong',
   muted: 'muted',
   text: 'text',
-  accent: 'accent',
+  link: 'crimson',
 } as const
 
 const SOCIAL = [

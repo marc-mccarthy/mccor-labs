@@ -34,12 +34,10 @@ type FontKey = keyof typeof FONTS
 
 const NAME_W = 240
 const NAME_H = 44
-const PHOTO_W = 72
-const PHOTO_H = 90
+const PHOTO_W = 98
+const PHOTO_H = 122
 const PHOTO_RADIUS = 8
 const ICON = 20
-const TARTAN_W = 596
-const TARTAN_H = 6
 const SCALE = 2
 
 const ICON_PATHS = {
@@ -117,27 +115,6 @@ async function renderIcon(
     .toFile(join(OUT_ASSETS, `${name}.png`))
 }
 
-async function renderTartan(tokens: Record<string, string>): Promise<void> {
-  const stripes = [
-    'crimson-shadow',
-    'crimson-deep',
-    'crimson-shadow',
-    'base',
-    'grass',
-    'base',
-  ]
-  const unit = 5
-  const rects = stripes
-    .map(
-      (t, i) =>
-        String.raw`<rect x="${i * unit}" width="${unit}" height="${TARTAN_H}" fill="${requireToken(tokens, t)}"/>`,
-    )
-    .join('')
-  const pattern = String.raw`<pattern id="p" width="${stripes.length * unit}" height="${TARTAN_H}" patternUnits="userSpaceOnUse">${rects}</pattern>`
-  const svg = String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${TARTAN_W}" height="${TARTAN_H}"><defs>${pattern}</defs><rect width="${TARTAN_W}" height="${TARTAN_H}" fill="url(#p)"/></svg>`
-  await sharp(Buffer.from(svg)).png().toFile(join(OUT_ASSETS, 'tartan.png'))
-}
-
 async function main(): Promise<void> {
   const font = pickFont()
   const tokens = readTokens(
@@ -160,7 +137,6 @@ async function main(): Promise<void> {
   await Promise.all(people.map((person) => renderPhoto(person, base)))
   await renderIcon('linkedin', requireToken(tokens, 'muted'), base)
   await renderIcon('facebook', requireToken(tokens, 'muted'), base)
-  await renderTartan(tokens)
 
   for (const person of people) {
     writeFileSync(

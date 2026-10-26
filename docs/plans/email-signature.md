@@ -8,11 +8,10 @@ LinkedIn and Facebook change per person; the card, art and animation are identic
 ## Design
 
 Card 600 wide on an opaque `base` background with a 2 px `border` outline, so light and dark mail
-clients render it the same. Top: animated stag scene GIF (596x361). Below, left: photo 72x90 JPEG
-with baked rounded corners. Right: name as a script-font PNG in `amber`, then title,
+clients render it the same. Top: animated stag scene GIF (596x361). Below, centred as one row: photo 98x122
+JPEG with baked rounded corners, then name as a script-font PNG in `amber`, then title,
 phone, email, site, "Book a call" and the slogan as live text in a system font stack, LinkedIn and
-Facebook as 20x20 PNG icons. Bottom: a 6 px McCarthy tartan band PNG in `crimson-deep`, `brand`,
-`pine` and `base`.
+Facebook as 20x20 PNG icons.
 
 Scene GIF: cut from the owner's generated video `scripts/signature/scene-source.mp4` (muted), cropped to the stag and pines, 7 fps, 64 colours, denoised, background pushed to black, under 500 KB. It plays once (no NETSCAPE loop block) so the glow pass happens a single time; the last frame then stays.
 

@@ -8,7 +8,7 @@ LinkedIn and Facebook change per person; the card, art and animation are identic
 ## Design
 
 Card 600 wide on an opaque `base` background with a 2 px `border` outline, so light and dark mail
-clients render it the same. Top: animated stag scene GIF (596x361). Below, centred as one row: photo 98x122
+clients render it the same. Top: animated stag scene GIF (596x310). Below, centred as one row: photo 98x122
 JPEG with baked rounded corners, then name as a script-font PNG in `amber`, then title,
 phone, email, site, "Book a call" and the slogan as live text in a system font stack, LinkedIn and
 Facebook as 20x20 PNG icons.

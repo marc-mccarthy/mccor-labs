@@ -126,8 +126,9 @@ describe('Hero', () => {
   })
 
   it.each([
+    [0.49, '/media/brand/stag-charge-burst-return.webm'],
     [0.5, '/media/brand/stag-turn-run-burst-return.webm'],
-    [0.99, '/media/brand/stag-logo-run-reassemble.webm'],
+    [0.99, '/media/brand/stag-turn-run-burst-return.webm'],
   ])('picks the intro from the pool by the random draw %s', async (draw, webm) => {
     mockMatchMedia(false)
     vi.spyOn(Math, 'random').mockReturnValue(draw)

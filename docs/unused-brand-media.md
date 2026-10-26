@@ -22,6 +22,16 @@ The font licence stays: `fonts/OFL.txt` must ship beside the Geist font files.
 | [systems-pipeline-loop.mp4](../app/web/public/media/brand/systems-pipeline-loop.mp4)   | 3.6 MB |
 | [systems-pipeline-loop.webm](../app/web/public/media/brand/systems-pipeline-loop.webm) | 3.6 MB |
 
+## Hero intro alternates
+
+`app/web/src/content/hero-media.ts` lists the intro clips the hero picks from at random. To add one
+to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`.
+
+| File                                                                                         | Size   |
+| -------------------------------------------------------------------------------------------- | ------ |
+| [stag-logo-run-reassemble.mp4](../app/web/public/media/brand/stag-logo-run-reassemble.mp4)   | 621 KB |
+| [stag-logo-run-reassemble.webm](../app/web/public/media/brand/stag-logo-run-reassemble.webm) | 345 KB |
+
 ## Stills
 
 | File                                                                                 | Size   |

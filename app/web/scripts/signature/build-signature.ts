@@ -24,15 +24,15 @@ const SITE_URL = 'https://mccorlabs.com'
 const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
+  holland: { file: 'Holland-JRGaj.ttf', size: 35, lift: 0 },
   darceyoliver: { file: 'DarceyOliver.ttf', size: 40, lift: 0 },
   allison: { file: 'Allison-Regular.ttf', size: 44, lift: 2 },
 } as const
-const DEFAULT_FONT: FontKey = existsSync(
-  join(import.meta.dirname, 'fonts', FONTS.darceyoliver.file),
-)
-  ? 'darceyoliver'
-  : 'allison'
 type FontKey = keyof typeof FONTS
+const DEFAULT_FONT: FontKey =
+  (['holland', 'darceyoliver'] as const).find((key) =>
+    existsSync(join(import.meta.dirname, 'fonts', FONTS[key].file)),
+  ) ?? 'allison'
 
 const NAME_W = 240
 const NAME_H = 44

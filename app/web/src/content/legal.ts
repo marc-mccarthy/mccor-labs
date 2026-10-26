@@ -34,6 +34,56 @@ const quietLabBlocks: readonly LegalBlock[] = [
   },
 ]
 
+const analytics = env.gaId !== null
+
+const trackingSentence = analytics
+  ? 'We use Google Analytics to count visits and see which pages are read. It sets cookies in your browser, unless your browser sends a Global Privacy Control or Do Not Track signal.'
+  : 'We do not use cookies. We do not use analytics.'
+
+const quietReadingBlocks: readonly LegalBlock[] = [
+  {
+    kind: 'p',
+    text: 'Nothing is collected in your browser. Specifically:',
+  },
+  {
+    kind: 'ul',
+    items: [
+      'No cookies are set. Not for analytics, not for advertising, not for functionality',
+      'No analytics service is used. We do not know how many people visit this site or which pages they read',
+      'No advertising or tracking pixels',
+      'No embedded third-party scripts. Fonts are served from our own domain rather than a font CDN, so no third party sees your request for them',
+      'No social media widgets or share buttons that phone home',
+    ],
+  },
+  {
+    kind: 'p',
+    text: 'If you have turned on a "do not track" or "global privacy control" signal, there is nothing here for it to switch off.',
+  },
+]
+
+const analyticsReadingBlocks: readonly LegalBlock[] = [
+  {
+    kind: 'p',
+    text: 'One thing is collected in your browser: Google Analytics counts visits. Specifically:',
+  },
+  {
+    kind: 'ul',
+    items: [
+      'Google Analytics records the pages you open, the site that sent you here, your approximate location (city level), and your device, browser and screen size. It does not log or store your IP address',
+      'It sets two cookies, _ga and one named _ga_ followed by part of our measurement ID, so it can tell a returning visitor from a new one. They last up to 2 years',
+      'We have turned off Google signals and advertising personalization, so this data is not linked to your Google account or used to show you ads',
+      'No other cookies are set. Not for advertising, not for functionality',
+      'No advertising or tracking pixels',
+      'No other third-party scripts. Fonts are served from our own domain rather than a font CDN, so no third party sees your request for them',
+      'No social media widgets or share buttons that phone home',
+    ],
+  },
+  {
+    kind: 'p',
+    text: 'If your browser sends a Global Privacy Control or Do Not Track signal, Google Analytics is not loaded at all. You can also block it with Google’s opt-out browser add-on or any content blocker.',
+  },
+]
+
 export const privacy: LegalDocument = {
   title: 'Privacy Policy',
   description: 'How we handle information you send us.',
@@ -62,8 +112,8 @@ export const privacy: LegalDocument = {
         {
           kind: 'p',
           text: env.labLive
-            ? 'We collect what you send us through the contact form. If you use the live part of our lab, the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.'
-            : 'We collect what you send us through the contact form. The live part of our lab is not switched on, so nothing you type in the lab is sent to an AI service. We do not use cookies. We do not use analytics. We do not track you across websites, and we do not sell or share your information with anyone for advertising.',
+            ? `We collect what you send us through the contact form. If you use the live part of our lab, the text you type for that test is sent to Amazon Bedrock to run it and is not stored by us. ${trackingSentence} We do not track you across websites, and we do not sell or share your information with anyone for advertising.`
+            : `We collect what you send us through the contact form. The live part of our lab is not switched on, so nothing you type in the lab is sent to an AI service. ${trackingSentence} We do not track you across websites, and we do not sell or share your information with anyone for advertising.`,
         },
         {
           kind: 'p',
@@ -127,24 +177,7 @@ export const privacy: LegalDocument = {
           text: 'Once a week, an automated email tells us how many marks each rule and verdict received for each reason. We use these counts to improve the rubric.',
         },
         { kind: 'h3', text: 'When You Simply Read the Site' },
-        {
-          kind: 'p',
-          text: 'Nothing is collected in your browser. Specifically:',
-        },
-        {
-          kind: 'ul',
-          items: [
-            'No cookies are set. Not for analytics, not for advertising, not for functionality',
-            'No analytics service is used. We do not know how many people visit this site or which pages they read',
-            'No advertising or tracking pixels',
-            'No embedded third-party scripts. Fonts are served from our own domain rather than a font CDN, so no third party sees your request for them',
-            'No social media widgets or share buttons that phone home',
-          ],
-        },
-        {
-          kind: 'p',
-          text: 'If you have turned on a "do not track" or "global privacy control" signal, there is nothing here for it to switch off.',
-        },
+        ...(analytics ? analyticsReadingBlocks : quietReadingBlocks),
         {
           kind: 'p',
           text: 'The site does store a small amount of information in your own browser to remember your preferences. This never leaves your device, is never sent to us, and you can clear it at any time through your browser settings.',
@@ -168,12 +201,19 @@ export const privacy: LegalDocument = {
             env.labLive
               ? 'Amazon Web Services gets contact form submissions in transit and at rest, the email itself, and the text of any live lab test you run. They host this site, run the email delivery and run the lab’s AI model. Contact data is processed in the US East (N. Virginia) region; live lab tests may be processed in N. Virginia, Ohio or Oregon'
               : 'Amazon Web Services gets contact form submissions in transit and at rest, and the email itself. They host this site and run the email delivery. Contact data is processed in the US East (N. Virginia) region',
+            ...(analytics
+              ? [
+                  'Google (Google Analytics) gets the visit details described under When You Simply Read the Site. Google processes them for us as a service provider, mostly in the US, and we have switched off its sharing of this data for Google’s own products and advertising',
+                ]
+              : []),
             'Google (Calendar appointment scheduling) gets whatever you enter when you book a call, typically your name, email address and any note you add. This happens only if you click through to book, and Google’s own privacy policy applies from that point',
           ],
         },
         {
           kind: 'p',
-          text: 'That is the complete list. We do not use a CRM, an email marketing platform, an analytics provider, an advertising network, or a chat widget.',
+          text: analytics
+            ? 'That is the complete list. We do not use a CRM, an email marketing platform, an advertising network, or a chat widget.'
+            : 'That is the complete list. We do not use a CRM, an email marketing platform, an analytics provider, an advertising network, or a chat widget.',
         },
         {
           kind: 'p',
@@ -202,6 +242,14 @@ export const privacy: LegalDocument = {
           kind: 'p',
           text: 'Verdict marks are deleted automatically after 90 days. Daily counts are deleted after 7 days.',
         },
+        ...(analytics
+          ? [
+              {
+                kind: 'p' as const,
+                text: 'Google Analytics visit data: 14 months, then Google deletes it automatically.',
+              },
+            ]
+          : []),
         {
           kind: 'p',
           text: 'Ask us to delete your information sooner and we will, unless we are legally required to keep it.',
@@ -281,7 +329,9 @@ export const privacy: LegalDocument = {
       blocks: [
         {
           kind: 'p',
-          text: 'If we change what we collect, adding analytics for instance, or a new tool that handles your information, we will update this page and change the date at the top. Material changes will be flagged on the page rather than made quietly.',
+          text: analytics
+            ? 'If we change what we collect, or add a new tool that handles your information, we will update this page and change the date at the top. Material changes will be flagged on the page rather than made quietly.'
+            : 'If we change what we collect, adding analytics for instance, or a new tool that handles your information, we will update this page and change the date at the top. Material changes will be flagged on the page rather than made quietly.',
         },
       ],
     },

@@ -1,14 +1,16 @@
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import type { LegalDocument } from './types'
 
-async function loadPrivacy(labLive: boolean): Promise<LegalDocument> {
+async function loadPrivacy(labLive: boolean, gaId = ''): Promise<LegalDocument> {
   vi.stubEnv('NEXT_PUBLIC_LAB_LIVE', labLive ? '1' : '0')
+  vi.stubEnv('NEXT_PUBLIC_GA_ID', gaId)
   vi.resetModules()
   return (await import('./legal')).privacy
 }
 
 const livePrivacy = await loadPrivacy(true)
 const quietPrivacy = await loadPrivacy(false)
+const analyticsPrivacy = await loadPrivacy(false, 'G-ABC123XYZ9')
 
 afterAll(() => {
   vi.unstubAllEnvs()
@@ -249,5 +251,58 @@ describe('privacy document with the live lab off', () => {
     ]) {
       expect(allText(quietPrivacy)).toContain(heading)
     }
+  })
+})
+
+describe('privacy document with Google Analytics off', () => {
+  it('never mentions Google Analytics or its cookies', () => {
+    const text = allText(quietPrivacy).join('\n')
+    expect(text).not.toContain('Google Analytics')
+    expect(text).not.toContain('_ga')
+    expect(text).toContain(
+      'No cookies are set. Not for analytics, not for advertising, not for functionality',
+    )
+  })
+})
+
+describe('privacy document with Google Analytics on', () => {
+  const text = allText(analyticsPrivacy).join('\n')
+
+  it('says in the short version that Google Analytics sets cookies', () => {
+    const first = section('The Short Version', analyticsPrivacy).blocks[0]
+    const body = first?.kind === 'p' ? first.text : ''
+    expect(body).toContain('We use Google Analytics to count visits')
+    expect(body).not.toContain('We do not use cookies')
+    expect(body).not.toContain('We do not use analytics')
+    expect(body).toContain('we do not sell or share your information')
+  })
+
+  it('names the cookies, how long they last and what is counted', () => {
+    expect(text).toContain('_ga')
+    expect(text).toContain('2 years')
+    expect(text).not.toContain('No cookies are set')
+    expect(text).not.toContain('No analytics service is used')
+  })
+
+  it('does not load Google Analytics when the browser sends a privacy signal', () => {
+    expect(text).toContain(
+      'If your browser sends a Global Privacy Control or Do Not Track signal, Google Analytics is not loaded at all.',
+    )
+  })
+
+  it('lists Google Analytics among who else sees information and drops it from the never-used list', () => {
+    const others = section('Who Else Sees Your Information', analyticsPrivacy)
+    const list = others.blocks.find((block) => block.kind === 'ul')
+    expect(list?.kind === 'ul' ? list.items.join('\n') : '').toContain('Google Analytics')
+    expect(allText(analyticsPrivacy)).not.toContain(
+      'That is the complete list. We do not use a CRM, an email marketing platform, an analytics provider, an advertising network, or a chat widget.',
+    )
+  })
+
+  it('states how long Google keeps visit data', () => {
+    const retention = section('How Long We Keep It', analyticsPrivacy).blocks
+    expect(
+      retention.map((block) => (block.kind === 'p' ? block.text : '')).join('\n'),
+    ).toContain('Google Analytics visit data: 14 months')
   })
 })

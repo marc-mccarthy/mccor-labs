@@ -7,17 +7,14 @@ LinkedIn and Facebook change per person; the card, art and animation are identic
 
 ## Design
 
-Card 600x160 on an opaque `base` background with a 2 px `border` outline, so light and dark mail
-clients render it the same. Left: animated stag scene GIF (220x160, retina source 440x320). Middle:
-photo 72x90 JPEG with baked rounded corners. Right: name as a script-font PNG in `amber`, then title,
+Card 600 wide on an opaque `base` background with a 2 px `border` outline, so light and dark mail
+clients render it the same. Top: animated stag scene GIF (596x361). Below, left: photo 72x90 JPEG
+with baked rounded corners. Right: name as a script-font PNG in `amber`, then title,
 phone, email, site, "Book a call" and the slogan as live text in a system font stack, LinkedIn and
 Facebook as 20x20 PNG icons. Bottom: a 6 px McCarthy tartan band PNG in `crimson-deep`, `brand`,
 `pine` and `base`.
 
-Scene GIF: 34 frames, 10 s loop, 64 colours, under 500 KB. Antler glow breathes 60% to 100% and a
-soft brightness shimmer travels slowly across the pines and the stag once per loop; the black
-background stays black because the shimmer scales pixel brightness instead of adding light. Frame 1 is the complete static scene because
-classic Outlook shows only the first frame.
+Scene GIF: cut from the owner's generated video `scripts/signature/scene-source.mp4` (muted), cropped to the stag and pines, 7 fps, 64 colours, denoised, background pushed to black, under 500 KB. It plays once (no NETSCAPE loop block) so the glow pass happens a single time; the last frame then stays.
 
 Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`height` on every
 `img`, alt text, no SVG, WebP, CSS backgrounds, web fonts or CSS animation.
@@ -41,15 +38,14 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 - Ruling: hosted assets live under `app/web/public/sig/`, not `public/media/`, because
   `scripts/hash-assets.ts` renames everything under `media/` on build and pasted signatures need
   stable URLs (cost if wrong: broken images in every sent mail).
-- Ruling: the pine and grass background is drawn procedurally as SVG in `build-scene.ts`, not by
-  agy. The agy asset run had no image tool and its sandbox could not write into the repo, so it was
-  stopped after 95 steps (cost if wrong: less organic art than a painted layer).
+- Ruling: the scene comes from the owner's generated video, not procedural SVG or agy; the build
+  only crops, denoises and quantises it (cost if wrong: regenerate the video).
 
 ## Tasks
 
 - T1 Tokens and this plan.
-- T2 `build-scene.ts` draws the pine and grass background as SVG, composes 12 frames with
-  `sharp` and assembles `scene.gif` with `magick` (`pnpm -F web signature:scene`).
+- T2 `build-scene.ts` converts `scene-source.mp4` to `scene.gif` with ffmpeg and a `magick`
+  optimize pass (`pnpm -F web signature:scene`).
 - T3 `people.json`, `template.html`, `signature.ts`, `build-signature.ts`, tests, `pnpm -F web signature`.
 - T4 Light and dark Playwright screenshots of `signatures/marcm.html`, sent to the owner.
 - T5 Owner supplies the licensed Darcey Oliver file and real phone numbers, then ship.
@@ -58,5 +54,5 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 
 - `pnpm -F web signature` regenerates all four mocks.
 - `pnpm -F web exec vitest related scripts/signature/build-signature.ts --run` passes.
-- `magick identify app/web/public/sig/scene.gif | wc -l` prints 34; file under 500 KB.
+- `magick identify app/web/public/sig/scene.gif | wc -l` prints 28; file under 500 KB.
 - Paste `signatures/marcm.html` into Gmail, send to Outlook and iPhone, animation plays on iPhone.

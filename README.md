@@ -62,7 +62,7 @@ account on the **Paid** plan (the Free plan closes the account after six months)
 
 `deploy.sh` takes AWS credentials only from 1Password, never from AWS profiles.
 `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` in `app.env` point at the
-`AWS Credentials` item in the `McCor Labs` vault (fields of the same names). Any `AWS_PROFILE` in
+`McCor Labs` item in the `McCor Labs` vault (fields of the same names). Any `AWS_PROFILE` in
 your shell is ignored. For commands you run by hand, define `r`. Run `op signin`, then check:
 
 ```bash
@@ -72,7 +72,7 @@ r aws sts get-caller-identity
 
 ### 2. Fill in your settings
 
-Settings live in 1Password, in the `McCor Labs` vault under the `McCor Labs` item that `app.env` points at. Fill in its fields there: `NAME`, `REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map of mailbox to sender display name, e.g. `{ marcm = "Marc McCarthy" }`; the server stamps that name on outgoing mail), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
+Settings live in 1Password, in the `McCor Labs` vault under the `McCor Labs` item that `app.env` points at. Fill in its fields there: `NAME`, `AWS_REGION`, `DOMAIN_NAME`, `ALERT_EMAIL`, `DELEGATION_SET_ID`, `MAILBOXES` (a Terraform map of mailbox to sender display name, e.g. `{ marcm = "Marc McCarthy" }`; the server stamps that name on outgoing mail), `ADMIN_MAILBOX`, `INSTANCE_TYPE`, `MAIL_VOLUME_GB`, `GITHUB_SUBJECT_PREFIX`, `BOOKING_URL`, `MONTHLY_BUDGET_USD`, `DOMAIN_REGISTRAR_IS_ROUTE53`, `DOMAIN_CONTACT`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Don't edit `app.env` itself. It's committed, and it only holds `op://` references. `deploy.sh` resolves them with `op run` and passes them to Terraform as environment variables, so nothing is written to disk. Install the 1Password CLI and run `op signin` first.
 
 Two fields need care. `DELEGATION_SET_ID` is the one you fill in after step 3, from the bootstrap output. `DOMAIN_REGISTRAR_IS_ROUTE53` stays `false` until the domain has been transferred to Route 53. `DOMAIN_CONTACT` holds the registrant contact as JSON, or the literal `null` until then, and is never left empty.
 

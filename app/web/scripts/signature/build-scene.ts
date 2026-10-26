@@ -1,8 +1,16 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { readTokens, requireToken } from './signature'
 
 const HERE = import.meta.dirname
 const WEB = join(HERE, '..', '..')
@@ -10,9 +18,10 @@ const SOURCE = join(HERE, 'scene-source.mp4')
 const OUT_DIR = join(WEB, 'public', 'sig')
 const OUT = join(OUT_DIR, 'scene.gif')
 
-export const SCENE_W = 436
-export const SCENE_H = 227
-const CROP = { w: 760, h: 395, x: 260, y: 75 }
+export const SCENE_W = 240
+export const SCENE_H = 103
+const CROP = { w: 700, h: 300, x: 300, y: 170 }
+const FADE_W = 70
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
@@ -33,7 +42,46 @@ function filters(): string {
   return `${sweep},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
 }
 
-function renderSweep(dir: string): string[] {
+function renderMask(dir: string): string {
+  const mask = join(dir, 'mask.png')
+  const solid = String(SCENE_W - FADE_W)
+  execFileSync('magick', [
+    '(',
+    '-size',
+    `${solid}x${String(SCENE_H)}`,
+    'xc:white',
+    ')',
+    '(',
+    '-size',
+    `${String(SCENE_H)}x${String(FADE_W)}`,
+    'gradient:white-black',
+    '-rotate',
+    '-90',
+    ')',
+    '+append',
+    mask,
+  ])
+  return mask
+}
+
+function fadeIntoCard(frame: string, mask: string, base: string): void {
+  execFileSync('magick', [
+    frame,
+    mask,
+    '-compose',
+    'multiply',
+    '-composite',
+    '-fill',
+    base,
+    '-fuzz',
+    '3%',
+    '-opaque',
+    'black',
+    frame,
+  ])
+}
+
+function renderSweep(dir: string, base: string): string[] {
   execFileSync('ffmpeg', [
     '-v',
     'error',
@@ -44,10 +92,13 @@ function renderSweep(dir: string): string[] {
     filters(),
     join(dir, 'sweep-%03d.png'),
   ])
-  return readdirSync(dir)
+  const mask = renderMask(dir)
+  const frames = readdirSync(dir)
     .filter((name) => name.startsWith('sweep-'))
     .sort()
     .map((name) => join(dir, name))
+  for (const frame of frames) fadeIntoCard(frame, mask, base)
+  return frames
 }
 
 function renderLit(dir: string, sweep: string[]): string {
@@ -56,9 +107,6 @@ function renderLit(dir: string, sweep: string[]): string {
     ...sweep,
     '-evaluate-sequence',
     'max',
-    '-statistic',
-    'median',
-    '3x3',
     '-fx',
     `u*(${String(LIT_DIM_LEFT)}+${String(LIT_DIM_RIGHT - LIT_DIM_LEFT)}*i/w)`,
     lit,
@@ -89,7 +137,10 @@ function renderFade(dir: string, from: string, to: string): string[] {
 function main(): void {
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
   mkdirSync(OUT_DIR, { recursive: true })
-  const sweep = renderSweep(dir)
+  const tokens = readTokens(
+    readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
+  )
+  const sweep = renderSweep(dir, requireToken(tokens, 'base'))
   const last = sweep.at(-1)
   if (!last) throw new Error('ffmpeg produced no sweep frames')
   const lit = renderLit(dir, sweep)

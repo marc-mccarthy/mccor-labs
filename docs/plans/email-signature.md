@@ -42,9 +42,9 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 
 ## People data
 
-`build-signature.ts` reads the people list from `SIGNATURE_PEOPLE` when that env var is set, else
+`build-signature.ts` reads the people list from `TEAM_MEMBERS` when that env var is set, else
 from `scripts/signature/people.json`. The repo copy carries no phone numbers. The real list, phones
-included, lives in 1Password at `op://McCor Labs/McCor Labs/SIGNATURE_PEOPLE` as the same JSON
+included, lives in 1Password at `op://McCor Labs/McCor Labs/TEAM_MEMBERS` as the same JSON
 array, wired through `app.env`. Build with real data:
 
 ```

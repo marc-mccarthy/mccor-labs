@@ -122,7 +122,7 @@ async function main(): Promise<void> {
     readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
   )
   const people = parsePeople(
-    process.env.SIGNATURE_PEOPLE ?? readFileSync(join(HERE, 'people.json'), 'utf8'),
+    process.env.TEAM_MEMBERS ?? readFileSync(join(HERE, 'people.json'), 'utf8'),
   )
   const template = readFileSync(join(HERE, 'template.html'), 'utf8')
   const ctx: SignatureContext = {

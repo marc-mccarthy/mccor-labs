@@ -17,10 +17,10 @@ const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
 const FINALE_START_S = 3.33
-const COLORS = 48
-const DENOISE = 'hqdn3d=14:12:24:18'
+const COLORS = 96
+const DENOISE = 'hqdn3d=4:3:16:12'
 const MAX_BYTES = 500_000
-const OPTIMIZE_FUZZ = '14%'
+const OPTIMIZE_FUZZ = '8%'
 const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
 
 function filters(): string {

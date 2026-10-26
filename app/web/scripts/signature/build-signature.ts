@@ -33,7 +33,7 @@ const NAME_H = 30
 const PHOTO_W = 52
 const PHOTO_H = 64
 const PHOTO_RADIUS = 6
-const ICON = 14
+const ICON = 16
 const SCALE = 2
 
 const ICON_PATHS = {
@@ -103,9 +103,10 @@ async function renderPhoto(person: Person, bg: string): Promise<void> {
 async function renderIcon(
   name: keyof typeof ICON_PATHS,
   color: string,
+  glyph: string,
   bg: string,
 ): Promise<void> {
-  const svg = String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${ICON * SCALE}" height="${ICON * SCALE}" viewBox="0 0 24 24"><rect width="24" height="24" fill="${bg}"/><path d="${ICON_PATHS[name]}" fill="${color}"/></svg>`
+  const svg = String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${ICON * SCALE}" height="${ICON * SCALE}" viewBox="0 0 24 24"><rect width="24" height="24" fill="${bg}"/><rect width="24" height="24" rx="4" fill="${color}"/><path d="${ICON_PATHS[name]}" fill="${glyph}"/></svg>`
   await sharp(Buffer.from(svg))
     .png()
     .toFile(join(OUT_ASSETS, `${name}.png`))
@@ -132,8 +133,18 @@ async function main(): Promise<void> {
 
   await renderNames(people, font, requireToken(tokens, 'amber'), base)
   await Promise.all(people.map((person) => renderPhoto(person, base)))
-  await renderIcon('linkedin', requireToken(tokens, 'muted'), base)
-  await renderIcon('facebook', requireToken(tokens, 'muted'), base)
+  await renderIcon(
+    'linkedin',
+    requireToken(tokens, 'linkedin'),
+    requireToken(tokens, 'text'),
+    base,
+  )
+  await renderIcon(
+    'facebook',
+    requireToken(tokens, 'facebook'),
+    requireToken(tokens, 'text'),
+    base,
+  )
 
   for (const person of people) {
     writeFileSync(

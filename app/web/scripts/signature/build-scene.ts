@@ -19,8 +19,8 @@ const OUT_DIR = join(WEB, 'public', 'sig')
 const OUT = join(OUT_DIR, 'scene.gif')
 
 export const SCENE_W = 240
-export const SCENE_H = 103
-const CROP = { w: 700, h: 300, x: 300, y: 170 }
+export const SCENE_H = 136
+const CROP = { w: 700, h: 395, x: 300, y: 75 }
 const FADE_W = 70
 const FPS = 10
 const SWEEP_END_S = 2.4

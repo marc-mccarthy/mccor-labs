@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from '@playwright/test'
@@ -26,13 +26,9 @@ const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 const FONTS = {
   holland: { file: 'Holland.ttf', size: 35, lift: 0 },
   darceyoliver: { file: 'DarceyOliver.ttf', size: 40, lift: 0 },
-  allison: { file: 'Allison-Regular.ttf', size: 44, lift: 2 },
 } as const
 type FontKey = keyof typeof FONTS
-const DEFAULT_FONT: FontKey =
-  (['holland', 'darceyoliver'] as const).find((key) =>
-    existsSync(join(import.meta.dirname, 'fonts', FONTS[key].file)),
-  ) ?? 'allison'
+const DEFAULT_FONT: FontKey = 'holland'
 
 const NAME_W = 240
 const NAME_H = 44

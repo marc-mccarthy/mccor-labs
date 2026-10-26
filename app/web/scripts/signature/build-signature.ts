@@ -7,6 +7,7 @@ import { site } from '../../src/content/site'
 import {
   type Person,
   type SignatureContext,
+  escapeHtml,
   parsePeople,
   readTokens,
   renderSignature,
@@ -72,7 +73,7 @@ async function renderNames(
   })
   for (const person of people) {
     await page.setContent(
-      String.raw`<style>@font-face{font-family:sig;src:url("${fontUrl}")}html,body{margin:0;background:${bg}}div{font-family:sig;font-size:${spec.size}px;line-height:${NAME_H}px;height:${NAME_H}px;color:${color};white-space:nowrap;padding-left:6px;margin-top:${spec.lift}px}</style><div>${person.name}</div>`,
+      String.raw`<style>@font-face{font-family:sig;src:url("${fontUrl}")}html,body{margin:0;background:${bg}}div{font-family:sig;font-size:${spec.size}px;line-height:${NAME_H}px;height:${NAME_H}px;color:${color};white-space:nowrap;padding-left:6px;margin-top:${spec.lift}px}</style><div>${escapeHtml(person.name)}</div>`,
     )
     await page.evaluate(() => document.fonts.ready)
     if (!(await page.evaluate(() => document.fonts.check('12px sig'))))

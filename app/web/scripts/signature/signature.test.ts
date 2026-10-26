@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import {
   type Person,
   type SignatureContext,
+  escapeHtml,
   parsePeople,
   phoneHref,
   readTokens,
@@ -67,6 +68,10 @@ describe('renderSignature', () => {
   it('escapes person fields and encodes the slogan', () => {
     expect(html).toContain('Marc &lt;McCarthy&gt;')
     expect(html).toContain('Swift &amp; Sure')
+  })
+
+  it('keeps astral characters as one entity', () => {
+    expect(escapeHtml('A😀')).toBe('A&#128512;')
   })
 
   it('emits only ASCII so mail clients cannot mis-decode it', () => {

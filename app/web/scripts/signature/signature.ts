@@ -80,7 +80,7 @@ export function escapeHtml(value: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
-    .replace(/[^\x20-\x7e]/g, (ch) => `&#${String(ch.codePointAt(0))};`)
+    .replace(/[^\x20-\x7e]/gu, (ch) => `&#${String(ch.codePointAt(0))};`)
 }
 
 export function phoneHref(phone: string): string {

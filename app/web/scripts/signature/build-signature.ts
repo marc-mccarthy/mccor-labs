@@ -7,6 +7,7 @@ import { site } from '../../src/content/site'
 import {
   type Person,
   type SignatureContext,
+  parsePeople,
   readTokens,
   renderSignature,
   requireToken,
@@ -120,7 +121,9 @@ async function main(): Promise<void> {
   const tokens = readTokens(
     readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
   )
-  const people = JSON.parse(readFileSync(join(HERE, 'people.json'), 'utf8')) as Person[]
+  const people = parsePeople(
+    process.env.SIGNATURE_PEOPLE ?? readFileSync(join(HERE, 'people.json'), 'utf8'),
+  )
   const template = readFileSync(join(HERE, 'template.html'), 'utf8')
   const ctx: SignatureContext = {
     assetBase: ASSET_BASE,

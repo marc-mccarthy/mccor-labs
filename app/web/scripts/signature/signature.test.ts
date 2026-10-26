@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import {
   type Person,
   type SignatureContext,
+  parsePeople,
   phoneHref,
   readTokens,
   renderSignature,
@@ -91,5 +92,29 @@ describe('renderSignature', () => {
 
   it('fails on an unknown placeholder', () => {
     expect(() => renderSignature('{{nope}}', person, ctx)).toThrow('{{nope}}')
+  })
+})
+
+describe('parsePeople', () => {
+  it('accepts a complete array', () => {
+    expect(parsePeople(JSON.stringify([person]))).toHaveLength(1)
+  })
+
+  it('rejects a missing field', () => {
+    const broken: Partial<Person> = { ...person }
+    delete broken.phone
+    expect(() => parsePeople(JSON.stringify([broken]))).toThrow('"phone"')
+  })
+
+  it('rejects an empty list', () => {
+    expect(() => parsePeople('[]')).toThrow('non-empty')
+  })
+})
+
+describe('blank phone', () => {
+  it('drops the phone and its separator', () => {
+    const html = renderSignature(template, { ...person, phone: '' }, ctx)
+    expect(html).not.toContain('tel:')
+    expect(html).not.toContain('&middot;&nbsp;<a href="mailto:')
   })
 })

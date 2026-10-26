@@ -40,6 +40,20 @@ Email rules followed: tables, inline CSS, hosted PNG/JPG over HTTPS, `width`/`he
 - Ruling: the scene comes from the owner's generated video, not procedural SVG or agy; the build
   only crops, denoises and quantises it (cost if wrong: regenerate the video).
 
+## People data
+
+`build-signature.ts` reads the people list from `SIGNATURE_PEOPLE` when that env var is set, else
+from `scripts/signature/people.json`. The repo copy carries no phone numbers. The real list, phones
+included, lives in 1Password at `op://McCor Labs/McCor Labs/SIGNATURE_PEOPLE` as the same JSON
+array, wired through `app.env`. Build with real data:
+
+```
+op run --env-file app.env -- pnpm -F web signature
+```
+
+- Ruling: profile data gets its own 1Password field instead of `MAILBOX_PASSWORDS`, so a signature
+  build never reads mail secrets (cost if wrong: one extra field to maintain).
+
 ## Tasks
 
 - T1 Tokens and this plan.

@@ -47,6 +47,33 @@ export function requireToken(tokens: Record<string, string>, name: string): stri
   return value
 }
 
+const PERSON_KEYS: readonly (keyof Person)[] = [
+  'slug',
+  'name',
+  'title',
+  'phone',
+  'email',
+  'linkedin',
+  'facebook',
+  'photo',
+]
+
+export function parsePeople(json: string): Person[] {
+  const data: unknown = JSON.parse(json)
+  if (!Array.isArray(data) || data.length === 0)
+    throw new Error('people must be a non-empty array')
+  return data.map((entry, i) => {
+    if (typeof entry !== 'object' || entry === null)
+      throw new Error(`person ${String(i)} is not an object`)
+    const record = entry as Record<string, unknown>
+    for (const key of PERSON_KEYS) {
+      if (typeof record[key] !== 'string')
+        throw new Error(`person ${String(i)} needs a string "${key}"`)
+    }
+    return record as unknown as Person
+  })
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -83,8 +110,10 @@ export function renderSignature(
     slug: person.slug,
     name: escapeHtml(person.name),
     title: escapeHtml(person.title),
-    phone: escapeHtml(person.phone),
-    phoneHref: phoneHref(person.phone),
+    phoneCell:
+      person.phone === ''
+        ? ''
+        : `<a href="tel:${phoneHref(person.phone)}" style="color:${requireToken(ctx.tokens, 'muted')};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
     email: escapeHtml(person.email),
     socialCells: socialCells(person, ctx),
   }

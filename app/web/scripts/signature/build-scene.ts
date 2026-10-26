@@ -14,6 +14,7 @@ export const SCENE_W = 596
 export const SCENE_H = 310
 const CROP = { w: 760, h: 395, x: 260, y: 75 }
 const FPS = 6
+const DURATION_S = 1.95
 const COLORS = 48
 const DENOISE = 'hqdn3d=14:12:24:18'
 const MAX_BYTES = 500_000
@@ -34,6 +35,8 @@ function main(): void {
     '-v',
     'error',
     '-y',
+    '-t',
+    String(DURATION_S),
     '-i',
     SOURCE,
     '-vf',
@@ -44,6 +47,8 @@ function main(): void {
     '-v',
     'error',
     '-y',
+    '-t',
+    String(DURATION_S),
     '-i',
     SOURCE,
     '-i',

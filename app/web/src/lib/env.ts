@@ -31,6 +31,16 @@ function optionalEndpoint(name: string, raw: string | undefined): string | null 
   return optionalUrl(name, raw)
 }
 
+function optionalMeasurementId(name: string, raw: string | undefined): string | null {
+  if (raw === undefined || raw === '') return null
+  if (!/^G-[A-Z0-9]{4,16}$/.test(raw)) {
+    throw new Error(
+      `${name} must be a GA4 measurement ID like G-XXXXXXXXXX, received: ${raw}`,
+    )
+  }
+  return raw
+}
+
 function requiredInProduction(name: string, raw: string | undefined): string | null {
   const value = optionalUrl(name, raw)
   if (value === null && process.env.NODE_ENV === 'production') {
@@ -57,4 +67,5 @@ export const env = {
     process.env.NEXT_PUBLIC_CONTACT_ENDPOINT,
   ),
   labLive: process.env.NEXT_PUBLIC_LAB_LIVE === '1',
+  gaId: optionalMeasurementId('NEXT_PUBLIC_GA_ID', process.env.NEXT_PUBLIC_GA_ID),
 } as const

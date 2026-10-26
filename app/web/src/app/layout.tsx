@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
+import { Analytics } from '@/components/analytics/Analytics'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SkipLink } from '@/components/layout/SkipLink'
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Footer />
         </MotionPauseProvider>
       </body>
+      {env.gaId ? <Analytics gaId={env.gaId} /> : null}
     </html>
   )
 }

@@ -70,6 +70,20 @@ touch "$STAGE/media/brand/favicon.ico"
 expect "ico outside the root favicon" 1 "media/brand/favicon.ico: extension not allowed"
 
 fixture
+mkdir -p "$STAGE/sig"
+touch "$STAGE/sig/name-marcm.png" "$STAGE/sig/scene.gif" "$STAGE/sig/photo-marcm.jpg"
+expect "email signature images under sig" 0
+
+fixture
+touch "$STAGE/media/brand/scene.gif"
+expect "gif outside sig" 1 "media/brand/scene.gif: extension not allowed"
+
+fixture
+mkdir -p "$STAGE/sig/nested"
+touch "$STAGE/sig/nested/a.png"
+expect "png nested below sig" 1 "sig/nested/a.png: extension not allowed"
+
+fixture
 touch "$STAGE/media/brand/._hero.webp"
 expect "dotfile with an allowed extension" 1 "._hero.webp: dotfile"
 

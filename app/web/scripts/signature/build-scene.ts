@@ -16,7 +16,8 @@ const CROP = { w: 760, h: 395, x: 260, y: 75 }
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
-const LIT_DIM = 0.85
+const LIT_DIM_LEFT = 0.85
+const LIT_DIM_RIGHT = 1.02
 const FADE_FRAMES = 4
 const FRAME_DELAY_CS = 10
 const COLORS = 96
@@ -55,9 +56,8 @@ function renderLit(dir: string, sweep: string[]): string {
     ...sweep,
     '-evaluate-sequence',
     'max',
-    '-evaluate',
-    'multiply',
-    String(LIT_DIM),
+    '-fx',
+    `u*(${String(LIT_DIM_LEFT)}+${String(LIT_DIM_RIGHT - LIT_DIM_LEFT)}*i/w)`,
     lit,
   ])
   return lit

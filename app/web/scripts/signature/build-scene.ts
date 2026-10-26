@@ -16,14 +16,14 @@ const CROP = { w: 760, h: 395, x: 260, y: 75 }
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
-const LIT_DIM_LEFT = 0.85
-const LIT_DIM_RIGHT = 1.02
+const LIT_DIM_LEFT = 0.72
+const LIT_DIM_RIGHT = 0.87
 const FADE_FRAMES = 4
 const FRAME_DELAY_CS = 10
-const COLORS = 96
-const DENOISE = 'hqdn3d=4:3:16:12'
-const MAX_BYTES = 500_000
-const OPTIMIZE_FUZZ = '8%'
+const COLORS = 160
+const DENOISE = 'hqdn3d=5:4:40:30'
+const MAX_BYTES = 600_000
+const OPTIMIZE_FUZZ = '6%'
 const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
 
 function filters(): string {
@@ -56,6 +56,9 @@ function renderLit(dir: string, sweep: string[]): string {
     ...sweep,
     '-evaluate-sequence',
     'max',
+    '-statistic',
+    'median',
+    '3x3',
     '-fx',
     `u*(${String(LIT_DIM_LEFT)}+${String(LIT_DIM_RIGHT - LIT_DIM_LEFT)}*i/w)`,
     lit,

@@ -13,9 +13,9 @@ const OUT = join(OUT_DIR, 'scene.gif')
 export const SCENE_W = 596
 export const SCENE_H = 310
 const CROP = { w: 760, h: 395, x: 260, y: 75 }
-const FPS = 5
+const FPS = 10
 const SWEEP_END_S = 2.4
-const SWEEP_SLOWDOWN = 2
+const SWEEP_SLOWDOWN = 0.625
 const FINALE_START_S = 3.33
 const COLORS = 48
 const DENOISE = 'hqdn3d=14:12:24:18'

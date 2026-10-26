@@ -17,7 +17,8 @@ const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
 const FINALE_START_S = 3.33
-const FINALE_RIGHT_GAIN = 1
+const FINALE_LEFT_GAIN = 0.7
+const FINALE_RIGHT_GAIN = 1.45
 const COLORS = 96
 const DENOISE = 'hqdn3d=4:3:16:12'
 const MAX_BYTES = 500_000
@@ -28,7 +29,7 @@ function filters(): string {
   const crop = `crop=${String(CROP.w)}:${String(CROP.h)}:${String(CROP.x)}:${String(CROP.y)}`
   const levels = `colorlevels=rimin=${String(BLACK_POINT.r)}:gimin=${String(BLACK_POINT.g)}:bimin=${String(BLACK_POINT.b)}`
   const sweep = `[s0]trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)[a]`
-  const evenOut = `geq=lum='min(255,lum(X,Y)*(1+${String(FINALE_RIGHT_GAIN)}*pow(X/W,1.5)))':cb='cb(X,Y)':cr='cr(X,Y)'`
+  const evenOut = `geq=lum='min(255,lum(X,Y)*(${String(FINALE_LEFT_GAIN)}+${String(FINALE_RIGHT_GAIN - FINALE_LEFT_GAIN)}*X/W))':cb='cb(X,Y)':cr='cr(X,Y)'`
   const finale = `[s1]trim=start=${String(FINALE_START_S)},setpts=PTS-STARTPTS,${evenOut}[b]`
   const cut = `[0:v]split[s0][s1];${sweep};${finale};[a][b]concat=n=2:v=1:a=0`
   return `${cut},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`

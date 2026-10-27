@@ -9,6 +9,8 @@ const WEB = join(HERE, '..', '..')
 const SOURCE = join(HERE, 'scene-source.mp4')
 const OUT_DIR = join(WEB, 'public', 'sig')
 const OUT = join(OUT_DIR, 'scene.gif')
+const OUT_WEBM = join(OUT_DIR, 'scene.webm')
+const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 
 export const SCENE_W = 260
 export const SCENE_H = 147
@@ -96,6 +98,54 @@ function renderFade(dir: string, from: string, to: string): string[] {
   return frames
 }
 
+function renderVideo(dir: string, frames: string[]): void {
+  frames.forEach((frame, i) => {
+    execFileSync('magick', [frame, join(dir, `video-${String(i).padStart(3, '0')}.png`)])
+  })
+  const input = [
+    '-v',
+    'error',
+    '-y',
+    '-framerate',
+    String(FPS),
+    '-i',
+    join(dir, 'video-%03d.png'),
+  ]
+  const evenSize = ['-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:color=0x00000000']
+  execFileSync('ffmpeg', [
+    ...input,
+    ...evenSize,
+    '-c:v',
+    'libvpx-vp9',
+    '-pix_fmt',
+    'yuva420p',
+    '-b:v',
+    '0',
+    '-crf',
+    '30',
+    '-row-mt',
+    '1',
+    OUT_WEBM,
+  ])
+  execFileSync('ffmpeg', [
+    ...input,
+    ...evenSize,
+    '-c:v',
+    'hevc_videotoolbox',
+    '-pix_fmt',
+    'bgra',
+    '-alpha_quality',
+    '0.9',
+    '-q:v',
+    '70',
+    '-tag:v',
+    'hvc1',
+    '-movflags',
+    '+faststart',
+    OUT_MP4,
+  ])
+}
+
 function main(): void {
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
   mkdirSync(OUT_DIR, { recursive: true })
@@ -117,6 +167,7 @@ function main(): void {
     String(COLORS),
     OUT,
   ])
+  renderVideo(dir, frames)
   rmSync(dir, { recursive: true, force: true })
   const bytes = statSync(OUT).size
   if (bytes > MAX_BYTES)
@@ -124,6 +175,11 @@ function main(): void {
   console.log(
     `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
   )
+  for (const file of [OUT_WEBM, OUT_MP4]) {
+    console.log(
+      `wrote ${file.slice(OUT_DIR.length + 1)} ${String(statSync(file).size)} bytes`,
+    )
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

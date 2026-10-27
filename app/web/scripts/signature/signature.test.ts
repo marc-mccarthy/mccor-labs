@@ -98,9 +98,7 @@ describe('renderSignature', () => {
     expect(html).toContain('Full-Stack &amp; AI Engineer')
     const plain = renderSignature(template, { ...person, title: 'Designer' }, ctx)
     expect(plain).toContain('Designer, McCor Labs')
-    expect(plain).not.toContain(
-      '<div style="font-size:12px;line-height:16px;color:#9a9aa8;"></div>',
-    )
+    expect(plain).not.toMatch(/exactly;"><\/div>/)
   })
 
   it('sends the call to action to the contact page', () => {

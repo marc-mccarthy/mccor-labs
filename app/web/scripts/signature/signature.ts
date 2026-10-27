@@ -27,6 +27,7 @@ const TOKEN_KEYS = {
 } as const
 
 const TITLE_SEPARATOR = ' · '
+const FONT = "-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
 
 const SOCIAL = [
   { key: 'linkedin', file: 'linkedin.png', alt: 'LinkedIn' },
@@ -113,13 +114,14 @@ export function renderSignature(
     assetBase: ctx.assetBase,
     siteUrl: ctx.siteUrl,
     contactUrl: ctx.contactUrl,
+    font: FONT,
     slug: person.slug,
     name: escapeHtml(person.name),
     roleLine: escapeHtml(`${role}, ${ctx.company}`),
     specialtyLine:
       specialty === ''
         ? ''
-        : `<div style="font-size:12px;line-height:16px;color:${ink};">${escapeHtml(specialty)}</div>`,
+        : `<div style="font-family:${FONT};font-size:12px;line-height:16px;color:${ink};mso-line-height-rule:exactly;">${escapeHtml(specialty)}</div>`,
     phoneCell:
       person.phone === ''
         ? ''

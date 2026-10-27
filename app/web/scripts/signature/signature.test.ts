@@ -21,14 +21,15 @@ const template = readFileSync(join(import.meta.dirname, 'template.html'), 'utf8'
 const ctx: SignatureContext = {
   assetBase: 'https://mccorlabs.com/sig',
   siteUrl: 'https://mccorlabs.com',
-  bookingUrl: 'https://example.com/book',
+  contactUrl: 'https://mccorlabs.com/contact',
+  company: 'McCor Labs',
   tokens: readTokens(css),
 }
 
 const person: Person = {
   slug: 'marcm',
   name: 'Marc <McCarthy>',
-  title: 'Founder',
+  title: 'Founder · Full-Stack & AI Engineer',
   phone: '+1 (612) 555-0123',
   email: 'marcm@mccorlabs.com',
   linkedin: 'https://www.linkedin.com/in/marc',
@@ -76,17 +77,13 @@ describe('renderSignature', () => {
   })
 
   it('emits only ASCII so mail clients cannot mis-decode it', () => {
-    const withDot = renderSignature(
-      template,
-      { ...person, title: 'Founder · Engineer' },
-      ctx,
-    )
-    expect(withDot).toContain('Founder &#183; Engineer')
-    expect(withDot).toMatch(/^[\x00-\x7e]*$/)
+    const accented = renderSignature(template, { ...person, name: 'Zoë Müller' }, ctx)
+    expect(accented).toContain('Zo&#235; M&#252;ller')
+    expect(accented).toMatch(/^[\x00-\x7e]*$/)
   })
 
   it('links the per-person hosted images', () => {
-    expect(html).toContain('https://mccorlabs.com/sig/name-marcm.png')
+    expect(html).toContain('https://mccorlabs.com/sig/scene.gif')
     expect(html).toContain('https://mccorlabs.com/sig/photo-marcm.png')
     expect(html).toContain('href="tel:+16125550123"')
   })
@@ -94,6 +91,20 @@ describe('renderSignature', () => {
   it('uses only theme colours', () => {
     const used = new Set(html.match(/#[0-9a-f]{6}/gi)?.map((hex) => hex.toLowerCase()))
     for (const hex of used) expect(Object.values(ctx.tokens)).toContain(hex)
+  })
+
+  it('names the company on the role line and splits the specialty off the title', () => {
+    expect(html).toContain('Founder, McCor Labs')
+    expect(html).toContain('Full-Stack &amp; AI Engineer')
+    const plain = renderSignature(template, { ...person, title: 'Designer' }, ctx)
+    expect(plain).toContain('Designer, McCor Labs')
+    expect(plain).not.toContain(
+      '<div style="font-size:12px;line-height:16px;color:#9a9aa8;"></div>',
+    )
+  })
+
+  it('sends the call to action to the contact page', () => {
+    expect(html).toContain('href="https://mccorlabs.com/contact"')
   })
 
   it('fails on an unknown placeholder', () => {

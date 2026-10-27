@@ -12,15 +12,20 @@ const OUT = join(OUT_DIR, 'scene.gif')
 const OUT_WEBM = join(OUT_DIR, 'scene.webm')
 const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 
-export const SCENE_W = 260
-export const SCENE_H = 147
-const CROP = { w: 700, h: 395, x: 300, y: 75 }
+export const SCENE_W = 384
+export const SCENE_H = 272
+const CROP = { w: 560, h: 397, x: 450, y: 135 }
 const ALPHA_THRESHOLD = '40%'
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
 const FADE_FRAMES = 4
 const FRAME_DELAY_CS = 10
+const HOLD_DELAY_CS = 60
+const PLATE = '#08080a'
+const PINE_HUE = { min: 0.19, max: 0.47 }
+const PINE_DIM = '55,75,100'
+const FEATHER = 44
 const COLORS = 160
 const DENOISE = 'hqdn3d=5:4:40:30'
 const MAX_BYTES = 600_000
@@ -166,6 +171,86 @@ function renderVideo(dir: string, frames: string[]): void {
   execFileSync('ffmpeg', videoArgs(input, 'mp4'))
 }
 
+function dimPines(frame: string): void {
+  const mask = `${frame}.pines.png`
+  execFileSync('magick', [
+    frame,
+    '-colorspace',
+    'HSB',
+    '-channel',
+    'R',
+    '-separate',
+    '+channel',
+    '-fx',
+    `(u>=${String(PINE_HUE.min)}&&u<=${String(PINE_HUE.max)})?1:0`,
+    mask,
+  ])
+  execFileSync('magick', [
+    frame,
+    '(',
+    '+clone',
+    '-modulate',
+    PINE_DIM,
+    ')',
+    mask,
+    '-composite',
+    frame,
+  ])
+}
+
+function plate(frame: string): void {
+  execFileSync('magick', [frame, '-background', PLATE, '-flatten', frame])
+}
+
+function featherMask(dir: string): string {
+  const mask = join(dir, 'feather.png')
+  execFileSync('magick', [
+    '-size',
+    `${String(SCENE_W)}x${String(SCENE_H)}`,
+    'xc:white',
+    '(',
+    '-size',
+    `${String(FEATHER)}x${String(SCENE_H)}`,
+    '-define',
+    'gradient:direction=East',
+    'gradient:white-black',
+    ')',
+    '-gravity',
+    'East',
+    '-compose',
+    'Multiply',
+    '-composite',
+    '(',
+    '-size',
+    `${String(SCENE_W)}x${String(FEATHER)}`,
+    '-define',
+    'gradient:direction=South',
+    'gradient:white-black',
+    ')',
+    '-gravity',
+    'South',
+    '-compose',
+    'Multiply',
+    '-composite',
+    mask,
+  ])
+  return mask
+}
+
+function feather(frame: string, mask: string): void {
+  execFileSync('magick', [
+    '-size',
+    `${String(SCENE_W)}x${String(SCENE_H)}`,
+    `xc:${PLATE}`,
+    frame,
+    mask,
+    '-compose',
+    'Over',
+    '-composite',
+    frame,
+  ])
+}
+
 function main(): void {
   requireEncoders()
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
@@ -176,10 +261,17 @@ function main(): void {
     if (!last) throw new Error('ffmpeg produced no sweep frames')
     const lit = renderLit(dir, sweep)
     const frames = [...sweep, ...renderFade(dir, last, lit), lit]
-    for (const frame of frames) keyOutBlack(frame)
+    for (const frame of [...sweep, lit]) dimPines(frame)
+    const mask = featherMask(dir)
+    for (const frame of frames) {
+      keyOutBlack(frame)
+      plate(frame)
+      feather(frame, mask)
+    }
     execFileSync('magick', [
-      '-dispose',
-      'Background',
+      '-delay',
+      String(HOLD_DELAY_CS),
+      lit,
       '-delay',
       String(FRAME_DELAY_CS),
       ...frames,
@@ -189,12 +281,12 @@ function main(): void {
       String(COLORS),
       OUT,
     ])
-    renderVideo(dir, frames)
+    renderVideo(dir, [lit, ...frames])
     const bytes = statSync(OUT).size
     if (bytes > MAX_BYTES)
       throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
     console.log(
-      `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
+      `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length + 1)} frames, plays once`,
     )
     for (const file of [OUT_WEBM, OUT_MP4]) {
       console.log(

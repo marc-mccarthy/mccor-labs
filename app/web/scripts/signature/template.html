@@ -1,16 +1,86 @@
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="620" style="width:620px;max-width:620px;border-collapse:collapse;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table
+  role="presentation"
+  cellpadding="0"
+  cellspacing="0"
+  border="0"
+  width="480"
+  bgcolor="{{plate}}"
+  style="width:480px;max-width:480px;border-collapse:separate;border:1px solid {{edge}};border-radius:8px;background-color:{{plate}};font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;"
+>
   <tr>
-    <td width="260" style="width:260px;padding:0;vertical-align:middle;line-height:0;">
-      <img src="{{assetBase}}/scene.gif" width="260" height="147" alt="McCor Labs red stag among glowing pines" style="display:block;width:260px;height:147px;border:0;">
+    <td width="192" style="width: 168px; padding: 0; vertical-align: top; line-height: 0">
+      <img
+        src="{{assetBase}}/scene.gif"
+        width="192"
+        height="136"
+        alt="McCor Labs"
+        style="display:block;width:192px;height:136px;border:0;border-radius:8px 0 0 8px;font-size:12px;color:{{ink}};"
+      />
     </td>
-    <td width="96" style="width:96px;padding:0 14px 0 0;vertical-align:middle;line-height:0;">
-      <img src="{{assetBase}}/photo-{{slug}}.png" width="96" height="120" alt="{{name}}" style="display:block;width:96px;height:120px;border:0;">
-    </td>
-    <td style="padding:6px 0 6px 0;vertical-align:middle;">
-      <img src="{{assetBase}}/name-{{slug}}.png" width="200" height="36" alt="{{name}}" style="display:block;width:200px;height:36px;border:0;margin:0 0 2px -5px;">
-      <div style="font-size:12px;line-height:16px;color:{{ink}};font-weight:600;">{{title}}</div>
-      <div style="font-size:12px;line-height:18px;color:{{ink}};white-space:nowrap;">{{phoneCell}}<a href="mailto:{{email}}" style="color:{{ink}};text-decoration:none;">{{email}}</a></div>
-      <div style="font-size:12px;line-height:18px;color:{{ink}};"><a href="{{siteUrl}}" style="color:{{link}};text-decoration:none;font-weight:600;">mccorlabs.com</a>&nbsp;&middot;&nbsp;<a href="{{bookingUrl}}" style="color:{{link}};text-decoration:none;font-weight:600;">Book a call</a>{{socialCells}}</div>
+    <td style="padding: 12px 16px 12px 16px; vertical-align: middle">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 0 12px 0 0; line-height: 0; vertical-align: middle">
+            <img
+              src="{{assetBase}}/photo-{{slug}}.png"
+              width="56"
+              height="56"
+              alt=""
+              style="display: block; width: 56px; height: 56px; border: 0"
+            />
+          </td>
+          <td style="vertical-align: middle">
+            <div
+              style="font-size:18px;line-height:22px;font-weight:700;color:{{text}};mso-line-height-rule:exactly;"
+            >
+              {{name}}
+            </div>
+            <div
+              style="font-size:12px;line-height:16px;font-weight:700;color:{{ink}};mso-line-height-rule:exactly;"
+            >
+              {{roleLine}}
+            </div>
+            {{specialtyLine}}
+          </td>
+        </tr>
+      </table>
+      <div
+        style="font-size:12px;line-height:18px;color:{{ink}};padding-top:6px;mso-line-height-rule:exactly;"
+      >
+        {{phoneCell}}<a
+          href="mailto:{{email}}"
+          style="color:{{ink}};text-decoration:none;"
+          >{{email}}</a
+        >&nbsp;&middot;&nbsp;<a
+          href="{{siteUrl}}"
+          style="color:{{ink}};text-decoration:none;"
+          >mccorlabs.com</a
+        >
+      </div>
+      <table
+        role="presentation"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+        style="padding-top: 2px"
+      >
+        <tr>
+          <td
+            style="
+              font-size: 13px;
+              line-height: 20px;
+              font-weight: 700;
+              vertical-align: middle;
+              padding: 0 4px 0 0;
+            "
+          >
+            <a href="{{contactUrl}}" style="color:{{link}};text-decoration:none;"
+              >Book a call &rarr;</a
+            >
+          </td>
+          {{socialCells}}
+        </tr>
+      </table>
     </td>
   </tr>
 </table>

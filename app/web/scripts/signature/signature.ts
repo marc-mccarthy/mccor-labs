@@ -13,14 +13,20 @@ export interface Person {
 export interface SignatureContext {
   assetBase: string
   siteUrl: string
-  bookingUrl: string
+  contactUrl: string
+  company: string
   tokens: Record<string, string>
 }
 
 const TOKEN_KEYS = {
-  ink: 'border-strong',
+  plate: 'base',
+  edge: 'border',
+  text: 'text',
+  ink: 'muted',
   link: 'accent',
 } as const
+
+const TITLE_SEPARATOR = ' · '
 
 const SOCIAL = [
   { key: 'linkedin', file: 'linkedin.png', alt: 'LinkedIn' },
@@ -86,11 +92,11 @@ export function phoneHref(phone: string): string {
 }
 
 export function socialCells(person: Person, ctx: SignatureContext): string {
-  const ink = requireToken(ctx.tokens, 'border-strong')
+  const ink = requireToken(ctx.tokens, 'muted')
   return SOCIAL.filter(({ key }) => person[key] !== '')
     .map(
       ({ key, file, alt }) =>
-        `<a href="${escapeHtml(person[key])}" style="color:${ink};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="16" height="16" alt="${alt}" style="width:16px;height:16px;border:0;vertical-align:-3px;margin-left:6px;"></a>`,
+        `<td style="padding:0 0 0 8px;line-height:0;vertical-align:middle;"><a href="${escapeHtml(person[key])}" style="color:${ink};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="20" height="20" alt="${alt}" style="display:block;width:20px;height:20px;border:0;font-size:12px;color:${ink};"></a></td>`,
     )
     .join('')
 }
@@ -100,17 +106,24 @@ export function renderSignature(
   person: Person,
   ctx: SignatureContext,
 ): string {
+  const ink = requireToken(ctx.tokens, 'muted')
+  const [role = '', ...rest] = person.title.split(TITLE_SEPARATOR)
+  const specialty = rest.join(TITLE_SEPARATOR)
   const values: Record<string, string> = {
     assetBase: ctx.assetBase,
     siteUrl: ctx.siteUrl,
-    bookingUrl: ctx.bookingUrl,
+    contactUrl: ctx.contactUrl,
     slug: person.slug,
     name: escapeHtml(person.name),
-    title: escapeHtml(person.title),
+    roleLine: escapeHtml(`${role}, ${ctx.company}`),
+    specialtyLine:
+      specialty === ''
+        ? ''
+        : `<div style="font-size:12px;line-height:16px;color:${ink};">${escapeHtml(specialty)}</div>`,
     phoneCell:
       person.phone === ''
         ? ''
-        : `<a href="tel:${phoneHref(person.phone)}" style="color:${requireToken(ctx.tokens, 'border-strong')};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
+        : `<a href="tel:${phoneHref(person.phone)}" style="color:${ink};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
     email: escapeHtml(person.email),
     socialCells: socialCells(person, ctx),
   }

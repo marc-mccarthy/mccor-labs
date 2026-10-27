@@ -34,10 +34,23 @@ describe('env', () => {
     expect((await loadEnv({ NEXT_PUBLIC_GA_ID: '' })).gaId).toBeNull()
   })
 
-  it('reads a GA4 measurement ID', async () => {
-    expect((await loadEnv({ NEXT_PUBLIC_GA_ID: 'G-ABC123XYZ9' })).gaId).toBe(
-      'G-ABC123XYZ9',
-    )
+  it('reads a GA4 measurement ID in a production build', async () => {
+    const env = await loadEnv({
+      NEXT_PUBLIC_GA_ID: 'G-ABC123XYZ9',
+      NEXT_PUBLIC_BOOKING_URL: 'https://calendar.app.google/EXAMPLE',
+      NODE_ENV: 'production',
+    })
+    expect(env.gaId).toBe('G-ABC123XYZ9')
+  })
+
+  it('leaves Google Analytics off outside production so dev and test hits never reach GA', async () => {
+    expect(
+      (await loadEnv({ NEXT_PUBLIC_GA_ID: 'G-ABC123XYZ9', NODE_ENV: 'development' }))
+        .gaId,
+    ).toBeNull()
+    expect(
+      (await loadEnv({ NEXT_PUBLIC_GA_ID: 'G-ABC123XYZ9', NODE_ENV: 'test' })).gaId,
+    ).toBeNull()
   })
 
   it('rejects a value that is not a GA4 measurement ID', async () => {

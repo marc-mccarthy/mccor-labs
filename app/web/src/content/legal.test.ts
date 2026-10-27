@@ -4,6 +4,10 @@ import type { LegalDocument } from './types'
 async function loadPrivacy(labLive: boolean, gaId = ''): Promise<LegalDocument> {
   vi.stubEnv('NEXT_PUBLIC_LAB_LIVE', labLive ? '1' : '0')
   vi.stubEnv('NEXT_PUBLIC_GA_ID', gaId)
+  if (gaId !== '') {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('NEXT_PUBLIC_BOOKING_URL', 'https://calendar.app.google/EXAMPLE')
+  }
   vi.resetModules()
   return (await import('./legal')).privacy
 }

@@ -2,11 +2,12 @@
   {
     "slug": "marcm",
     "name": "Marc McCarthy",
-    "title": "Founder \u00b7 Full-Stack & AI Engineer",
+    "title": "Founder · Full-Stack & AI Engineer",
     "phone": "",
     "email": "marcm@mccorlabs.com",
     "linkedin": "https://www.linkedin.com/in/the-marc-mccarthy/",
-    "facebook": "https://www.facebook.com/marc.mccarthy.351",
+    "facebook": "",
+    "github": "https://github.com/marc-mccarthy",
     "photo": "marcm"
   },
   {
@@ -17,6 +18,7 @@
     "email": "nateb@mccorlabs.com",
     "linkedin": "https://www.linkedin.com/in/nateb-placeholder",
     "facebook": "https://www.facebook.com/nateb.placeholder",
+    "github": "",
     "photo": "nateb"
   },
   {
@@ -27,6 +29,7 @@
     "email": "ashleyt@mccorlabs.com",
     "linkedin": "https://www.linkedin.com/in/ashleyt-placeholder",
     "facebook": "https://www.facebook.com/ashleyt.placeholder",
+    "github": "",
     "photo": "ashleyt"
   },
   {
@@ -37,6 +40,7 @@
     "email": "mariem@mccorlabs.com",
     "linkedin": "https://www.linkedin.com/in/mariem-placeholder",
     "facebook": "https://www.facebook.com/mariem.placeholder",
+    "github": "",
     "photo": "mariem"
   }
 ]

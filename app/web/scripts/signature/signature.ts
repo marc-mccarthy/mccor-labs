@@ -6,6 +6,7 @@ export interface Person {
   email: string
   linkedin: string
   facebook: string
+  github: string
   photo: string
 }
 
@@ -24,6 +25,7 @@ const TOKEN_KEYS = {
 const SOCIAL = [
   { key: 'linkedin', file: 'linkedin.png', alt: 'LinkedIn' },
   { key: 'facebook', file: 'facebook.png', alt: 'Facebook' },
+  { key: 'github', file: 'github.png', alt: 'GitHub' },
 ] as const
 
 export function readTokens(css: string): Record<string, string> {
@@ -50,6 +52,7 @@ const PERSON_KEYS: readonly (keyof Person)[] = [
   'email',
   'linkedin',
   'facebook',
+  'github',
   'photo',
 ]
 

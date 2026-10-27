@@ -33,6 +33,7 @@ const person: Person = {
   email: 'marcm@mccorlabs.com',
   linkedin: 'https://www.linkedin.com/in/marc',
   facebook: '',
+  github: 'https://github.com/marc-mccarthy',
   photo: 'marcm',
 }
 
@@ -54,6 +55,8 @@ describe('socialCells', () => {
     const cells = socialCells(person, ctx)
     expect(cells).toContain('linkedin.png')
     expect(cells).not.toContain('facebook.png')
+    expect(cells).toContain('href="https://github.com/marc-mccarthy"')
+    expect(cells).toContain('github.png')
   })
 })
 

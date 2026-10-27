@@ -38,7 +38,7 @@ function optionalMeasurementId(name: string, raw: string | undefined): string | 
       `${name} must be a GA4 measurement ID like G-XXXXXXXXXX, received: ${raw}`,
     )
   }
-  return raw
+  return process.env.NODE_ENV === 'production' ? raw : null
 }
 
 function requiredInProduction(name: string, raw: string | undefined): string | null {

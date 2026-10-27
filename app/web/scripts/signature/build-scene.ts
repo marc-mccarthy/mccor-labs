@@ -15,7 +15,7 @@ const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 export const SCENE_W = 260
 export const SCENE_H = 147
 const CROP = { w: 700, h: 395, x: 300, y: 75 }
-const ALPHA_THRESHOLD = '26%'
+const ALPHA_THRESHOLD = '40%'
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
@@ -44,6 +44,10 @@ function keyOutBlack(frame: string): void {
     '-compose',
     'CopyOpacity',
     '-composite',
+    '-channel',
+    'RGB',
+    '-fx',
+    'u/pow(max(u.a,0.01),0.5)',
     '-channel',
     'A',
     '-threshold',

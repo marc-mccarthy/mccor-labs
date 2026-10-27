@@ -98,37 +98,44 @@ function renderFade(dir: string, from: string, to: string): string[] {
   return frames
 }
 
-function renderVideo(dir: string, frames: string[]): void {
-  frames.forEach((frame, i) => {
-    execFileSync('magick', [frame, join(dir, `video-${String(i).padStart(3, '0')}.png`)])
-  })
-  const input = [
-    '-v',
-    'error',
-    '-y',
-    '-framerate',
-    String(FPS),
-    '-i',
-    join(dir, 'video-%03d.png'),
-  ]
+export const VIDEO_ENCODERS = ['libvpx-vp9', 'hevc_videotoolbox'] as const
+
+export function missingEncoders(encoderList: string): string[] {
+  return VIDEO_ENCODERS.filter((name) => !new RegExp(`\\s${name}\\s`).test(encoderList))
+}
+
+function requireEncoders(): void {
+  const list = execFileSync('ffmpeg', ['-hide_banner', '-encoders'], { encoding: 'utf8' })
+  const missing = missingEncoders(list)
+  if (missing.length > 0) {
+    throw new Error(
+      `ffmpeg lacks ${missing.join(', ')}; hevc_videotoolbox needs macOS, so run this script there`,
+    )
+  }
+}
+
+export function videoArgs(input: string, target: 'webm' | 'mp4'): string[] {
+  const base = ['-v', 'error', '-y', '-framerate', String(FPS), '-i', input]
   const evenSize = ['-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:color=0x00000000']
-  execFileSync('ffmpeg', [
-    ...input,
-    ...evenSize,
-    '-c:v',
-    'libvpx-vp9',
-    '-pix_fmt',
-    'yuva420p',
-    '-b:v',
-    '0',
-    '-crf',
-    '30',
-    '-row-mt',
-    '1',
-    OUT_WEBM,
-  ])
-  execFileSync('ffmpeg', [
-    ...input,
+  if (target === 'webm') {
+    return [
+      ...base,
+      ...evenSize,
+      '-c:v',
+      'libvpx-vp9',
+      '-pix_fmt',
+      'yuva420p',
+      '-b:v',
+      '0',
+      '-crf',
+      '30',
+      '-row-mt',
+      '1',
+      OUT_WEBM,
+    ]
+  }
+  return [
+    ...base,
     ...evenSize,
     '-c:v',
     'hevc_videotoolbox',
@@ -143,42 +150,55 @@ function renderVideo(dir: string, frames: string[]): void {
     '-movflags',
     '+faststart',
     OUT_MP4,
-  ])
+  ]
+}
+
+function renderVideo(dir: string, frames: string[]): void {
+  frames.forEach((frame, i) => {
+    execFileSync('magick', [frame, join(dir, `video-${String(i).padStart(3, '0')}.png`)])
+  })
+  const input = join(dir, 'video-%03d.png')
+  execFileSync('ffmpeg', videoArgs(input, 'webm'))
+  execFileSync('ffmpeg', videoArgs(input, 'mp4'))
 }
 
 function main(): void {
+  requireEncoders()
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
   mkdirSync(OUT_DIR, { recursive: true })
-  const sweep = renderSweep(dir)
-  const last = sweep.at(-1)
-  if (!last) throw new Error('ffmpeg produced no sweep frames')
-  const lit = renderLit(dir, sweep)
-  const frames = [...sweep, ...renderFade(dir, last, lit), lit]
-  for (const frame of frames) keyOutBlack(frame)
-  execFileSync('magick', [
-    '-dispose',
-    'Background',
-    '-delay',
-    String(FRAME_DELAY_CS),
-    ...frames,
-    '-loop',
-    '1',
-    '-colors',
-    String(COLORS),
-    OUT,
-  ])
-  renderVideo(dir, frames)
-  rmSync(dir, { recursive: true, force: true })
-  const bytes = statSync(OUT).size
-  if (bytes > MAX_BYTES)
-    throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
-  console.log(
-    `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
-  )
-  for (const file of [OUT_WEBM, OUT_MP4]) {
+  try {
+    const sweep = renderSweep(dir)
+    const last = sweep.at(-1)
+    if (!last) throw new Error('ffmpeg produced no sweep frames')
+    const lit = renderLit(dir, sweep)
+    const frames = [...sweep, ...renderFade(dir, last, lit), lit]
+    for (const frame of frames) keyOutBlack(frame)
+    execFileSync('magick', [
+      '-dispose',
+      'Background',
+      '-delay',
+      String(FRAME_DELAY_CS),
+      ...frames,
+      '-loop',
+      '1',
+      '-colors',
+      String(COLORS),
+      OUT,
+    ])
+    renderVideo(dir, frames)
+    const bytes = statSync(OUT).size
+    if (bytes > MAX_BYTES)
+      throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
     console.log(
-      `wrote ${file.slice(OUT_DIR.length + 1)} ${String(statSync(file).size)} bytes`,
+      `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
     )
+    for (const file of [OUT_WEBM, OUT_MP4]) {
+      console.log(
+        `wrote ${file.slice(OUT_DIR.length + 1)} ${String(statSync(file).size)} bytes`,
+      )
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
   }
 }
 

@@ -84,7 +84,7 @@ describe('renderSignature', () => {
 
   it('links the per-person hosted images', () => {
     expect(html).toContain('https://mccorlabs.com/sig/name-marcm.png')
-    expect(html).toContain('https://mccorlabs.com/sig/photo-marcm.jpg')
+    expect(html).toContain('https://mccorlabs.com/sig/photo-marcm.png')
     expect(html).toContain('href="tel:+16125550123"')
   })
 

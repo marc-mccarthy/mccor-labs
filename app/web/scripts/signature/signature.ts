@@ -17,11 +17,7 @@ export interface SignatureContext {
 }
 
 const TOKEN_KEYS = {
-  base: 'base',
-  border: 'border',
-  borderStrong: 'border-strong',
-  muted: 'muted',
-  text: 'text',
+  ink: 'border-strong',
   link: 'accent',
 } as const
 
@@ -87,11 +83,11 @@ export function phoneHref(phone: string): string {
 }
 
 export function socialCells(person: Person, ctx: SignatureContext): string {
-  const muted = requireToken(ctx.tokens, 'muted')
+  const ink = requireToken(ctx.tokens, 'border-strong')
   return SOCIAL.filter(({ key }) => person[key] !== '')
     .map(
       ({ key, file, alt }) =>
-        `<a href="${escapeHtml(person[key])}" style="color:${muted};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="16" height="16" alt="${alt}" style="width:16px;height:16px;border:0;vertical-align:-3px;margin-left:6px;"></a>`,
+        `<a href="${escapeHtml(person[key])}" style="color:${ink};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="16" height="16" alt="${alt}" style="width:16px;height:16px;border:0;vertical-align:-3px;margin-left:6px;"></a>`,
     )
     .join('')
 }
@@ -111,7 +107,7 @@ export function renderSignature(
     phoneCell:
       person.phone === ''
         ? ''
-        : `<a href="tel:${phoneHref(person.phone)}" style="color:${requireToken(ctx.tokens, 'muted')};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
+        : `<a href="tel:${phoneHref(person.phone)}" style="color:${requireToken(ctx.tokens, 'border-strong')};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
     email: escapeHtml(person.email),
     socialCells: socialCells(person, ctx),
   }

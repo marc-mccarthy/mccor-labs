@@ -1,38 +1,29 @@
 import { execFileSync } from 'node:child_process'
-import {
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { readTokens, requireToken } from './signature'
 
 const HERE = import.meta.dirname
 const WEB = join(HERE, '..', '..')
 const SOURCE = join(HERE, 'scene-source.mp4')
 const OUT_DIR = join(WEB, 'public', 'sig')
 const OUT = join(OUT_DIR, 'scene.gif')
+const OUT_WEBM = join(OUT_DIR, 'scene.webm')
+const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 
-export const SCENE_W = 240
-export const SCENE_H = 136
+export const SCENE_W = 260
+export const SCENE_H = 147
 const CROP = { w: 700, h: 395, x: 300, y: 75 }
-const FADE_W = 70
+const ALPHA_THRESHOLD = '26%'
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
-const LIT_DIM_LEFT = 0.72
-const LIT_DIM_RIGHT = 0.8
 const FADE_FRAMES = 4
 const FRAME_DELAY_CS = 10
 const COLORS = 160
 const DENOISE = 'hqdn3d=5:4:40:30'
 const MAX_BYTES = 600_000
-const OPTIMIZE_FUZZ = '6%'
 const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
 
 function filters(): string {
@@ -42,46 +33,29 @@ function filters(): string {
   return `${sweep},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
 }
 
-function renderMask(dir: string): string {
-  const mask = join(dir, 'mask.png')
-  const solid = String(SCENE_W - FADE_W)
-  execFileSync('magick', [
-    '(',
-    '-size',
-    `${solid}x${String(SCENE_H)}`,
-    'xc:white',
-    ')',
-    '(',
-    '-size',
-    `${String(SCENE_H)}x${String(FADE_W)}`,
-    'gradient:white-black',
-    '-rotate',
-    '-90',
-    ')',
-    '+append',
-    mask,
-  ])
-  return mask
-}
-
-function fadeIntoCard(frame: string, mask: string, base: string): void {
+function keyOutBlack(frame: string): void {
+  const alpha = `${frame}.alpha.png`
+  execFileSync('magick', [frame, '-separate', '-evaluate-sequence', 'max', alpha])
   execFileSync('magick', [
     frame,
-    mask,
+    alpha,
+    '-alpha',
+    'off',
     '-compose',
-    'multiply',
+    'CopyOpacity',
     '-composite',
-    '-fill',
-    base,
-    '-fuzz',
-    '3%',
-    '-opaque',
-    'black',
+    '-channel',
+    'A',
+    '-threshold',
+    ALPHA_THRESHOLD,
+    '+channel',
+    '-background',
+    'none',
     frame,
   ])
 }
 
-function renderSweep(dir: string, base: string): string[] {
+function renderSweep(dir: string): string[] {
   execFileSync('ffmpeg', [
     '-v',
     'error',
@@ -92,25 +66,15 @@ function renderSweep(dir: string, base: string): string[] {
     filters(),
     join(dir, 'sweep-%03d.png'),
   ])
-  const mask = renderMask(dir)
-  const frames = readdirSync(dir)
+  return readdirSync(dir)
     .filter((name) => name.startsWith('sweep-'))
     .sort()
     .map((name) => join(dir, name))
-  for (const frame of frames) fadeIntoCard(frame, mask, base)
-  return frames
 }
 
 function renderLit(dir: string, sweep: string[]): string {
   const lit = join(dir, 'lit.png')
-  execFileSync('magick', [
-    ...sweep,
-    '-evaluate-sequence',
-    'max',
-    '-fx',
-    `u*(${String(LIT_DIM_LEFT)}+${String(LIT_DIM_RIGHT - LIT_DIM_LEFT)}*i/w)`,
-    lit,
-  ])
+  execFileSync('magick', [...sweep, '-evaluate-sequence', 'max', lit])
   return lit
 }
 
@@ -134,38 +98,108 @@ function renderFade(dir: string, from: string, to: string): string[] {
   return frames
 }
 
+export const VIDEO_ENCODERS = ['libvpx-vp9', 'hevc_videotoolbox'] as const
+
+export function missingEncoders(encoderList: string): string[] {
+  return VIDEO_ENCODERS.filter((name) => !new RegExp(`\\s${name}\\s`).test(encoderList))
+}
+
+function requireEncoders(): void {
+  const list = execFileSync('ffmpeg', ['-hide_banner', '-encoders'], { encoding: 'utf8' })
+  const missing = missingEncoders(list)
+  if (missing.length > 0) {
+    throw new Error(
+      `ffmpeg lacks ${missing.join(', ')}; hevc_videotoolbox needs macOS, so run this script there`,
+    )
+  }
+}
+
+export function videoArgs(input: string, target: 'webm' | 'mp4'): string[] {
+  const base = ['-v', 'error', '-y', '-framerate', String(FPS), '-i', input]
+  const evenSize = ['-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2:0:0:color=0x00000000']
+  if (target === 'webm') {
+    return [
+      ...base,
+      ...evenSize,
+      '-c:v',
+      'libvpx-vp9',
+      '-pix_fmt',
+      'yuva420p',
+      '-b:v',
+      '0',
+      '-crf',
+      '30',
+      '-row-mt',
+      '1',
+      OUT_WEBM,
+    ]
+  }
+  return [
+    ...base,
+    ...evenSize,
+    '-c:v',
+    'hevc_videotoolbox',
+    '-pix_fmt',
+    'bgra',
+    '-alpha_quality',
+    '0.9',
+    '-q:v',
+    '70',
+    '-tag:v',
+    'hvc1',
+    '-movflags',
+    '+faststart',
+    OUT_MP4,
+  ]
+}
+
+function renderVideo(dir: string, frames: string[]): void {
+  frames.forEach((frame, i) => {
+    execFileSync('magick', [frame, join(dir, `video-${String(i).padStart(3, '0')}.png`)])
+  })
+  const input = join(dir, 'video-%03d.png')
+  execFileSync('ffmpeg', videoArgs(input, 'webm'))
+  execFileSync('ffmpeg', videoArgs(input, 'mp4'))
+}
+
 function main(): void {
+  requireEncoders()
   const dir = mkdtempSync(join(tmpdir(), 'sig-scene-'))
   mkdirSync(OUT_DIR, { recursive: true })
-  const tokens = readTokens(
-    readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
-  )
-  const sweep = renderSweep(dir, requireToken(tokens, 'base'))
-  const last = sweep.at(-1)
-  if (!last) throw new Error('ffmpeg produced no sweep frames')
-  const lit = renderLit(dir, sweep)
-  const frames = [...sweep, ...renderFade(dir, last, lit), lit]
-  execFileSync('magick', [
-    '-delay',
-    String(FRAME_DELAY_CS),
-    ...frames,
-    '-loop',
-    '1',
-    '-colors',
-    String(COLORS),
-    '-fuzz',
-    OPTIMIZE_FUZZ,
-    '-layers',
-    'Optimize',
-    OUT,
-  ])
-  rmSync(dir, { recursive: true, force: true })
-  const bytes = statSync(OUT).size
-  if (bytes > MAX_BYTES)
-    throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
-  console.log(
-    `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
-  )
+  try {
+    const sweep = renderSweep(dir)
+    const last = sweep.at(-1)
+    if (!last) throw new Error('ffmpeg produced no sweep frames')
+    const lit = renderLit(dir, sweep)
+    const frames = [...sweep, ...renderFade(dir, last, lit), lit]
+    for (const frame of frames) keyOutBlack(frame)
+    execFileSync('magick', [
+      '-dispose',
+      'Background',
+      '-delay',
+      String(FRAME_DELAY_CS),
+      ...frames,
+      '-loop',
+      '1',
+      '-colors',
+      String(COLORS),
+      OUT,
+    ])
+    renderVideo(dir, frames)
+    const bytes = statSync(OUT).size
+    if (bytes > MAX_BYTES)
+      throw new Error(`scene.gif is ${String(bytes)} bytes, over ${String(MAX_BYTES)}`)
+    console.log(
+      `wrote scene.gif ${String(bytes)} bytes, ${String(frames.length)} frames, plays once`,
+    )
+    for (const file of [OUT_WEBM, OUT_MP4]) {
+      console.log(
+        `wrote ${file.slice(OUT_DIR.length + 1)} ${String(statSync(file).size)} bytes`,
+      )
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

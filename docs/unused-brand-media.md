@@ -1,6 +1,6 @@
 # Unused brand media
 
-Created: 2026-10-18 · Updated: 2026-10-25
+Created: 2026-10-18 · Updated: 2026-10-26
 
 Files under `app/web/public/` that no page, stylesheet, script or test references. They are kept for
 the owner's review. The build hashes and ships them like every other asset; the unreferenced check in
@@ -31,6 +31,10 @@ to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`
 | -------------------------------------------------------------------------------------------- | ------ |
 | [stag-logo-run-reassemble.mp4](../app/web/public/media/brand/stag-logo-run-reassemble.mp4)   | 621 KB |
 | [stag-logo-run-reassemble.webm](../app/web/public/media/brand/stag-logo-run-reassemble.webm) | 345 KB |
+| [stag-corridor-charge.mp4](../app/web/public/media/brand/stag-corridor-charge.mp4)           | 2.0 MB |
+| [stag-corridor-charge.webm](../app/web/public/media/brand/stag-corridor-charge.webm)         | 1.7 MB |
+| [stag-gallop-banner.mp4](../app/web/public/media/brand/stag-gallop-banner.mp4)               | 176 KB |
+| [stag-gallop-banner.webm](../app/web/public/media/brand/stag-gallop-banner.webm)             | 135 KB |
 
 ## Stills
 

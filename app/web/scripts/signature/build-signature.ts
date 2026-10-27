@@ -23,16 +23,16 @@ const SITE_URL = 'https://mccorlabs.com'
 const BOOKING_FALLBACK = 'https://mccorlabs.com/contact'
 
 const FONTS = {
-  holland: { file: 'Holland.ttf', size: 24, lift: 0 },
+  holland: { file: 'Holland.ttf', size: 28, lift: 0 },
 } as const
 type FontKey = keyof typeof FONTS
 const DEFAULT_FONT: FontKey = 'holland'
 
-const NAME_W = 170
-const NAME_H = 30
-const PHOTO_W = 52
-const PHOTO_H = 64
-const PHOTO_RADIUS = 6
+const NAME_W = 200
+const NAME_H = 36
+const PHOTO_W = 96
+const PHOTO_H = 120
+const PHOTO_RADIUS = 8
 const ICON = 16
 const SCALE = 2
 
@@ -51,12 +51,7 @@ function pickFont(): FontKey {
   return key as FontKey
 }
 
-async function renderNames(
-  people: readonly Person[],
-  font: FontKey,
-  color: string,
-  bg: string,
-) {
+async function renderNames(people: readonly Person[], font: FontKey, color: string) {
   const spec = FONTS[font]
   const fontData = readFileSync(join(HERE, 'fonts', spec.file)).toString('base64')
   const fontUrl = `data:font/ttf;base64,${fontData}`
@@ -67,14 +62,14 @@ async function renderNames(
   })
   for (const person of people) {
     await page.setContent(
-      String.raw`<style>@font-face{font-family:sig;src:url("${fontUrl}")}html,body{margin:0;background:${bg}}div{font-family:sig;font-size:${spec.size}px;line-height:${NAME_H}px;height:${NAME_H}px;color:${color};white-space:nowrap;padding-left:6px;margin-top:${spec.lift}px}</style><div>${escapeHtml(person.name)}</div>`,
+      String.raw`<style>@font-face{font-family:sig;src:url("${fontUrl}")}html,body{margin:0;background:transparent}div{font-family:sig;font-size:${spec.size}px;line-height:${NAME_H}px;height:${NAME_H}px;color:${color};white-space:nowrap;padding-left:6px;margin-top:${spec.lift}px}</style><div>${escapeHtml(person.name)}</div>`,
     )
     await page.evaluate(() => document.fonts.ready)
     if (!(await page.evaluate(() => document.fonts.check('12px sig'))))
       throw new Error('signature font failed to load')
     await page.screenshot({
       path: join(OUT_ASSETS, `name-${person.slug}.png`),
-      omitBackground: false,
+      omitBackground: true,
     })
   }
   await browser.close()
@@ -86,27 +81,22 @@ function roundedMask(w: number, h: number, r: number): Buffer {
   )
 }
 
-async function renderPhoto(person: Person, bg: string): Promise<void> {
+async function renderPhoto(person: Person): Promise<void> {
   const w = PHOTO_W * SCALE
   const h = PHOTO_H * SCALE
-  const photo = await sharp(join(TEAM_DIR, `${person.photo}.webp`))
+  await sharp(join(TEAM_DIR, `${person.photo}.webp`))
     .resize(w, h, { fit: 'cover' })
     .composite([{ input: roundedMask(w, h, PHOTO_RADIUS * SCALE), blend: 'dest-in' }])
     .png()
-    .toBuffer()
-  await sharp({ create: { width: w, height: h, channels: 3, background: bg } })
-    .composite([{ input: photo }])
-    .jpeg({ quality: 88 })
-    .toFile(join(OUT_ASSETS, `photo-${person.slug}.jpg`))
+    .toFile(join(OUT_ASSETS, `photo-${person.slug}.png`))
 }
 
 async function renderIcon(
   name: keyof typeof ICON_PATHS,
   color: string,
   glyph: string,
-  bg: string,
 ): Promise<void> {
-  const svg = String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${ICON * SCALE}" height="${ICON * SCALE}" viewBox="0 0 24 24"><rect width="24" height="24" fill="${bg}"/><rect width="24" height="24" rx="4" fill="${color}"/><path d="${ICON_PATHS[name]}" fill="${glyph}"/></svg>`
+  const svg = String.raw`<svg xmlns="http://www.w3.org/2000/svg" width="${ICON * SCALE}" height="${ICON * SCALE}" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="${color}"/><path d="${ICON_PATHS[name]}" fill="${glyph}"/></svg>`
   await sharp(Buffer.from(svg))
     .png()
     .toFile(join(OUT_ASSETS, `${name}.png`))
@@ -127,23 +117,19 @@ async function main(): Promise<void> {
     bookingUrl: process.env.NEXT_PUBLIC_BOOKING_URL ?? BOOKING_FALLBACK,
     tokens,
   }
-  const base = requireToken(tokens, 'base')
   mkdirSync(OUT_HTML, { recursive: true })
   mkdirSync(OUT_ASSETS, { recursive: true })
-
-  await renderNames(people, font, requireToken(tokens, 'amber'), base)
-  await Promise.all(people.map((person) => renderPhoto(person, base)))
+  await renderNames(people, font, requireToken(tokens, 'amber'))
+  await Promise.all(people.map((person) => renderPhoto(person)))
   await renderIcon(
     'linkedin',
     requireToken(tokens, 'linkedin'),
     requireToken(tokens, 'text'),
-    base,
   )
   await renderIcon(
     'facebook',
     requireToken(tokens, 'facebook'),
     requireToken(tokens, 'text'),
-    base,
   )
 
   for (const person of people) {

@@ -41,7 +41,7 @@ to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`
 | File                                                                                       | Size   |
 | ------------------------------------------------------------------------------------------ | ------ |
 | [antler-circuit-sigil-512.png](../app/web/public/media/brand/antler-circuit-sigil-512.png) | 28 KB  |
-| [antler-circuit-sigil.svg](../app/web/public/media/brand/antler-circuit-sigil.svg)         | 3 KB   |
+| [antler-circuit-sigil.svg](../app/web/public/media/brand/antler-circuit-sigil.svg)         | 6 KB   |
 | [mccor-ai-neural.jpg](../app/web/public/media/brand/mccor-ai-neural.jpg)                   | 916 KB |
 | [mccor-ai-neural.webp](../app/web/public/media/brand/mccor-ai-neural.webp)                 | 200 KB |
 | [mccor-code-synthesis.webp](../app/web/public/media/brand/mccor-code-synthesis.webp)       | 116 KB |

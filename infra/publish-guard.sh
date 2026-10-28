@@ -24,7 +24,7 @@ check_publish_stage() {
       :
     else
       case "$name" in
-        *.html | *.txt | *.js | *.css | *.json | *.xml | *.woff2 | *.webp | *.avif | *.jpg | *.svg | *.mp4 | *.webm | *.glsl) ;;
+        *.html | *.txt | *.js | *.css | *.json | *.xml | *.woff2 | *.webp | *.avif | *.jpg | *.svg | *.mp4 | *.webm | *.mp3 | *.glsl) ;;
         *) publish_guard_reject "${file#"$stage"/}" "extension not allowed" ;;
       esac
     fi

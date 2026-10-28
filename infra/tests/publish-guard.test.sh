@@ -79,6 +79,11 @@ touch "$STAGE/media/brand/scene.gif"
 expect "gif outside sig" 1 "media/brand/scene.gif: extension not allowed"
 
 fixture
+mkdir -p "$STAGE/media/audio"
+touch "$STAGE/media/audio/mccor-ambient-loop.c93bf064.mp3"
+expect "mp3 under media/audio" 0
+
+fixture
 mkdir -p "$STAGE/sig/nested"
 touch "$STAGE/sig/nested/a.png"
 expect "png nested below sig" 1 "sig/nested/a.png: extension not allowed"

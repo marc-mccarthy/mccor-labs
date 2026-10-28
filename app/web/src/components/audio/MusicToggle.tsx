@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ui } from '@/content/ui'
 
-export const MUSIC_SRC = '/media/audio/ambient-loop.mp3'
+export const MUSIC_SRC = '/media/audio/mccor-ambient-loop.mp3'
 export const FADE_IN_SECONDS = 1.2
 export const FADE_OUT_SECONDS = 0.5
 

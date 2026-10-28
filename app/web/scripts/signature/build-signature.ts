@@ -190,7 +190,7 @@ async function main(): Promise<void> {
   for (const name of ['linkedin', 'facebook', 'github'] as const) {
     await renderIcon(
       name,
-      requireToken(tokens, 'elevated'),
+      requireToken(tokens, name),
       requireToken(tokens, 'text'),
       requireToken(tokens, 'border-strong'),
     )

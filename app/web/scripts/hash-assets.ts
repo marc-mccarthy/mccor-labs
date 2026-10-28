@@ -22,7 +22,7 @@ const KEPT_UNREFERENCED: ReadonlySet<string> = new Set([
   '/fonts/OFL.txt',
   '/media/brand/ai-neural-loop.mp4',
   '/media/brand/ai-neural-loop.webm',
-  '/media/brand/antler-circuit-sigil-512.png',
+  '/media/brand/antler-circuit-sigil-512.webp',
   '/media/brand/antler-circuit-sigil.svg',
   '/media/brand/code-synthesis-loop.mp4',
   '/media/brand/code-synthesis-loop.webm',

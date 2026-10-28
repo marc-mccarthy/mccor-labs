@@ -52,6 +52,7 @@ export function MusicToggle() {
   const playerRef = useRef<Player | null>(null)
   const pendingRef = useRef(false)
   const mountedRef = useRef(true)
+  const wantedRef = useRef(false)
   const fadeOutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const start = useCallback(async () => {
@@ -69,10 +70,12 @@ export function MusicToggle() {
         clearTimeout(fadeOutRef.current)
         fadeOutRef.current = null
       }
+      wantedRef.current = true
       rampGain(player, 1, FADE_IN_SECONDS)
       await (document.hidden ? player.context.suspend() : player.context.resume())
       setPlaying(true)
     } catch (error) {
+      if (!mountedRef.current) return
       reportError(new Error('Could not start the background music', { cause: error }))
       setPlaying(false)
     } finally {
@@ -84,6 +87,7 @@ export function MusicToggle() {
   const stop = useCallback(() => {
     const player = playerRef.current
     if (!player) return
+    wantedRef.current = false
     rampGain(player, 0, FADE_OUT_SECONDS)
     fadeOutRef.current = setTimeout(() => {
       fadeOutRef.current = null
@@ -93,21 +97,15 @@ export function MusicToggle() {
   }, [])
 
   useEffect(() => {
-    if (!playing) return
+    mountedRef.current = true
     function onVisibilityChange() {
       const player = playerRef.current
-      if (!player) return
+      if (!player || !wantedRef.current) return
       void (document.hidden ? player.context.suspend() : player.context.resume())
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [playing])
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
       mountedRef.current = false
       if (fadeOutRef.current) clearTimeout(fadeOutRef.current)
       void playerRef.current?.context.close()

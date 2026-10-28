@@ -15,7 +15,6 @@ const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 export const SCENE_W = 384
 export const SCENE_H = 272
 const CROP = { w: 560, h: 397, x: 450, y: 135 }
-const ALPHA_THRESHOLD = '40%'
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
@@ -26,7 +25,7 @@ const PLATE = '#08080a'
 const PINE_HUE = { min: 0.19, max: 0.47 }
 const PINE_DIM = '55,75,100'
 const FEATHER = 44
-const COLORS = 160
+const COLORS = 128
 const DENOISE = 'hqdn3d=5:4:40:30'
 const MAX_BYTES = 600_000
 const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
@@ -36,32 +35,6 @@ function filters(): string {
   const levels = `colorlevels=rimin=${String(BLACK_POINT.r)}:gimin=${String(BLACK_POINT.g)}:bimin=${String(BLACK_POINT.b)}`
   const sweep = `trim=end=${String(SWEEP_END_S)},setpts=${String(SWEEP_SLOWDOWN)}*(PTS-STARTPTS)`
   return `${sweep},fps=${String(FPS)},${crop},${DENOISE},scale=${String(SCENE_W)}:${String(SCENE_H)}:flags=lanczos,${levels}`
-}
-
-function keyOutBlack(frame: string): void {
-  const alpha = `${frame}.alpha.png`
-  execFileSync('magick', [frame, '-separate', '-evaluate-sequence', 'max', alpha])
-  execFileSync('magick', [
-    frame,
-    alpha,
-    '-alpha',
-    'off',
-    '-compose',
-    'CopyOpacity',
-    '-composite',
-    '-channel',
-    'RGB',
-    '-fx',
-    'u/pow(max(u.a,0.01),0.5)',
-    '-channel',
-    'A',
-    '-threshold',
-    ALPHA_THRESHOLD,
-    '+channel',
-    '-background',
-    'none',
-    frame,
-  ])
 }
 
 function renderSweep(dir: string): string[] {
@@ -199,7 +172,16 @@ function dimPines(frame: string): void {
 }
 
 function plate(frame: string): void {
-  execFileSync('magick', [frame, '-background', PLATE, '-flatten', frame])
+  execFileSync('magick', [
+    '-size',
+    `${String(SCENE_W)}x${String(SCENE_H)}`,
+    `xc:${PLATE}`,
+    frame,
+    '-compose',
+    'Lighten',
+    '-composite',
+    frame,
+  ])
 }
 
 function featherMask(dir: string): string {
@@ -264,7 +246,6 @@ function main(): void {
     for (const frame of [...sweep, lit]) dimPines(frame)
     const mask = featherMask(dir)
     for (const frame of frames) {
-      keyOutBlack(frame)
       plate(frame)
       feather(frame, mask)
     }

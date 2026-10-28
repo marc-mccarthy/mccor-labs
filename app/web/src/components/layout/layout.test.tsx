@@ -97,12 +97,16 @@ describe('Header', () => {
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
   })
 
-  it('offers the motion pause toggle right before the menu button at every width', () => {
+  it('offers the music and motion toggles right before the menu button at every width', () => {
     render(<Header />)
+    const music = screen.getByRole('button', { name: ui.playMusic })
     const pause = screen.getByRole('button', { name: ui.pauseMotion })
     const menu = screen.getByRole('button', { name: ui.openMenu })
+    expect(music).toHaveAttribute('aria-pressed', 'false')
     expect(pause).toHaveAttribute('aria-pressed', 'false')
+    expect(music.nextElementSibling).toBe(pause)
     expect(pause.nextElementSibling).toBe(menu)
+    expect(music.closest('.hidden')).toBeNull()
     expect(pause.closest('.hidden')).toBeNull()
   })
 

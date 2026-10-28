@@ -9,6 +9,7 @@ interface FakeAudio {
   close: ReturnType<typeof vi.fn>
   start: ReturnType<typeof vi.fn>
   ramp: ReturnType<typeof vi.fn>
+  decode: ReturnType<typeof vi.fn>
   source: { loop: boolean; loopStart: number; loopEnd: number; buffer: unknown }
 }
 
@@ -19,6 +20,7 @@ function installFakeAudioContext(): FakeAudio {
     close: vi.fn().mockResolvedValue(undefined),
     start: vi.fn(),
     ramp: vi.fn(),
+    decode: vi.fn().mockResolvedValue({ duration: 124 }),
     source: { loop: false, loopStart: 0, loopEnd: 0, buffer: null },
   }
   const gainNode = {
@@ -36,7 +38,7 @@ function installFakeAudioContext(): FakeAudio {
     resume = fake.resume
     suspend = fake.suspend
     close = fake.close
-    decodeAudioData = vi.fn().mockResolvedValue({ duration: 124 })
+    decodeAudioData = fake.decode
     createGain = () => gainNode
     createBufferSource = () => {
       const source = Object.assign(fake.source, {
@@ -103,9 +105,10 @@ describe('MusicToggle', () => {
     expect(fake.source.loopStart).toBeGreaterThan(0)
     expect(fake.source.loopEnd).toBeLessThan(124)
     expect(fake.start).toHaveBeenCalledTimes(1)
-    expect(fake.resume).toHaveBeenCalledTimes(1)
+    expect(fake.resume).toHaveBeenCalledTimes(2)
     expect(fake.ramp).toHaveBeenCalledWith(1, 10 + FADE_IN_SECONDS)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle).not.toHaveAttribute('aria-busy')
   })
 
   it('fades out and suspends on the second press without reloading', async () => {
@@ -126,7 +129,7 @@ describe('MusicToggle', () => {
     await clickToggle(toggle)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fake.start).toHaveBeenCalledTimes(1)
-    expect(fake.resume).toHaveBeenCalledTimes(2)
+    expect(fake.resume).toHaveBeenCalledTimes(3)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
   })
 
@@ -158,7 +161,7 @@ describe('MusicToggle', () => {
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'))
     })
-    expect(fake.resume).toHaveBeenCalledTimes(2)
+    expect(fake.resume).toHaveBeenCalledTimes(3)
   })
 
   it('closes the audio context on unmount', async () => {
@@ -168,6 +171,92 @@ describe('MusicToggle', () => {
     await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
     unmount()
     expect(fake.close).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the context when fetch rejects or decoding fails', async () => {
+    const fake = installFakeAudioContext()
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
+    const { unmount } = render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.playMusic })
+    await clickToggle(toggle)
+    expect(fake.close).toHaveBeenCalledTimes(1)
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    unmount()
+
+    mockFetch()
+    fake.decode.mockRejectedValue(new DOMException('bad', 'EncodingError'))
+    render(<MusicToggle />)
+    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    expect(fake.close).toHaveBeenCalledTimes(2)
+    expect(reportError).toHaveBeenCalledTimes(2)
+  })
+
+  it('marks the button busy and ignores clicks while the loop loads', async () => {
+    const fake = installFakeAudioContext()
+    let resolveFetch: (value: unknown) => void = () => undefined
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.playMusic })
+    await clickToggle(toggle)
+    await clickToggle(toggle)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(toggle).toHaveAttribute('aria-busy', 'true')
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await act(async () => {
+      resolveFetch({
+        ok: true,
+        status: 200,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+      })
+      await Promise.resolve()
+    })
+    expect(toggle).not.toHaveAttribute('aria-busy')
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(fake.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes a load that finishes after unmount and never fades in', async () => {
+    const fake = installFakeAudioContext()
+    let resolveFetch: (value: unknown) => void = () => undefined
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveFetch = resolve
+        }),
+      ),
+    )
+    const { unmount } = render(<MusicToggle />)
+    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    unmount()
+    await act(async () => {
+      resolveFetch({
+        ok: true,
+        status: 200,
+        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+      })
+      await Promise.resolve()
+    })
+    expect(fake.close).toHaveBeenCalledTimes(1)
+    expect(fake.ramp).not.toHaveBeenCalledWith(1, expect.anything())
+  })
+
+  it('keeps the loop suspended when the tab is hidden by the time the load finishes', async () => {
+    mockFetch()
+    const fake = installFakeAudioContext()
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.playMusic })
+    await clickToggle(toggle)
+    expect(fake.suspend).toHaveBeenCalledTimes(1)
+    expect(fake.resume).toHaveBeenCalledTimes(1)
+    expect(fake.ramp).toHaveBeenCalledWith(1, 10 + FADE_IN_SECONDS)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('draws a path-only icon with no text', () => {

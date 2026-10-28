@@ -16,22 +16,27 @@ interface Player {
 
 async function createPlayer(): Promise<Player> {
   const context = new AudioContext()
-  const response = await fetch(MUSIC_SRC)
-  if (!response.ok) {
+  void context.resume()
+  try {
+    const response = await fetch(MUSIC_SRC)
+    if (!response.ok) {
+      throw new Error(`Could not load ${MUSIC_SRC}: ${String(response.status)}`)
+    }
+    const buffer = await context.decodeAudioData(await response.arrayBuffer())
+    const source = context.createBufferSource()
+    source.buffer = buffer
+    source.loop = true
+    source.loopStart = LOOP_TRIM_SECONDS
+    source.loopEnd = buffer.duration - LOOP_TRIM_SECONDS
+    const gain = context.createGain()
+    gain.gain.value = 0
+    source.connect(gain).connect(context.destination)
+    source.start()
+    return { context, gain }
+  } catch (error) {
     await context.close()
-    throw new Error(`Could not load ${MUSIC_SRC}: ${String(response.status)}`)
+    throw error
   }
-  const buffer = await context.decodeAudioData(await response.arrayBuffer())
-  const source = context.createBufferSource()
-  source.buffer = buffer
-  source.loop = true
-  source.loopStart = LOOP_TRIM_SECONDS
-  source.loopEnd = buffer.duration - LOOP_TRIM_SECONDS
-  const gain = context.createGain()
-  gain.gain.value = 0
-  source.connect(gain).connect(context.destination)
-  source.start()
-  return { context, gain }
 }
 
 function rampGain({ context, gain }: Player, target: number, seconds: number): void {
@@ -43,28 +48,36 @@ function rampGain({ context, gain }: Player, target: number, seconds: number): v
 
 export function MusicToggle() {
   const [playing, setPlaying] = useState(false)
+  const [loading, setLoading] = useState(false)
   const playerRef = useRef<Player | null>(null)
   const pendingRef = useRef(false)
+  const mountedRef = useRef(true)
   const fadeOutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const start = useCallback(async () => {
     if (pendingRef.current) return
     pendingRef.current = true
+    setLoading(true)
     try {
-      playerRef.current ??= await createPlayer()
-      const player = playerRef.current
+      const player = playerRef.current ?? (await createPlayer())
+      if (!mountedRef.current) {
+        await player.context.close()
+        return
+      }
+      playerRef.current = player
       if (fadeOutRef.current) {
         clearTimeout(fadeOutRef.current)
         fadeOutRef.current = null
       }
-      await player.context.resume()
       rampGain(player, 1, FADE_IN_SECONDS)
+      await (document.hidden ? player.context.suspend() : player.context.resume())
       setPlaying(true)
     } catch (error) {
       reportError(new Error('Could not start the background music', { cause: error }))
       setPlaying(false)
     } finally {
       pendingRef.current = false
+      if (mountedRef.current) setLoading(false)
     }
   }, [])
 
@@ -92,18 +105,21 @@ export function MusicToggle() {
     }
   }, [playing])
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
       if (fadeOutRef.current) clearTimeout(fadeOutRef.current)
       void playerRef.current?.context.close()
-    },
-    [],
-  )
+      playerRef.current = null
+    }
+  }, [])
 
   return (
     <button
       type="button"
       aria-pressed={playing}
+      aria-busy={loading ? true : undefined}
       aria-label={ui.playMusic}
       onClick={playing ? stop : () => void start()}
       className="inline-flex h-11 w-11 shrink-0 press items-center justify-center rounded-full border border-border text-muted hover:text-accent focus-visible:text-accent aria-pressed:border-accent"

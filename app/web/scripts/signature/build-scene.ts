@@ -242,8 +242,8 @@ function main(): void {
     const last = sweep.at(-1)
     if (!last) throw new Error('ffmpeg produced no sweep frames')
     const lit = renderLit(dir, sweep)
-    const frames = [...sweep, ...renderFade(dir, last, lit), lit]
     for (const frame of [...sweep, lit]) dimPines(frame)
+    const frames = [...sweep, ...renderFade(dir, last, lit), lit]
     const mask = featherMask(dir)
     for (const frame of frames) {
       plate(frame)

@@ -12,9 +12,9 @@ const OUT = join(OUT_DIR, 'scene.gif')
 const OUT_WEBM = join(OUT_DIR, 'scene.webm')
 const OUT_MP4 = join(OUT_DIR, 'scene.mp4')
 
-export const SCENE_W = 384
-export const SCENE_H = 272
-const CROP = { w: 560, h: 397, x: 450, y: 135 }
+export const SCENE_W = 480
+export const SCENE_H = 340
+const CROP = { w: 680, h: 482, x: 330, y: 70 }
 const FPS = 10
 const SWEEP_END_S = 2.4
 const SWEEP_SLOWDOWN = 0.625
@@ -23,9 +23,10 @@ const FRAME_DELAY_CS = 10
 const HOLD_DELAY_CS = 60
 const PLATE = '#08080a'
 const PINE_HUE = { min: 0.19, max: 0.47 }
-const PINE_DIM = '55,75,100'
-const FEATHER = 44
+const PINE_DIM = '72,85,100'
+const FEATHER = 36
 const COLORS = 128
+const DELTA_FUZZ = '4%'
 const DENOISE = 'hqdn3d=5:4:40:30'
 const MAX_BYTES = 600_000
 const BLACK_POINT = { r: 0.13, g: 0.16, b: 0.19 }
@@ -202,18 +203,6 @@ function featherMask(dir: string): string {
     '-compose',
     'Multiply',
     '-composite',
-    '(',
-    '-size',
-    `${String(SCENE_W)}x${String(FEATHER)}`,
-    '-define',
-    'gradient:direction=South',
-    'gradient:white-black',
-    ')',
-    '-gravity',
-    'South',
-    '-compose',
-    'Multiply',
-    '-composite',
     mask,
   ])
   return mask
@@ -258,6 +247,10 @@ function main(): void {
       ...frames,
       '-loop',
       '1',
+      '-fuzz',
+      DELTA_FUZZ,
+      '-layers',
+      'OptimizeTransparency',
       '-colors',
       String(COLORS),
       OUT,

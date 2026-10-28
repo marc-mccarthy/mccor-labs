@@ -38,26 +38,27 @@ to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`
 
 ## Stills
 
-| File                                                                                 | Size   |
-| ------------------------------------------------------------------------------------ | ------ |
-| [mccor-ai-neural.jpg](../app/web/public/media/brand/mccor-ai-neural.jpg)             | 916 KB |
-| [mccor-ai-neural.webp](../app/web/public/media/brand/mccor-ai-neural.webp)           | 200 KB |
-| [mccor-code-synthesis.webp](../app/web/public/media/brand/mccor-code-synthesis.webp) | 116 KB |
-| [mccor-edge-telemetry.webp](../app/web/public/media/brand/mccor-edge-telemetry.webp) | 168 KB |
-| [mccor-stag-head.jpg](../app/web/public/media/brand/mccor-stag-head.jpg)             | 368 KB |
-| [mccor-stag-head.webp](../app/web/public/media/brand/mccor-stag-head.webp)           | 40 KB  |
-| [mccor-stag-hero.jpg](../app/web/public/media/brand/mccor-stag-hero.jpg)             | 600 KB |
-| [mccor-stag-impact.jpg](../app/web/public/media/brand/mccor-stag-impact.jpg)         | 1.2 MB |
-| [mccor-stag-logo-1.webp](../app/web/public/media/brand/mccor-stag-logo-1.webp)       | 30 KB  |
-| [mccor-stag-logo.jpg](../app/web/public/media/brand/mccor-stag-logo.jpg)             | 272 KB |
-| [mccor-stag-logo.svg](../app/web/public/media/brand/mccor-stag-logo.svg)             | 3 KB   |
-| [mccor-stag-logo.webp](../app/web/public/media/brand/mccor-stag-logo.webp)           | 32 KB  |
-| [mccor-stag-og.webp](../app/web/public/media/brand/mccor-stag-og.webp)               | 60 KB  |
-| [mccor-stag-systems.jpg](../app/web/public/media/brand/mccor-stag-systems.jpg)       | 896 KB |
-| [mccor-stag-systems.webp](../app/web/public/media/brand/mccor-stag-systems.webp)     | 188 KB |
-| [mccor-systems-arch.webp](../app/web/public/media/brand/mccor-systems-arch.webp)     | 248 KB |
-| [mccor-vector-space.jpg](../app/web/public/media/brand/mccor-vector-space.jpg)       | 856 KB |
-| [mccor-vector-space.webp](../app/web/public/media/brand/mccor-vector-space.webp)     | 168 KB |
+| File                                                                                       | Size   |
+| ------------------------------------------------------------------------------------------ | ------ |
+| [antler-circuit-sigil-512.png](../app/web/public/media/brand/antler-circuit-sigil-512.png) | 28 KB  |
+| [antler-circuit-sigil.svg](../app/web/public/media/brand/antler-circuit-sigil.svg)         | 6 KB   |
+| [mccor-ai-neural.jpg](../app/web/public/media/brand/mccor-ai-neural.jpg)                   | 916 KB |
+| [mccor-ai-neural.webp](../app/web/public/media/brand/mccor-ai-neural.webp)                 | 200 KB |
+| [mccor-code-synthesis.webp](../app/web/public/media/brand/mccor-code-synthesis.webp)       | 116 KB |
+| [mccor-edge-telemetry.webp](../app/web/public/media/brand/mccor-edge-telemetry.webp)       | 168 KB |
+| [mccor-stag-head.jpg](../app/web/public/media/brand/mccor-stag-head.jpg)                   | 368 KB |
+| [mccor-stag-head.webp](../app/web/public/media/brand/mccor-stag-head.webp)                 | 40 KB  |
+| [mccor-stag-hero.jpg](../app/web/public/media/brand/mccor-stag-hero.jpg)                   | 600 KB |
+| [mccor-stag-impact.jpg](../app/web/public/media/brand/mccor-stag-impact.jpg)               | 1.2 MB |
+| [mccor-stag-logo-1.webp](../app/web/public/media/brand/mccor-stag-logo-1.webp)             | 30 KB  |
+| [mccor-stag-logo.jpg](../app/web/public/media/brand/mccor-stag-logo.jpg)                   | 272 KB |
+| [mccor-stag-logo.webp](../app/web/public/media/brand/mccor-stag-logo.webp)                 | 32 KB  |
+| [mccor-stag-og.webp](../app/web/public/media/brand/mccor-stag-og.webp)                     | 60 KB  |
+| [mccor-stag-systems.jpg](../app/web/public/media/brand/mccor-stag-systems.jpg)             | 896 KB |
+| [mccor-stag-systems.webp](../app/web/public/media/brand/mccor-stag-systems.webp)           | 188 KB |
+| [mccor-systems-arch.webp](../app/web/public/media/brand/mccor-systems-arch.webp)           | 248 KB |
+| [mccor-vector-space.jpg](../app/web/public/media/brand/mccor-vector-space.jpg)             | 856 KB |
+| [mccor-vector-space.webp](../app/web/public/media/brand/mccor-vector-space.webp)           | 168 KB |
 
 ## Textures
 

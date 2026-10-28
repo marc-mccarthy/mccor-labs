@@ -223,7 +223,7 @@ describe('BIMI logo', () => {
 })
 
 describe('site logos', () => {
-  const LOGOS = ['favicon.svg', 'icon.svg', 'media/brand/mccor-stag-logo.svg'] as const
+  const LOGOS = ['favicon.svg', 'icon.svg'] as const
   const read = (name: string) =>
     readFileSync(join(import.meta.dirname, '../../public', name), 'utf8')
 
@@ -250,10 +250,6 @@ describe('site logos', () => {
 
   it('keeps favicon.svg and icon.svg identical', () => {
     expect(read('favicon.svg')).toBe(read('icon.svg'))
-  })
-
-  it('glows the antlers only in the brand master', () => {
-    expect(read('media/brand/mccor-stag-logo.svg')).toMatch(/<filter id="glow"/)
   })
 })
 

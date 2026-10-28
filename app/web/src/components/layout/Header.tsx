@@ -8,6 +8,7 @@ import { Logo } from './Logo'
 import { BookingCta } from './BookingCta'
 import { Container } from './Container'
 import { UNDERLINE } from './underline'
+import { MusicToggle } from '@/components/audio/MusicToggle'
 import { MotionPauseToggle } from '@/components/motion/MotionPauseToggle'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
@@ -73,6 +74,7 @@ export function Header() {
           <div className="hidden md:block">
             <BookingCta size="sm" variant={current === '/contact' ? 'link' : 'primary'} />
           </div>
+          <MusicToggle />
           <MotionPauseToggle />
           <button
             ref={toggleRef}

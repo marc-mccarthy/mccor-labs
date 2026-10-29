@@ -80,9 +80,9 @@ describe('renderSignature', () => {
     expect(render(minimal, false)).not.toMatch(/{{\w+}}/)
   })
 
-  it('keeps the stable root id and 555px width', () => {
+  it('keeps the stable root id and 546px width', () => {
     expect(flat(html)).toContain('<table id="sig"')
-    expect(html).toContain('width="555"')
+    expect(html).toContain('width="546"')
   })
 
   it('escapes person fields', () => {
@@ -130,7 +130,7 @@ describe('renderSignature', () => {
   })
 
   it('keeps the role line and crest alt as in the reference', () => {
-    expect(flat(html)).toContain('font-weight:700;padding-top:3px"> Founder, McCor Labs')
+    expect(flat(html)).toContain('font-weight:700;padding-top:2px"> Founder, McCor Labs')
     expect(html).toContain('alt="McCarthy coat of arms"')
   })
 
@@ -172,11 +172,11 @@ describe('renderSignature', () => {
     expect(bare).toContain('icon-mccor.gif')
   })
 
-  it('fits the 555 by 200 frame', () => {
+  it('fits the 546 by 190 frame', () => {
     const f = flat(html)
-    expect(f).toContain('height="149"')
-    expect(f).toContain('width="99" height="137"')
-    expect(f).toContain('width="127" height="141"')
+    expect(f).toContain('height="139"')
+    expect(f).toContain('width="95" height="131"')
+    expect(f).toContain('width="118" height="131"')
   })
 
   it('links the mccor icon to the website', () => {

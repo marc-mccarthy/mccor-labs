@@ -20,8 +20,8 @@ export interface SignatureContext {
 
 const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
-const PAD_TOP = 3
-const PAD_BOTTOM = 6
+const PAD_TOP = 0
+const PAD_BOTTOM = 7
 const BUTTON_GAP = 15
 const US_PREFIX = /^\+1\s+/
 
@@ -92,12 +92,12 @@ export function phoneHref(phone: string): string {
 
 function photoCell(person: Person, ctx: SignatureContext): string {
   const src = `${ctx.assetBase}/${person.slug}.png`
-  return `<td width="99" valign="middle" style="width:99px;line-height:0"><img src="${src}" width="99" height="137" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:99px;height:137px"></td>\n`
+  return `<td width="95" valign="middle" style="width:95px;line-height:0"><img src="${src}" width="95" height="131" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:95px;height:131px"></td>\n`
 }
 
 function specialtyRow(specialty: string, ink: string): string {
   if (specialty === '') return ''
-  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:1px">${escapeHtml(specialty)}</div>\n`
+  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:0">${escapeHtml(specialty)}</div>\n`
 }
 
 function phoneRow(phone: string | undefined, ink: string): string {

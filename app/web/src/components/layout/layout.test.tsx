@@ -91,21 +91,11 @@ describe('Header', () => {
     }
   })
 
-  it('falls back to an email link when booking is not configured', () => {
-    mocked.env.bookingUrl = null
-    render(<Header />)
-    const cta = screen.getByRole('link', { name: ui.contactFallback })
-    expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
-  })
-
-  it('links to the booking url in a new tab when booking is configured', () => {
+  it('leaves the booking call to the page, not the closed header', () => {
     mocked.env.bookingUrl = BOOKING_URL
     render(<Header />)
-    const cta = screen.getByRole('link', { name: ui.bookCall })
-    expect(cta).toHaveAttribute('href', BOOKING_URL)
-    expect(cta).toHaveAttribute('target', '_blank')
-    expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
-    expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    expect(screen.queryByRole('link', { name: ui.bookCall })).toBeNull()
+    expect(screen.queryByRole('link', { name: ui.contactFallback })).toBeNull()
   })
 
   it('offers the music and motion toggles right before the menu button at every width', () => {
@@ -264,25 +254,12 @@ describe('BookingCta link variant', () => {
     expect(container.querySelector('[data-magnetic]')).not.toBeNull()
   })
 
-  it('demotes only the desktop header CTA on the contact route', () => {
+  it('keeps the only header booking call in the mobile menu', () => {
     mocked.env.bookingUrl = BOOKING_URL
-    navigation.pathname = '/contact/'
     render(<Header />)
     const links = screen.getAllByRole('link', { name: ui.bookCall, hidden: true })
-    expect(links).toHaveLength(2)
-    const desktop = links.find((link) => link.closest('.hidden.md\\:block'))!
-    const mobile = links.find((link) => link.closest('#mobile-nav'))!
-    expect(desktop.closest('[data-magnetic]')).toBeNull()
-    expect(mobile.closest('[data-magnetic]')).not.toBeNull()
-  })
-
-  it('keeps the desktop header CTA magnetic off the contact route', () => {
-    mocked.env.bookingUrl = BOOKING_URL
-    render(<Header />)
-    const desktop = screen
-      .getAllByRole('link', { name: ui.bookCall, hidden: true })
-      .find((link) => link.closest('.hidden.md\\:block'))!
-    expect(desktop.closest('[data-magnetic]')).not.toBeNull()
+    expect(links).toHaveLength(1)
+    expect(links[0]?.closest('#mobile-nav')).not.toBeNull()
   })
 })
 

@@ -20,7 +20,7 @@ check_publish_stage() {
       publish_guard_reject "${file#"$stage"/}" "dotfile"
     elif [[ "${file#"$stage"/}" == "apple-touch-icon.png" || "${file#"$stage"/}" == "favicon.ico" ]]; then
       :
-    elif [[ "${file#"$stage"/}" =~ ^sig/([^/]+/)?[^/]+\.(png|gif)$ ]]; then
+    elif [[ "${file#"$stage"/}" =~ ^sig/(framed/)?[^/]+\.(png|gif)$ ]]; then
       :
     else
       case "$name" in

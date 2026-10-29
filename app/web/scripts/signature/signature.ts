@@ -20,8 +20,9 @@ export interface SignatureContext {
 
 const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
-const PAD_TOP = 9
+const PAD_TOP = 19
 const PAD_BOTTOM = 14
+const BUTTON_GAP = 15
 const US_PREFIX = /^\+1\s+/
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
@@ -104,17 +105,17 @@ function phoneRow(phone: string | undefined, ink: string): string {
   return `<div style="font-size:11px;line-height:16px;color:${ink};padding-top:2px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
 }
 
-function bookCell(booking: string, ctx: SignatureContext): string {
+function bookButton(booking: string, ctx: SignatureContext, gap: number): string {
   const red = requireToken(ctx.tokens, 'crimson-deep')
   const light = requireToken(ctx.tokens, 'text')
-  return `<td valign="bottom" style="padding:0;line-height:0"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${red}" style="background:${red};border-radius:3px;padding:6px 11px;font-family:${FONT};font-size:10px;line-height:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td></tr></table></td>`
+  return `<div style="padding-top:${String(gap)}px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${red}" style="background:${red};border-radius:3px;padding:6px 11px;font-family:${FONT};font-size:10px;line-height:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td></tr></table></div>`
 }
 
 function iconCell(src: string, href: string, alt: string, gap: number): string {
   return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="48" alt="${alt}" style="display:block;border:0;width:24px;height:48px"></a></td>`
 }
 
-function actionRow(person: Person, ctx: SignatureContext): string {
+function iconTable(person: Person, ctx: SignatureContext): string {
   const website = person.website ?? ''
   const icons = [
     {
@@ -125,14 +126,21 @@ function actionRow(person: Person, ctx: SignatureContext): string {
     { href: person.linkedin, file: 'icon-linkedin.gif', alt: 'LinkedIn' },
     { href: person.github, file: 'icon-github.gif', alt: 'GitHub' },
   ]
-  const cells = person.booking ? [bookCell(person.booking, ctx)] : []
-  let gap = cells.length === 0 ? 0 : 12
+  const cells: string[] = []
+  let gap = 0
   for (const { href, file, alt } of icons) {
     if (!href) continue
     cells.push(iconCell(`${ctx.assetBase}/${file}`, href, alt, gap))
     gap = 6
   }
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>\n`
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>`
+}
+
+function contactBlock(person: Person, ctx: SignatureContext, ink: string): string {
+  const phone = phoneRow(person.phone, ink)
+  if (!person.booking) return `${phone}${iconTable(person, ctx)}\n`
+  const button = bookButton(person.booking, ctx, phone === '' ? 0 : BUTTON_GAP)
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n<td valign="bottom" style="padding:0">${phone}${button}</td>\n<td valign="bottom" style="padding:0 0 0 12px;line-height:0">${iconTable(person, ctx)}</td>\n</tr></table>\n`
 }
 
 export function renderSignature(
@@ -157,8 +165,7 @@ export function renderSignature(
     email: escapeHtml(person.email),
     photoCell: hasCard ? photoCell(person, ctx) : '',
     specialtyRow: specialtyRow(rest.join(TITLE_SEPARATOR), base),
-    phoneRow: phoneRow(person.phone, base),
-    actionRow: actionRow(person, ctx),
+    contactBlock: contactBlock(person, ctx, base),
   }
   return template.replace(/{{(\w+)}}/g, (_, key: string) => {
     const value = values[key]

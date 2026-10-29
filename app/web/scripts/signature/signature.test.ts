@@ -147,6 +147,24 @@ describe('renderSignature', () => {
     expect(html).toContain('width="24" height="48"')
   })
 
+  it('puts the icons in a cell beside the phone and button', () => {
+    expect(flat(html)).toMatch(
+      /tel:.*padding-top:15px.*Book a call.*<\/div><\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
+    )
+  })
+
+  it('drops the gap above the button when there is no phone', () => {
+    expect(flat(render({ ...person, phone: '' }))).toContain(
+      '<div style="padding-top:0px"><table',
+    )
+  })
+
+  it('puts the icons under the phone when there is no booking', () => {
+    const plain = flat(render({ ...person, booking: '' }))
+    expect(plain).not.toContain('Book a call')
+    expect(plain.indexOf('tel:')).toBeLessThan(plain.indexOf('icon-mccor.gif'))
+  })
+
   it('links the mccor icon to the website', () => {
     expect(html).toContain(
       '<a href="https://example.com"><img src="https://mccorlabs.com/sig/framed/icon-mccor.gif"',

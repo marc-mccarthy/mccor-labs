@@ -1,7 +1,15 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ui } from '@/content/ui'
-import { FADE_IN_SECONDS, FADE_OUT_SECONDS, MUSIC_SRC, MusicToggle } from './MusicToggle'
+import {
+  BAR_MAX,
+  BARS,
+  FADE_IN_SECONDS,
+  FADE_OUT_SECONDS,
+  MUSIC_SRC,
+  MUSIC_VOLUME,
+  MusicToggle,
+} from './MusicToggle'
 
 interface FakeAudio {
   resume: ReturnType<typeof vi.fn>
@@ -11,6 +19,7 @@ interface FakeAudio {
   ramp: ReturnType<typeof vi.fn>
   decode: ReturnType<typeof vi.fn>
   source: { loop: boolean; loopStart: number; loopEnd: number; buffer: unknown }
+  spectrum: ReturnType<typeof vi.fn>
 }
 
 function installFakeAudioContext(): FakeAudio {
@@ -22,6 +31,13 @@ function installFakeAudioContext(): FakeAudio {
     ramp: vi.fn(),
     decode: vi.fn().mockResolvedValue({ duration: 124 }),
     source: { loop: false, loopStart: 0, loopEnd: 0, buffer: null },
+    spectrum: vi.fn((data: Uint8Array) => data.fill(255)),
+  }
+  const analyserNode = {
+    fftSize: 2048,
+    frequencyBinCount: 32,
+    getByteFrequencyData: fake.spectrum,
+    connect: vi.fn(),
   }
   const gainNode = {
     gain: {
@@ -30,7 +46,7 @@ function installFakeAudioContext(): FakeAudio {
       setValueAtTime: vi.fn(),
       linearRampToValueAtTime: fake.ramp,
     },
-    connect: vi.fn(),
+    connect: vi.fn().mockReturnValue(analyserNode),
   }
   class FakeAudioContext {
     currentTime = 10
@@ -40,6 +56,7 @@ function installFakeAudioContext(): FakeAudio {
     close = fake.close
     decodeAudioData = fake.decode
     createGain = () => gainNode
+    createAnalyser = () => analyserNode
     createBufferSource = () => {
       const source = Object.assign(fake.source, {
         start: fake.start,
@@ -69,6 +86,29 @@ async function clickToggle(toggle: HTMLElement) {
   })
 }
 
+async function interact(type: 'click' | 'keydown' = 'click') {
+  await act(async () => {
+    if (type === 'click') fireEvent.click(document.body)
+    else fireEvent.keyDown(document.body, { key: 'a' })
+    await Promise.resolve()
+  })
+}
+
+function stubActivation(isActive: boolean) {
+  Object.defineProperty(navigator, 'userActivation', {
+    value: { isActive },
+    configurable: true,
+  })
+}
+
+function resolvedResponse() {
+  return {
+    ok: true,
+    status: 200,
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+  }
+}
+
 describe('MusicToggle', () => {
   let reportError: ReturnType<typeof vi.fn<(error: unknown) => void>>
 
@@ -82,43 +122,98 @@ describe('MusicToggle', () => {
     vi.useRealTimers()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    Reflect.deleteProperty(navigator, 'userActivation')
+    window.localStorage.clear()
   })
 
-  it('starts silent, unpressed, and fetches nothing', () => {
+  it('renders unmuted and fetches nothing before an interaction', () => {
     const fetchMock = mockFetch()
     installFakeAudioContext()
     render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
     expect(toggle).toHaveAttribute('type', 'button')
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('loads the loop, starts it, and fades in on the first press', async () => {
+  it('loads the loop, starts it, and fades to half volume on a click elsewhere', async () => {
     const fetchMock = mockFetch()
     const fake = installFakeAudioContext()
     render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
-    await clickToggle(toggle)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
+    await interact()
     expect(fetchMock).toHaveBeenCalledWith(MUSIC_SRC)
     expect(fake.source.loop).toBe(true)
     expect(fake.source.loopStart).toBeGreaterThan(0)
     expect(fake.source.loopEnd).toBeLessThan(124)
     expect(fake.start).toHaveBeenCalledTimes(1)
     expect(fake.resume).toHaveBeenCalledTimes(2)
-    expect(fake.ramp).toHaveBeenCalledWith(1, 10 + FADE_IN_SECONDS)
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+    expect(MUSIC_VOLUME).toBe(0.5)
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
     expect(toggle).not.toHaveAttribute('aria-busy')
+    await interact()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('fades out and suspends on the second press without reloading', async () => {
+  it('starts on a keydown', async () => {
     const fetchMock = mockFetch()
     const fake = installFakeAudioContext()
     render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
+    await interact('keydown')
+    expect(fetchMock).toHaveBeenCalledWith(MUSIC_SRC)
+    expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+  })
+
+  it('does not start without user activation', async () => {
+    const fetchMock = mockFetch()
+    installFakeAudioContext()
+    stubActivation(false)
+    render(<MusicToggle />)
+    await interact()
+    await interact('keydown')
+    expect(fetchMock).not.toHaveBeenCalled()
+    stubActivation(true)
+    await interact()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('mutes on the first click of the button without loading anything', async () => {
+    const fetchMock = mockFetch()
+    installFakeAudioContext()
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
     await clickToggle(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(window.localStorage.getItem('mccor-music')).toBe('muted')
+    await interact()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('stays muted when the preference is stored, then unmutes and plays', async () => {
+    const fetchMock = mockFetch()
+    const fake = installFakeAudioContext()
+    window.localStorage.setItem('mccor-music', 'muted')
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await interact()
+    expect(fetchMock).not.toHaveBeenCalled()
     await clickToggle(toggle)
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(window.localStorage.getItem('mccor-music')).toBeNull()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+  })
+
+  it('fades out and suspends on mute, then resumes on unmute without reloading', async () => {
+    const fetchMock = mockFetch()
+    const fake = installFakeAudioContext()
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
+    await interact()
+    await clickToggle(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
     expect(fake.ramp).toHaveBeenLastCalledWith(0, 10 + FADE_OUT_SECONDS)
     expect(fake.suspend).not.toHaveBeenCalled()
     act(() => {
@@ -130,15 +225,41 @@ describe('MusicToggle', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fake.start).toHaveBeenCalledTimes(1)
     expect(fake.resume).toHaveBeenCalledTimes(3)
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(fake.ramp).toHaveBeenLastCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('reports a failed load and stays unpressed', async () => {
+  it('never fades in when muted during a pending load', async () => {
+    const fake = installFakeAudioContext()
+    let resolveFetch: (value: unknown) => void = () => undefined
+    const fetchMock = vi.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveFetch = resolve
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    render(<MusicToggle />)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
+    await interact()
+    expect(toggle).toHaveAttribute('aria-busy', 'true')
+    await clickToggle(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await act(async () => {
+      resolveFetch(resolvedResponse())
+      await Promise.resolve()
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fake.ramp).not.toHaveBeenCalledWith(MUSIC_VOLUME, expect.anything())
+    expect(fake.suspend).toHaveBeenCalledTimes(1)
+    expect(toggle).not.toHaveAttribute('aria-busy')
+  })
+
+  it('reports a failed load and closes the context', async () => {
     mockFetch(false)
     const fake = installFakeAudioContext()
     render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
-    await clickToggle(toggle)
+    const toggle = screen.getByRole('button', { name: ui.muteMusic })
+    await interact()
     expect(reportError).toHaveBeenCalledTimes(1)
     const [reported] = reportError.mock.calls[0] ?? []
     expect(reported).toBeInstanceOf(Error)
@@ -151,7 +272,7 @@ describe('MusicToggle', () => {
     mockFetch()
     const fake = installFakeAudioContext()
     render(<MusicToggle />)
-    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    await interact()
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'))
@@ -168,7 +289,7 @@ describe('MusicToggle', () => {
     mockFetch()
     const fake = installFakeAudioContext()
     const { unmount } = render(<MusicToggle />)
-    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    await interact()
     unmount()
     expect(fake.close).toHaveBeenCalledTimes(1)
   })
@@ -177,47 +298,20 @@ describe('MusicToggle', () => {
     const fake = installFakeAudioContext()
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')))
     const { unmount } = render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
-    await clickToggle(toggle)
+    await interact()
     expect(fake.close).toHaveBeenCalledTimes(1)
-    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: ui.muteMusic })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
     unmount()
 
     mockFetch()
     fake.decode.mockRejectedValue(new DOMException('bad', 'EncodingError'))
     render(<MusicToggle />)
-    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    await interact()
     expect(fake.close).toHaveBeenCalledTimes(2)
     expect(reportError).toHaveBeenCalledTimes(2)
-  })
-
-  it('marks the button busy and ignores clicks while the loop loads', async () => {
-    const fake = installFakeAudioContext()
-    let resolveFetch: (value: unknown) => void = () => undefined
-    const fetchMock = vi.fn().mockReturnValue(
-      new Promise((resolve) => {
-        resolveFetch = resolve
-      }),
-    )
-    vi.stubGlobal('fetch', fetchMock)
-    render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
-    await clickToggle(toggle)
-    await clickToggle(toggle)
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(toggle).toHaveAttribute('aria-busy', 'true')
-    expect(toggle).toHaveAttribute('aria-pressed', 'false')
-    await act(async () => {
-      resolveFetch({
-        ok: true,
-        status: 200,
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
-      })
-      await Promise.resolve()
-    })
-    expect(toggle).not.toHaveAttribute('aria-busy')
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
-    expect(fake.start).toHaveBeenCalledTimes(1)
   })
 
   it('closes a load that finishes after unmount and never fades in', async () => {
@@ -232,18 +326,14 @@ describe('MusicToggle', () => {
       ),
     )
     const { unmount } = render(<MusicToggle />)
-    await clickToggle(screen.getByRole('button', { name: ui.playMusic }))
+    await interact()
     unmount()
     await act(async () => {
-      resolveFetch({
-        ok: true,
-        status: 200,
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
-      })
+      resolveFetch(resolvedResponse())
       await Promise.resolve()
     })
     expect(fake.close).toHaveBeenCalledTimes(1)
-    expect(fake.ramp).not.toHaveBeenCalledWith(1, expect.anything())
+    expect(fake.ramp).not.toHaveBeenCalledWith(MUSIC_VOLUME, expect.anything())
   })
 
   it('keeps the loop suspended when the tab is hidden by the time the load finishes', async () => {
@@ -251,22 +341,89 @@ describe('MusicToggle', () => {
     const fake = installFakeAudioContext()
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     render(<MusicToggle />)
-    const toggle = screen.getByRole('button', { name: ui.playMusic })
-    await clickToggle(toggle)
+    await interact()
     expect(fake.suspend).toHaveBeenCalledTimes(1)
     expect(fake.resume).toHaveBeenCalledTimes(1)
-    expect(fake.ramp).toHaveBeenCalledWith(1, 10 + FADE_IN_SECONDS)
-    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
   })
 
   it('draws a path-only icon with no text', () => {
     mockFetch()
     installFakeAudioContext()
     render(<MusicToggle />)
-    const svg = screen.getByRole('button', { name: ui.playMusic }).querySelector('svg')
+    const svg = screen.getByRole('button', { name: ui.muteMusic }).querySelector('svg')
     expect(svg).toHaveAttribute('aria-hidden', 'true')
     expect(svg?.querySelector('text')).toBeNull()
     expect(svg?.textContent).toBe('')
     expect(svg?.querySelectorAll('path').length).toBeGreaterThan(0)
+  })
+
+  function barHeights() {
+    return [
+      ...screen.getByRole('button', { name: ui.muteMusic }).querySelectorAll('rect'),
+    ].map((bar) => Number(bar.getAttribute('height')))
+  }
+
+  function captureFrames() {
+    const frames: FrameRequestCallback[] = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    const cancel = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined)
+    return { frames, cancel }
+  }
+
+  it('shows the bars at rest before the music plays', () => {
+    mockFetch()
+    installFakeAudioContext()
+    render(<MusicToggle />)
+    expect(barHeights()).toEqual(BARS.map(({ rest }) => rest))
+  })
+
+  it('drives the bars from the music while it plays', async () => {
+    mockFetch()
+    const fake = installFakeAudioContext()
+    const { frames } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    act(() => {
+      frames.at(-1)?.(0)
+    })
+    expect(fake.spectrum).toHaveBeenCalled()
+    expect(barHeights()).toEqual(BARS.map(() => BAR_MAX))
+  })
+
+  it('stops the bars and shows the mute mark when muted', async () => {
+    mockFetch()
+    installFakeAudioContext()
+    const { frames, cancel } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    expect(frames.length).toBeGreaterThan(0)
+    await clickToggle(screen.getByRole('button', { name: ui.muteMusic }))
+    expect(cancel).toHaveBeenCalled()
+    expect(barHeights()).toEqual([])
+  })
+
+  it('keeps the bars still when the visitor prefers reduced motion', async () => {
+    mockFetch()
+    installFakeAudioContext()
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+    const { frames } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    expect(frames).toHaveLength(0)
+    expect(barHeights()).toEqual(BARS.map(({ rest }) => rest))
   })
 })

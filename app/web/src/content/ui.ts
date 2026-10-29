@@ -7,12 +7,12 @@ export const ui = {
   pauseVideo: 'Pause Background Video',
   pauseMotion: 'Pause Motion',
   pauseMotionSystemHint: 'Motion is already reduced by your system setting.',
-  playMusic: 'Play Music',
-  bookCall: 'Book a 30-Minute Call',
+  muteMusic: 'Mute Music',
+  bookCall: 'Book a Call',
   contactFallback: 'Email Us Directly',
   ctaHeading: 'Have Something to Build?',
   ctaBody:
-    'Thirty minutes, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
+    'Book a call, no preparation needed. Tell us what you are trying to do and we will tell you plainly whether we can help.',
   deliveredHeading: 'Delivered',
   featured: 'Featured',
   eyebrows: {

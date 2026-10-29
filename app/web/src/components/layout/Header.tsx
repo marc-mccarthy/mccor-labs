@@ -22,6 +22,8 @@ const MOBILE_NAV =
 const MOBILE_ITEM =
   'motion-safe:transition-[opacity,translate] motion-safe:duration-(--duration-standard) motion-safe:ease-(--ease-standard) motion-safe:delay-[calc(var(--i)*var(--stagger-interval))] motion-safe:starting:translate-y-2 motion-safe:starting:opacity-0'
 
+const PAGES_WITH_BOOKING = new Set(['/', '/services', '/contact'])
+
 function stripTrailingSlash(path: string) {
   return path.length > 1 ? path.replace(/\/+$/, '') : path
 }
@@ -71,9 +73,11 @@ export function Header() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <div className="hidden md:block">
-            <BookingCta size="sm" variant={current === '/contact' ? 'link' : 'primary'} />
-          </div>
+          {PAGES_WITH_BOOKING.has(current) ? null : (
+            <div className="hidden md:block">
+              <BookingCta size="sm" />
+            </div>
+          )}
           <MusicToggle />
           <MotionPauseToggle />
           <button

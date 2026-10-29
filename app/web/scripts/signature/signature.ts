@@ -2,37 +2,37 @@ export interface Person {
   slug: string
   name: string
   title: string
-  phone: string
   email: string
-  linkedin: string
-  facebook: string
-  github: string
-  photo: string
+  phone?: string
+  booking?: string
+  website?: string
+  linkedin?: string
+  github?: string
+  photo?: string
 }
 
 export interface SignatureContext {
   assetBase: string
   siteUrl: string
-  contactUrl: string
   company: string
   tokens: Record<string, string>
 }
 
-const TOKEN_KEYS = {
-  plate: 'base',
-  edge: 'border',
-  text: 'text',
-  ink: 'muted',
-  link: 'accent',
-} as const
-
 const TITLE_SEPARATOR = ' · '
-const FONT = "-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
+const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
+const PAD_TOP = 19
+const PAD_BOTTOM = 14
+const BUTTON_GAP = 15
+const US_PREFIX = /^\+1\s+/
 
-const SOCIAL = [
-  { key: 'linkedin', file: 'linkedin.png', alt: 'LinkedIn' },
-  { key: 'facebook', file: 'facebook.png', alt: 'Facebook' },
-  { key: 'github', file: 'github.png', alt: 'GitHub' },
+const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
+const OPTIONAL_KEYS = [
+  'phone',
+  'booking',
+  'website',
+  'linkedin',
+  'github',
+  'photo',
 ] as const
 
 export function readTokens(css: string): Record<string, string> {
@@ -51,18 +51,6 @@ export function requireToken(tokens: Record<string, string>, name: string): stri
   return value
 }
 
-const PERSON_KEYS: readonly (keyof Person)[] = [
-  'slug',
-  'name',
-  'title',
-  'phone',
-  'email',
-  'linkedin',
-  'facebook',
-  'github',
-  'photo',
-]
-
 export function parsePeople(json: string): Person[] {
   const data: unknown = JSON.parse(json)
   if (!Array.isArray(data) || data.length === 0)
@@ -71,11 +59,21 @@ export function parsePeople(json: string): Person[] {
     if (typeof entry !== 'object' || entry === null)
       throw new Error(`person ${String(i)} is not an object`)
     const record = entry as Record<string, unknown>
-    for (const key of PERSON_KEYS) {
-      if (typeof record[key] !== 'string')
-        throw new Error(`person ${String(i)} needs a string "${key}"`)
+    const person: Record<string, string> = {}
+    for (const key of REQUIRED_KEYS) {
+      const value = record[key]
+      if (typeof value !== 'string' || value === '')
+        throw new Error(`person ${String(i)} needs a non-empty string "${key}"`)
+      person[key] = value
     }
-    return record as unknown as Person
+    for (const key of OPTIONAL_KEYS) {
+      const value = record[key]
+      if (value === undefined) continue
+      if (typeof value !== 'string')
+        throw new Error(`person ${String(i)} "${key}" must be a string`)
+      person[key] = value
+    }
+    return person as unknown as Person
   })
 }
 
@@ -92,45 +90,82 @@ export function phoneHref(phone: string): string {
   return phone.replace(/[^\d+]/g, '')
 }
 
-export function socialCells(person: Person, ctx: SignatureContext): string {
-  const ink = requireToken(ctx.tokens, 'muted')
-  return SOCIAL.filter(({ key }) => person[key] !== '')
-    .map(
-      ({ key, file, alt }) =>
-        `<td style="padding:0 0 0 8px;line-height:0;vertical-align:middle;"><a href="${escapeHtml(person[key])}" style="color:${ink};text-decoration:none;"><img src="${ctx.assetBase}/${file}" width="20" height="20" alt="${alt}" style="display:block;width:20px;height:20px;border:0;font-size:12px;color:${ink};"></a></td>`,
-    )
-    .join('')
+function photoCell(person: Person, ctx: SignatureContext): string {
+  const src = `${ctx.assetBase}/${person.slug}.png`
+  return `<td width="126" valign="middle" style="width:126px;line-height:0"><img src="${src}" width="126" height="175" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:126px;height:175px"></td>\n`
+}
+
+function specialtyRow(specialty: string, ink: string): string {
+  if (specialty === '') return ''
+  return `<div style="font-size:10px;line-height:15px;color:${ink};padding-top:2px">${escapeHtml(specialty)}</div>\n`
+}
+
+function phoneRow(phone: string | undefined, ink: string): string {
+  if (!phone) return ''
+  return `<div style="font-size:11px;line-height:16px;color:${ink};padding-top:2px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
+}
+
+function bookButton(booking: string, ctx: SignatureContext, gap: number): string {
+  const red = requireToken(ctx.tokens, 'crimson-deep')
+  const light = requireToken(ctx.tokens, 'text')
+  return `<div style="padding-top:${String(gap)}px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${red}" style="background:${red};border-radius:3px;padding:6px 11px;font-family:${FONT};font-size:10px;line-height:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td></tr></table></div>`
+}
+
+function iconCell(src: string, href: string, alt: string, gap: number): string {
+  return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="56" alt="${alt}" style="display:block;border:0;width:24px;height:56px"></a></td>`
+}
+
+function iconTable(person: Person, ctx: SignatureContext): string {
+  const website = person.website ?? ''
+  const icons = [
+    {
+      href: website === '' ? ctx.siteUrl : website,
+      file: 'icon-mccor.gif',
+      alt: 'McCor Labs',
+    },
+    { href: person.linkedin, file: 'icon-linkedin.gif', alt: 'LinkedIn' },
+    { href: person.github, file: 'icon-github.gif', alt: 'GitHub' },
+  ]
+  const cells: string[] = []
+  let gap = 0
+  for (const { href, file, alt } of icons) {
+    if (!href) continue
+    cells.push(iconCell(`${ctx.assetBase}/${file}`, href, alt, gap))
+    gap = 6
+  }
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>`
+}
+
+function contactBlock(person: Person, ctx: SignatureContext, ink: string): string {
+  const phone = phoneRow(person.phone, ink)
+  if (!person.booking) return `${phone}${iconTable(person, ctx)}\n`
+  const button = bookButton(person.booking, ctx, phone === '' ? 0 : BUTTON_GAP)
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n<td valign="bottom" style="padding:0">${phone}${button}</td>\n<td valign="bottom" style="padding:0 0 0 12px;line-height:0">${iconTable(person, ctx)}</td>\n</tr></table>\n`
 }
 
 export function renderSignature(
   template: string,
   person: Person,
   ctx: SignatureContext,
+  hasCard: boolean,
 ): string {
-  const ink = requireToken(ctx.tokens, 'muted')
+  const base = requireToken(ctx.tokens, 'base')
   const [role = '', ...rest] = person.title.split(TITLE_SEPARATOR)
-  const specialty = rest.join(TITLE_SEPARATOR)
   const values: Record<string, string> = {
     assetBase: ctx.assetBase,
-    siteUrl: ctx.siteUrl,
-    contactUrl: ctx.contactUrl,
     font: FONT,
-    slug: person.slug,
+    padTop: String(PAD_TOP),
+    padBottom: String(PAD_BOTTOM),
+    base,
+    text: requireToken(ctx.tokens, 'text'),
+    crimson: requireToken(ctx.tokens, 'crimson-deep'),
+    rule: requireToken(ctx.tokens, 'border-strong'),
     name: escapeHtml(person.name),
     roleLine: escapeHtml(`${role}, ${ctx.company}`),
-    specialtyLine:
-      specialty === ''
-        ? ''
-        : `<div style="font-family:${FONT};font-size:12px;line-height:16px;color:${ink};mso-line-height-rule:exactly;">${escapeHtml(specialty)}</div>`,
-    phoneCell:
-      person.phone === ''
-        ? ''
-        : `<a href="tel:${phoneHref(person.phone)}" style="color:${ink};text-decoration:none;">${escapeHtml(person.phone)}</a>&nbsp;&middot;&nbsp;`,
     email: escapeHtml(person.email),
-    socialCells: socialCells(person, ctx),
-  }
-  for (const [key, token] of Object.entries(TOKEN_KEYS)) {
-    values[key] = requireToken(ctx.tokens, token)
+    photoCell: hasCard ? photoCell(person, ctx) : '',
+    specialtyRow: specialtyRow(rest.join(TITLE_SEPARATOR), base),
+    contactBlock: contactBlock(person, ctx, base),
   }
   return template.replace(/{{(\w+)}}/g, (_, key: string) => {
     const value = values[key]

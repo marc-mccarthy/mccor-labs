@@ -1,81 +1,204 @@
 <table
+  id="sig"
   role="presentation"
   cellpadding="0"
   cellspacing="0"
   border="0"
-  width="540"
-  bgcolor="{{plate}}"
-  style="width:540px;max-width:540px;border-collapse:separate;border:1px solid {{edge}};border-radius:8px;background-color:{{plate}};font-family:{{font}};"
+  width="600"
+  style="width:600px;border-collapse:collapse;background:{{base}}"
 >
   <tr>
-    <td width="240" style="width: 240px; padding: 0; vertical-align: top; line-height: 0">
+    <td
+      width="26"
+      height="26"
+      style="width: 26px; height: 26px; padding: 0; line-height: 0; font-size: 0"
+    >
       <img
-        src="{{assetBase}}/scene.gif"
-        width="240"
-        height="170"
-        alt="McCor Labs"
-        style="display:block;width:240px;height:170px;border:0;border-radius:8px 0 0 8px;font-family:{{font}};font-size:12px;color:{{ink}};"
+        src="{{assetBase}}/frame-tl.gif"
+        width="26"
+        height="26"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 26px"
       />
     </td>
-    <td bgcolor="{{plate}}" style="padding: 12px 16px 12px 16px; vertical-align: middle">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td style="padding: 0 12px 0 0; line-height: 0; vertical-align: middle">
-            <img
-              src="{{assetBase}}/photo-{{slug}}.png"
-              width="56"
-              height="56"
-              alt=""
-              style="display: block; width: 56px; height: 56px; border: 0"
-            />
-          </td>
-          <td style="vertical-align: middle">
-            <div
-              style="font-family:{{font}};font-size:18px;line-height:22px;font-weight:700;color:{{text}};mso-line-height-rule:exactly;"
-            >
-              {{name}}
-            </div>
-            <div
-              style="font-family:{{font}};font-size:12px;line-height:16px;font-weight:700;color:{{ink}};mso-line-height-rule:exactly;"
-            >
-              {{roleLine}}
-            </div>
-            {{specialtyLine}}
-          </td>
-        </tr>
+    <td
+      width="548"
+      height="26"
+      style="width: 548px; height: 26px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-top.gif"
+        width="548"
+        height="26"
+        alt=""
+        style="display: block; border: 0; width: 548px; height: 26px"
+      />
+    </td>
+    <td
+      width="26"
+      height="26"
+      style="width: 26px; height: 26px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-tr.gif"
+        width="26"
+        height="26"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 26px"
+      />
+    </td>
+  </tr>
+  <tr>
+    <td
+      width="26"
+      valign="top"
+      style="width: 26px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-left.gif"
+        width="26"
+        height="189"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 189px"
+      />
+    </td>
+    <td width="548" valign="top" style="width: 548px; padding: 0">
+      <table
+        role="presentation"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+        width="548"
+        style="width: 548px; border-collapse: collapse"
+      >
         <tr>
           <td
-            colspan="2"
-            style="padding:6px 0 0 0;font-family:{{font}};font-size:12px;line-height:18px;color:{{ink}};white-space:nowrap;mso-line-height-rule:exactly;"
+            width="349"
+            height="189"
+            valign="middle"
+            style="width:349px;height:189px;background:{{text}};padding:0 12px 0 9px"
           >
-            {{phoneCell}}<a
-              href="mailto:{{email}}"
-              style="color:{{ink}};text-decoration:none;"
-              >{{email}}</a
-            >&nbsp;&middot;&nbsp;<a
-              href="{{siteUrl}}"
-              style="color:{{ink}};text-decoration:none;"
-              >mccorlabs.com</a
+            <table
+              role="presentation"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+              width="349"
+              style="width: 349px"
             >
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding: 2px 0 0 0">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
+                {{photoCell}}
                 <td
-                  style="padding:0 4px 0 0;font-family:{{font}};font-size:13px;line-height:20px;font-weight:700;vertical-align:middle;"
+                  valign="middle"
+                  style="padding:{{padTop}}px 0 {{padBottom}}px 19px;font-family:{{font}}"
                 >
-                  <a href="{{contactUrl}}" style="color:{{link}};text-decoration:none;"
-                    >Book a call &rarr;</a
+                  <div
+                    style="font-size:23px;line-height:26px;font-weight:800;color:{{base}};letter-spacing:-0.4px;white-space:nowrap"
                   >
+                    {{name}}
+                  </div>
+                  <div
+                    style="font-size:9px;line-height:13px;letter-spacing:0.5px;color:{{crimson}};text-transform:uppercase;font-weight:700;padding-top:6px;white-space:nowrap"
+                  >
+                    {{roleLine}}
+                  </div>
+                  {{specialtyRow}}
+                  <div
+                    style="border-top:1px solid {{rule}};font-size:1px;line-height:1px;height:1px;margin-top:10px"
+                  >
+                    &nbsp;
+                  </div>
+                  <div
+                    style="font-size:11px;line-height:16px;color:{{crimson}};padding-top:8px"
+                  >
+                    <a
+                      href="mailto:{{email}}"
+                      style="color:{{crimson}};text-decoration:none;font-weight:700"
+                      >{{email}}</a
+                    >
+                  </div>
+                  {{contactBlock}}
                 </td>
-                {{socialCells}}
               </tr>
             </table>
           </td>
+          <td
+            width="174"
+            height="185"
+            align="right"
+            valign="middle"
+            style="width:174px;height:185px;background:{{base}};padding:0 4px 4px 0;line-height:0"
+          >
+            <img
+              src="{{assetBase}}/crest.gif"
+              width="160"
+              height="178"
+              alt="McCarthy coat of arms"
+              style="
+                display: block;
+                border: 0;
+                width: 160px;
+                height: 178px;
+                margin: 0 0 0 auto;
+              "
+            />
+          </td>
         </tr>
       </table>
+    </td>
+    <td
+      width="26"
+      valign="top"
+      style="width: 26px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-right.gif"
+        width="26"
+        height="189"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 189px"
+      />
+    </td>
+  </tr>
+  <tr>
+    <td
+      width="26"
+      height="25"
+      style="width: 26px; height: 25px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-bl.gif"
+        width="26"
+        height="25"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 25px"
+      />
+    </td>
+    <td
+      width="548"
+      height="25"
+      style="width: 548px; height: 25px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-bottom.gif"
+        width="548"
+        height="25"
+        alt=""
+        style="display: block; border: 0; width: 548px; height: 25px"
+      />
+    </td>
+    <td
+      width="26"
+      height="25"
+      style="width: 26px; height: 25px; padding: 0; line-height: 0; font-size: 0"
+    >
+      <img
+        src="{{assetBase}}/frame-br.gif"
+        width="26"
+        height="25"
+        alt=""
+        style="display: block; border: 0; width: 26px; height: 25px"
+      />
     </td>
   </tr>
 </table>

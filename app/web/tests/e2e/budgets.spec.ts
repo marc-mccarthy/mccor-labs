@@ -26,16 +26,30 @@ interface Weights {
   total: number
 }
 
+const DOCUMENT_SCRIPT =
+  /<(?:script[^>]*\ssrc|link[^>]*\srel="(?:preload|modulepreload)"[^>]*\shref)="([^"]+\.js)"/g
+
+function documentScripts(html: string): Set<string> {
+  return new Set([...html.matchAll(DOCUMENT_SCRIPT)].map(([, src = '']) => src))
+}
+
 function measureWeights(page: Page): () => Promise<Weights> {
   const weights: Weights = { initialJs: 0, lazyJs: 0, css: 0, total: 0 }
+  const scripts: { path: string; bytes: number }[] = []
   const pending: Promise<void>[] = []
-  let loaded = false
-  page.on('load', () => {
-    loaded = true
-  })
+  let initial = new Set<string>()
   page.on('response', (response) => {
-    const wasLazy = loaded
     const url = response.url()
+    if (response.request().isNavigationRequest()) {
+      pending.push(
+        response
+          .text()
+          .then((html) => {
+            initial = documentScripts(html)
+          })
+          .catch(() => undefined),
+      )
+    }
     pending.push(
       response
         .request()
@@ -44,16 +58,17 @@ function measureWeights(page: Page): () => Promise<Weights> {
           const bytes = sizes.responseBodySize
           weights.total += bytes
           if (/\.css(\?|$)/.test(url)) weights.css += bytes
-          if (/\.js(\?|$)/.test(url)) {
-            if (wasLazy) weights.lazyJs += bytes
-            else weights.initialJs += bytes
-          }
+          if (/\.js(\?|$)/.test(url)) scripts.push({ path: new URL(url).pathname, bytes })
         })
         .catch(() => undefined),
     )
   })
   return async () => {
     await Promise.all(pending)
+    for (const { path, bytes } of scripts) {
+      if (initial.has(path)) weights.initialJs += bytes
+      else weights.lazyJs += bytes
+    }
     return weights
   }
 }

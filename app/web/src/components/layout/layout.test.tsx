@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BookingCta } from './BookingCta'
@@ -24,6 +24,17 @@ const navigation = vi.hoisted(() => ({ pathname: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
 
 const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
+
+beforeEach(() => {
+  Object.defineProperty(navigator, 'userActivation', {
+    value: { isActive: false },
+    configurable: true,
+  })
+})
+
+afterEach(() => {
+  Reflect.deleteProperty(navigator, 'userActivation')
+})
 
 describe('Header', () => {
   beforeEach(() => {
@@ -80,26 +91,40 @@ describe('Header', () => {
     }
   })
 
-  it('falls back to an email link when booking is not configured', () => {
-    mocked.env.bookingUrl = null
-    render(<Header />)
-    const cta = screen.getByRole('link', { name: ui.contactFallback })
-    expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
-  })
+  it.each(['/', '/services/', '/contact/'])(
+    'leaves the booking call to the page at %s',
+    (pathname) => {
+      mocked.env.bookingUrl = BOOKING_URL
+      navigation.pathname = pathname
+      render(<Header />)
+      expect(screen.queryByRole('link', { name: ui.bookCall })).toBeNull()
+      expect(screen.queryByRole('link', { name: ui.contactFallback })).toBeNull()
+    },
+  )
 
-  it('links to the booking url in a new tab when booking is configured', () => {
+  it('links to the booking url in a new tab on pages without their own', () => {
     mocked.env.bookingUrl = BOOKING_URL
+    navigation.pathname = '/work/'
     render(<Header />)
     const cta = screen.getByRole('link', { name: ui.bookCall })
     expect(cta).toHaveAttribute('href', BOOKING_URL)
     expect(cta).toHaveAttribute('target', '_blank')
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
     expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    expect(cta.closest('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('falls back to an email link in the header when booking is not configured', () => {
+    mocked.env.bookingUrl = null
+    navigation.pathname = '/process/'
+    render(<Header />)
+    const cta = screen.getByRole('link', { name: ui.contactFallback })
+    expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
   })
 
   it('offers the music and motion toggles right before the menu button at every width', () => {
     render(<Header />)
-    const music = screen.getByRole('button', { name: ui.playMusic })
+    const music = screen.getByRole('button', { name: ui.muteMusic })
     const pause = screen.getByRole('button', { name: ui.pauseMotion })
     const menu = screen.getByRole('button', { name: ui.openMenu })
     expect(music).toHaveAttribute('aria-pressed', 'false')
@@ -253,25 +278,12 @@ describe('BookingCta link variant', () => {
     expect(container.querySelector('[data-magnetic]')).not.toBeNull()
   })
 
-  it('demotes only the desktop header CTA on the contact route', () => {
+  it('keeps the only header booking call in the mobile menu on the home page', () => {
     mocked.env.bookingUrl = BOOKING_URL
-    navigation.pathname = '/contact/'
     render(<Header />)
     const links = screen.getAllByRole('link', { name: ui.bookCall, hidden: true })
-    expect(links).toHaveLength(2)
-    const desktop = links.find((link) => link.closest('.hidden.md\\:block'))!
-    const mobile = links.find((link) => link.closest('#mobile-nav'))!
-    expect(desktop.closest('[data-magnetic]')).toBeNull()
-    expect(mobile.closest('[data-magnetic]')).not.toBeNull()
-  })
-
-  it('keeps the desktop header CTA magnetic off the contact route', () => {
-    mocked.env.bookingUrl = BOOKING_URL
-    render(<Header />)
-    const desktop = screen
-      .getAllByRole('link', { name: ui.bookCall, hidden: true })
-      .find((link) => link.closest('.hidden.md\\:block'))!
-    expect(desktop.closest('[data-magnetic]')).not.toBeNull()
+    expect(links).toHaveLength(1)
+    expect(links[0]?.closest('#mobile-nav')).not.toBeNull()
   })
 })
 

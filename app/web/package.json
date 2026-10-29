@@ -16,7 +16,7 @@
     "portraits": "tsx scripts/build-portraits.ts",
     "build:icons": "tsx scripts/build-icons.ts",
     "signature": "tsx scripts/signature/build-signature.ts",
-    "signature:scene": "tsx scripts/signature/build-scene.ts",
+    "signature:motion": "tsx scripts/signature/build-motion.ts",
     "lighthouse": "tsx scripts/lighthouse.ts"
   },
   "dependencies": {

@@ -131,7 +131,7 @@ describe('renderSignature', () => {
 
   it('keeps the role line and crest alt as in the reference', () => {
     expect(flat(html)).toContain(
-      'font-weight:700;padding-top:6px;white-space:nowrap"> Founder, McCor Labs',
+      'font-weight:700;padding-top:4px;white-space:nowrap"> Founder, McCor Labs',
     )
     expect(html).toContain('alt="McCarthy coat of arms"')
   })
@@ -159,10 +159,26 @@ describe('renderSignature', () => {
     )
   })
 
-  it('puts the icons under the phone when there is no booking', () => {
+  it('puts the icons in a cell beside the phone when there is no booking', () => {
     const plain = flat(render({ ...person, booking: '' }))
     expect(plain).not.toContain('Book a call')
-    expect(plain.indexOf('tel:')).toBeLessThan(plain.indexOf('icon-mccor.gif'))
+    expect(plain).toMatch(
+      /tel:.*<\/a><\/div> <\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
+    )
+  })
+
+  it('shows only the icons when there is no phone and no booking', () => {
+    const bare = flat(render({ ...person, phone: '', booking: '' }))
+    expect(bare).not.toContain('tel:')
+    expect(bare).not.toContain('padding:0 0 0 12px')
+    expect(bare).toContain('icon-mccor.gif')
+  })
+
+  it('fits the 600 by 200 frame', () => {
+    const f = flat(html)
+    expect(f).toContain('height="149"')
+    expect(f).toContain('width="99" height="137"')
+    expect(f).toContain('width="127" height="141"')
   })
 
   it('links the mccor icon to the website', () => {

@@ -32,7 +32,7 @@ const SLICES = [
 
 const SHINE = {
   holdCs: 30,
-  frames: 57,
+  frames: 46,
   frameCs: 7,
   restCs: 100,
   start: -24,
@@ -80,7 +80,7 @@ const ICON = {
   frameCs: 4,
   restCs: 100,
   hops: [22, 11, 5],
-  secondsPerRoot: 0.192,
+  secondsPerRoot: 0.154,
   squash: [
     { x: 1.07, y: 0.88 },
     { x: 1.03, y: 0.95 },

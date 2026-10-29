@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BookingCta } from './BookingCta'
@@ -24,6 +24,17 @@ const navigation = vi.hoisted(() => ({ pathname: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => navigation.pathname }))
 
 const BOOKING_URL = 'https://calendar.example.com/mccor-labs'
+
+beforeEach(() => {
+  Object.defineProperty(navigator, 'userActivation', {
+    value: { isActive: false },
+    configurable: true,
+  })
+})
+
+afterEach(() => {
+  Reflect.deleteProperty(navigator, 'userActivation')
+})
 
 describe('Header', () => {
   beforeEach(() => {
@@ -99,7 +110,7 @@ describe('Header', () => {
 
   it('offers the music and motion toggles right before the menu button at every width', () => {
     render(<Header />)
-    const music = screen.getByRole('button', { name: ui.playMusic })
+    const music = screen.getByRole('button', { name: ui.muteMusic })
     const pause = screen.getByRole('button', { name: ui.pauseMotion })
     const menu = screen.getByRole('button', { name: ui.openMenu })
     expect(music).toHaveAttribute('aria-pressed', 'false')

@@ -4,10 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ui } from '@/content/ui'
 
 export const MUSIC_SRC = '/media/audio/mccor-ambient-loop.mp3'
+export const MUSIC_VOLUME = 0.5
 export const FADE_IN_SECONDS = 1.2
 export const FADE_OUT_SECONDS = 0.5
 
 const LOOP_TRIM_SECONDS = 0.05
+const MUSIC_STORAGE_KEY = 'mccor-music'
+const MUTED = 'muted'
 
 interface Player {
   context: AudioContext
@@ -46,16 +49,49 @@ function rampGain({ context, gain }: Player, target: number, seconds: number): v
   gain.gain.linearRampToValueAtTime(target, now + seconds)
 }
 
+function isMusicWanted(ref: { current: boolean }): boolean {
+  return ref.current
+}
+
+function reportStorageFailure(action: string, cause: unknown): void {
+  reportError(new Error(`Could not ${action} the music mute preference`, { cause }))
+}
+
+function readMuted(): boolean {
+  try {
+    return window.localStorage.getItem(MUSIC_STORAGE_KEY) === MUTED
+  } catch (error) {
+    reportStorageFailure('read', error)
+    return false
+  }
+}
+
+function writeMuted(muted: boolean): void {
+  try {
+    if (muted) {
+      window.localStorage.setItem(MUSIC_STORAGE_KEY, MUTED)
+    } else {
+      window.localStorage.removeItem(MUSIC_STORAGE_KEY)
+    }
+  } catch (error) {
+    reportStorageFailure('save', error)
+  }
+}
+
 export function MusicToggle() {
-  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
   const [loading, setLoading] = useState(false)
   const playerRef = useRef<Player | null>(null)
   const pendingRef = useRef(false)
   const mountedRef = useRef(true)
   const wantedRef = useRef(false)
+  const startedRef = useRef(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const fadeOutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const start = useCallback(async () => {
+    wantedRef.current = true
+    startedRef.current = true
     if (pendingRef.current) return
     pendingRef.current = true
     setLoading(true)
@@ -70,14 +106,15 @@ export function MusicToggle() {
         clearTimeout(fadeOutRef.current)
         fadeOutRef.current = null
       }
-      wantedRef.current = true
-      rampGain(player, 1, FADE_IN_SECONDS)
-      await (document.hidden ? player.context.suspend() : player.context.resume())
-      setPlaying(true)
+      if (isMusicWanted(wantedRef)) {
+        rampGain(player, MUSIC_VOLUME, FADE_IN_SECONDS)
+        await (document.hidden ? player.context.suspend() : player.context.resume())
+      } else {
+        await player.context.suspend()
+      }
     } catch (error) {
       if (!mountedRef.current) return
       reportError(new Error('Could not start the background music', { cause: error }))
-      setPlaying(false)
     } finally {
       pendingRef.current = false
       if (mountedRef.current) setLoading(false)
@@ -85,16 +122,49 @@ export function MusicToggle() {
   }, [])
 
   const stop = useCallback(() => {
+    wantedRef.current = false
     const player = playerRef.current
     if (!player) return
-    wantedRef.current = false
     rampGain(player, 0, FADE_OUT_SECONDS)
     fadeOutRef.current = setTimeout(() => {
       fadeOutRef.current = null
       void player.context.suspend()
     }, FADE_OUT_SECONDS * 1000)
-    setPlaying(false)
   }, [])
+
+  const toggle = useCallback(() => {
+    if (muted) {
+      setMuted(false)
+      writeMuted(false)
+      void start()
+    } else {
+      setMuted(true)
+      writeMuted(true)
+      stop()
+    }
+  }, [muted, start, stop])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (readMuted()) setMuted(true)
+  }, [])
+
+  useEffect(() => {
+    if (muted || startedRef.current) return
+    function onInteraction(event: Event) {
+      if (buttonRef.current?.contains(event.target as Node)) return
+      if ('userActivation' in navigator && !navigator.userActivation.isActive) return
+      document.removeEventListener('click', onInteraction)
+      document.removeEventListener('keydown', onInteraction)
+      void start()
+    }
+    document.addEventListener('click', onInteraction)
+    document.addEventListener('keydown', onInteraction)
+    return () => {
+      document.removeEventListener('click', onInteraction)
+      document.removeEventListener('keydown', onInteraction)
+    }
+  }, [muted, start])
 
   useEffect(() => {
     mountedRef.current = true
@@ -115,11 +185,12 @@ export function MusicToggle() {
 
   return (
     <button
+      ref={buttonRef}
       type="button"
-      aria-pressed={playing}
+      aria-pressed={muted}
       aria-busy={loading ? true : undefined}
-      aria-label={ui.playMusic}
-      onClick={playing ? stop : () => void start()}
+      aria-label={ui.muteMusic}
+      onClick={toggle}
       className="inline-flex h-11 w-11 shrink-0 press items-center justify-center rounded-full border border-border text-muted hover:text-accent focus-visible:text-accent aria-pressed:border-accent"
     >
       <svg
@@ -130,10 +201,10 @@ export function MusicToggle() {
         aria-hidden="true"
       >
         <path d="M1 5.5 H4 L8 2.5 V13.5 L4 10.5 H1 Z" />
-        {playing ? (
-          <path d="M10 6 H11.5 V10 H10 Z M12.5 4 H14 V12 H12.5 Z" />
-        ) : (
+        {muted ? (
           <path d="M10.3 5.3 L11 4.6 L15.4 9 L14.7 9.7 Z M14.7 4.6 L15.4 5.3 L11 9.7 L10.3 9 Z" />
+        ) : (
+          <path d="M10 6 H11.5 V10 H10 Z M12.5 4 H14 V12 H12.5 Z" />
         )}
       </svg>
     </button>

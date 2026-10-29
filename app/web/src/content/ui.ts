@@ -7,7 +7,7 @@ export const ui = {
   pauseVideo: 'Pause Background Video',
   pauseMotion: 'Pause Motion',
   pauseMotionSystemHint: 'Motion is already reduced by your system setting.',
-  playMusic: 'Play Music',
+  muteMusic: 'Mute Music',
   bookCall: 'Book a 30-Minute Call',
   contactFallback: 'Email Us Directly',
   ctaHeading: 'Have Something to Build?',

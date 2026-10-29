@@ -54,7 +54,7 @@ const CREST = {
   h: 356,
   slant: 0.4,
   holdCs: 160,
-  frames: 30,
+  frames: 25,
   frameCs: 7,
   restCs: 100,
   colors: 256,

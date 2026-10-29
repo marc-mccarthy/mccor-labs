@@ -80,9 +80,9 @@ describe('renderSignature', () => {
     expect(render(minimal, false)).not.toMatch(/{{\w+}}/)
   })
 
-  it('keeps the stable root id and 555px width', () => {
+  it('keeps the stable root id and 546px width', () => {
     expect(flat(html)).toContain('<table id="sig"')
-    expect(html).toContain('width="555"')
+    expect(html).toContain('width="546"')
   })
 
   it('escapes person fields', () => {
@@ -130,7 +130,7 @@ describe('renderSignature', () => {
   })
 
   it('keeps the role line and crest alt as in the reference', () => {
-    expect(flat(html)).toContain('font-weight:700;padding-top:3px"> Founder, McCor Labs')
+    expect(flat(html)).toContain('font-weight:700;padding-top:7px"> Founder, McCor Labs')
     expect(html).toContain('alt="McCarthy coat of arms"')
   })
 
@@ -145,16 +145,16 @@ describe('renderSignature', () => {
     expect(html).toContain('width="24" height="56"')
   })
 
-  it('puts the icons in a cell beside the phone and button', () => {
+  it('stacks email, phone and button beside the icons', () => {
     expect(flat(html)).toMatch(
-      /tel:.*padding-top:15px.*Book a call.*<\/div><\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
+      /<td valign="bottom" style="padding:2px 0 0 0">.*mailto:.*tel:.*padding-top:7px.*Book a call.*<\/div><\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
     )
   })
 
-  it('drops the gap above the button when there is no phone', () => {
-    expect(flat(render({ ...person, phone: '' }))).toContain(
-      '<div style="padding-top:0px"><table',
-    )
+  it('keeps the button gap under the email when there is no phone', () => {
+    const noPhone = flat(render({ ...person, phone: '' }))
+    expect(noPhone).not.toContain('tel:')
+    expect(noPhone).toMatch(/mailto:.*<div style="padding-top:7px"><table/)
   })
 
   it('puts the icons in a cell beside the phone when there is no booking', () => {
@@ -165,18 +165,20 @@ describe('renderSignature', () => {
     )
   })
 
-  it('shows only the icons when there is no phone and no booking', () => {
+  it('shows only the email beside the icons when there is no phone and no booking', () => {
     const bare = flat(render({ ...person, phone: '', booking: '' }))
     expect(bare).not.toContain('tel:')
-    expect(bare).not.toContain('padding:0 0 0 12px')
-    expect(bare).toContain('icon-mccor.gif')
+    expect(bare).not.toContain('Book a call')
+    expect(bare).toMatch(
+      /<td valign="top" style="padding:2px 0 0 0">.*mailto:.*icon-mccor\.gif/,
+    )
   })
 
-  it('fits the 555 by 200 frame', () => {
+  it('fits the 546 by 190 frame', () => {
     const f = flat(html)
-    expect(f).toContain('height="149"')
-    expect(f).toContain('width="99" height="137"')
-    expect(f).toContain('width="127" height="141"')
+    expect(f).toContain('height="139"')
+    expect(f).toContain('width="95" height="131"')
+    expect(f).toContain('width="118" height="131"')
   })
 
   it('links the mccor icon to the website', () => {

@@ -144,7 +144,7 @@ describe('renderSignature', () => {
     )
     expect(order).toEqual([...order].sort((a, b) => a - b))
     expect(order).not.toContain(-1)
-    expect(html).toContain('width="24" height="48"')
+    expect(html).toContain('width="24" height="56"')
   })
 
   it('puts the icons in a cell beside the phone and button', () => {

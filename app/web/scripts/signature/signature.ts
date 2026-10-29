@@ -112,7 +112,7 @@ function bookButton(booking: string, ctx: SignatureContext, gap: number): string
 }
 
 function iconCell(src: string, href: string, alt: string, gap: number): string {
-  return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="48" alt="${alt}" style="display:block;border:0;width:24px;height:48px"></a></td>`
+  return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="56" alt="${alt}" style="display:block;border:0;width:24px;height:56px"></a></td>`
 }
 
 function iconTable(person: Person, ctx: SignatureContext): string {

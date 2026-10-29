@@ -18,16 +18,16 @@ const SRC_DIR = join(HERE, 'framed-src')
 const OUT_DIR = join(WEB, 'public', 'sig', 'framed')
 const GLOBALS = join(WEB, 'src', 'styles', 'globals.css')
 
-const FRAME = { w: 600, h: 240, inset: 10 }
+const FRAME = { w: 555, h: 200, inset: 10 }
 const SLICES = [
   { name: 'tl', x: 0, y: 0, w: 26, h: 26 },
-  { name: 'top', x: 26, y: 0, w: 548, h: 26 },
-  { name: 'tr', x: 574, y: 0, w: 26, h: 26 },
-  { name: 'left', x: 0, y: 26, w: 26, h: 189 },
-  { name: 'right', x: 574, y: 26, w: 26, h: 189 },
-  { name: 'bl', x: 0, y: 215, w: 26, h: 25 },
-  { name: 'bottom', x: 26, y: 215, w: 548, h: 25 },
-  { name: 'br', x: 574, y: 215, w: 26, h: 25 },
+  { name: 'top', x: 26, y: 0, w: 505, h: 26 },
+  { name: 'tr', x: 531, y: 0, w: 24, h: 26 },
+  { name: 'left', x: 0, y: 26, w: 26, h: 149 },
+  { name: 'right', x: 531, y: 26, w: 24, h: 149 },
+  { name: 'bl', x: 0, y: 175, w: 26, h: 25 },
+  { name: 'bottom', x: 26, y: 175, w: 505, h: 25 },
+  { name: 'br', x: 531, y: 175, w: 24, h: 25 },
 ] as const
 
 const SHINE = {
@@ -50,8 +50,8 @@ const FRAME_MAX_BYTES = 1_000_000
 const CREST = {
   src: 'crest.png',
   out: 'crest.gif',
-  w: 320,
-  h: 356,
+  w: 254,
+  h: 282,
   slant: 0.4,
   holdCs: 160,
   frames: 23,
@@ -60,10 +60,10 @@ const CREST = {
   colors: 256,
   paletteStep: 3,
   floor: '20%,100%',
-  margin: 90,
-  core: { sigma: 9, gain: 0.85 },
-  halo: { sigma: 30, gain: 0.38 },
-  trail: { sigma: 4, gain: 0.45, offset: 38 },
+  margin: 71,
+  core: { sigma: 7, gain: 0.85 },
+  halo: { sigma: 24, gain: 0.38 },
+  trail: { sigma: 3, gain: 0.45, offset: 30 },
   maxBytes: 400_000,
 }
 

@@ -20,8 +20,8 @@ export interface SignatureContext {
 
 const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
-const PAD_TOP = 19
-const PAD_BOTTOM = 14
+const PAD_TOP = 3
+const PAD_BOTTOM = 6
 const BUTTON_GAP = 15
 const US_PREFIX = /^\+1\s+/
 
@@ -92,17 +92,17 @@ export function phoneHref(phone: string): string {
 
 function photoCell(person: Person, ctx: SignatureContext): string {
   const src = `${ctx.assetBase}/${person.slug}.png`
-  return `<td width="126" valign="middle" style="width:126px;line-height:0"><img src="${src}" width="126" height="175" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:126px;height:175px"></td>\n`
+  return `<td width="99" valign="middle" style="width:99px;line-height:0"><img src="${src}" width="99" height="137" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:99px;height:137px"></td>\n`
 }
 
 function specialtyRow(specialty: string, ink: string): string {
   if (specialty === '') return ''
-  return `<div style="font-size:10px;line-height:15px;color:${ink};padding-top:2px">${escapeHtml(specialty)}</div>\n`
+  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:1px">${escapeHtml(specialty)}</div>\n`
 }
 
 function phoneRow(phone: string | undefined, ink: string): string {
   if (!phone) return ''
-  return `<div style="font-size:11px;line-height:16px;color:${ink};padding-top:2px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
+  return `<div style="font-size:11px;line-height:15px;color:${ink};padding-top:1px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
 }
 
 function bookButton(booking: string, ctx: SignatureContext, gap: number): string {
@@ -138,8 +138,10 @@ function iconTable(person: Person, ctx: SignatureContext): string {
 
 function contactBlock(person: Person, ctx: SignatureContext, ink: string): string {
   const phone = phoneRow(person.phone, ink)
-  if (!person.booking) return `${phone}${iconTable(person, ctx)}\n`
-  const button = bookButton(person.booking, ctx, phone === '' ? 0 : BUTTON_GAP)
+  const button = person.booking
+    ? bookButton(person.booking, ctx, phone === '' ? 0 : BUTTON_GAP)
+    : ''
+  if (phone === '' && button === '') return `${iconTable(person, ctx)}\n`
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n<td valign="bottom" style="padding:0">${phone}${button}</td>\n<td valign="bottom" style="padding:0 0 0 12px;line-height:0">${iconTable(person, ctx)}</td>\n</tr></table>\n`
 }
 

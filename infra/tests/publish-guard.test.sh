@@ -84,9 +84,24 @@ touch "$STAGE/media/audio/mccor-ambient-loop.c93bf064.mp3"
 expect "mp3 under media/audio" 0
 
 fixture
+mkdir -p "$STAGE/sig/framed"
+touch "$STAGE/sig/framed/marcm.png" "$STAGE/sig/framed/frame-top.gif"
+expect "framed signature images under sig/framed" 0
+
+fixture
 mkdir -p "$STAGE/sig/nested"
 touch "$STAGE/sig/nested/a.png"
-expect "png nested below sig" 1 "sig/nested/a.png: extension not allowed"
+expect "png in another folder below sig" 1 "sig/nested/a.png: extension not allowed"
+
+fixture
+mkdir -p "$STAGE/sig/.hidden"
+touch "$STAGE/sig/.hidden/a.gif"
+expect "gif in a hidden folder below sig" 1 "sig/.hidden/a.gif: extension not allowed"
+
+fixture
+mkdir -p "$STAGE/sig/framed/deeper"
+touch "$STAGE/sig/framed/deeper/a.png"
+expect "png below sig/framed" 1 "sig/framed/deeper/a.png: extension not allowed"
 
 fixture
 touch "$STAGE/media/brand/._hero.webp"

@@ -34,7 +34,6 @@ const KEPT_UNREFERENCED: ReadonlySet<string> = new Set([
   '/media/brand/mccor-stag-head.webp',
   '/media/brand/mccor-stag-hero.jpg',
   '/media/brand/mccor-stag-impact.jpg',
-  '/media/brand/mccor-stag-logo-1.webp',
   '/media/brand/mccor-stag-logo.jpg',
   '/media/brand/mccor-stag-logo.webp',
   '/media/brand/mccor-stag-og.webp',

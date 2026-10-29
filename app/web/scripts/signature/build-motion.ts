@@ -32,8 +32,8 @@ const SLICES = [
 
 const SHINE = {
   holdCs: 30,
-  frames: 46,
-  frameCs: 7,
+  frames: 43,
+  frameCs: 5,
   restCs: 100,
   start: -48,
   head: 14,
@@ -54,8 +54,8 @@ const CREST = {
   h: 356,
   slant: 0.4,
   holdCs: 160,
-  frames: 25,
-  frameCs: 7,
+  frames: 23,
+  frameCs: 5,
   restCs: 100,
   colors: 256,
   paletteStep: 3,

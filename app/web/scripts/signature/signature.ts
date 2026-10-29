@@ -21,8 +21,8 @@ export interface SignatureContext {
 const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
 const PAD_TOP = 2
-const PAD_BOTTOM = 6
-const BUTTON_GAP = 10
+const PAD_BOTTOM = 4
+const BUTTON_GAP = 8
 const EMAIL_GAP = 3
 const US_PREFIX = /^\+1\s+/
 
@@ -98,12 +98,12 @@ function photoCell(person: Person, ctx: SignatureContext): string {
 
 function specialtyRow(specialty: string, ink: string): string {
   if (specialty === '') return ''
-  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:5px">${escapeHtml(specialty)}</div>\n`
+  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:7px">${escapeHtml(specialty)}</div>\n`
 }
 
 function phoneRow(phone: string | undefined, ink: string): string {
   if (!phone) return ''
-  return `<div style="font-size:11px;line-height:15px;color:${ink};padding-top:2px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
+  return `<div style="font-size:11px;line-height:15px;color:${ink};padding-top:4px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
 }
 
 function bookButton(booking: string, ctx: SignatureContext, gap: number): string {

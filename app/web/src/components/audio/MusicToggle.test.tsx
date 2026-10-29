@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ui } from '@/content/ui'
 import {
+  BAR_MAX,
+  BARS,
   FADE_IN_SECONDS,
   FADE_OUT_SECONDS,
   MUSIC_SRC,
@@ -17,6 +19,7 @@ interface FakeAudio {
   ramp: ReturnType<typeof vi.fn>
   decode: ReturnType<typeof vi.fn>
   source: { loop: boolean; loopStart: number; loopEnd: number; buffer: unknown }
+  spectrum: ReturnType<typeof vi.fn>
 }
 
 function installFakeAudioContext(): FakeAudio {
@@ -28,6 +31,13 @@ function installFakeAudioContext(): FakeAudio {
     ramp: vi.fn(),
     decode: vi.fn().mockResolvedValue({ duration: 124 }),
     source: { loop: false, loopStart: 0, loopEnd: 0, buffer: null },
+    spectrum: vi.fn((data: Uint8Array) => data.fill(255)),
+  }
+  const analyserNode = {
+    fftSize: 2048,
+    frequencyBinCount: 32,
+    getByteFrequencyData: fake.spectrum,
+    connect: vi.fn(),
   }
   const gainNode = {
     gain: {
@@ -36,7 +46,7 @@ function installFakeAudioContext(): FakeAudio {
       setValueAtTime: vi.fn(),
       linearRampToValueAtTime: fake.ramp,
     },
-    connect: vi.fn(),
+    connect: vi.fn().mockReturnValue(analyserNode),
   }
   class FakeAudioContext {
     currentTime = 10
@@ -46,6 +56,7 @@ function installFakeAudioContext(): FakeAudio {
     close = fake.close
     decodeAudioData = fake.decode
     createGain = () => gainNode
+    createAnalyser = () => analyserNode
     createBufferSource = () => {
       const source = Object.assign(fake.source, {
         start: fake.start,
@@ -345,5 +356,74 @@ describe('MusicToggle', () => {
     expect(svg?.querySelector('text')).toBeNull()
     expect(svg?.textContent).toBe('')
     expect(svg?.querySelectorAll('path').length).toBeGreaterThan(0)
+  })
+
+  function barHeights() {
+    return [
+      ...screen.getByRole('button', { name: ui.muteMusic }).querySelectorAll('rect'),
+    ].map((bar) => Number(bar.getAttribute('height')))
+  }
+
+  function captureFrames() {
+    const frames: FrameRequestCallback[] = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    const cancel = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined)
+    return { frames, cancel }
+  }
+
+  it('shows the bars at rest before the music plays', () => {
+    mockFetch()
+    installFakeAudioContext()
+    render(<MusicToggle />)
+    expect(barHeights()).toEqual(BARS.map(({ rest }) => rest))
+  })
+
+  it('drives the bars from the music while it plays', async () => {
+    mockFetch()
+    const fake = installFakeAudioContext()
+    const { frames } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    act(() => {
+      frames.at(-1)?.(0)
+    })
+    expect(fake.spectrum).toHaveBeenCalled()
+    expect(barHeights()).toEqual(BARS.map(() => BAR_MAX))
+  })
+
+  it('stops the bars and shows the mute mark when muted', async () => {
+    mockFetch()
+    installFakeAudioContext()
+    const { frames, cancel } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    expect(frames.length).toBeGreaterThan(0)
+    await clickToggle(screen.getByRole('button', { name: ui.muteMusic }))
+    expect(cancel).toHaveBeenCalled()
+    expect(barHeights()).toEqual([])
+  })
+
+  it('keeps the bars still when the visitor prefers reduced motion', async () => {
+    mockFetch()
+    installFakeAudioContext()
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+    const { frames } = captureFrames()
+    render(<MusicToggle />)
+    await interact()
+    expect(frames).toHaveLength(0)
+    expect(barHeights()).toEqual(BARS.map(({ rest }) => rest))
   })
 })

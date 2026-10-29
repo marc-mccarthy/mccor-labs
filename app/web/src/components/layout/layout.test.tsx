@@ -91,11 +91,35 @@ describe('Header', () => {
     }
   })
 
-  it('leaves the booking call to the page, not the closed header', () => {
+  it.each(['/', '/services/', '/contact/'])(
+    'leaves the booking call to the page at %s',
+    (pathname) => {
+      mocked.env.bookingUrl = BOOKING_URL
+      navigation.pathname = pathname
+      render(<Header />)
+      expect(screen.queryByRole('link', { name: ui.bookCall })).toBeNull()
+      expect(screen.queryByRole('link', { name: ui.contactFallback })).toBeNull()
+    },
+  )
+
+  it('links to the booking url in a new tab on pages without their own', () => {
     mocked.env.bookingUrl = BOOKING_URL
+    navigation.pathname = '/work/'
     render(<Header />)
-    expect(screen.queryByRole('link', { name: ui.bookCall })).toBeNull()
-    expect(screen.queryByRole('link', { name: ui.contactFallback })).toBeNull()
+    const cta = screen.getByRole('link', { name: ui.bookCall })
+    expect(cta).toHaveAttribute('href', BOOKING_URL)
+    expect(cta).toHaveAttribute('target', '_blank')
+    expect(cta).toHaveAttribute('rel', expect.stringContaining('noopener'))
+    expect(cta).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    expect(cta.closest('[data-magnetic]')).not.toBeNull()
+  })
+
+  it('falls back to an email link in the header when booking is not configured', () => {
+    mocked.env.bookingUrl = null
+    navigation.pathname = '/process/'
+    render(<Header />)
+    const cta = screen.getByRole('link', { name: ui.contactFallback })
+    expect(cta).toHaveAttribute('href', `mailto:${site.contactEmail}`)
   })
 
   it('offers the music and motion toggles right before the menu button at every width', () => {
@@ -254,7 +278,7 @@ describe('BookingCta link variant', () => {
     expect(container.querySelector('[data-magnetic]')).not.toBeNull()
   })
 
-  it('keeps the only header booking call in the mobile menu', () => {
+  it('keeps the only header booking call in the mobile menu on the home page', () => {
     mocked.env.bookingUrl = BOOKING_URL
     render(<Header />)
     const links = screen.getAllByRole('link', { name: ui.bookCall, hidden: true })

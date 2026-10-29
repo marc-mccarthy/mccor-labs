@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 import { evalsCopy } from '@/content/lab/evalsCopy'
 import { site } from '@/content/site'
+import { ui } from '@/content/ui'
 
 const ROUTES = [
   { path: '/', heading: site.slogan },
@@ -31,9 +32,16 @@ test.describe('routes', () => {
     for (const route of ROUTES) {
       await page.goto(route.path)
       const cta = page
-        .locator('header a[href^="https://"], header a[href^="mailto:"]')
+        .locator('header, main')
+        .getByRole('link', { name: ui.bookCall, exact: true })
+        .or(
+          page
+            .locator('header, main')
+            .getByRole('link', { name: ui.contactFallback, exact: true }),
+        )
+        .filter({ visible: true })
         .first()
-      await expect(cta).toBeVisible()
+      await expect(cta, route.path).toBeVisible()
     }
   })
 

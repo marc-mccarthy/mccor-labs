@@ -34,3 +34,5 @@ lighthouse-report/
 infra/**/superpowers/
 infra/**/.superpowers/
 app/web/signatures/
+
+assets-dump/

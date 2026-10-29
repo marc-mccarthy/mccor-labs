@@ -80,9 +80,9 @@ describe('renderSignature', () => {
     expect(render(minimal, false)).not.toMatch(/{{\w+}}/)
   })
 
-  it('keeps the stable root id and 565px width', () => {
+  it('keeps the stable root id and 561px width', () => {
     expect(flat(html)).toContain('<table id="sig"')
-    expect(html).toContain('width="565"')
+    expect(html).toContain('width="561"')
   })
 
   it('escapes person fields', () => {
@@ -172,7 +172,7 @@ describe('renderSignature', () => {
     expect(bare).toContain('icon-mccor.gif')
   })
 
-  it('fits the 565 by 200 frame', () => {
+  it('fits the 561 by 200 frame', () => {
     const f = flat(html)
     expect(f).toContain('height="149"')
     expect(f).toContain('width="99" height="137"')

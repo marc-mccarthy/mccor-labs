@@ -18,16 +18,16 @@ const SRC_DIR = join(HERE, 'framed-src')
 const OUT_DIR = join(WEB, 'public', 'sig', 'framed')
 const GLOBALS = join(WEB, 'src', 'styles', 'globals.css')
 
-const FRAME = { w: 565, h: 200, inset: 10 }
+const FRAME = { w: 561, h: 200, inset: 10 }
 const SLICES = [
   { name: 'tl', x: 0, y: 0, w: 26, h: 26 },
-  { name: 'top', x: 26, y: 0, w: 513, h: 26 },
-  { name: 'tr', x: 539, y: 0, w: 26, h: 26 },
+  { name: 'top', x: 26, y: 0, w: 509, h: 26 },
+  { name: 'tr', x: 535, y: 0, w: 26, h: 26 },
   { name: 'left', x: 0, y: 26, w: 26, h: 149 },
-  { name: 'right', x: 539, y: 26, w: 26, h: 149 },
+  { name: 'right', x: 535, y: 26, w: 26, h: 149 },
   { name: 'bl', x: 0, y: 175, w: 26, h: 25 },
-  { name: 'bottom', x: 26, y: 175, w: 513, h: 25 },
-  { name: 'br', x: 539, y: 175, w: 26, h: 25 },
+  { name: 'bottom', x: 26, y: 175, w: 509, h: 25 },
+  { name: 'br', x: 535, y: 175, w: 26, h: 25 },
 ] as const
 
 const SHINE = {

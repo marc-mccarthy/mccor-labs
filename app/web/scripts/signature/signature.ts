@@ -20,8 +20,8 @@ export interface SignatureContext {
 
 const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
-const PAD_TOP = 10
-const PAD_BOTTOM = 15
+const PAD_TOP = 9
+const PAD_BOTTOM = 14
 const US_PREFIX = /^\+1\s+/
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
@@ -111,7 +111,7 @@ function bookCell(booking: string, ctx: SignatureContext): string {
 }
 
 function iconCell(src: string, href: string, alt: string, gap: number): string {
-  return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="32" alt="${alt}" style="display:block;border:0;width:24px;height:32px"></a></td>`
+  return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="48" alt="${alt}" style="display:block;border:0;width:24px;height:48px"></a></td>`
 }
 
 function actionRow(person: Person, ctx: SignatureContext): string {
@@ -132,7 +132,7 @@ function actionRow(person: Person, ctx: SignatureContext): string {
     cells.push(iconCell(`${ctx.assetBase}/${file}`, href, alt, gap))
     gap = 6
   }
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:5px"><tr>\n${cells.join('\n')}\n</tr></table>\n`
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>\n`
 }
 
 export function renderSignature(

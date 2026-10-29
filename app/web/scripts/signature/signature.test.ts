@@ -97,7 +97,7 @@ describe('renderSignature', () => {
 
   it('links the framed assets and the per-person card', () => {
     expect(html).toContain('https://mccorlabs.com/sig/framed/frame-tl.gif')
-    expect(html).toContain('https://mccorlabs.com/sig/framed/crest.png')
+    expect(html).toContain('https://mccorlabs.com/sig/framed/crest.gif')
     expect(html).toContain('https://mccorlabs.com/sig/framed/marcm.png')
     expect(html).toContain('https://mccorlabs.com/sig/framed/icon-mccor.gif')
   })
@@ -144,7 +144,7 @@ describe('renderSignature', () => {
     )
     expect(order).toEqual([...order].sort((a, b) => a - b))
     expect(order).not.toContain(-1)
-    expect(html).toContain('width="24" height="32"')
+    expect(html).toContain('width="24" height="48"')
   })
 
   it('links the mccor icon to the website', () => {

@@ -131,7 +131,7 @@ describe('renderSignature', () => {
 
   it('keeps the role line and crest alt as in the reference', () => {
     expect(flat(html)).toContain(
-      'font-weight:700;padding-top:4px;white-space:nowrap"> Founder, McCor Labs',
+      'font-weight:700;padding-top:3px;white-space:nowrap"> Founder, McCor Labs',
     )
     expect(html).toContain('alt="McCarthy coat of arms"')
   })

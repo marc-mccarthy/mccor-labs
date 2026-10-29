@@ -130,7 +130,7 @@ describe('renderSignature', () => {
   })
 
   it('keeps the role line and crest alt as in the reference', () => {
-    expect(flat(html)).toContain('font-weight:700;padding-top:2px"> Founder, McCor Labs')
+    expect(flat(html)).toContain('font-weight:700;padding-top:4px"> Founder, McCor Labs')
     expect(html).toContain('alt="McCarthy coat of arms"')
   })
 
@@ -145,16 +145,16 @@ describe('renderSignature', () => {
     expect(html).toContain('width="24" height="56"')
   })
 
-  it('puts the icons in a cell beside the phone and button', () => {
+  it('stacks email, phone and button beside the icons', () => {
     expect(flat(html)).toMatch(
-      /tel:.*padding-top:15px.*Book a call.*<\/div><\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
+      /<td valign="bottom" style="padding:5px 0 0 0">.*mailto:.*tel:.*padding-top:10px.*Book a call.*<\/div><\/td> <td valign="bottom" style="padding:0 0 0 12px;line-height:0"><table.*icon-mccor\.gif/,
     )
   })
 
-  it('drops the gap above the button when there is no phone', () => {
-    expect(flat(render({ ...person, phone: '' }))).toContain(
-      '<div style="padding-top:0px"><table',
-    )
+  it('keeps the button gap under the email when there is no phone', () => {
+    const noPhone = flat(render({ ...person, phone: '' }))
+    expect(noPhone).not.toContain('tel:')
+    expect(noPhone).toMatch(/mailto:.*<div style="padding-top:10px"><table/)
   })
 
   it('puts the icons in a cell beside the phone when there is no booking', () => {
@@ -165,11 +165,13 @@ describe('renderSignature', () => {
     )
   })
 
-  it('shows only the icons when there is no phone and no booking', () => {
+  it('shows only the email beside the icons when there is no phone and no booking', () => {
     const bare = flat(render({ ...person, phone: '', booking: '' }))
     expect(bare).not.toContain('tel:')
-    expect(bare).not.toContain('padding:0 0 0 12px')
-    expect(bare).toContain('icon-mccor.gif')
+    expect(bare).not.toContain('Book a call')
+    expect(bare).toMatch(
+      /<td valign="top" style="padding:5px 0 0 0">.*mailto:.*icon-mccor\.gif/,
+    )
   })
 
   it('fits the 546 by 190 frame', () => {

@@ -22,7 +22,8 @@ const TITLE_SEPARATOR = ' · '
 const FONT = "'Helvetica Neue',Helvetica,Arial,sans-serif"
 const PAD_TOP = 0
 const PAD_BOTTOM = 7
-const BUTTON_GAP = 15
+const BUTTON_GAP = 10
+const EMAIL_GAP = 5
 const US_PREFIX = /^\+1\s+/
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
@@ -97,12 +98,12 @@ function photoCell(person: Person, ctx: SignatureContext): string {
 
 function specialtyRow(specialty: string, ink: string): string {
   if (specialty === '') return ''
-  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:0">${escapeHtml(specialty)}</div>\n`
+  return `<div style="font-size:10px;line-height:13px;color:${ink};padding-top:2px">${escapeHtml(specialty)}</div>\n`
 }
 
 function phoneRow(phone: string | undefined, ink: string): string {
   if (!phone) return ''
-  return `<div style="font-size:11px;line-height:15px;color:${ink};padding-top:1px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
+  return `<div style="font-size:11px;line-height:15px;color:${ink};padding-top:2px"><a href="tel:${phoneHref(phone)}" style="color:${ink};text-decoration:none;font-weight:700">${escapeHtml(phone.replace(US_PREFIX, ''))}</a></div>\n`
 }
 
 function bookButton(booking: string, ctx: SignatureContext, gap: number): string {
@@ -136,13 +137,16 @@ function iconTable(person: Person, ctx: SignatureContext): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>`
 }
 
+function emailRow(email: string, crimson: string): string {
+  const address = escapeHtml(email)
+  return `<div style="font-size:11px;line-height:14px;color:${crimson}"><a href="mailto:${address}" style="color:${crimson};text-decoration:none;font-weight:700">${address}</a></div>\n`
+}
+
 function contactBlock(person: Person, ctx: SignatureContext, ink: string): string {
-  const phone = phoneRow(person.phone, ink)
-  const button = person.booking
-    ? bookButton(person.booking, ctx, phone === '' ? 0 : BUTTON_GAP)
-    : ''
-  if (phone === '' && button === '') return `${iconTable(person, ctx)}\n`
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n<td valign="bottom" style="padding:0">${phone}${button}</td>\n<td valign="bottom" style="padding:0 0 0 12px;line-height:0">${iconTable(person, ctx)}</td>\n</tr></table>\n`
+  const crimson = requireToken(ctx.tokens, 'crimson-deep')
+  const button = person.booking ? bookButton(person.booking, ctx, BUTTON_GAP) : ''
+  const valign = person.booking ? 'bottom' : 'top'
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n<td valign="${valign}" style="padding:${String(EMAIL_GAP)}px 0 0 0">${emailRow(person.email, crimson)}${phoneRow(person.phone, ink)}${button}</td>\n<td valign="bottom" style="padding:0 0 0 12px;line-height:0">${iconTable(person, ctx)}</td>\n</tr></table>\n`
 }
 
 export function renderSignature(
@@ -164,7 +168,6 @@ export function renderSignature(
     rule: requireToken(ctx.tokens, 'border-strong'),
     name: escapeHtml(person.name),
     roleLine: escapeHtml(`${role}, ${ctx.company}`),
-    email: escapeHtml(person.email),
     photoCell: hasCard ? photoCell(person, ctx) : '',
     specialtyRow: specialtyRow(rest.join(TITLE_SEPARATOR), base),
     contactBlock: contactBlock(person, ctx, base),

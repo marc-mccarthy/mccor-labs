@@ -35,17 +35,17 @@ const SHINE = {
   frames: 46,
   frameCs: 7,
   restCs: 100,
-  start: -24,
-  head: 7,
-  tail: 42,
-  bloom: { gain: 0.45, sigma: 48, lag: 24 },
-  reachBack: 180,
-  reachFront: 130,
+  start: -48,
+  head: 14,
+  tail: 84,
+  bloom: { gain: 0.6, sigma: 90, lag: 45 },
+  reachBack: 340,
+  reachFront: 220,
 }
-const LINE_LEVELS = '3%,40%'
+const LINE_LEVELS = '3%,30%'
 const FRAME_COLORS = 128
 const FRAME_FUZZ = '3%'
-const FRAME_MAX_BYTES = 900_000
+const FRAME_MAX_BYTES = 1_000_000
 
 const CREST = {
   src: 'crest.png',
@@ -55,7 +55,7 @@ const CREST = {
   slant: 0.4,
   holdCs: 160,
   frames: 30,
-  frameCs: 16,
+  frameCs: 8,
   restCs: 100,
   colors: 256,
   paletteStep: 3,

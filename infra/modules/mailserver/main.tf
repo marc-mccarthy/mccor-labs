@@ -12,6 +12,7 @@ terraform {
 }
 
 data "aws_region" "current" {}
+data "aws_default_tags" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -259,6 +260,7 @@ resource "aws_instance" "mail" {
     volume_size = 20
     volume_type = "gp3"
     encrypted   = true
+    tags        = data.aws_default_tags.current.tags
   }
 
   user_data_replace_on_change = true

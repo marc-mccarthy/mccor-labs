@@ -8,7 +8,8 @@
     "website": "https://mccorlabs.com",
     "linkedin": "https://www.linkedin.com/in/the-marc-mccarthy",
     "github": "https://www.github.com/marc-mccarthy",
-    "photo": "marcm"
+    "photo": "marcm",
+    "layout": "card"
   },
   {
     "slug": "nateb",

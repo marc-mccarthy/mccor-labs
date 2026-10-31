@@ -12,8 +12,8 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = "mccor-labs"
-      Env       = "prod"
+      Project   = var.PROJECT
+      Env       = var.ENV
       ManagedBy = "terraform"
     }
   }

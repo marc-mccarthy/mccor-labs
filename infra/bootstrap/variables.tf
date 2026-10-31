@@ -6,6 +6,16 @@ variable "NAME" {
     error_message = "name must be lowercase alphanumeric with hyphens, 32 chars max."
   }
 }
+variable "PROJECT" {
+  description = "Project tag on every resource, for cost allocation"
+  type        = string
+  default     = "mccor-labs"
+}
+variable "ENV" {
+  description = "Env tag on every resource, for cost allocation"
+  type        = string
+  default     = "prod"
+}
 variable "DOMAIN_NAME" {
   description = "Domain registered in Route 53 once transferred"
   type        = string

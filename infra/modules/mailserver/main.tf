@@ -260,8 +260,7 @@ resource "aws_instance" "mail" {
     volume_size = 20
     volume_type = "gp3"
     encrypted   = true
-    # Without explicit tags the plan drops Project from the root volume, so its cost would go untagged
-    tags = data.aws_default_tags.current.tags
+    tags        = data.aws_default_tags.current.tags
   }
 
   user_data_replace_on_change = true

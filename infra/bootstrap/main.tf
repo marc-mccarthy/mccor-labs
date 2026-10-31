@@ -8,8 +8,8 @@ provider "aws" {
   region = "us-east-1"
   default_tags {
     tags = {
-      Project   = "mccor-labs"
-      Env       = "prod"
+      Project   = var.PROJECT
+      Env       = var.ENV
       ManagedBy = "terraform"
       Stack     = "bootstrap"
     }

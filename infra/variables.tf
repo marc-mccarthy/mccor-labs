@@ -8,6 +8,18 @@ variable "NAME" {
   }
 }
 
+variable "PROJECT" {
+  description = "Project tag on every resource, for cost allocation"
+  type        = string
+  default     = "mccor-labs"
+}
+
+variable "ENV" {
+  description = "Env tag on every resource, for cost allocation"
+  type        = string
+  default     = "prod"
+}
+
 variable "DOMAIN_NAME" {
   description = "Your domain, e.g. example.com. An explicit empty string deploys only what works on the CloudFront default domain."
   type        = string

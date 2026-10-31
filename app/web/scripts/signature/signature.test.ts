@@ -264,6 +264,11 @@ describe('renderCardSignature', () => {
     expect(card(person, false)).not.toContain('marcm-card.png')
   })
 
+  it('widens the text cell to fill the photo column when there is no photo', () => {
+    expect(flat(html)).toContain('width:230px;padding:0 16px 0 18px')
+    expect(flat(card(person, false))).toContain('width:351px;padding:0 16px 0 0px')
+  })
+
   it('stacks name, role, specialty, email and phone in order', () => {
     const order = [
       'Marc &lt;McCarthy&gt;',

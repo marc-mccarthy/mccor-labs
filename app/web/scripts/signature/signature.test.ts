@@ -8,6 +8,7 @@ import {
   parsePeople,
   phoneHref,
   readTokens,
+  renderCardSignature,
   renderSignature,
 } from './signature'
 
@@ -16,6 +17,7 @@ const css = readFileSync(
   'utf8',
 )
 const template = readFileSync(join(import.meta.dirname, 'template.html'), 'utf8')
+const cardTemplate = readFileSync(join(import.meta.dirname, 'card-template.html'), 'utf8')
 
 const ctx: SignatureContext = {
   assetBase: 'https://mccorlabs.com/sig/framed',
@@ -226,6 +228,94 @@ describe('renderSignature', () => {
   })
 })
 
+describe('renderCardSignature', () => {
+  const card = (p: Person, hasPhoto = true) =>
+    renderCardSignature(cardTemplate, p, ctx, hasPhoto)
+  const html = card(person)
+
+  it('fills every placeholder', () => {
+    expect(html).not.toMatch(/{{\w+}}/)
+    expect(card(minimal, false)).not.toMatch(/{{\w+}}/)
+  })
+
+  it('keeps the stable root id at 500px wide', () => {
+    expect(flat(html)).toContain('<table id="sig"')
+    expect(html).toContain('width="500"')
+  })
+
+  it('frames the card in the accent line on the base colour', () => {
+    expect(html).toContain(`border:1px solid ${ctx.tokens.accent ?? ''}`)
+    expect(html).toContain(`background:${ctx.tokens.base ?? ''};border-radius:6px`)
+  })
+
+  it('links the card photo, crest and 20px icons', () => {
+    expect(html).toContain(
+      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="103" height="120"',
+    )
+    expect(html).toContain('https://mccorlabs.com/sig/framed/card-crest.png')
+    for (const key of ['mccor', 'linkedin', 'github'])
+      expect(html).toContain(
+        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="20" height="20"`,
+      )
+    expect(html).not.toContain('.gif')
+  })
+
+  it('omits the photo cell when there is no photo', () => {
+    expect(card(person, false)).not.toContain('marcm-card.png')
+  })
+
+  it('stacks name, role, specialty, email and phone in order', () => {
+    const order = [
+      'Marc &lt;McCarthy&gt;',
+      'Founder, McCor Labs',
+      'Full-Stack &amp; AI Engineer',
+      'mailto:',
+      'tel:+16125550123',
+      'Book a call',
+    ].map((s) => html.indexOf(s))
+    expect(order).not.toContain(-1)
+    expect(order).toEqual([...order].sort((a, b) => a - b))
+  })
+
+  it('bolds the email and phone lines so they keep a 16px line box', () => {
+    expect(flat(html)).toMatch(/line-height:16px;[^"]*;font-weight:700"><a href="mailto:/)
+    expect(flat(html)).toMatch(/line-height:16px;[^"]*;font-weight:700"><a href="tel:/)
+  })
+
+  it('puts the button and the icons in one row', () => {
+    expect(flat(html)).toMatch(
+      /Book a call<\/a><\/td> <td valign="middle" style="padding-left:12px;line-height:0"><a href="https:\/\/example.com"><img src="[^"]*card-icon-mccor.png".*padding-left:7px.*card-icon-linkedin.*padding-left:7px.*card-icon-github/,
+    )
+  })
+
+  it('starts the icons flush left when there is no booking', () => {
+    const plain = flat(card({ ...person, booking: '' }))
+    expect(plain).not.toContain('Book a call')
+    expect(plain).toContain('<td valign="middle" style="padding-left:0px;line-height:0">')
+  })
+
+  it('omits phone, booking, linkedin, github and specialty when missing', () => {
+    const bare = card(minimal)
+    expect(bare).not.toContain('tel:')
+    expect(bare).not.toContain('Book a call')
+    expect(bare).not.toContain('card-icon-linkedin')
+    expect(bare).not.toContain('card-icon-github')
+    expect(bare).toContain('card-icon-mccor')
+    expect(bare).toContain('Consultation Specialist, McCor Labs')
+  })
+
+  it('uses only theme colours', () => {
+    const used = new Set(html.match(/#[0-9a-f]{6}/gi)?.map((hex) => hex.toLowerCase()))
+    expect(used.size).toBeGreaterThan(0)
+    for (const hex of used) expect(Object.values(ctx.tokens)).toContain(hex)
+    expect(cardTemplate).not.toMatch(/#[0-9a-f]{3,6}\b/i)
+  })
+
+  it('emits only ASCII', () => {
+    expect(card({ ...person, name: 'Zo\u00eb' })).toMatch(/^[\x00-\x7e]*$/)
+  })
+})
+
 describe('parsePeople', () => {
   it('accepts required keys only', () => {
     expect(parsePeople(JSON.stringify([minimal]))).toEqual([minimal])
@@ -254,6 +344,17 @@ describe('parsePeople', () => {
   it('rejects a non-string optional value', () => {
     expect(() => parsePeople(JSON.stringify([{ ...minimal, phone: 4 }]))).toThrow(
       '"phone"',
+    )
+  })
+
+  it('accepts the card layout', () => {
+    const [parsed] = parsePeople(JSON.stringify([{ ...minimal, layout: 'card' }]))
+    expect(parsed?.layout).toBe('card')
+  })
+
+  it('rejects an unknown layout', () => {
+    expect(() => parsePeople(JSON.stringify([{ ...minimal, layout: 'wide' }]))).toThrow(
+      '"layout" must be one of framed, card',
     )
   })
 

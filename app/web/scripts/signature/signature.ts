@@ -9,7 +9,12 @@ export interface Person {
   linkedin?: string
   github?: string
   photo?: string
+  layout?: Layout
 }
+
+const LAYOUTS = ['framed', 'card'] as const
+
+export type Layout = (typeof LAYOUTS)[number]
 
 export interface SignatureContext {
   assetBase: string
@@ -34,6 +39,7 @@ const OPTIONAL_KEYS = [
   'linkedin',
   'github',
   'photo',
+  'layout',
 ] as const
 
 export function readTokens(css: string): Record<string, string> {
@@ -72,6 +78,10 @@ export function parsePeople(json: string): Person[] {
       if (value === undefined) continue
       if (typeof value !== 'string')
         throw new Error(`person ${String(i)} "${key}" must be a string`)
+      if (key === 'layout' && !(LAYOUTS as readonly string[]).includes(value))
+        throw new Error(
+          `person ${String(i)} "layout" must be one of ${LAYOUTS.join(', ')}`,
+        )
       person[key] = value
     }
     return person as unknown as Person
@@ -116,24 +126,26 @@ function iconCell(src: string, href: string, alt: string, gap: number): string {
   return `<td valign="bottom" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${src}" width="24" height="56" alt="${alt}" style="display:block;border:0;width:24px;height:56px"></a></td>`
 }
 
-function iconTable(person: Person, ctx: SignatureContext): string {
+interface IconLink {
+  href: string
+  key: 'mccor' | 'linkedin' | 'github'
+  alt: string
+}
+
+function iconLinks(person: Person, ctx: SignatureContext): IconLink[] {
   const website = person.website ?? ''
   const icons = [
-    {
-      href: website === '' ? ctx.siteUrl : website,
-      file: 'icon-mccor.gif',
-      alt: 'McCor Labs',
-    },
-    { href: person.linkedin, file: 'icon-linkedin.gif', alt: 'LinkedIn' },
-    { href: person.github, file: 'icon-github.gif', alt: 'GitHub' },
-  ]
-  const cells: string[] = []
-  let gap = 0
-  for (const { href, file, alt } of icons) {
-    if (!href) continue
-    cells.push(iconCell(`${ctx.assetBase}/${file}`, href, alt, gap))
-    gap = 6
-  }
+    { href: website === '' ? ctx.siteUrl : website, key: 'mccor', alt: 'McCor Labs' },
+    { href: person.linkedin, key: 'linkedin', alt: 'LinkedIn' },
+    { href: person.github, key: 'github', alt: 'GitHub' },
+  ] as const
+  return icons.flatMap(({ href, key, alt }) => (href ? [{ href, key, alt }] : []))
+}
+
+function iconTable(person: Person, ctx: SignatureContext): string {
+  const cells = iconLinks(person, ctx).map(({ href, key, alt }, i) =>
+    iconCell(`${ctx.assetBase}/icon-${key}.gif`, href, alt, i === 0 ? 0 : 6),
+  )
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table>`
 }
 
@@ -172,10 +184,81 @@ export function renderSignature(
     specialtyRow: specialtyRow(rest.join(TITLE_SEPARATOR), base),
     contactBlock: contactBlock(person, ctx, base),
   }
+  return fillTemplate(template, values)
+}
+
+function fillTemplate(template: string, values: Record<string, string>): string {
   return template.replace(/{{(\w+)}}/g, (_, key: string) => {
     const value = values[key]
     if (value === undefined)
       throw new Error(`template placeholder {{${key}}} has no value`)
     return value
+  })
+}
+
+function cardPhotoCell(person: Person, ctx: SignatureContext): string {
+  const src = `${ctx.assetBase}/${person.slug}-card.png`
+  return `<td width="103" valign="top" style="width:103px;line-height:0"><img src="${src}" width="103" height="120" alt="${escapeHtml(person.name)}" style="display:block;border:0;width:103px;height:120px"></td>\n`
+}
+
+function cardLine(text: string, ink: string, gap: number, href?: string): string {
+  const body = href
+    ? `<a href="${href}" style="color:${ink};text-decoration:none;font-weight:700">${text}</a>`
+    : text
+  const weight = href ? ';font-weight:700' : ''
+  return `<div style="font-size:13px;line-height:16px;color:${ink};padding-top:${String(gap)}px${weight}">${body}</div>\n`
+}
+
+function cardButton(booking: string, ctx: SignatureContext): string {
+  const red = requireToken(ctx.tokens, 'crimson-deep')
+  const light = requireToken(ctx.tokens, 'text')
+  return `<td valign="middle" bgcolor="${red}" style="background:${red};border-radius:3px;padding:3px 11px 6px;font-family:${FONT};font-size:10px;line-height:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td>`
+}
+
+function cardActions(person: Person, ctx: SignatureContext): string {
+  const icons = iconLinks(person, ctx).map(({ href, key, alt }, i) => {
+    const gap = i > 0 ? 7 : person.booking ? 12 : 0
+    return `<td valign="middle" style="padding-left:${String(gap)}px;line-height:0"><a href="${escapeHtml(href)}"><img src="${ctx.assetBase}/card-icon-${key}.png" width="20" height="20" alt="${alt}" style="display:block;border:0;width:20px;height:20px"></a></td>`
+  })
+  const cells = [...(person.booking ? [cardButton(person.booking, ctx)] : []), ...icons]
+  return `<div style="padding-top:4px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${cells.join('\n')}\n</tr></table></div>\n`
+}
+
+function cardContact(person: Person, ctx: SignatureContext, ink: string): string {
+  const crimson = requireToken(ctx.tokens, 'crimson-deep')
+  const address = escapeHtml(person.email)
+  const phone = person.phone
+    ? cardLine(
+        escapeHtml(person.phone.replace(US_PREFIX, '')),
+        ink,
+        2,
+        `tel:${phoneHref(person.phone)}`,
+      )
+    : ''
+  return `${cardLine(address, crimson, 3, `mailto:${address}`)}${phone}${cardActions(person, ctx)}`
+}
+
+export function renderCardSignature(
+  template: string,
+  person: Person,
+  ctx: SignatureContext,
+  hasPhoto: boolean,
+): string {
+  const base = requireToken(ctx.tokens, 'base')
+  const [role = '', ...rest] = person.title.split(TITLE_SEPARATOR)
+  const specialty = rest.join(TITLE_SEPARATOR)
+  return fillTemplate(template, {
+    assetBase: ctx.assetBase,
+    font: FONT,
+    base,
+    text: requireToken(ctx.tokens, 'text'),
+    accent: requireToken(ctx.tokens, 'accent'),
+    crimson: requireToken(ctx.tokens, 'crimson-deep'),
+    rule: requireToken(ctx.tokens, 'border-strong'),
+    name: escapeHtml(person.name),
+    roleLine: escapeHtml(`${role}, ${ctx.company}`),
+    photoCell: hasPhoto ? cardPhotoCell(person, ctx) : '',
+    specialtyRow: specialty === '' ? '' : cardLine(escapeHtml(specialty), base, 2),
+    contactBlock: cardContact(person, ctx, base),
   })
 }

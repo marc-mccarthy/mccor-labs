@@ -31,6 +31,10 @@ resource "aws_bedrock_guardrail_version" "lab" {
   description   = "lab"
 
   lifecycle {
-    replace_triggered_by = [aws_bedrock_guardrail.lab]
+    replace_triggered_by = [
+      aws_bedrock_guardrail.lab.content_policy_config,
+      aws_bedrock_guardrail.lab.blocked_input_messaging,
+      aws_bedrock_guardrail.lab.blocked_outputs_messaging,
+    ]
   }
 }

@@ -1,6 +1,6 @@
 # Unused brand media
 
-Created: 2026-10-18 · Updated: 2026-10-29
+Created: 2026-10-18 · Updated: 2026-11-01
 
 Files under `app/web/public/` that no page, stylesheet, script or test references. They are kept for
 the owner's review. The build hashes and ships them like every other asset; the unreferenced check in
@@ -52,6 +52,7 @@ to the pool, list it there and remove it from this table and `KEPT_UNREFERENCED`
 | [mccor-stag-impact.jpg](../app/web/public/media/brand/mccor-stag-impact.jpg)                 | 1.2 MB |
 | [mccor-stag-logo.jpg](../app/web/public/media/brand/mccor-stag-logo.jpg)                     | 272 KB |
 | [mccor-stag-logo.webp](../app/web/public/media/brand/mccor-stag-logo.webp)                   | 32 KB  |
+| [mccor-stag-og-banner.jpg](../app/web/public/media/brand/mccor-stag-og-banner.jpg)           | 84 KB  |
 | [mccor-stag-og.webp](../app/web/public/media/brand/mccor-stag-og.webp)                       | 60 KB  |
 | [mccor-stag-systems.jpg](../app/web/public/media/brand/mccor-stag-systems.jpg)               | 896 KB |
 | [mccor-stag-systems.webp](../app/web/public/media/brand/mccor-stag-systems.webp)             | 188 KB |

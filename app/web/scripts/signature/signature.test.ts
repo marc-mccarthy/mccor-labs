@@ -243,21 +243,23 @@ describe('renderCardSignature', () => {
     expect(html).toContain('width="500"')
   })
 
-  it('frames the card in the accent line on the base colour', () => {
-    expect(html).toContain(`border:1px solid ${ctx.tokens.accent ?? ''}`)
-    expect(html).toContain(`background:${ctx.tokens.base ?? ''};border-radius:6px`)
+  it('frames the light card in one 2px crimson line', () => {
+    expect(html).toContain(
+      `background:${ctx.tokens.text ?? ''};border:2px solid ${ctx.tokens['crimson-deep'] ?? ''};border-radius:6px`,
+    )
+    expect(html.match(/border:2px solid/g)).toHaveLength(1)
   })
 
-  it('links the 76 by 100 photo and crest and the 18px icons', () => {
+  it('links the 88 by 116 photo, the 104 by 116 crest and the 20px icons', () => {
     expect(html).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="76" height="100"',
+      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="88" height="116"',
     )
     expect(flat(html)).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="76" height="100"',
+      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="104" height="116"',
     )
     for (const key of ['mccor', 'linkedin', 'github'])
       expect(html).toContain(
-        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="18" height="18"`,
+        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="20" height="20"`,
       )
     expect(html).not.toContain('.gif')
   })
@@ -267,15 +269,15 @@ describe('renderCardSignature', () => {
   })
 
   it('widens the text cell to fill the photo column when there is no photo', () => {
-    expect(flat(html)).toContain('width:284px;padding:0 16px 0 18px')
-    expect(flat(card(person, false))).toContain('width:378px;padding:0 16px 0 0px')
+    expect(flat(html)).toContain('width:260px;padding:0 16px 0 18px')
+    expect(flat(card(person, false))).toContain('width:366px;padding:0 16px 0 0px')
   })
 
-  it('fills the 470px inner row exactly with photo, text and crest', () => {
+  it('fills the 486px inner row exactly with photo, text and crest', () => {
     const [, text = '', gap = ''] =
       /width:(\d+)px;padding:0 16px 0 (\d+)px/.exec(flat(html)) ?? []
-    expect(76 + Number(gap) + Number(text) + 16 + 76).toBe(470)
-    expect(html).toContain('width="470"')
+    expect(88 + Number(gap) + Number(text) + 16 + 104).toBe(486)
+    expect(html).toContain('width="486"')
   })
 
   it('stacks name, role, specialty, email and phone in order', () => {
@@ -291,14 +293,33 @@ describe('renderCardSignature', () => {
     expect(order).toEqual([...order].sort((a, b) => a - b))
   })
 
-  it('bolds the email and phone lines so they keep a 14px line box', () => {
-    expect(flat(html)).toMatch(/line-height:14px;[^"]*;font-weight:700"><a href="mailto:/)
-    expect(flat(html)).toMatch(/line-height:14px;[^"]*;font-weight:700"><a href="tel:/)
+  it('sets the email and phone in regular weight on a 14px line box', () => {
+    expect(flat(html)).toMatch(
+      /line-height:14px;[^"]*"><a href="mailto:[^"]*" style="[^"]*text-decoration:none">/,
+    )
+    expect(flat(html)).toMatch(
+      /line-height:14px;[^"]*"><a href="tel:[^"]*" style="[^"]*text-decoration:none">/,
+    )
+    expect(flat(html)).not.toMatch(/font-weight:700"><a href="(mailto|tel):/)
   })
 
-  it('puts the button and the icons in one row', () => {
+  it('puts the button beside the email and phone, with the icons on their own row', () => {
     expect(flat(html)).toMatch(
-      /Book a call<\/a><\/td> <td valign="middle" style="padding-left:12px;line-height:0"><a href="https:\/\/example.com"><img src="[^"]*card-icon-mccor.png".*padding-left:7px.*card-icon-linkedin.*padding-left:7px.*card-icon-github/,
+      /<td width="150" valign="middle">.*mailto:.*tel:.*<\/table><\/td> <td width="110" align="right" valign="middle">.*padding:9px 12px;[^"]*font-size:11px;line-height:12px;.*Book a call<\/a><\/td><\/tr><\/table><\/td> <\/tr><\/table><\/td><\/tr> <tr><td style="padding-top:4px">.*card-icon-mccor.*padding-left:12px.*card-icon-linkedin.*padding-left:12px.*card-icon-github/,
+    )
+  })
+
+  it('gives the email and phone the full width when there is no booking', () => {
+    const plain = flat(card({ ...person, booking: '' }))
+    expect(plain).toContain('<td width="260" valign="middle">')
+    expect(plain).not.toContain('align="right" valign="middle"')
+  })
+
+  it('spaces rows with table cells, not divs, so Outlook keeps the rhythm', () => {
+    expect(html).not.toContain('<div')
+    expect(cardTemplate).not.toContain('<div')
+    expect(flat(html)).toContain(
+      `<td height="1" bgcolor="${ctx.tokens['border-strong'] ?? ''}"`,
     )
   })
 

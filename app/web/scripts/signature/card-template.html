@@ -5,67 +5,83 @@
   cellspacing="0"
   border="0"
   width="500"
-  style="width:500px;border-collapse:separate;background:{{base}};border-radius:6px"
+  style="width:500px;border-collapse:separate;background:{{text}};border:2px solid {{crimson}};border-radius:6px"
 >
   <tr>
-    <td style="padding: 4px">
+    <td style="padding: 5px">
       <table
         role="presentation"
         cellpadding="0"
         cellspacing="0"
         border="0"
-        width="492"
-        style="width:492px;border-collapse:separate;background:{{text}};border:1px solid {{accent}};border-radius:4px"
+        width="486"
+        style="width: 486px; border-collapse: collapse"
       >
         <tr>
-          <td style="padding: 10px">
+          {{photoCell}}
+          <td
+            valign="top"
+            style="width:{{textWidth}}px;padding:0 16px 0 {{textGap}}px;font-family:{{font}}"
+          >
             <table
               role="presentation"
               cellpadding="0"
               cellspacing="0"
               border="0"
-              width="470"
-              style="width: 470px; border-collapse: collapse"
+              width="{{textWidth}}"
+              style="width:{{textWidth}}px"
             >
               <tr>
-                {{photoCell}}
                 <td
-                  valign="top"
-                  style="width:{{textWidth}}px;padding:0 16px 0 {{textGap}}px;font-family:{{font}}"
+                  style="font-family:{{font}};font-size:18px;line-height:18px;font-weight:700;color:{{base}};letter-spacing:-0.2px;white-space:nowrap"
                 >
-                  <div
-                    style="font-size:18px;line-height:16px;font-weight:700;color:{{base}};letter-spacing:-0.2px;white-space:nowrap"
-                  >
-                    {{name}}
-                  </div>
-                  <div
-                    style="font-size:10px;line-height:12px;letter-spacing:1px;color:{{crimson}};text-transform:uppercase;font-weight:700;padding-top:1px;white-space:nowrap"
-                  >
-                    {{roleLine}}
-                  </div>
-                  {{specialtyRow}}
-                  <div
-                    style="border-top:1px solid {{rule}};font-size:1px;line-height:1px;height:1px;margin-top:3px"
-                  >
-                    &nbsp;
-                  </div>
-                  {{contactBlock}}
-                </td>
-                <td
-                  width="{{crestWidth}}"
-                  valign="top"
-                  style="width:{{crestWidth}}px;line-height:0"
-                >
-                  <img
-                    src="{{assetBase}}/card-crest.png"
-                    width="{{crestWidth}}"
-                    height="{{crestHeight}}"
-                    alt="McCarthy coat of arms"
-                    style="display:block;border:0;width:{{crestWidth}}px;height:{{crestHeight}}px"
-                  />
+                  {{name}}
                 </td>
               </tr>
+              <tr>
+                <td
+                  style="padding-top:2px;font-family:{{font}};font-size:11px;line-height:13px;letter-spacing:1px;color:{{crimson}};text-transform:uppercase;font-weight:700;white-space:nowrap"
+                >
+                  {{roleLine}}
+                </td>
+              </tr>
+              {{specialtyRow}}
+              <tr>
+                <td style="padding-top: 5px">
+                  <table
+                    role="presentation"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    width="100%"
+                  >
+                    <tr>
+                      <td
+                        height="1"
+                        bgcolor="{{rule}}"
+                        style="height:1px;font-size:1px;line-height:1px;background:{{rule}}"
+                      >
+                        &nbsp;
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              {{contactBlock}}
             </table>
+          </td>
+          <td
+            width="{{crestWidth}}"
+            valign="top"
+            style="width:{{crestWidth}}px;line-height:0"
+          >
+            <img
+              src="{{assetBase}}/card-crest.png"
+              width="{{crestWidth}}"
+              height="{{crestHeight}}"
+              alt="McCarthy coat of arms"
+              style="display:block;border:0;width:{{crestWidth}}px;height:{{crestHeight}}px"
+            />
           </td>
         </tr>
       </table>

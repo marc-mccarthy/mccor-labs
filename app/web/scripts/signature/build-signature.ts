@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 import {
+  CARD_CREST,
   CARD_ICON,
   CARD_PHOTO,
   type Layout,
@@ -50,9 +51,14 @@ const CARD_PHOTO_PX: Box = {
   height: CARD_PHOTO.height * PHOTO_SCALE,
   radius: 6 * PHOTO_SCALE,
 }
+const CARD_CREST_PX: Box = {
+  width: CARD_CREST.width * PHOTO_SCALE,
+  height: CARD_CREST.height * PHOTO_SCALE,
+  radius: 6 * PHOTO_SCALE,
+}
 const CREST_ART = {
-  width: CARD_PHOTO_PX.width - 16,
-  height: CARD_PHOTO_PX.height - 10,
+  width: CARD_CREST_PX.width - 8,
+  height: CARD_CREST_PX.height - 8,
 }
 const CARD_ICONS = [
   ['mccor', 'stag.png'],
@@ -166,19 +172,36 @@ async function writeCardArt(base: string): Promise<void> {
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
     .toBuffer()
-  const { width, height } = CARD_PHOTO_PX
+  const { width, height } = CARD_CREST_PX
   await sharp({ create: { width, height, channels: 4, background: base } })
     .composite([
       { input: art, gravity: 'center' },
-      { input: roundedMask(CARD_PHOTO_PX), blend: 'dest-in' },
+      { input: roundedMask(CARD_CREST_PX), blend: 'dest-in' },
     ])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
   for (const [key, file] of CARD_ICONS)
-    await sharp(join(SRC_DIR, file))
-      .resize(CARD_ICON.width * ICON_SCALE, CARD_ICON.height * ICON_SCALE)
-      .png()
-      .toFile(join(OUT_DIR, `card-icon-${key}.png`))
+    await writeFlatIcon(join(SRC_DIR, file), base, join(OUT_DIR, `card-icon-${key}.png`))
+}
+
+async function writeFlatIcon(source: string, color: string, out: string): Promise<void> {
+  const { data, info } = await sharp(source)
+    .resize(CARD_ICON.width * ICON_SCALE, CARD_ICON.height * ICON_SCALE)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(color.slice(i, i + 2), 16))
+  const pixels = Buffer.alloc(data.length)
+  for (let i = 0; i < data.length; i += 4) {
+    const light = Math.min(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0) / 255
+    pixels[i] = r ?? 0
+    pixels[i + 1] = g ?? 0
+    pixels[i + 2] = b ?? 0
+    pixels[i + 3] = Math.round((data[i + 3] ?? 0) * (1 - light))
+  }
+  await sharp(pixels, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .png()
+    .toFile(out)
 }
 
 async function main(): Promise<void> {

@@ -54,22 +54,22 @@ const FRAMED_PHOTO: Box = { width: 95, height: 131 }
 const FRAMED_ICON: Box = { width: 24, height: 56 }
 const FRAMED_LINES = {
   specialty: { size: 10, lineHeight: 13, gap: 6, bold: false },
-  email: { size: 11, lineHeight: 14, gap: 0, bold: false },
-  phone: { size: 11, lineHeight: 15, gap: 3, bold: false },
+  email: { size: 11, lineHeight: 14, gap: 0, bold: true },
+  phone: { size: 11, lineHeight: 15, gap: 3, bold: true },
 } satisfies Record<string, LineStyle>
 
-export const CARD_PHOTO: Box = { width: 90, height: 118 }
-export const CARD_CREST: Box = { width: 106, height: 118 }
+export const CARD_PHOTO: Box = { width: 88, height: 116 }
+export const CARD_CREST: Box = { width: 104, height: 116 }
 export const CARD_ICON: Box = { width: 20, height: 20 }
-const CARD_INNER = 488
+const CARD_INNER = 486
 const CARD_TEXT_GAP = 18
 const CARD_TEXT_END = 16
 const CARD_TEXT =
   CARD_INNER - CARD_PHOTO.width - CARD_CREST.width - CARD_TEXT_GAP - CARD_TEXT_END
 const CARD_LINES = {
-  specialty: { size: 12, lineHeight: 14, gap: 4, bold: false },
-  email: { size: 12, lineHeight: 14, gap: 5, bold: true },
-  phone: { size: 12, lineHeight: 14, gap: 3, bold: true },
+  specialty: { size: 12, lineHeight: 14, gap: 3, bold: false },
+  email: { size: 12, lineHeight: 14, gap: 5, bold: false },
+  phone: { size: 12, lineHeight: 14, gap: 2, bold: false },
 } satisfies Record<string, LineStyle>
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
@@ -153,23 +153,23 @@ function fillTemplate(template: string, values: Record<string, string>): string 
 
 function line(body: string, ink: string, style: LineStyle): string {
   const gap = style.gap > 0 ? `;padding-top:${String(style.gap)}px` : ''
-  const weight = style.bold ? ';font-weight:700' : ''
-  return `<div style="font-size:${String(style.size)}px;line-height:${String(style.lineHeight)}px;color:${ink}${gap}${weight}">${body}</div>\n`
+  return `<div style="font-size:${String(style.size)}px;line-height:${String(style.lineHeight)}px;color:${ink}${gap}">${body}</div>\n`
 }
 
-function link(href: string, text: string, ink: string): string {
-  return `<a href="${href}" style="color:${ink};text-decoration:none;font-weight:700">${text}</a>`
+function link(href: string, text: string, ink: string, bold: boolean): string {
+  const weight = bold ? ';font-weight:700' : ''
+  return `<a href="${href}" style="color:${ink};text-decoration:none${weight}">${text}</a>`
 }
 
 function emailLine(email: string, ink: string, style: LineStyle): string {
   const address = escapeHtml(email)
-  return line(link(`mailto:${address}`, address, ink), ink, style)
+  return line(link(`mailto:${address}`, address, ink, style.bold), ink, style)
 }
 
 function phoneLine(phone: string | undefined, ink: string, style: LineStyle): string {
   if (!phone) return ''
   const shown = escapeHtml(phone.replace(US_PREFIX, ''))
-  return line(link(`tel:${phoneHref(phone)}`, shown, ink), ink, style)
+  return line(link(`tel:${phoneHref(phone)}`, shown, ink, style.bold), ink, style)
 }
 
 function specialtyLine(specialty: string, ink: string, style: LineStyle): string {
@@ -286,7 +286,7 @@ function cardActions(person: Person, ctx: SignatureContext): string {
     )
   })
   const button = person.booking ? [buttonCell(person.booking, ctx, '4px 11px 5px')] : []
-  return `<div style="padding-top:3px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${[...button, ...icons].join('\n')}\n</tr></table></div>\n`
+  return `<div style="padding-top:5px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${[...button, ...icons].join('\n')}\n</tr></table></div>\n`
 }
 
 function cardContact(person: Person, ctx: SignatureContext, ink: string): string {

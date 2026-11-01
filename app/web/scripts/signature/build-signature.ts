@@ -32,9 +32,14 @@ interface Box {
   radius: number
 }
 
-interface Crop {
+export interface Crop {
   centerX: number
   top: number
+  height: number
+}
+
+interface Size {
+  width: number
   height: number
 }
 
@@ -92,32 +97,41 @@ async function renderPhoto(source: string, out: string, box: Box): Promise<void>
     .toFile(out)
 }
 
-function readCrop(path: string): Crop {
-  const data = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>
-  const crop: Record<string, number> = {}
-  for (const key of ['centerX', 'top', 'height'] as const) {
+export function parseCrop(json: string, label: string): Crop {
+  const data = JSON.parse(json) as Record<string, unknown>
+  const whole = (key: keyof Crop, min: number): number => {
     const value = data[key]
-    if (typeof value !== 'number' || value < 0)
-      throw new Error(`${path} needs a non-negative number "${key}"`)
-    crop[key] = value
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < min)
+      throw new Error(`${label} needs a whole number "${key}" of at least ${String(min)}`)
+    return value
   }
-  return crop as unknown as Crop
+  return {
+    centerX: whole('centerX', 0),
+    top: whole('top', 0),
+    height: whole('height', 1),
+  }
+}
+
+export function cropRegion(crop: Crop, box: Size, source: Size, label: string) {
+  const width = Math.round((crop.height * box.width) / box.height)
+  const left = Math.round(crop.centerX - width / 2)
+  if (left < 0 || left + width > source.width || crop.top + crop.height > source.height)
+    throw new Error(
+      `${label} crops ${String(width)}x${String(crop.height)} at ${String(left)},${String(crop.top)}, outside the ${String(source.width)}x${String(source.height)} photo`,
+    )
+  return { left, top: crop.top, width, height: crop.height }
 }
 
 async function renderCroppedPhoto(
   source: string,
-  crop: Crop,
+  cropFile: string,
   out: string,
   box: Box,
 ): Promise<void> {
-  const width = Math.round((crop.height * box.width) / box.height)
+  const crop = parseCrop(readFileSync(cropFile, 'utf8'), cropFile)
+  const { width, height } = await sharp(source).metadata()
   await sharp(source)
-    .extract({
-      left: Math.round(crop.centerX - width / 2),
-      top: crop.top,
-      width,
-      height: crop.height,
-    })
+    .extract(cropRegion(crop, box, { width, height }, cropFile))
     .resize(box.width, box.height)
     .ensureAlpha()
     .composite([{ input: roundedMask(box), blend: 'dest-in' }])
@@ -131,7 +145,7 @@ async function ensurePhoto(person: Person, build: LayoutBuild): Promise<boolean>
   if (person.photo && existsSync(crop)) {
     await renderCroppedPhoto(
       join(PHOTO_DIR, `${person.photo}.webp`),
-      readCrop(crop),
+      crop,
       photo,
       build.photo,
     )

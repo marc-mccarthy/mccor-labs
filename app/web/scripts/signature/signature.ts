@@ -298,7 +298,6 @@ export const renderCardSignature: Renderer = (template, person, ctx, hasPhoto) =
   const ink = requireToken(ctx.tokens, 'base')
   return fillTemplate(template, {
     ...sharedValues(person, ctx),
-    accent: requireToken(ctx.tokens, 'accent'),
     textWidth: String(
       hasPhoto ? CARD_TEXT : CARD_TEXT + CARD_TEXT_GAP + CARD_PHOTO.width,
     ),

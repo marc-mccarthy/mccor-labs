@@ -243,9 +243,9 @@ describe('renderCardSignature', () => {
     expect(html).toContain('width="500"')
   })
 
-  it('frames the light card in one 2px accent line', () => {
+  it('frames the light card in one 2px crimson line', () => {
     expect(html).toContain(
-      `background:${ctx.tokens.text ?? ''};border:2px solid ${ctx.tokens.accent ?? ''};border-radius:6px`,
+      `background:${ctx.tokens.text ?? ''};border:2px solid ${ctx.tokens['crimson-deep'] ?? ''};border-radius:6px`,
     )
     expect(html.match(/border:2px solid/g)).toHaveLength(1)
   })

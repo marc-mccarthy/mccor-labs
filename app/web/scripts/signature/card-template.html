@@ -34,30 +34,34 @@
                   style="width:{{textWidth}}px;padding:0 16px 0 {{textGap}}px;font-family:{{font}}"
                 >
                   <div
-                    style="font-size:20px;line-height:19px;font-weight:700;color:{{base}};letter-spacing:-0.2px;white-space:nowrap"
+                    style="font-size:18px;line-height:16px;font-weight:700;color:{{base}};letter-spacing:-0.2px;white-space:nowrap"
                   >
                     {{name}}
                   </div>
                   <div
-                    style="font-size:11px;line-height:13px;letter-spacing:1px;color:{{crimson}};text-transform:uppercase;font-weight:700;padding-top:2px;white-space:nowrap"
+                    style="font-size:10px;line-height:12px;letter-spacing:1px;color:{{crimson}};text-transform:uppercase;font-weight:700;padding-top:1px;white-space:nowrap"
                   >
                     {{roleLine}}
                   </div>
                   {{specialtyRow}}
                   <div
-                    style="border-top:1px solid {{rule}};font-size:1px;line-height:1px;height:1px;margin-top:5px"
+                    style="border-top:1px solid {{rule}};font-size:1px;line-height:1px;height:1px;margin-top:3px"
                   >
                     &nbsp;
                   </div>
                   {{contactBlock}}
                 </td>
-                <td width="103" valign="top" style="width: 103px; line-height: 0">
+                <td
+                  width="{{crestWidth}}"
+                  valign="top"
+                  style="width:{{crestWidth}}px;line-height:0"
+                >
                   <img
                     src="{{assetBase}}/card-crest.png"
-                    width="103"
-                    height="120"
+                    width="{{crestWidth}}"
+                    height="{{crestHeight}}"
                     alt="McCarthy coat of arms"
-                    style="display: block; border: 0; width: 103px; height: 120px"
+                    style="display:block;border:0;width:{{crestWidth}}px;height:{{crestHeight}}px"
                   />
                 </td>
               </tr>

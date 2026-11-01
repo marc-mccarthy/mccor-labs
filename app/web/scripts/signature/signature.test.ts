@@ -248,14 +248,16 @@ describe('renderCardSignature', () => {
     expect(html).toContain(`background:${ctx.tokens.base ?? ''};border-radius:6px`)
   })
 
-  it('links the card photo, crest and 20px icons', () => {
+  it('links the 76 by 100 photo and crest and the 18px icons', () => {
     expect(html).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="103" height="120"',
+      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="76" height="100"',
     )
-    expect(html).toContain('https://mccorlabs.com/sig/framed/card-crest.png')
+    expect(flat(html)).toContain(
+      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="76" height="100"',
+    )
     for (const key of ['mccor', 'linkedin', 'github'])
       expect(html).toContain(
-        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="20" height="20"`,
+        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="18" height="18"`,
       )
     expect(html).not.toContain('.gif')
   })
@@ -265,8 +267,15 @@ describe('renderCardSignature', () => {
   })
 
   it('widens the text cell to fill the photo column when there is no photo', () => {
-    expect(flat(html)).toContain('width:230px;padding:0 16px 0 18px')
-    expect(flat(card(person, false))).toContain('width:351px;padding:0 16px 0 0px')
+    expect(flat(html)).toContain('width:284px;padding:0 16px 0 18px')
+    expect(flat(card(person, false))).toContain('width:378px;padding:0 16px 0 0px')
+  })
+
+  it('fills the 470px inner row exactly with photo, text and crest', () => {
+    const [, text = '', gap = ''] =
+      /width:(\d+)px;padding:0 16px 0 (\d+)px/.exec(flat(html)) ?? []
+    expect(76 + Number(gap) + Number(text) + 16 + 76).toBe(470)
+    expect(html).toContain('width="470"')
   })
 
   it('stacks name, role, specialty, email and phone in order', () => {
@@ -282,9 +291,9 @@ describe('renderCardSignature', () => {
     expect(order).toEqual([...order].sort((a, b) => a - b))
   })
 
-  it('bolds the email and phone lines so they keep a 16px line box', () => {
-    expect(flat(html)).toMatch(/line-height:16px;[^"]*;font-weight:700"><a href="mailto:/)
-    expect(flat(html)).toMatch(/line-height:16px;[^"]*;font-weight:700"><a href="tel:/)
+  it('bolds the email and phone lines so they keep a 14px line box', () => {
+    expect(flat(html)).toMatch(/line-height:14px;[^"]*;font-weight:700"><a href="mailto:/)
+    expect(flat(html)).toMatch(/line-height:14px;[^"]*;font-weight:700"><a href="tel:/)
   })
 
   it('puts the button and the icons in one row', () => {

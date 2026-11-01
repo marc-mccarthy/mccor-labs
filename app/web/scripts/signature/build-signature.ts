@@ -3,6 +3,8 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 import {
+  CARD_ICON,
+  CARD_PHOTO,
   type Layout,
   type Person,
   type Renderer,
@@ -19,6 +21,7 @@ const WEB = join(HERE, '..', '..')
 const OUT_DIR = join(WEB, 'public', 'sig', 'framed')
 const TEAM_DIR = join(WEB, 'public', 'media', 'team')
 const SRC_DIR = join(HERE, 'framed-src')
+const PHOTO_DIR = join(HERE, 'photos')
 const ASSET_BASE = 'https://mccorlabs.com/sig/framed'
 const SITE_URL = 'https://mccorlabs.com'
 const COMPANY = 'McCor Labs'
@@ -29,9 +32,23 @@ interface Box {
   radius: number
 }
 
-const CARD_PHOTO: Box = { width: 309, height: 360, radius: 18 }
-const CREST_ART = { width: 288, height: 348 }
-const CARD_ICON = 40
+interface Crop {
+  centerX: number
+  top: number
+  height: number
+}
+
+const PHOTO_SCALE = 3
+const ICON_SCALE = 2
+const CARD_PHOTO_PX: Box = {
+  width: CARD_PHOTO.width * PHOTO_SCALE,
+  height: CARD_PHOTO.height * PHOTO_SCALE,
+  radius: 6 * PHOTO_SCALE,
+}
+const CREST_ART = {
+  width: CARD_PHOTO_PX.width - 16,
+  height: CARD_PHOTO_PX.height - 10,
+}
 const CARD_ICONS = [
   ['mccor', 'stag.png'],
   ['linkedin', 'linkedin.png'],
@@ -56,7 +73,7 @@ const LAYOUT_BUILDS: Record<Layout, LayoutBuild> = {
     template: 'card-template.html',
     render: renderCardSignature,
     photoSuffix: '-card',
-    photo: CARD_PHOTO,
+    photo: CARD_PHOTO_PX,
   },
 }
 
@@ -75,8 +92,51 @@ async function renderPhoto(source: string, out: string, box: Box): Promise<void>
     .toFile(out)
 }
 
+function readCrop(path: string): Crop {
+  const data = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>
+  const crop: Record<string, number> = {}
+  for (const key of ['centerX', 'top', 'height'] as const) {
+    const value = data[key]
+    if (typeof value !== 'number' || value < 0)
+      throw new Error(`${path} needs a non-negative number "${key}"`)
+    crop[key] = value
+  }
+  return crop as unknown as Crop
+}
+
+async function renderCroppedPhoto(
+  source: string,
+  crop: Crop,
+  out: string,
+  box: Box,
+): Promise<void> {
+  const width = Math.round((crop.height * box.width) / box.height)
+  await sharp(source)
+    .extract({
+      left: Math.round(crop.centerX - width / 2),
+      top: crop.top,
+      width,
+      height: crop.height,
+    })
+    .resize(box.width, box.height)
+    .ensureAlpha()
+    .composite([{ input: roundedMask(box), blend: 'dest-in' }])
+    .png()
+    .toFile(out)
+}
+
 async function ensurePhoto(person: Person, build: LayoutBuild): Promise<boolean> {
   const photo = join(OUT_DIR, `${person.slug}${build.photoSuffix}.png`)
+  const crop = join(PHOTO_DIR, `${person.photo ?? ''}.json`)
+  if (person.photo && existsSync(crop)) {
+    await renderCroppedPhoto(
+      join(PHOTO_DIR, `${person.photo}.webp`),
+      readCrop(crop),
+      photo,
+      build.photo,
+    )
+    return true
+  }
   if (existsSync(photo)) return true
   const source = join(TEAM_DIR, `${person.photo ?? ''}.webp`)
   if (!person.photo || !existsSync(source)) return false
@@ -92,17 +152,17 @@ async function writeCardArt(base: string): Promise<void> {
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
     .toBuffer()
-  const { width, height } = CARD_PHOTO
+  const { width, height } = CARD_PHOTO_PX
   await sharp({ create: { width, height, channels: 4, background: base } })
     .composite([
       { input: art, gravity: 'center' },
-      { input: roundedMask(CARD_PHOTO), blend: 'dest-in' },
+      { input: roundedMask(CARD_PHOTO_PX), blend: 'dest-in' },
     ])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
   for (const [key, file] of CARD_ICONS)
     await sharp(join(SRC_DIR, file))
-      .resize(CARD_ICON, CARD_ICON)
+      .resize(CARD_ICON.width * ICON_SCALE, CARD_ICON.height * ICON_SCALE)
       .png()
       .toFile(join(OUT_DIR, `card-icon-${key}.png`))
 }

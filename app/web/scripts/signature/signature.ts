@@ -68,9 +68,12 @@ const CARD_TEXT =
   CARD_INNER - CARD_PHOTO.width - CARD_CREST.width - CARD_TEXT_GAP - CARD_TEXT_END
 const CARD_LINES = {
   specialty: { size: 12, lineHeight: 14, gap: 3, bold: false },
-  email: { size: 12, lineHeight: 14, gap: 5, bold: false },
+  email: { size: 12, lineHeight: 14, gap: 0, bold: false },
   phone: { size: 12, lineHeight: 14, gap: 2, bold: false },
 } satisfies Record<string, LineStyle>
+const CARD_CONTACT = 150
+const PRESENTATION =
+  '<table role="presentation" cellpadding="0" cellspacing="0" border="0"'
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
 const OPTIONAL_KEYS = [
@@ -181,10 +184,15 @@ function imageCell(src: string, alt: string, box: Box, valign: string): string {
   return `<td width="${String(width)}" valign="${valign}" style="width:${String(width)}px;line-height:0"><img src="${src}" width="${String(width)}" height="${String(height)}" alt="${alt}" style="display:block;border:0;width:${String(width)}px;height:${String(height)}px"></td>\n`
 }
 
-function buttonCell(booking: string, ctx: SignatureContext, padding: string): string {
+function buttonCell(
+  booking: string,
+  ctx: SignatureContext,
+  padding: string,
+  type: { size: number; lineHeight: number },
+): string {
   const red = requireToken(ctx.tokens, 'crimson-deep')
   const light = requireToken(ctx.tokens, 'text')
-  return `<td bgcolor="${red}" style="background:${red};border-radius:3px;padding:${padding};font-family:${FONT};font-size:10px;line-height:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td>`
+  return `<td bgcolor="${red}" style="background:${red};border-radius:3px;padding:${padding};font-family:${FONT};font-size:${String(type.size)}px;line-height:${String(type.lineHeight)}px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap"><a href="${escapeHtml(booking)}" style="color:${light};text-decoration:none">Book a call</a></td>`
 }
 
 interface IconLink {
@@ -248,7 +256,7 @@ function framedIcons(person: Person, ctx: SignatureContext): string {
 function framedContact(person: Person, ctx: SignatureContext, ink: string): string {
   const crimson = requireToken(ctx.tokens, 'crimson-deep')
   const button = person.booking
-    ? `<div style="padding-top:${String(BUTTON_GAP)}px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${buttonCell(person.booking, ctx, '6px 11px')}</tr></table></div>`
+    ? `<div style="padding-top:${String(BUTTON_GAP)}px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${buttonCell(person.booking, ctx, '6px 11px', { size: 10, lineHeight: 11 })}</tr></table></div>`
     : ''
   const valign = person.booking ? 'bottom' : 'top'
   const lines = `${emailLine(person.email, crimson, FRAMED_LINES.email)}${phoneLine(person.phone, ink, FRAMED_LINES.phone)}${button}`
@@ -274,33 +282,64 @@ export const renderSignature: Renderer = (template, person, ctx, hasPhoto) => {
   })
 }
 
-function cardActions(person: Person, ctx: SignatureContext): string {
-  const icons = iconLinks(person, ctx).map((icon, i) => {
-    const gap = i > 0 ? 7 : person.booking ? 12 : 0
-    return iconCell(
-      `${ctx.assetBase}/card-icon-${icon.key}.png`,
-      icon,
-      gap,
-      CARD_ICON,
-      'middle',
-    )
-  })
-  const button = person.booking ? [buttonCell(person.booking, ctx, '4px 11px 5px')] : []
-  return `<div style="padding-top:5px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${[...button, ...icons].join('\n')}\n</tr></table></div>\n`
+function cardRow(body: string, ink: string, style: LineStyle): string {
+  const gap = style.gap > 0 ? `padding-top:${String(style.gap)}px;` : ''
+  return `<tr><td style="${gap}font-family:${FONT};font-size:${String(style.size)}px;line-height:${String(style.lineHeight)}px;color:${ink}">${body}</td></tr>\n`
 }
 
-function cardContact(person: Person, ctx: SignatureContext, ink: string): string {
+function cardIcons(person: Person, ctx: SignatureContext): string {
+  const cells = iconLinks(person, ctx).map((icon, i) =>
+    iconCell(
+      `${ctx.assetBase}/card-icon-${icon.key}.png`,
+      icon,
+      i === 0 ? 0 : 12,
+      CARD_ICON,
+      'middle',
+    ),
+  )
+  return `<tr><td style="padding-top:4px">${PRESENTATION}><tr>\n${cells.join('\n')}\n</tr></table></td></tr>\n`
+}
+
+function cardContact(
+  person: Person,
+  ctx: SignatureContext,
+  ink: string,
+  width: number,
+): string {
   const crimson = requireToken(ctx.tokens, 'crimson-deep')
-  return `${emailLine(person.email, crimson, CARD_LINES.email)}${phoneLine(person.phone, ink, CARD_LINES.phone)}${cardActions(person, ctx)}`
+  const address = escapeHtml(person.email)
+  const lines = [
+    cardRow(
+      link(`mailto:${address}`, address, crimson, false),
+      crimson,
+      CARD_LINES.email,
+    ),
+  ]
+  if (person.phone) {
+    const shown = escapeHtml(person.phone.replace(US_PREFIX, ''))
+    lines.push(
+      cardRow(
+        link(`tel:${phoneHref(person.phone)}`, shown, ink, false),
+        ink,
+        CARD_LINES.phone,
+      ),
+    )
+  }
+  const reachWidth = person.booking ? CARD_CONTACT : width
+  const reach = `<td width="${String(reachWidth)}" valign="middle">${PRESENTATION}>\n${lines.join('')}</table></td>`
+  const button = person.booking
+    ? `\n<td width="${String(width - CARD_CONTACT)}" align="right" valign="middle">${PRESENTATION} align="right"><tr>${buttonCell(person.booking, ctx, '9px 12px', { size: 11, lineHeight: 12 })}</tr></table></td>`
+    : ''
+  return `<tr><td style="padding-top:6px">${PRESENTATION} width="${String(width)}" style="width:${String(width)}px"><tr>\n${reach}${button}\n</tr></table></td></tr>\n${cardIcons(person, ctx)}`
 }
 
 export const renderCardSignature: Renderer = (template, person, ctx, hasPhoto) => {
   const ink = requireToken(ctx.tokens, 'base')
+  const textWidth = hasPhoto ? CARD_TEXT : CARD_TEXT + CARD_TEXT_GAP + CARD_PHOTO.width
+  const specialty = specialtyOf(person)
   return fillTemplate(template, {
     ...sharedValues(person, ctx),
-    textWidth: String(
-      hasPhoto ? CARD_TEXT : CARD_TEXT + CARD_TEXT_GAP + CARD_PHOTO.width,
-    ),
+    textWidth: String(textWidth),
     textGap: String(hasPhoto ? CARD_TEXT_GAP : 0),
     crestWidth: String(CARD_CREST.width),
     crestHeight: String(CARD_CREST.height),
@@ -312,7 +351,8 @@ export const renderCardSignature: Renderer = (template, person, ctx, hasPhoto) =
           'top',
         )
       : '',
-    specialtyRow: specialtyLine(specialtyOf(person), ink, CARD_LINES.specialty),
-    contactBlock: cardContact(person, ctx, ink),
+    specialtyRow:
+      specialty === '' ? '' : cardRow(escapeHtml(specialty), ink, CARD_LINES.specialty),
+    contactBlock: cardContact(person, ctx, ink, textWidth),
   })
 }

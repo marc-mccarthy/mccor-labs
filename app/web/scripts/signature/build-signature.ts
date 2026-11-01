@@ -181,10 +181,27 @@ async function writeCardArt(base: string): Promise<void> {
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
   for (const [key, file] of CARD_ICONS)
-    await sharp(join(SRC_DIR, file))
-      .resize(CARD_ICON.width * ICON_SCALE, CARD_ICON.height * ICON_SCALE)
-      .png()
-      .toFile(join(OUT_DIR, `card-icon-${key}.png`))
+    await writeFlatIcon(join(SRC_DIR, file), base, join(OUT_DIR, `card-icon-${key}.png`))
+}
+
+async function writeFlatIcon(source: string, color: string, out: string): Promise<void> {
+  const { data, info } = await sharp(source)
+    .resize(CARD_ICON.width * ICON_SCALE, CARD_ICON.height * ICON_SCALE)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(color.slice(i, i + 2), 16))
+  const pixels = Buffer.alloc(data.length)
+  for (let i = 0; i < data.length; i += 4) {
+    const light = Math.min(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0) / 255
+    pixels[i] = r ?? 0
+    pixels[i + 1] = g ?? 0
+    pixels[i + 2] = b ?? 0
+    pixels[i + 3] = Math.round((data[i + 3] ?? 0) * (1 - light))
+  }
+  await sharp(pixels, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .png()
+    .toFile(out)
 }
 
 async function main(): Promise<void> {

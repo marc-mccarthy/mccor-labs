@@ -303,9 +303,23 @@ describe('renderCardSignature', () => {
     expect(flat(html)).not.toMatch(/font-weight:700"><a href="(mailto|tel):/)
   })
 
-  it('puts the button and the icons in one row', () => {
+  it('puts the button beside the email and phone, with the icons on their own row', () => {
     expect(flat(html)).toMatch(
-      /Book a call<\/a><\/td> <td valign="middle" style="padding-left:12px;line-height:0"><a href="https:\/\/example.com"><img src="[^"]*card-icon-mccor.png".*padding-left:7px.*card-icon-linkedin.*padding-left:7px.*card-icon-github/,
+      /<td width="150" valign="middle">.*mailto:.*tel:.*<\/table><\/td> <td width="110" align="right" valign="middle">.*padding:9px 12px;[^"]*font-size:11px;line-height:12px;.*Book a call<\/a><\/td><\/tr><\/table><\/td> <\/tr><\/table><\/td><\/tr> <tr><td style="padding-top:4px">.*card-icon-mccor.*padding-left:12px.*card-icon-linkedin.*padding-left:12px.*card-icon-github/,
+    )
+  })
+
+  it('gives the email and phone the full width when there is no booking', () => {
+    const plain = flat(card({ ...person, booking: '' }))
+    expect(plain).toContain('<td width="260" valign="middle">')
+    expect(plain).not.toContain('align="right" valign="middle"')
+  })
+
+  it('spaces rows with table cells, not divs, so Outlook keeps the rhythm', () => {
+    expect(html).not.toContain('<div')
+    expect(cardTemplate).not.toContain('<div')
+    expect(flat(html)).toContain(
+      `<td height="1" bgcolor="${ctx.tokens['border-strong'] ?? ''}"`,
     )
   })
 

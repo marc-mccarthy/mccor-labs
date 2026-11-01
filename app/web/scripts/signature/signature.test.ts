@@ -243,21 +243,23 @@ describe('renderCardSignature', () => {
     expect(html).toContain('width="500"')
   })
 
-  it('frames the card in the accent line on the base colour', () => {
-    expect(html).toContain(`border:1px solid ${ctx.tokens.accent ?? ''}`)
-    expect(html).toContain(`background:${ctx.tokens.base ?? ''};border-radius:6px`)
+  it('frames the light card in one thin accent line', () => {
+    expect(html).toContain(
+      `background:${ctx.tokens.text ?? ''};border:1px solid ${ctx.tokens.accent ?? ''};border-radius:6px`,
+    )
+    expect(html.match(/border:1px solid/g)).toHaveLength(1)
   })
 
-  it('links the 76 by 100 photo and crest and the 18px icons', () => {
+  it('links the 90 by 118 photo, the 106 by 118 crest and the 20px icons', () => {
     expect(html).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="76" height="100"',
+      '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="90" height="118"',
     )
     expect(flat(html)).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="76" height="100"',
+      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="106" height="118"',
     )
     for (const key of ['mccor', 'linkedin', 'github'])
       expect(html).toContain(
-        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="18" height="18"`,
+        `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="20" height="20"`,
       )
     expect(html).not.toContain('.gif')
   })
@@ -267,15 +269,15 @@ describe('renderCardSignature', () => {
   })
 
   it('widens the text cell to fill the photo column when there is no photo', () => {
-    expect(flat(html)).toContain('width:284px;padding:0 16px 0 18px')
-    expect(flat(card(person, false))).toContain('width:378px;padding:0 16px 0 0px')
+    expect(flat(html)).toContain('width:258px;padding:0 16px 0 18px')
+    expect(flat(card(person, false))).toContain('width:366px;padding:0 16px 0 0px')
   })
 
-  it('fills the 470px inner row exactly with photo, text and crest', () => {
+  it('fills the 488px inner row exactly with photo, text and crest', () => {
     const [, text = '', gap = ''] =
       /width:(\d+)px;padding:0 16px 0 (\d+)px/.exec(flat(html)) ?? []
-    expect(76 + Number(gap) + Number(text) + 16 + 76).toBe(470)
-    expect(html).toContain('width="470"')
+    expect(90 + Number(gap) + Number(text) + 16 + 106).toBe(488)
+    expect(html).toContain('width="488"')
   })
 
   it('stacks name, role, specialty, email and phone in order', () => {

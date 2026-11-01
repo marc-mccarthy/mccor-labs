@@ -58,16 +58,18 @@ const FRAMED_LINES = {
   phone: { size: 11, lineHeight: 15, gap: 3, bold: false },
 } satisfies Record<string, LineStyle>
 
-export const CARD_PHOTO: Box = { width: 76, height: 100 }
-export const CARD_ICON: Box = { width: 18, height: 18 }
-const CARD_INNER = 470
+export const CARD_PHOTO: Box = { width: 90, height: 118 }
+export const CARD_CREST: Box = { width: 106, height: 118 }
+export const CARD_ICON: Box = { width: 20, height: 20 }
+const CARD_INNER = 488
 const CARD_TEXT_GAP = 18
 const CARD_TEXT_END = 16
-const CARD_TEXT = CARD_INNER - 2 * CARD_PHOTO.width - CARD_TEXT_GAP - CARD_TEXT_END
+const CARD_TEXT =
+  CARD_INNER - CARD_PHOTO.width - CARD_CREST.width - CARD_TEXT_GAP - CARD_TEXT_END
 const CARD_LINES = {
-  specialty: { size: 12, lineHeight: 14, gap: 1, bold: false },
-  email: { size: 12, lineHeight: 14, gap: 2, bold: true },
-  phone: { size: 12, lineHeight: 14, gap: 1, bold: true },
+  specialty: { size: 12, lineHeight: 14, gap: 4, bold: false },
+  email: { size: 12, lineHeight: 14, gap: 5, bold: true },
+  phone: { size: 12, lineHeight: 14, gap: 3, bold: true },
 } satisfies Record<string, LineStyle>
 
 const REQUIRED_KEYS = ['slug', 'name', 'title', 'email'] as const
@@ -283,8 +285,8 @@ function cardActions(person: Person, ctx: SignatureContext): string {
       'middle',
     )
   })
-  const button = person.booking ? [buttonCell(person.booking, ctx, '3px 11px 4px')] : []
-  return `<div style="padding-top:2px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${[...button, ...icons].join('\n')}\n</tr></table></div>\n`
+  const button = person.booking ? [buttonCell(person.booking, ctx, '4px 11px 5px')] : []
+  return `<div style="padding-top:3px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>\n${[...button, ...icons].join('\n')}\n</tr></table></div>\n`
 }
 
 function cardContact(person: Person, ctx: SignatureContext, ink: string): string {
@@ -301,8 +303,8 @@ export const renderCardSignature: Renderer = (template, person, ctx, hasPhoto) =
       hasPhoto ? CARD_TEXT : CARD_TEXT + CARD_TEXT_GAP + CARD_PHOTO.width,
     ),
     textGap: String(hasPhoto ? CARD_TEXT_GAP : 0),
-    crestWidth: String(CARD_PHOTO.width),
-    crestHeight: String(CARD_PHOTO.height),
+    crestWidth: String(CARD_CREST.width),
+    crestHeight: String(CARD_CREST.height),
     photoCell: hasPhoto
       ? imageCell(
           `${ctx.assetBase}/${person.slug}-card.png`,

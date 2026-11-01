@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 import {
+  CARD_CREST,
   CARD_ICON,
   CARD_PHOTO,
   type Layout,
@@ -50,9 +51,14 @@ const CARD_PHOTO_PX: Box = {
   height: CARD_PHOTO.height * PHOTO_SCALE,
   radius: 6 * PHOTO_SCALE,
 }
+const CARD_CREST_PX: Box = {
+  width: CARD_CREST.width * PHOTO_SCALE,
+  height: CARD_CREST.height * PHOTO_SCALE,
+  radius: 6 * PHOTO_SCALE,
+}
 const CREST_ART = {
-  width: CARD_PHOTO_PX.width - 16,
-  height: CARD_PHOTO_PX.height - 10,
+  width: CARD_CREST_PX.width - 8,
+  height: CARD_CREST_PX.height - 8,
 }
 const CARD_ICONS = [
   ['mccor', 'stag.png'],
@@ -166,11 +172,11 @@ async function writeCardArt(base: string): Promise<void> {
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
     .toBuffer()
-  const { width, height } = CARD_PHOTO_PX
+  const { width, height } = CARD_CREST_PX
   await sharp({ create: { width, height, channels: 4, background: base } })
     .composite([
       { input: art, gravity: 'center' },
-      { input: roundedMask(CARD_PHOTO_PX), blend: 'dest-in' },
+      { input: roundedMask(CARD_CREST_PX), blend: 'dest-in' },
     ])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))

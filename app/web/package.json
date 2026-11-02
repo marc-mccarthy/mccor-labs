@@ -17,6 +17,7 @@
     "build:icons": "tsx scripts/build-icons.ts",
     "signature": "tsx scripts/signature/build-signature.ts",
     "signature:motion": "tsx scripts/signature/build-motion.ts",
+    "signature:preview": "tsx scripts/signature/preview-signature.ts",
     "lighthouse": "tsx scripts/lighthouse.ts"
   },
   "dependencies": {

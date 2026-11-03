@@ -33,13 +33,23 @@ export function dropSpecks(
   return out
 }
 
+export function hexToRgb(hex: string): [number, number, number] {
+  if (!/^#[0-9a-f]{6}$/i.test(hex))
+    throw new Error(`expected a #rrggbb colour, got: ${hex}`)
+  return [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)) as [
+    number,
+    number,
+    number,
+  ]
+}
+
 export function silhouette(rgba: Uint8Array, hex: string, opacity: number): Uint8Array {
-  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
+  const [r, g, b] = hexToRgb(hex)
   const out = new Uint8Array(rgba.length)
   for (let i = 0; i < rgba.length; i += 4) {
-    out[i] = r ?? 0
-    out[i + 1] = g ?? 0
-    out[i + 2] = b ?? 0
+    out[i] = r
+    out[i + 1] = g
+    out[i + 2] = b
     out[i + 3] = Math.round((rgba[i + 3] ?? 0) * opacity)
   }
   return out

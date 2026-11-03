@@ -16,7 +16,7 @@ import {
   renderSignature,
   requireToken,
 } from './signature'
-import { dropSpecks, silhouette } from './crest-art'
+import { dropSpecks, hexToRgb, silhouette } from './crest-art'
 
 const HERE = import.meta.dirname
 const WEB = join(HERE, '..', '..')
@@ -58,9 +58,10 @@ const CARD_CREST_PX = {
 }
 const SPECK_AREA = 10
 const CREST_SHADOW = { opacity: 0.35, blur: 2, drop: 2 }
+const SHADOW_ROOM = Math.ceil(CREST_SHADOW.blur * 3)
 const CREST_ART = {
-  width: CARD_CREST_PX.width - 8,
-  height: CARD_CREST_PX.height - 8,
+  width: CARD_CREST_PX.width - 2 * SHADOW_ROOM,
+  height: CARD_CREST_PX.height - 2 * SHADOW_ROOM - CREST_SHADOW.drop,
 }
 const CARD_ICONS = [
   ['mccor', 'stag.png'],
@@ -182,22 +183,35 @@ async function writeCrest(shadowColor: string): Promise<void> {
     })
     .raw()
     .toBuffer({ resolveWithObject: true })
-  const raw = { raw: { width: info.width, height: info.height, channels: 4 as const } }
-  const art = await sharp(data, raw).png().toBuffer()
-  const shadow = await sharp(silhouette(data, shadowColor, CREST_SHADOW.opacity), raw)
+  const art = { width: info.width, height: info.height, channels: 4 as const }
+  const { width, height } = CARD_CREST_PX
+  const left = Math.round((width - art.width) / 2)
+  const top = Math.round((height - art.height - CREST_SHADOW.drop) / 2)
+  const blank = {
+    create: {
+      width,
+      height,
+      channels: 4 as const,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  }
+  const placed = await sharp(blank)
+    .composite([
+      {
+        input: Buffer.from(silhouette(data, shadowColor, CREST_SHADOW.opacity)),
+        raw: art,
+        left,
+        top: top + CREST_SHADOW.drop,
+      },
+    ])
+    .raw()
+    .toBuffer()
+  const shadow = await sharp(placed, { raw: { width, height, channels: 4 } })
     .blur(CREST_SHADOW.blur)
     .png()
     .toBuffer()
-  const { width, height } = CARD_CREST_PX
-  const left = Math.round((width - info.width) / 2)
-  const top = Math.round((height - info.height) / 2)
-  await sharp({
-    create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  })
-    .composite([
-      { input: shadow, left, top: top + CREST_SHADOW.drop },
-      { input: art, left, top },
-    ])
+  await sharp(blank)
+    .composite([{ input: shadow }, { input: data, raw: art, left, top }])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
 }
@@ -218,13 +232,13 @@ async function writeFlatIcon(source: string, color: string, out: string): Promis
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true })
-  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(color.slice(i, i + 2), 16))
+  const [r, g, b] = hexToRgb(color)
   const pixels = Buffer.alloc(data.length)
   for (let i = 0; i < data.length; i += 4) {
     const light = Math.min(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0) / 255
-    pixels[i] = r ?? 0
-    pixels[i + 1] = g ?? 0
-    pixels[i + 2] = b ?? 0
+    pixels[i] = r
+    pixels[i + 1] = g
+    pixels[i + 2] = b
     pixels[i + 3] = Math.round((data[i + 3] ?? 0) * (1 - light))
   }
   await sharp(pixels, { raw: { width: info.width, height: info.height, channels: 4 } })

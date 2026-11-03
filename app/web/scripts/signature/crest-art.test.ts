@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dropSpecks, silhouette } from './crest-art'
+import { dropSpecks, hexToRgb, silhouette } from './crest-art'
 
 function image(width: number, height: number, opaque: [number, number][]): Uint8Array {
   const rgba = new Uint8Array(width * height * 4)
@@ -49,5 +49,16 @@ describe('silhouette', () => {
     const out = silhouette(image(2, 1, [[0, 0]]), '#08080a', 0.2)
     expect([...out.slice(0, 4)]).toEqual([8, 8, 10, 51])
     expect(out[7]).toBe(0)
+  })
+})
+
+describe('hexToRgb', () => {
+  it('reads a #rrggbb token', () => {
+    expect(hexToRgb('#991B1b')).toEqual([153, 27, 27])
+  })
+
+  it('throws on anything that is not #rrggbb instead of drawing black', () => {
+    expect(() => hexToRgb('#abc')).toThrow('#rrggbb')
+    expect(() => hexToRgb('red')).toThrow('#rrggbb')
   })
 })

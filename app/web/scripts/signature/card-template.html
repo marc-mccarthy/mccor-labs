@@ -70,18 +70,34 @@
               {{contactBlock}}
             </table>
           </td>
-          <td
-            width="{{crestWidth}}"
-            valign="top"
-            style="width:{{crestWidth}}px;line-height:0"
-          >
-            <img
-              src="{{assetBase}}/card-crest.png"
+          <td width="{{crestWidth}}" valign="top" style="width:{{crestWidth}}px">
+            <table
+              role="presentation"
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
               width="{{crestWidth}}"
-              height="{{crestHeight}}"
-              alt="McCarthy coat of arms"
-              style="display:block;border:0;width:{{crestWidth}}px;height:{{crestHeight}}px"
-            />
+            >
+              <tr>
+                <td style="line-height: 0">
+                  <img
+                    src="{{assetBase}}/card-crest.png"
+                    width="{{crestWidth}}"
+                    height="{{crestHeight}}"
+                    alt="McCarthy coat of arms"
+                    style="display:block;border:0;width:{{crestWidth}}px;height:{{crestHeight}}px"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  align="center"
+                  style="padding-top:3px;font-family:{{font}};font-size:10px;line-height:13px;letter-spacing:2px;color:{{crimson}};text-transform:uppercase;font-weight:700;white-space:nowrap"
+                >
+                  McCarthy
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>

@@ -51,10 +51,9 @@ const CARD_PHOTO_PX: Box = {
   height: CARD_PHOTO.height * PHOTO_SCALE,
   radius: 6 * PHOTO_SCALE,
 }
-const CARD_CREST_PX: Box = {
+const CARD_CREST_PX = {
   width: CARD_CREST.width * PHOTO_SCALE,
   height: CARD_CREST.height * PHOTO_SCALE,
-  radius: 6 * PHOTO_SCALE,
 }
 const CREST_ART = {
   width: CARD_CREST_PX.width - 8,
@@ -164,7 +163,7 @@ async function ensurePhoto(person: Person, build: LayoutBuild): Promise<boolean>
   return true
 }
 
-async function writeCardArt(base: string): Promise<void> {
+async function writeCardArt(iconColor: string): Promise<void> {
   const art = await sharp(join(SRC_DIR, 'crest.png'))
     .trim()
     .resize(CREST_ART.width, CREST_ART.height, {
@@ -173,15 +172,18 @@ async function writeCardArt(base: string): Promise<void> {
     })
     .toBuffer()
   const { width, height } = CARD_CREST_PX
-  await sharp({ create: { width, height, channels: 4, background: base } })
-    .composite([
-      { input: art, gravity: 'center' },
-      { input: roundedMask(CARD_CREST_PX), blend: 'dest-in' },
-    ])
+  await sharp({
+    create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+  })
+    .composite([{ input: art, gravity: 'center' }])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
   for (const [key, file] of CARD_ICONS)
-    await writeFlatIcon(join(SRC_DIR, file), base, join(OUT_DIR, `card-icon-${key}.png`))
+    await writeFlatIcon(
+      join(SRC_DIR, file),
+      iconColor,
+      join(OUT_DIR, `card-icon-${key}.png`),
+    )
 }
 
 async function writeFlatIcon(source: string, color: string, out: string): Promise<void> {
@@ -219,7 +221,7 @@ async function main(): Promise<void> {
   }
   mkdirSync(OUT_DIR, { recursive: true })
   if (people.some((person) => person.layout === 'card'))
-    await writeCardArt(requireToken(tokens, 'base'))
+    await writeCardArt(requireToken(tokens, 'border-strong'))
   for (const person of people) {
     const build = LAYOUT_BUILDS[person.layout ?? 'framed']
     const template = readFileSync(join(HERE, build.template), 'utf8')

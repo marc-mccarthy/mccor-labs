@@ -2,11 +2,12 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import type { Page } from '@playwright/test'
+import { expect, type Page, type Request } from '@playwright/test'
 
 const CHUNKS_DIR = fileURLToPath(
   new URL('../../out/_next/static/chunks', import.meta.url),
 )
+const QUIET_MS = 500
 
 export function builtWithEndpoint(chunksDir: string = CHUNKS_DIR): boolean {
   if (!existsSync(chunksDir)) return false
@@ -49,4 +50,43 @@ function trackScriptsContaining(page: Page, marker: string): () => Promise<strin
     )
   })
   return async () => (await Promise.all(pending)).filter((url) => url !== null)
+}
+
+interface QuietNetwork {
+  forget: () => void
+  wait: () => Promise<void>
+}
+
+export function trackQuietNetwork(page: Page): QuietNetwork {
+  const open = new Set<Request>()
+  let changedAt = Date.now()
+  page.on('request', (request) => {
+    if (request.resourceType() === 'media') return
+    open.add(request)
+    changedAt = Date.now()
+  })
+  const settle = (request: Request) => {
+    if (open.delete(request)) changedAt = Date.now()
+  }
+  page.on('requestfinished', settle)
+  page.on('requestfailed', settle)
+  return {
+    forget: () => {
+      open.clear()
+      changedAt = Date.now()
+    },
+    wait: () =>
+      expect(() => {
+        expect([...open].map((request) => request.url())).toEqual([])
+        expect(Date.now() - changedAt).toBeGreaterThanOrEqual(QUIET_MS)
+      }).toPass({ intervals: [100] }),
+  }
+}
+
+export async function gotoQuiet(page: Page, url: string): Promise<void> {
+  const network = trackQuietNetwork(page)
+  await page.goto(url, { waitUntil: 'commit' })
+  network.forget()
+  await page.waitForLoadState('load')
+  await network.wait()
 }

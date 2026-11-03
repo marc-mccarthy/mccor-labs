@@ -8,7 +8,7 @@ import { site } from '@/content/site'
 import { ui } from '@/content/ui'
 import { encodeLabResult, toLabResult } from '@/lib/labResult'
 
-import { builtWithEndpoint } from './support'
+import { builtWithEndpoint, gotoQuiet } from './support'
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const REFERENCE = 'MC-7Q4K'
@@ -83,7 +83,7 @@ function labHash(): string {
 }
 
 async function open(page: Page, hash = '') {
-  await page.goto(`/contact/${hash}`, { waitUntil: 'networkidle' })
+  await gotoQuiet(page, `/contact/${hash}`)
   await page.waitForFunction(
     () =>
       document.querySelector('[data-reveal="pending"]') === null &&
@@ -942,7 +942,7 @@ test.describe('live form', () => {
     test('fresh lab arrival shows an empty status', async ({ browser }) => {
       const context = await browser.newContext()
       const page = await context.newPage()
-      await page.goto(`/contact/${labHash()}`, { waitUntil: 'networkidle' })
+      await gotoQuiet(page, `/contact/${labHash()}`)
       await expect(page.locator('form')).toHaveAttribute('data-status', 'idle')
       await expect(page.locator('form').getByRole('status')).toHaveText('')
       await context.close()

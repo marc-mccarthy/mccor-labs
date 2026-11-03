@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 import { ui } from '@/content/ui'
 
-import { builtWithEndpoint } from './support'
+import { builtWithEndpoint, gotoQuiet } from './support'
 
 const REFERENCE = 'MC-7Q4K'
 
@@ -28,7 +28,7 @@ test('contact signal reaches sent', async ({ page }) => {
     window.__contactSignal = {}
   })
 
-  await page.goto('/contact/', { waitUntil: 'networkidle' })
+  await gotoQuiet(page, '/contact/')
   await page.locator('#name').fill('Ada Lovelace')
   await page.locator('#email').fill('ada@example.com')
   await page.locator('#phone').fill('2025550123')

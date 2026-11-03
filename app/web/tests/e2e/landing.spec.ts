@@ -3,6 +3,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 import { nav } from '@/content/nav'
 import { ui } from '@/content/ui'
 
+import { gotoQuiet } from './support'
+
 async function atViewport(page: Page, width: number, height: number) {
   await page.setViewportSize({ width, height })
 }
@@ -207,8 +209,7 @@ test.describe('service cards', () => {
     page,
   }) => {
     await atViewport(page, 1440, 900)
-    await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await gotoQuiet(page, '/')
     const card = page.locator('[data-service]').first()
     const link = card.getByRole('link')
     await card.scrollIntoViewIfNeeded()

@@ -17,6 +17,7 @@ interface FakeAudio {
   play: ReturnType<typeof vi.fn<() => Promise<void>>>
   pause: ReturnType<typeof vi.fn<() => void>>
   elements: HTMLMediaElement[]
+  sounding: WeakSet<HTMLMediaElement>
   contexts: number
 }
 
@@ -29,6 +30,7 @@ function installFakeAudio(): FakeAudio {
     play: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
     pause: vi.fn<() => void>(),
     elements: [],
+    sounding: new WeakSet(),
     contexts: 0,
   }
   const analyserNode = {
@@ -69,10 +71,15 @@ function installFakeAudio(): FakeAudio {
     this: HTMLMediaElement,
   ) {
     return fake.play().then(() => {
+      if (fake.sounding.has(this)) return
+      fake.sounding.add(this)
       this.dispatchEvent(new Event('playing'))
     })
   })
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(function (
+    this: HTMLMediaElement,
+  ) {
+    fake.sounding.delete(this)
     fake.pause()
   })
   return fake
@@ -130,12 +137,15 @@ async function interact(type: 'click' | 'keydown' = 'click') {
   await flush()
 }
 
-async function fire(fake: FakeAudio, type: string) {
-  fake.elements.at(-1)?.dispatchEvent(new Event(type))
+async function fire(fake: FakeAudio, type: 'ended' | 'error') {
+  const element = fake.elements.at(-1)
+  if (!element) throw new Error('No audio element to fire on')
+  fake.sounding.delete(element)
+  element.dispatchEvent(new Event(type))
   await flush()
 }
 
-async function fireTimes(fake: FakeAudio, type: string, times: number) {
+async function fireTimes(fake: FakeAudio, type: 'ended' | 'error', times: number) {
   for (let i = 0; i < times; i++) await fire(fake, type)
 }
 
@@ -272,16 +282,21 @@ describe('MusicToggle', () => {
     expect(toggleButton()).toHaveAttribute('aria-pressed', 'false')
   })
 
-  it('keeps playing when unmuted during the fade-out', async () => {
+  it('fades back in when unmuted during the fade-out, with no new playing event', async () => {
     const fake = installFakeAudio()
     await renderToggle()
+    const playing = vi.fn()
+    fake.elements[0]?.addEventListener('playing', playing)
     await clickToggle()
     await clickToggle()
     act(() => {
       vi.advanceTimersByTime(FADE_OUT_SECONDS * 1000)
     })
+    expect(playing).not.toHaveBeenCalled()
     expect(fake.pause).not.toHaveBeenCalled()
     expect(fake.ramp).toHaveBeenLastCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+    expect(strip()).toHaveAttribute('data-state', 'playing')
+    expect(toggleButton()).not.toHaveAttribute('aria-busy')
   })
 
   it('never fades in when muted while play is pending', async () => {
@@ -315,11 +330,21 @@ describe('MusicToggle', () => {
     await renderToggle()
     expect(reportError).not.toHaveBeenCalled()
     expect(fake.ramp).not.toHaveBeenCalled()
+    expect(toggleButton()).toHaveAttribute('aria-busy', 'true')
     await fire(fake, 'error')
     expect(reportError).toHaveBeenCalledTimes(1)
     expect(currentTrack(fake)).toBe(TRACKS[1])
     expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
     expect(strip()).toHaveAttribute('data-state', 'playing')
+    expect(toggleButton()).not.toHaveAttribute('aria-busy')
+  })
+
+  it('reports a context that fails to resume', async () => {
+    const fake = installFakeAudio()
+    fake.resume.mockImplementationOnce(rejection('NotSupportedError'))
+    await renderToggle()
+    expect(reportError).toHaveBeenCalledTimes(1)
+    expect((reportError.mock.calls[0]?.[0] as Error).cause).toBeInstanceOf(DOMException)
   })
 
   it('shows the strip waiting, not playing, when an unmute fails to play', async () => {
@@ -364,6 +389,24 @@ describe('MusicToggle', () => {
     await fireTimes(fake, 'error', TRACKS.length)
     expect(reportError).toHaveBeenCalledTimes(TRACKS.length + 1)
     expect(fake.play).toHaveBeenCalledTimes(TRACKS.length + 1)
+    expect(toggleButton()).not.toHaveAttribute('aria-busy')
+  })
+
+  it('reloads a failed track on the next click and reports it again if it still fails', async () => {
+    const fake = installFakeAudio()
+    fake.play.mockImplementation(rejection('NotSupportedError'))
+    await renderToggle()
+    await fireTimes(fake, 'error', TRACKS.length)
+    expect(reportError).toHaveBeenCalledTimes(TRACKS.length)
+    const element = fake.elements[0]
+    Object.defineProperty(element, 'error', { value: { code: 4 }, configurable: true })
+    const setSrc = vi.spyOn(HTMLMediaElement.prototype, 'src', 'set')
+    await interact()
+    expect(setSrc).toHaveBeenCalledWith(currentTrack(fake))
+    expect(toggleButton()).toHaveAttribute('aria-busy', 'true')
+    await fire(fake, 'error')
+    expect(reportError).toHaveBeenCalledTimes(TRACKS.length + 1)
+    expect(toggleButton()).not.toHaveAttribute('aria-busy')
   })
 
   it('pauses while the tab is hidden and plays again when it is shown', async () => {

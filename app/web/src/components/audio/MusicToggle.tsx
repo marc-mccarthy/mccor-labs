@@ -26,6 +26,11 @@ interface Player {
   failures: number
 }
 
+interface PlayerEvents {
+  onPlaying: (player: Player) => void
+  onGiveUp: (player: Player) => void
+}
+
 function hasWebAudio(): boolean {
   return typeof window.AudioContext === 'function'
 }
@@ -34,26 +39,39 @@ function isExpected(error: unknown, name: string): boolean {
   return error instanceof DOMException && error.name === name
 }
 
+function isHandledByPlayer(error: unknown): boolean {
+  return isExpected(error, 'AbortError') || isExpected(error, 'NotSupportedError')
+}
+
 function reportPlayFailure(error: unknown): void {
-  if (isExpected(error, 'AbortError') || isExpected(error, 'NotSupportedError')) return
+  if (isHandledByPlayer(error)) return
   reportError(new Error('Could not play the background music', { cause: error }))
+}
+
+function trackSrc(track: number): string {
+  return TRACKS[track] ?? TRACKS[0]
 }
 
 function playTrack(player: Player, track: number): void {
   player.track = track % TRACKS.length
-  player.audio.src = TRACKS[player.track] ?? TRACKS[0]
+  player.audio.src = trackSrc(player.track)
   player.audio.play().catch(reportPlayFailure)
 }
 
-function onTrackError(player: Player): void {
+function reloadIfFailed(player: Player): void {
+  if (player.audio.error) player.audio.src = trackSrc(player.track)
+}
+
+function onTrackError(player: Player, events: PlayerEvents): void {
   reportError(
     new Error(`Could not load ${player.audio.src}`, { cause: player.audio.error }),
   )
   player.failures += 1
   if (player.failures < TRACKS.length) playTrack(player, player.track + 1)
+  else events.onGiveUp(player)
 }
 
-function createPlayer(onPlaying: (player: Player) => void): Player {
+function createPlayer(events: PlayerEvents): Player {
   const audio = new Audio()
   audio.preload = 'none'
   audio.src = TRACKS[0]
@@ -72,10 +90,10 @@ function createPlayer(onPlaying: (player: Player) => void): Player {
   })
   audio.addEventListener('playing', () => {
     player.failures = 0
-    onPlaying(player)
+    events.onPlaying(player)
   })
   audio.addEventListener('error', () => {
-    onTrackError(player)
+    onTrackError(player, events)
   })
   return player
 }
@@ -142,15 +160,22 @@ export function MusicToggle() {
   const fadeOutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fadeIn = useCallback((player: Player) => {
-    if (playerRef.current !== player || !wantedRef.current) return
+    if (playerRef.current !== player) return
+    setLoading(false)
+    if (!wantedRef.current) return
     rampGain(player, MUSIC_VOLUME, FADE_IN_SECONDS)
     setLive(true)
+  }, [])
+
+  const giveUp = useCallback((player: Player) => {
+    if (playerRef.current === player) setLoading(false)
   }, [])
 
   const start = useCallback(async () => {
     if (!hasWebAudio()) return
     wantedRef.current = true
-    const player = playerRef.current ?? createPlayer(fadeIn)
+    const player =
+      playerRef.current ?? createPlayer({ onPlaying: fadeIn, onGiveUp: giveUp })
     playerRef.current = player
     setAnalyser(player.analyser)
     if (fadeOutRef.current) {
@@ -158,23 +183,26 @@ export function MusicToggle() {
       fadeOutRef.current = null
     }
     if (document.hidden) return
+    reloadIfFailed(player)
     setLoading(true)
+    player.context.resume().catch((error: unknown) => {
+      if (playerRef.current !== player) return
+      reportError(new Error('Could not resume the background music', { cause: error }))
+    })
     try {
-      player.context.resume().catch((error: unknown) => {
-        if (playerRef.current === player) reportPlayFailure(error)
-      })
       await player.audio.play()
+      fadeIn(player)
     } catch (error) {
-      if (playerRef.current !== player || isExpected(error, 'NotAllowedError')) return
-      reportPlayFailure(error)
-    } finally {
-      if (playerRef.current === player) setLoading(false)
+      if (playerRef.current !== player || isHandledByPlayer(error)) return
+      setLoading(false)
+      if (!isExpected(error, 'NotAllowedError')) reportPlayFailure(error)
     }
-  }, [fadeIn])
+  }, [fadeIn, giveUp])
 
   const stop = useCallback(() => {
     wantedRef.current = false
     setLive(false)
+    setLoading(false)
     const player = playerRef.current
     if (!player) return
     rampGain(player, 0, FADE_OUT_SECONDS)

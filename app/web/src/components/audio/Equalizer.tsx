@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useMotionPausedFlag } from '@/components/motion/MotionPauseProvider'
-import { useReducedMotion } from '@/components/motion/useReducedMotion'
+import { useMediaQuery, useReducedMotion } from '@/components/motion/useReducedMotion'
 import { cn } from '@/lib/cn'
 
 export type EqualizerState = 'idle' | 'playing' | 'muted'
@@ -15,6 +15,7 @@ export const SILENCE_DB = -120
 export const SWING_DB = 16
 export const CENTER = 0.5
 export const MEAN_RATE = 0.04
+export const HIDDEN_WIDTHS = '(width < 375px), (48rem <= width < 900px)'
 export const REST = Array.from(
   { length: BAR_COUNT },
   (_, i) => 0.3 + 0.4 * Math.abs(Math.sin(i * 1.3)),
@@ -89,8 +90,9 @@ interface EqualizerProps {
 export function Equalizer({ state, analyser }: EqualizerProps) {
   const reducedMotion = useReducedMotion()
   const motionPaused = useMotionPausedFlag()
+  const hidden = useMediaQuery(HIDDEN_WIDTHS)
   const barsRef = useRef<(HTMLSpanElement | null)[]>([])
-  const still = reducedMotion || motionPaused
+  const still = reducedMotion || motionPaused || hidden
 
   useEffect(() => {
     const bars = barsRef.current

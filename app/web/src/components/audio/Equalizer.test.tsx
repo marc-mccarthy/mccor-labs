@@ -11,6 +11,7 @@ import {
   CENTER,
   Equalizer,
   FLOOR,
+  HIDDEN_WIDTHS,
   levelAround,
   REST,
   SWING_DB,
@@ -57,11 +58,11 @@ function filled(level: number): number[] {
   return Array.from({ length: BAR_COUNT }, () => level)
 }
 
-function preferReducedMotion() {
+function matchOnly(target: string) {
   vi.stubGlobal(
     'matchMedia',
     vi.fn().mockImplementation((query: string) => ({
-      matches: query === '(prefers-reduced-motion: reduce)',
+      matches: query === target,
       media: query,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -184,12 +185,21 @@ describe('Equalizer', () => {
   })
 
   it('keeps the bars still when the visitor prefers reduced motion', () => {
-    preferReducedMotion()
+    matchOnly('(prefers-reduced-motion: reduce)')
     const { analyser } = fakeAnalyser((data) => data.fill(-40))
     const { frames } = captureFrames()
     const { container } = render(<Equalizer state="playing" analyser={analyser} />)
     expect(frames).toHaveLength(0)
     expectLevels(container, REST)
+  })
+
+  it('stops drawing at the widths where the strip is hidden', () => {
+    matchOnly(HIDDEN_WIDTHS)
+    const { analyser, spectrum } = fakeAnalyser((data) => data.fill(-40))
+    const { frames } = captureFrames()
+    render(<Equalizer state="playing" analyser={analyser} />)
+    expect(frames).toHaveLength(0)
+    expect(spectrum).not.toHaveBeenCalled()
   })
 
   it('keeps the bars still while motion is paused on the site', () => {

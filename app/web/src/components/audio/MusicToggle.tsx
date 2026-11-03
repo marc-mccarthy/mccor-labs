@@ -35,7 +35,7 @@ function isExpected(error: unknown, name: string): boolean {
 }
 
 function reportPlayFailure(error: unknown): void {
-  if (isExpected(error, 'AbortError')) return
+  if (isExpected(error, 'AbortError') || isExpected(error, 'NotSupportedError')) return
   reportError(new Error('Could not play the background music', { cause: error }))
 }
 
@@ -53,7 +53,7 @@ function onTrackError(player: Player): void {
   if (player.failures < TRACKS.length) playTrack(player, player.track + 1)
 }
 
-function createPlayer(): Player {
+function createPlayer(onPlaying: (player: Player) => void): Player {
   const audio = new Audio()
   audio.preload = 'none'
   audio.src = TRACKS[0]
@@ -72,6 +72,7 @@ function createPlayer(): Player {
   })
   audio.addEventListener('playing', () => {
     player.failures = 0
+    onPlaying(player)
   })
   audio.addEventListener('error', () => {
     onTrackError(player)
@@ -101,10 +102,6 @@ function noopSubscribe(): () => undefined {
 
 function serverSnapshot(): boolean {
   return false
-}
-
-function isMusicWanted(ref: { current: boolean }): boolean {
-  return ref.current
 }
 
 function reportStorageFailure(action: string, cause: unknown): void {
@@ -144,10 +141,16 @@ export function MusicToggle() {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const fadeOutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const fadeIn = useCallback((player: Player) => {
+    if (playerRef.current !== player || !wantedRef.current) return
+    rampGain(player, MUSIC_VOLUME, FADE_IN_SECONDS)
+    setLive(true)
+  }, [])
+
   const start = useCallback(async () => {
     if (!hasWebAudio()) return
     wantedRef.current = true
-    const player = playerRef.current ?? createPlayer()
+    const player = playerRef.current ?? createPlayer(fadeIn)
     playerRef.current = player
     setAnalyser(player.analyser)
     if (fadeOutRef.current) {
@@ -161,21 +164,17 @@ export function MusicToggle() {
         if (playerRef.current === player) reportPlayFailure(error)
       })
       await player.audio.play()
-      if (playerRef.current !== player) return
-      if (isMusicWanted(wantedRef)) {
-        rampGain(player, MUSIC_VOLUME, FADE_IN_SECONDS)
-        setLive(true)
-      }
     } catch (error) {
       if (playerRef.current !== player || isExpected(error, 'NotAllowedError')) return
       reportPlayFailure(error)
     } finally {
       if (playerRef.current === player) setLoading(false)
     }
-  }, [])
+  }, [fadeIn])
 
   const stop = useCallback(() => {
     wantedRef.current = false
+    setLive(false)
     const player = playerRef.current
     if (!player) return
     rampGain(player, 0, FADE_OUT_SECONDS)

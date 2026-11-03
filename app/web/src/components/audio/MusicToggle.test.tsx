@@ -65,7 +65,13 @@ function installFakeAudio(): FakeAudio {
     }
   }
   vi.stubGlobal('AudioContext', FakeAudioContext)
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => fake.play())
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (
+    this: HTMLMediaElement,
+  ) {
+    return fake.play().then(() => {
+      this.dispatchEvent(new Event('playing'))
+    })
+  })
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {
     fake.pause()
   })
@@ -294,13 +300,36 @@ describe('MusicToggle', () => {
 
   it('reports a play that fails for any other reason', async () => {
     const fake = installFakeAudio()
-    fake.play.mockImplementationOnce(rejection('NotSupportedError'))
+    fake.play.mockImplementationOnce(rejection('UnknownError'))
     await renderToggle()
     expect(reportError).toHaveBeenCalledTimes(1)
     const [reported] = reportError.mock.calls[0] ?? []
     expect(reported).toBeInstanceOf(Error)
     expect((reported as Error).cause).toBeInstanceOf(DOMException)
     expect(toggleButton()).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('reports a first track that fails to load once and fades in the next one', async () => {
+    const fake = installFakeAudio()
+    fake.play.mockImplementationOnce(rejection('NotSupportedError'))
+    await renderToggle()
+    expect(reportError).not.toHaveBeenCalled()
+    expect(fake.ramp).not.toHaveBeenCalled()
+    await fire(fake, 'error')
+    expect(reportError).toHaveBeenCalledTimes(1)
+    expect(currentTrack(fake)).toBe(TRACKS[1])
+    expect(fake.ramp).toHaveBeenCalledWith(MUSIC_VOLUME, 10 + FADE_IN_SECONDS)
+    expect(strip()).toHaveAttribute('data-state', 'playing')
+  })
+
+  it('shows the strip waiting, not playing, when an unmute fails to play', async () => {
+    const fake = installFakeAudio()
+    await renderToggle()
+    await clickToggle()
+    fake.play.mockImplementationOnce(rejection('UnknownError'))
+    await clickToggle()
+    expect(toggleButton()).toHaveAttribute('aria-pressed', 'false')
+    expect(strip()).toHaveAttribute('data-state', 'idle')
   })
 
   it('treats an interrupted play as expected', async () => {
@@ -331,7 +360,7 @@ describe('MusicToggle', () => {
     expect((reportError.mock.calls[0]?.[0] as Error).message).toContain(TRACKS[0])
     expect(currentTrack(fake)).toBe(TRACKS[1])
     expect(fake.play).toHaveBeenCalledTimes(2)
-    await fire(fake, 'playing')
+    fake.play.mockImplementation(rejection('NotSupportedError'))
     await fireTimes(fake, 'error', TRACKS.length)
     expect(reportError).toHaveBeenCalledTimes(TRACKS.length + 1)
     expect(fake.play).toHaveBeenCalledTimes(TRACKS.length + 1)

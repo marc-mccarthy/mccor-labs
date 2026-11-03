@@ -97,7 +97,7 @@ export function applyDarkMode(html: string, mode: DarkMode): string {
       (_, style: string) => `style="${recolorStyle(style, mode)}"`,
     )
     .replace(
-      /bgcolor="(#[0-9a-f]{3,6})"/gi,
+      /bgcolor="(#(?:[0-9a-f]{6}|[0-9a-f]{3}))"/gi,
       (_, hex: string) => `bgcolor="${recolor(hex, 'background', mode)}"`,
     )
 }

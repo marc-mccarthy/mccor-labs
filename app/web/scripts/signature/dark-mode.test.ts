@@ -53,6 +53,10 @@ describe('applyDarkMode', () => {
     expect(dark).toContain('src="https://example.com/a.png"')
   })
 
+  it('ignores bgcolor values that are not 3- or 6-digit hex', () => {
+    expect(applyDarkMode('<td bgcolor="#abcd">', 'full')).toBe('<td bgcolor="#abcd">')
+  })
+
   it('keeps a dark button and its light label in partial invert', () => {
     const dark = applyDarkMode(card, 'partial')
     expect(dark).toContain('bgcolor="#991b1b"')

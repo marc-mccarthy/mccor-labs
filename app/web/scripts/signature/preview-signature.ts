@@ -12,6 +12,7 @@ import {
   rewriteAssets,
   shotName,
 } from './preview-page'
+import { readTokens, requireToken } from './signature'
 
 const WEB = join(import.meta.dirname, '..', '..')
 const ASSET_BASE = 'https://mccorlabs.com/sig/framed'
@@ -61,7 +62,15 @@ async function main(): Promise<void> {
     await browser.close()
   }
   const report = join(out, 'index.html')
-  writeFileSync(report, reportPage(values.title, CLIENTS))
+  const tokens = readTokens(
+    readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
+  )
+  const palette = {
+    page: requireToken(tokens, 'text'),
+    ink: requireToken(tokens, 'base'),
+    muted: requireToken(tokens, 'border-strong'),
+  }
+  writeFileSync(report, reportPage(values.title, CLIENTS, palette))
   const browser = await chromium.launch()
   const page = await browser.newPage()
   await page.goto(pathToFileURL(report).href)

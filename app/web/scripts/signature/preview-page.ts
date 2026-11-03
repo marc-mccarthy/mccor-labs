@@ -82,20 +82,30 @@ export function shotName(client: Client, scheme: Scheme): string {
   return `${client.slug}-${scheme}.png`
 }
 
-export function reportPage(title: string, clients: readonly Client[]): string {
+export interface ReportPalette {
+  page: string
+  ink: string
+  muted: string
+}
+
+export function reportPage(
+  title: string,
+  clients: readonly Client[],
+  palette: ReportPalette,
+): string {
   const rows = clients
     .map(
       (client) =>
         `<tr><th>${client.name}<small>${client.engine} engine, ${DARK_LABEL[client.dark]}</small></th><td><img src="${shotName(client, 'light')}" alt="${client.name} light"></td><td><img src="${shotName(client, 'dark')}" alt="${client.name} dark"></td></tr>`,
     )
     .join('\n')
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="margin:0;padding:24px;background:#f0f0f0;font-family:-apple-system,Helvetica,Arial,sans-serif;color:#222">
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="margin:0;padding:24px;background:${palette.page};font-family:-apple-system,Helvetica,Arial,sans-serif;color:${palette.ink}">
 <h1 style="font-size:18px;margin:0 0 4px">${title}</h1>
 <p style="font-size:12px;margin:0 0 16px;max-width:900px">Light and dark mode per client. Dark mode is simulated from each client's documented behaviour (Litmus dark-mode support chart): no change, partial invert (light backgrounds darken, dark text lightens) or full invert (every colour flips). Images are never recoloured. Outlook on Windows also uses the Word engine, whose layout quirks are not simulated. Confirm a final design with a real test send.</p>
 <table style="border-collapse:collapse;font-size:12px">
 <tr><th></th><th style="padding:4px 8px">Light</th><th style="padding:4px 8px">Dark</th></tr>
 ${rows}
 </table>
-<style>th{text-align:left;vertical-align:middle;padding:8px}th small{display:block;font-weight:400;color:#666}td{padding:8px}td img{display:block;width:532px}</style>
+<style>th{text-align:left;vertical-align:middle;padding:8px}th small{display:block;font-weight:400;color:${palette.muted}}td{padding:8px}td img{display:block;width:532px}</style>
 </body></html>`
 }

@@ -51,7 +51,11 @@ describe('framePage', () => {
 
 describe('reportPage', () => {
   it('lists every client with a light and a dark shot', () => {
-    const page = reportPage('Test', CLIENTS)
+    const page = reportPage('Test', CLIENTS, {
+      page: '#f5f5f7',
+      ink: '#08080a',
+      muted: '#6b6b7b',
+    })
     for (const client of CLIENTS) {
       expect(page).toContain(client.name)
       expect(page).toContain(`src="${shotName(client, 'light')}"`)

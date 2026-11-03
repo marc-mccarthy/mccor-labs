@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
-import { ROUTES } from './support'
+import { ROUTES, gotoQuiet } from './support'
 
 test.use({ browserName: 'chromium', channel: 'chrome' })
 
@@ -242,12 +242,12 @@ test.describe('hard gates', () => {
           javaScriptEnabled: false,
         })
         const serverPage = await server.newPage()
-        await serverPage.goto(`${String(baseURL)}${path}`, { waitUntil: 'networkidle' })
+        await gotoQuiet(serverPage, `${String(baseURL)}${path}`)
         const before = await serverPage.evaluate(
           () => document.documentElement.scrollHeight,
         )
         await server.close()
-        await page.goto(path, { waitUntil: 'networkidle' })
+        await gotoQuiet(page, path)
         const after = await page.evaluate(() => document.documentElement.scrollHeight)
         expect(after).toBe(before)
       })

@@ -4,7 +4,7 @@ import type { Page } from '@playwright/test'
 import { EMPTY_ANSWERS, QUESTION_KEYS, classifyStep } from '@/content/lab/rubric'
 import { encodeLabResult, toLabResult } from '@/lib/labResult'
 
-import { builtWithEndpoint } from './support'
+import { builtWithEndpoint, gotoQuiet } from './support'
 
 test.use({ browserName: 'chromium', channel: 'chrome' })
 
@@ -182,12 +182,12 @@ test.describe('contact gates', () => {
         javaScriptEnabled: false,
       })
       const serverPage = await server.newPage()
-      await serverPage.goto(`${String(baseURL)}/contact/`, { waitUntil: 'networkidle' })
+      await gotoQuiet(serverPage, `${String(baseURL)}/contact/`)
       const before = await serverPage.evaluate(
         () => document.documentElement.scrollHeight,
       )
       await server.close()
-      await page.goto('/contact/', { waitUntil: 'networkidle' })
+      await gotoQuiet(page, '/contact/')
       const after = await page.evaluate(() => document.documentElement.scrollHeight)
       expect(after).toBe(before)
     })
@@ -205,7 +205,7 @@ test.describe('contact gates', () => {
     test(`INP on /contact/ while typing is under budget`, async ({ page }) => {
       await observeWorstInteraction(page)
       await recordSceneFrames(page)
-      await page.goto('/contact/', { waitUntil: 'networkidle' })
+      await gotoQuiet(page, '/contact/')
       await clickMessageWithScenesAtRest(page)
       await page.keyboard.type('x'.repeat(40), { delay: 20 })
       for (let i = 0; i < 6; i += 1) {
@@ -231,7 +231,7 @@ test.describe('contact gates', () => {
       await page.emulateMedia({ reducedMotion: 'no-preference' })
       await observeWorstInteraction(page)
       await recordSceneFrames(page)
-      await page.goto('/contact/', { waitUntil: 'networkidle' })
+      await gotoQuiet(page, '/contact/')
       await expect(page.locator('[data-scene-status="active"]')).not.toHaveCount(0, {
         timeout: 15_000,
       })

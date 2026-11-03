@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 import { expect, test } from '@playwright/test'
 
-import { ROUTES } from './support'
+import { ROUTES, trackQuietNetwork } from './support'
 
 interface Violation {
   blockedURI: string
@@ -30,6 +30,7 @@ const csp = readPolicy()
 for (const route of [...ROUTES, UNKNOWN_ROUTE]) {
   test(`${route} raises no CSP violation under the enforced policy`, async ({ page }) => {
     const problems: string[] = []
+    const network = trackQuietNetwork(page)
 
     await page.route('**/*', async (handler) => {
       if (handler.request().resourceType() !== 'document') {
@@ -78,7 +79,7 @@ for (const route of [...ROUTES, UNKNOWN_ROUTE]) {
       await page.mouse.wheel(0, 600)
       await page.waitForTimeout(250)
     }
-    await page.waitForLoadState('networkidle')
+    await network.wait()
     const idleScenes = page.locator('[data-scene-status="idle"]')
     await expect(async () => {
       if ((await idleScenes.count()) > 0) {
@@ -87,7 +88,8 @@ for (const route of [...ROUTES, UNKNOWN_ROUTE]) {
       await expect(idleScenes).toHaveCount(0, { timeout: 1_000 })
     }).toPass({ timeout: 15_000 })
     await expect(page.locator('[data-scene-status="fallback"]')).toHaveCount(0)
-    await page.waitForLoadState('networkidle')
+    await network.wait()
+    network.stop()
     await page.waitForTimeout(500)
 
     const violations = await page.evaluate(

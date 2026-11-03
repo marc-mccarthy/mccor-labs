@@ -16,6 +16,7 @@ import {
   renderSignature,
   requireToken,
 } from './signature'
+import { dropSpecks, hexToRgb, silhouette } from './crest-art'
 
 const HERE = import.meta.dirname
 const WEB = join(HERE, '..', '..')
@@ -55,9 +56,12 @@ const CARD_CREST_PX = {
   width: CARD_CREST.width * PHOTO_SCALE,
   height: CARD_CREST.height * PHOTO_SCALE,
 }
+const SPECK_AREA = 10
+const CREST_SHADOW = { opacity: 0.35, blur: 2, drop: 2 }
+const SHADOW_ROOM = Math.ceil(CREST_SHADOW.blur * 3)
 const CREST_ART = {
-  width: CARD_CREST_PX.width - 8,
-  height: CARD_CREST_PX.height - 8,
+  width: CARD_CREST_PX.width - 2 * SHADOW_ROOM,
+  height: CARD_CREST_PX.height - 2 * SHADOW_ROOM - CREST_SHADOW.drop,
 }
 const CARD_ICONS = [
   ['mccor', 'stag.png'],
@@ -163,21 +167,57 @@ async function ensurePhoto(person: Person, build: LayoutBuild): Promise<boolean>
   return true
 }
 
-async function writeCardArt(iconColor: string): Promise<void> {
-  const art = await sharp(join(SRC_DIR, 'crest.png'))
+async function writeCrest(shadowColor: string): Promise<void> {
+  const source = await sharp(join(SRC_DIR, 'crest.png'))
     .trim()
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const clean = dropSpecks(source.data, source.info.width, source.info.height, SPECK_AREA)
+  const { data, info } = await sharp(clean, {
+    raw: { width: source.info.width, height: source.info.height, channels: 4 },
+  })
     .resize(CREST_ART.width, CREST_ART.height, {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
-    .toBuffer()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const art = { width: info.width, height: info.height, channels: 4 as const }
   const { width, height } = CARD_CREST_PX
-  await sharp({
-    create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
-  })
-    .composite([{ input: art, gravity: 'center' }])
+  const left = Math.round((width - art.width) / 2)
+  const top = Math.round((height - art.height - CREST_SHADOW.drop) / 2)
+  const blank = {
+    create: {
+      width,
+      height,
+      channels: 4 as const,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  }
+  const placed = await sharp(blank)
+    .composite([
+      {
+        input: Buffer.from(silhouette(data, shadowColor, CREST_SHADOW.opacity)),
+        raw: art,
+        left,
+        top: top + CREST_SHADOW.drop,
+      },
+    ])
+    .raw()
+    .toBuffer()
+  const shadow = await sharp(placed, { raw: { width, height, channels: 4 } })
+    .blur(CREST_SHADOW.blur)
+    .png()
+    .toBuffer()
+  await sharp(blank)
+    .composite([{ input: shadow }, { input: data, raw: art, left, top }])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
+}
+
+async function writeCardArt(iconColor: string, shadowColor: string): Promise<void> {
+  await writeCrest(shadowColor)
   for (const [key, file] of CARD_ICONS)
     await writeFlatIcon(
       join(SRC_DIR, file),
@@ -192,13 +232,13 @@ async function writeFlatIcon(source: string, color: string, out: string): Promis
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true })
-  const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(color.slice(i, i + 2), 16))
+  const [r, g, b] = hexToRgb(color)
   const pixels = Buffer.alloc(data.length)
   for (let i = 0; i < data.length; i += 4) {
     const light = Math.min(data[i] ?? 0, data[i + 1] ?? 0, data[i + 2] ?? 0) / 255
-    pixels[i] = r ?? 0
-    pixels[i + 1] = g ?? 0
-    pixels[i + 2] = b ?? 0
+    pixels[i] = r
+    pixels[i + 1] = g
+    pixels[i + 2] = b
     pixels[i + 3] = Math.round((data[i + 3] ?? 0) * (1 - light))
   }
   await sharp(pixels, { raw: { width: info.width, height: info.height, channels: 4 } })
@@ -221,7 +261,10 @@ async function main(): Promise<void> {
   }
   mkdirSync(OUT_DIR, { recursive: true })
   if (people.some((person) => person.layout === 'card'))
-    await writeCardArt(requireToken(tokens, 'border-strong'))
+    await writeCardArt(
+      requireToken(tokens, 'border-strong'),
+      requireToken(tokens, 'base'),
+    )
   for (const person of people) {
     const build = LAYOUT_BUILDS[person.layout ?? 'framed']
     const template = readFileSync(join(HERE, build.template), 'utf8')

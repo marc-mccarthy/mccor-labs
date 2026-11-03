@@ -175,6 +175,7 @@ test -f .git/hooks/pre-commit && echo "hooks installed"
 ```
 
 - The 1Password CLI must be installed and signed in for `pnpm dev` and `pnpm build` -- both go through `op run`.
+- `pnpm -F web dev` refuses to start without the `app.env` settings, so start the site with `pnpm dev` from the repo root. `pnpm -F web exec next dev` is the deliberate bypass when you want a server without them.
 - Values live in 1Password, in the `McCor Labs` vault under the `McCor Labs` item. The references are in `app.env`, which is committed because it holds `op://` paths, not values.
 - `pnpm dev` and `pnpm build` strip the AWS keys from the environment and set `NEXT_PUBLIC_SITE_URL` to `https://` plus `DOMAIN_NAME`, which comes from the `domain_name` field.
 - A locked 1Password means the pre-push hook's `build` step fails with an `op` error, not a code error -- check that first before debugging the build.

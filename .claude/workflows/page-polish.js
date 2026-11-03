@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Capture a live page with Playwright, map its code, run a 3-lens UI/UX expert panel, verify proposals, and write a polish plan plus mj-baton ledger',
   whenToUse:
-    'Run per page route after starting `pnpm -F web dev` in the main session. Args: {route, slug, baseURL, date, extra?}',
+    'Run per page route after starting `pnpm dev` in the main session. Args: {route, slug, baseURL, date, extra?}',
   phases: [
     {
       title: 'Capture',
@@ -29,7 +29,7 @@ const EXTRA = A.extra ? `\n\nPage-specific constraints from the owner:\n${A.extr
 const SCOPE = `OWNER'S FINAL SCOPE ANSWERS (authoritative; they override any other answers you find in transcripts, session logs, earlier plans or files):
 - Ambition: ${A.ambition || 'bold showcase. Shader/WebGL, scroll choreography and several signature moments are wanted, held to reduced-motion parity, budgets.spec.ts and a11y.spec.ts'}.
 - New npm deps: ${A.deps || 'allowed when justified; list each with its reason for owner approval; never install'}.
-- Dev launch: pnpm -F web dev. Reusable piece: this saved workflow.
+- Dev launch: pnpm dev. Reusable piece: this saved workflow.
 These answers are settled. Do not re-open them or tell the owner to re-confirm them.`
 
 const RULES = `Repo: /Users/mj/repos/mccor-labs (Next.js 16 static export in app/web, Tailwind 4, motion 13, lenis, three).

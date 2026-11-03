@@ -250,18 +250,24 @@ describe('renderCardSignature', () => {
     expect(html.match(/border:2px solid/g)).toHaveLength(1)
   })
 
-  it('links the 88 by 116 photo, the 104 by 116 crest and the 20px icons', () => {
+  it('links the 88 by 116 photo, the 104 by 100 crest and the 20px icons', () => {
     expect(html).toContain(
       '<img src="https://mccorlabs.com/sig/framed/marcm-card.png" width="88" height="116"',
     )
     expect(flat(html)).toContain(
-      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="104" height="116"',
+      '<img src="https://mccorlabs.com/sig/framed/card-crest.png" width="104" height="100"',
     )
     for (const key of ['mccor', 'linkedin', 'github'])
       expect(html).toContain(
         `<img src="https://mccorlabs.com/sig/framed/card-icon-${key}.png" width="20" height="20"`,
       )
     expect(html).not.toContain('.gif')
+  })
+
+  it('labels the crest McCarthy in live text, not inside the image', () => {
+    expect(flat(html)).toMatch(
+      /alt="McCarthy coat of arms".*<td align="center" style="padding-top:3px;[^"]*text-transform:uppercase[^"]*"> McCarthy <\/td>/,
+    )
   })
 
   it('omits the photo cell when there is no photo', () => {

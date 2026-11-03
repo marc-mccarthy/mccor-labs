@@ -59,7 +59,7 @@ const FRAMED_LINES = {
 } satisfies Record<string, LineStyle>
 
 export const CARD_PHOTO: Box = { width: 88, height: 116 }
-export const CARD_CREST: Box = { width: 104, height: 116 }
+export const CARD_CREST: Box = { width: 104, height: 100 }
 export const CARD_ICON: Box = { width: 20, height: 20 }
 const CARD_INNER = 486
 const CARD_TEXT_GAP = 18

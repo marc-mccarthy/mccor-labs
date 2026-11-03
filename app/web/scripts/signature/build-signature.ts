@@ -16,6 +16,7 @@ import {
   renderSignature,
   requireToken,
 } from './signature'
+import { dropSpecks, silhouette } from './crest-art'
 
 const HERE = import.meta.dirname
 const WEB = join(HERE, '..', '..')
@@ -55,6 +56,8 @@ const CARD_CREST_PX = {
   width: CARD_CREST.width * PHOTO_SCALE,
   height: CARD_CREST.height * PHOTO_SCALE,
 }
+const SPECK_AREA = 10
+const CREST_SHADOW = { opacity: 0.22, blur: 2, drop: 2 }
 const CREST_ART = {
   width: CARD_CREST_PX.width - 8,
   height: CARD_CREST_PX.height - 8,
@@ -163,21 +166,44 @@ async function ensurePhoto(person: Person, build: LayoutBuild): Promise<boolean>
   return true
 }
 
-async function writeCardArt(iconColor: string): Promise<void> {
-  const art = await sharp(join(SRC_DIR, 'crest.png'))
+async function writeCrest(shadowColor: string): Promise<void> {
+  const source = await sharp(join(SRC_DIR, 'crest.png'))
     .trim()
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const clean = dropSpecks(source.data, source.info.width, source.info.height, SPECK_AREA)
+  const { data, info } = await sharp(clean, {
+    raw: { width: source.info.width, height: source.info.height, channels: 4 },
+  })
     .resize(CREST_ART.width, CREST_ART.height, {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+  const raw = { raw: { width: info.width, height: info.height, channels: 4 as const } }
+  const art = await sharp(data, raw).png().toBuffer()
+  const shadow = await sharp(silhouette(data, shadowColor, CREST_SHADOW.opacity), raw)
+    .blur(CREST_SHADOW.blur)
+    .png()
     .toBuffer()
   const { width, height } = CARD_CREST_PX
+  const left = Math.round((width - info.width) / 2)
+  const top = Math.round((height - info.height) / 2)
   await sharp({
     create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
   })
-    .composite([{ input: art, gravity: 'center' }])
+    .composite([
+      { input: shadow, left, top: top + CREST_SHADOW.drop },
+      { input: art, left, top },
+    ])
     .png()
     .toFile(join(OUT_DIR, 'card-crest.png'))
+}
+
+async function writeCardArt(iconColor: string, shadowColor: string): Promise<void> {
+  await writeCrest(shadowColor)
   for (const [key, file] of CARD_ICONS)
     await writeFlatIcon(
       join(SRC_DIR, file),
@@ -221,7 +247,10 @@ async function main(): Promise<void> {
   }
   mkdirSync(OUT_DIR, { recursive: true })
   if (people.some((person) => person.layout === 'card'))
-    await writeCardArt(requireToken(tokens, 'border-strong'))
+    await writeCardArt(
+      requireToken(tokens, 'border-strong'),
+      requireToken(tokens, 'base'),
+    )
   for (const person of people) {
     const build = LAYOUT_BUILDS[person.layout ?? 'framed']
     const template = readFileSync(join(HERE, build.template), 'utf8')

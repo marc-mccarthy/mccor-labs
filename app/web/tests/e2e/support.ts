@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { expect, type Page, type Request } from '@playwright/test'
+import { expect, type Frame, type Page, type Request } from '@playwright/test'
 
 const CHUNKS_DIR = fileURLToPath(
   new URL('../../out/_next/static/chunks', import.meta.url),
@@ -53,40 +53,56 @@ function trackScriptsContaining(page: Page, marker: string): () => Promise<strin
 }
 
 interface QuietNetwork {
-  forget: () => void
   wait: () => Promise<void>
+  stop: () => void
 }
 
 export function trackQuietNetwork(page: Page): QuietNetwork {
   const open = new Set<Request>()
   let changedAt = Date.now()
-  page.on('request', (request) => {
+  let navigating = false
+  const onRequest = (request: Request) => {
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame()) {
+      navigating = true
+    }
     if (request.resourceType() === 'media') return
     open.add(request)
     changedAt = Date.now()
-  })
-  const settle = (request: Request) => {
+  }
+  const onSettled = (request: Request) => {
     if (open.delete(request)) changedAt = Date.now()
   }
-  page.on('requestfinished', settle)
-  page.on('requestfailed', settle)
+  const onNavigated = (frame: Frame) => {
+    if (!navigating || frame !== page.mainFrame()) return
+    navigating = false
+    open.clear()
+    changedAt = Date.now()
+  }
+  page.on('request', onRequest)
+  page.on('requestfinished', onSettled)
+  page.on('requestfailed', onSettled)
+  page.on('framenavigated', onNavigated)
   return {
-    forget: () => {
-      open.clear()
-      changedAt = Date.now()
-    },
     wait: () =>
       expect(() => {
         expect([...open].map((request) => request.url())).toEqual([])
         expect(Date.now() - changedAt).toBeGreaterThanOrEqual(QUIET_MS)
       }).toPass({ intervals: [100] }),
+    stop: () => {
+      page.off('request', onRequest)
+      page.off('requestfinished', onSettled)
+      page.off('requestfailed', onSettled)
+      page.off('framenavigated', onNavigated)
+    },
   }
 }
 
 export async function gotoQuiet(page: Page, url: string): Promise<void> {
   const network = trackQuietNetwork(page)
-  await page.goto(url, { waitUntil: 'commit' })
-  network.forget()
-  await page.waitForLoadState('load')
-  await network.wait()
+  try {
+    await page.goto(url)
+    await network.wait()
+  } finally {
+    network.stop()
+  }
 }

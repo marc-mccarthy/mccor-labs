@@ -89,6 +89,7 @@ for (const route of [...ROUTES, UNKNOWN_ROUTE]) {
     }).toPass({ timeout: 15_000 })
     await expect(page.locator('[data-scene-status="fallback"]')).toHaveCount(0)
     await network.wait()
+    network.stop()
     await page.waitForTimeout(500)
 
     const violations = await page.evaluate(

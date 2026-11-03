@@ -5,9 +5,9 @@ import { createAnalyser, Equalizer } from './Equalizer'
 import { ui } from '@/content/ui'
 
 export const TRACKS = [
+  '/media/audio/mccor-gardens-chill.mp3',
   '/media/audio/mccor-ambient-loop.mp3',
   '/media/audio/mccor-sci-fi-ambient.mp3',
-  '/media/audio/mccor-gardens-chill.mp3',
   '/media/audio/mccor-last-point.mp3',
 ] as const
 export const MUSIC_VOLUME = 0.5

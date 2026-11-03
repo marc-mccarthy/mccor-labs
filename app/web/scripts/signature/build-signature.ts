@@ -57,7 +57,7 @@ const CARD_CREST_PX = {
   height: CARD_CREST.height * PHOTO_SCALE,
 }
 const SPECK_AREA = 10
-const CREST_SHADOW = { opacity: 0.22, blur: 2, drop: 2 }
+const CREST_SHADOW = { opacity: 0.35, blur: 2, drop: 2 }
 const CREST_ART = {
   width: CARD_CREST_PX.width - 8,
   height: CARD_CREST_PX.height - 8,

@@ -50,6 +50,16 @@ describe('framePage', () => {
 })
 
 describe('reportPage', () => {
+  it('escapes the title', () => {
+    const page = reportPage('<b>A & B</b>', CLIENTS, {
+      page: '#f5f5f7',
+      ink: '#08080a',
+      muted: '#6b6b7b',
+    })
+    expect(page).toContain('<title>&lt;b&gt;A &amp; B&lt;/b&gt;</title>')
+    expect(page).not.toContain('<b>A & B</b>')
+  })
+
   it('lists every client with a light and a dark shot', () => {
     const page = reportPage('Test', CLIENTS, {
       page: '#f5f5f7',

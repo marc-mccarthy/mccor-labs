@@ -41,6 +41,14 @@ async function main(): Promise<void> {
       title: { type: 'string', default: 'Signature preview' },
     },
   })
+  const tokens = readTokens(
+    readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
+  )
+  const palette = {
+    page: requireToken(tokens, 'text'),
+    ink: requireToken(tokens, 'base'),
+    muted: requireToken(tokens, 'border-strong'),
+  }
   const out = resolve(values.out)
   mkdirSync(join(out, 'pages'), { recursive: true })
   const raw = readFileSync(resolve(values.html), 'utf8')
@@ -62,14 +70,6 @@ async function main(): Promise<void> {
     await browser.close()
   }
   const report = join(out, 'index.html')
-  const tokens = readTokens(
-    readFileSync(join(WEB, 'src', 'styles', 'globals.css'), 'utf8'),
-  )
-  const palette = {
-    page: requireToken(tokens, 'text'),
-    ink: requireToken(tokens, 'base'),
-    muted: requireToken(tokens, 'border-strong'),
-  }
   writeFileSync(report, reportPage(values.title, CLIENTS, palette))
   const browser = await chromium.launch()
   const page = await browser.newPage()
